@@ -1,0 +1,10 @@
+.env
+tmp
+
+.vscode
+
+.git
+.gitignore
+.github
+
+**/*go-bin

@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  app:
+    environment:
+      - PORT=${PORT}
+    build:
+      context: .
+      target: dev
+    ports:
+      - ${PORT}:${PORT}
+    volumes:
+      - .:/app
