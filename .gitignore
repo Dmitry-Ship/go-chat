@@ -6,6 +6,8 @@
 *.dylib
 
 node_modules
+dist
+
 
 # Test binary, built with `go test -c`
 *.test

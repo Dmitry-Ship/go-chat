@@ -10,13 +10,13 @@ COPY . .
 
 FROM base as build
 
-RUN go build -v -o main ./cmd/server
+RUN npm run build
 
 FROM alpine:latest as prod
 
 RUN apk --no-cache add ca-certificates
 
-COPY --from=build /client/build .
+COPY --from=build /client/dist .
 
 FROM base as dev
 
