@@ -1,4 +1,4 @@
-module GitHub/go-chat
+module GitHub/go-chat/server
 
 go 1.16
 

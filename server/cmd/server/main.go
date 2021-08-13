@@ -1,8 +1,8 @@
 package main
 
 import (
-	"GitHub/go-chat/pkg/application"
-	"GitHub/go-chat/pkg/interfaces"
+	"GitHub/go-chat/server/pkg/application"
+	"GitHub/go-chat/server/pkg/interfaces"
 	"fmt"
 	"log"
 	"net/http"

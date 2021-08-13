@@ -1,13 +1,26 @@
 version: "3.8"
 
 services:
-  app:
+  api:
     environment:
       - PORT=${PORT}
     build:
-      context: .
+      context: ./server
       target: dev
     ports:
       - ${PORT}:${PORT}
     volumes:
-      - .:/app
+      - ./server:/app
+
+  frontend:
+    restart: always
+    build:
+      context: ./frontend
+      target: dev
+    volumes:
+      - ./frontend:/client
+      - /client/node_modules/
+    ports:
+      - 3000:3000
+    depends_on:
+      - api

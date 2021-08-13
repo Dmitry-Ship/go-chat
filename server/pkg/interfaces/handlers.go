@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	"GitHub/go-chat/pkg/application"
+	"GitHub/go-chat/server/pkg/application"
 	"log"
 	"net/http"
 
@@ -9,7 +9,8 @@ import (
 )
 
 func HandleRequests(hub *application.Hub) {
-	http.Handle("/", http.FileServer(http.Dir("frontend")))
+	// http.Handle("/", http.FileServer(http.Dir("frontend")))
+
 	http.HandleFunc("/ws", handeleWS(hub))
 }
 
@@ -20,6 +21,7 @@ var upgrader = websocket.Upgrader{
 
 func handeleWS(hub *application.Hub) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Println(err)
