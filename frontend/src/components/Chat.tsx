@@ -9,21 +9,25 @@ const Chat = () => {
   const [logs, setLogs] = useState<Message[]>([]);
   const [message, setMessage] = useState<string>("");
 
-  const appendLog = (item: Message) => {
-    setLogs((oldLogs) => [...oldLogs, item]);
+  const appendLog = (items: Message[]) => {
+    setLogs((oldLogs) => [...oldLogs, ...items]);
   };
 
   useEffect(() => {
-    connect((msg) => {
-      appendLog({
+    connect((msgs) => {
+      const messages = msgs.map((msg: any) => ({
         text: msg.content,
         type: msg.type,
         sender: msg.sender,
-      });
+        created_at: msg.created_at,
+      }));
+      appendLog(messages);
     });
   }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+
     sendMsg({
       content: message,
       type: "user",

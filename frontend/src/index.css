@@ -12,10 +12,11 @@ code {
     monospace;
 }
 
-* {
-  box-sizing: border-box;
-}
-
 :root {
   --br: 20px;
+  --warn: #eaac8b;
+  --accent: #e56b6f;
+  --primary: #b56576;
+  --secondary: #6d597a;
+  --tertiary: #355070;
 }

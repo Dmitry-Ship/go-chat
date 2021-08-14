@@ -2,8 +2,8 @@ package application
 
 import (
 	"GitHub/go-chat/server/domain"
-	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -27,18 +27,21 @@ const (
 
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	Id   string
-	Hub  *Hub
-	Conn *websocket.Conn
-	Send chan domain.Message
+	Id     string
+	Hub    *Hub
+	Conn   *websocket.Conn
+	Send   chan domain.Message
+	Sender *domain.Sender
 }
 
 func NewClient(conn *websocket.Conn, hub *Hub) *Client {
+	id := strconv.Itoa(int(time.Now().UnixNano()))
 	return &Client{
-		Id:   strconv.Itoa(int(time.Now().UnixNano())),
-		Hub:  hub,
-		Conn: conn,
-		Send: make(chan domain.Message, 256),
+		Id:     id,
+		Hub:    hub,
+		Conn:   conn,
+		Send:   make(chan domain.Message, 256),
+		Sender: domain.NewSender(id),
 	}
 }
 
@@ -73,7 +76,7 @@ func (c *Client) ReceiveMessages() {
 			panic(err)
 		}
 
-		parsedMessage := domain.NewMessage(m.Content, "user", c.Id)
+		parsedMessage := domain.NewMessage(m.Content, "user", c.Sender)
 
 		c.Hub.Broadcast <- parsedMessage
 	}
@@ -101,30 +104,30 @@ func (c *Client) SendMessages() {
 				return
 			}
 
-			w, err := c.Conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				return
-			}
-
-			if message.Sender == c.Id {
+			if message.Sender.Id == c.Id {
 				message.Type = "outbound"
 			}
 
-			reqBodyBytes := new(bytes.Buffer)
-			json.NewEncoder(reqBodyBytes).Encode(message)
-			w.Write(reqBodyBytes.Bytes())
+			messages := []domain.Message{message}
 
-			// Add queued chat messages to the current websocket message.
-			n := len(c.Send)
-			for i := 0; i < n; i++ {
-				reqBodyBytes := new(bytes.Buffer)
-				json.NewEncoder(reqBodyBytes).Encode(<-c.Send)
-				w.Write(reqBodyBytes.Bytes())
-			}
-
-			if err := w.Close(); err != nil {
+			if err := c.Conn.WriteJSON(messages); err != nil {
 				return
 			}
+			fmt.Println("sent")
+
+			// Add queued chat messages to the current websocket message.
+			for i := 0; i < len(c.Send); i++ {
+				fmt.Println("in a loop")
+				message := <-c.Send
+				if message.Sender.Id == c.Id {
+					message.Type = "outbound"
+				}
+				messages = append(messages, message)
+				if err := c.Conn.WriteJSON(messages); err != nil {
+					return
+				}
+			}
+
 		case <-ticker.C:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {

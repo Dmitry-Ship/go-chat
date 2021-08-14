@@ -1,7 +1,9 @@
 .wrap {
-  margin: auto;
+  height: 75vh;
   padding: 10px;
   max-width: 400px;
-  background: grey;
+  background: rgb(99, 99, 99);
   border-radius: var(--br);
+  display: flex;
+  flex-direction: column;
 }

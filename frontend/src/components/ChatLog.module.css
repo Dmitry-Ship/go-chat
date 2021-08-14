@@ -1,29 +1,9 @@
 .log {
-  background: white;
+  background: var(--tertiary);
   padding: 1rem;
-  min-height: 50vh;
   border-radius: 20px;
-  font-size: medium;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-}
-
-.message {
-  margin-top: 10px;
-  background-color: rgb(167, 184, 212);
-  padding: 10px;
-  width: auto;
-  display: inline-block;
-  border-radius: var(--br);
-}
-
-.systemMessage {
-  background-color: transparent;
-  color: grey;
-  text-align: center;
-}
-
-.outboundMessage {
-  background-color: rgb(96, 122, 163);
+  overflow-y: scroll;
+  flex-grow: 1;
 }

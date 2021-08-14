@@ -22,7 +22,7 @@ const ChatForm: React.FC<{
         className={styles.submitBtn}
         onClick={onSubmit}
       >
-        🚀
+        ⬆️
       </button>
     </form>
   );

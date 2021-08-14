@@ -2,6 +2,7 @@ package application
 
 import (
 	"GitHub/go-chat/server/domain"
+	"fmt"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -27,7 +28,8 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.Join:
 			h.Clients[client] = true
-			message := domain.NewMessage("new user joined", "system", "0")
+
+			message := domain.NewMessage(fmt.Sprintf("%s %s joined", client.Sender.Avatar, client.Sender.Name), "system", client.Sender)
 
 			for currentClient := range h.Clients {
 				if currentClient.Id == client.Id {
@@ -44,6 +46,17 @@ func (h *Hub) Run() {
 			if _, ok := h.Clients[client]; ok {
 				delete(h.Clients, client)
 				close(client.Send)
+			}
+
+			message := domain.NewMessage(fmt.Sprintf("%s %s left", client.Sender.Avatar, client.Sender.Name), "system", client.Sender)
+
+			for currentClient := range h.Clients {
+				select {
+				case currentClient.Send <- message:
+				default:
+					close(currentClient.Send)
+					delete(h.Clients, currentClient)
+				}
 			}
 		case message := <-h.Broadcast:
 			for client := range h.Clients {
