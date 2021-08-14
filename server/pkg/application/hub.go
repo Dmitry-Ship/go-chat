@@ -1,48 +1,46 @@
 package application
 
+import (
+	"GitHub/go-chat/server/domain"
+)
+
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
-	// Registered Clients.
-	Clients map[*Client]bool
-
-	// Inbound messages from the clients.
-	Broadcast chan []byte
-
-	// Register requests from the clients.
-	Register chan *Client
-
-	// Unregister requests from clients.
-	Unregister chan *Client
+	Clients   map[*Client]bool
+	Broadcast chan domain.Message
+	Join      chan *Client
+	Leave     chan *Client
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		Broadcast:  make(chan []byte),
-		Register:   make(chan *Client),
-		Unregister: make(chan *Client),
-		Clients:    make(map[*Client]bool),
+		Broadcast: make(chan domain.Message, 1024),
+		Join:      make(chan *Client),
+		Leave:     make(chan *Client),
+		Clients:   make(map[*Client]bool),
 	}
 }
 
 func (h *Hub) Run() {
 	for {
 		select {
-		case client := <-h.Register:
+		case client := <-h.Join:
 			h.Clients[client] = true
-			message := "new user joined"
-			// convert message to []byte
-			messageBytes := []byte(message)
+			message := domain.NewMessage("new user joined", "system", "0")
 
-			for client := range h.Clients {
+			for currentClient := range h.Clients {
+				if currentClient.Id == client.Id {
+					continue
+				}
 				select {
-				case client.Send <- messageBytes:
+				case currentClient.Send <- message:
 				default:
-					close(client.Send)
-					delete(h.Clients, client)
+					close(currentClient.Send)
+					delete(h.Clients, currentClient)
 				}
 			}
-		case client := <-h.Unregister:
+		case client := <-h.Leave:
 			if _, ok := h.Clients[client]; ok {
 				delete(h.Clients, client)
 				close(client.Send)

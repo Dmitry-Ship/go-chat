@@ -1,8 +1,11 @@
 package application
 
 import (
+	"GitHub/go-chat/server/domain"
 	"bytes"
+	"encoding/json"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -22,35 +25,38 @@ const (
 	maxMessageSize = 512
 )
 
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
-)
-
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	Hub *Hub
-
-	// The websocket connection.
+	Id   string
+	Hub  *Hub
 	Conn *websocket.Conn
-
-	// Buffered channel of outbound messages.
-	Send chan []byte
+	Send chan domain.Message
 }
 
-// Receive pumps messages from the websocket connection to the hub.
+func NewClient(conn *websocket.Conn, hub *Hub) *Client {
+	return &Client{
+		Id:   strconv.Itoa(int(time.Now().UnixNano())),
+		Hub:  hub,
+		Conn: conn,
+		Send: make(chan domain.Message, 256),
+	}
+}
+
+// ReceiveMessages pumps messages from the websocket connection to the hub.
 //
-// The application runs Receive in a per-connection goroutine. The application
+// The application runs ReceiveMessages in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
-func (c *Client) Receive() {
+func (c *Client) ReceiveMessages() {
 	defer func() {
-		c.Hub.Unregister <- c
+		c.Hub.Leave <- c
 		c.Conn.Close()
 	}()
+
 	c.Conn.SetReadLimit(maxMessageSize)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
 	for {
 		_, message, err := c.Conn.ReadMessage()
 
@@ -60,22 +66,31 @@ func (c *Client) Receive() {
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.Hub.Broadcast <- message
+
+		m := domain.Message{}
+
+		if err := json.Unmarshal(message, &m); err != nil {
+			panic(err)
+		}
+
+		parsedMessage := domain.NewMessage(m.Content, "user", c.Id)
+
+		c.Hub.Broadcast <- parsedMessage
 	}
 }
 
-// WriteMessages pumps messages from the hub to the websocket connection.
+// SendMessages pumps messages from the hub to the websocket connection.
 //
-// A goroutine running WriteMessages is started for each connection. The
+// A goroutine running SendMessages is started for each connection. The
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
-func (c *Client) WriteMessages() {
+func (c *Client) SendMessages() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
 		c.Conn.Close()
 	}()
+
 	for {
 		select {
 		case message, ok := <-c.Send:
@@ -90,13 +105,21 @@ func (c *Client) WriteMessages() {
 			if err != nil {
 				return
 			}
-			w.Write(message)
+
+			if message.Sender == c.Id {
+				message.Type = "outbound"
+			}
+
+			reqBodyBytes := new(bytes.Buffer)
+			json.NewEncoder(reqBodyBytes).Encode(message)
+			w.Write(reqBodyBytes.Bytes())
 
 			// Add queued chat messages to the current websocket message.
 			n := len(c.Send)
 			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-c.Send)
+				reqBodyBytes := new(bytes.Buffer)
+				json.NewEncoder(reqBodyBytes).Encode(<-c.Send)
+				w.Write(reqBodyBytes.Bytes())
 			}
 
 			if err := w.Close(); err != nil {
