@@ -20,3 +20,7 @@ code {
   --secondary: #6d597a;
   --tertiary: #355070;
 }
+
+* {
+  box-sizing: border-box;
+}

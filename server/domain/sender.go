@@ -161,17 +161,6 @@ func getRandomWord() string {
 }
 
 func NewSender(id string) *Sender {
-
-	randomLetters := ""
-	for i := 0; i < 6; i++ {
-		randomLetters += string(rune(rand.Intn(26) + 97))
-
-		if i == 0 {
-			randomLetters = strings.ToUpper(randomLetters)
-		}
-
-	}
-
 	return &Sender{
 		Id:     id,
 		Avatar: getRandomEmoji(),

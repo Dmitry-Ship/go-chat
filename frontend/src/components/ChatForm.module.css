@@ -23,16 +23,16 @@
 }
 
 .submitBtn {
-  font-size: x-large;
+  font-size: xx-large;
   border-radius: 100%;
   border: none;
   display: block;
   padding: none;
   width: 40px;
   height: 40px;
-  background-color: var(--accent);
+  background-color: transparent;
 }
 
 .submitBtn:disabled {
-  background-color: lightgray;
+  opacity: 0.5;
 }

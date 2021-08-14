@@ -9,7 +9,7 @@ const classes = {
 };
 
 const MessageComponent: React.FC<{ message: Message }> = ({ message }) => {
-  const date = new Date(message.created_at);
+  const date = new Date(message.created_at * 1000);
   const time = `${date.getHours()}:${date.getMinutes()}`;
 
   return (

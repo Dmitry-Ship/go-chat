@@ -1,8 +1,9 @@
 .wrap {
-  height: 75vh;
+  max-height: 100vh;
+  min-height: 100vh;
   padding: 10px;
   max-width: 400px;
-  background: rgb(99, 99, 99);
+  background: #282c34;
   border-radius: var(--br);
   display: flex;
   flex-direction: column;
