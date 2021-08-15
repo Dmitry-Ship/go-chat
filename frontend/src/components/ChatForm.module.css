@@ -1,6 +1,7 @@
 .form {
   margin-top: 20px;
   display: flex;
+  justify-content: space-between;
 }
 
 .input {
@@ -8,7 +9,6 @@
   height: 40px;
   padding: 0 0.5rem;
   line-height: 30px;
-  margin-right: 10px;
   border-radius: var(--br);
   border: none;
   outline: none;
@@ -24,7 +24,6 @@
 
 .submitBtn {
   font-size: xx-large;
-  border-radius: 100%;
   border: none;
   display: block;
   padding: none;
