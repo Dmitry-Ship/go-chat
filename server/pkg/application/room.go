@@ -5,17 +5,17 @@ import (
 	"fmt"
 )
 
-// Hub maintains the set of active clients and broadcasts messages to the
+// Room maintains the set of active clients and broadcasts messages to the
 // clients.
-type Hub struct {
+type Room struct {
 	Clients   map[*Client]bool
 	Broadcast chan domain.Message
 	Join      chan *Client
 	Leave     chan *Client
 }
 
-func NewHub() *Hub {
-	return &Hub{
+func NewRoom() *Room {
+	return &Room{
 		Broadcast: make(chan domain.Message, 1024),
 		Join:      make(chan *Client),
 		Leave:     make(chan *Client),
@@ -23,7 +23,7 @@ func NewHub() *Hub {
 	}
 }
 
-func (h *Hub) Run() {
+func (h *Room) Run() {
 	for {
 		select {
 		case client := <-h.Join:

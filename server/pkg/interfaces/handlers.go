@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func HandleRequests(hub *application.Hub) {
-	http.HandleFunc("/ws", handeleWS(hub))
+func HandleRequests(room *application.Room) {
+	http.HandleFunc("/ws", handeleWS(room))
 }
 
 var upgrader = websocket.Upgrader{
@@ -18,7 +18,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-func handeleWS(hub *application.Hub) func(w http.ResponseWriter, r *http.Request) {
+func handeleWS(room *application.Room) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -26,9 +26,9 @@ func handeleWS(hub *application.Hub) func(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		client := application.NewClient(conn, hub)
+		client := application.NewClient(conn, room)
 
-		client.Hub.Join <- client
+		client.Room.Join <- client
 
 		// Allow collection of memory referenced by the caller by doing all work in
 		// new goroutines.

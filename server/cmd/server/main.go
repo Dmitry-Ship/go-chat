@@ -10,10 +10,10 @@ import (
 )
 
 func main() {
-	hub := application.NewHub()
-	go hub.Run()
+	room := application.NewRoom()
+	go room.Run()
 
-	interfaces.HandleRequests(hub)
+	interfaces.HandleRequests(room)
 
 	port := os.Getenv("PORT")
 

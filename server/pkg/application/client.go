@@ -25,34 +25,34 @@ const (
 	maxMessageSize = 512
 )
 
-// Client is a middleman between the websocket connection and the hub.
+// Client is a middleman between the websocket connection and the room.
 type Client struct {
 	Id     string
-	Hub    *Hub
+	Room   *Room
 	Conn   *websocket.Conn
 	Send   chan domain.Message
 	Sender *domain.Sender
 }
 
-func NewClient(conn *websocket.Conn, hub *Hub) *Client {
+func NewClient(conn *websocket.Conn, room *Room) *Client {
 	id := strconv.Itoa(int(time.Now().UnixNano()))
 	return &Client{
 		Id:     id,
-		Hub:    hub,
+		Room:   room,
 		Conn:   conn,
 		Send:   make(chan domain.Message, 256),
 		Sender: domain.NewSender(id),
 	}
 }
 
-// ReceiveMessages pumps messages from the websocket connection to the hub.
+// ReceiveMessages pumps messages from the websocket connection to the room.
 //
 // The application runs ReceiveMessages in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
 func (c *Client) ReceiveMessages() {
 	defer func() {
-		c.Hub.Leave <- c
+		c.Room.Leave <- c
 		c.Conn.Close()
 	}()
 
@@ -78,7 +78,7 @@ func (c *Client) ReceiveMessages() {
 
 		parsedMessage := domain.NewMessage(m.Content, "user", c.Sender)
 
-		c.Hub.Broadcast <- parsedMessage
+		c.Room.Broadcast <- parsedMessage
 	}
 }
 
@@ -99,7 +99,7 @@ func (c *Client) SendMessages() {
 		case message, ok := <-c.Send:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				// The hub closed the channel.
+				// The room closed the channel.
 				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
