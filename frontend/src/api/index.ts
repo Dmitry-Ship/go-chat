@@ -1,4 +1,6 @@
-const connection = new WebSocket("wss://" + location.host + "/ws");
+const connection = new WebSocket(
+  "wss://" + "go-chat-23rpzgbtta-uc.a.run.app" + "/ws"
+);
 
 const connect = (cb: (msg: any) => void) => {
   console.log("connecting");
