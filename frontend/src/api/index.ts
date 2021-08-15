@@ -1,4 +1,4 @@
-const connection = new WebSocket("ws://" + location.host + "/ws");
+const connection = new WebSocket("wss://" + location.host + "/ws");
 
 const connect = (cb: (msg: any) => void) => {
   console.log("connecting");

@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/ws": {
-        target: "ws://api:8080",
+        target: "wss://api:8080",
         changeOrigin: true,
         ws: true,
         secure: false,
