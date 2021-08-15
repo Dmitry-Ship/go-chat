@@ -8,7 +8,6 @@ const connect = (cb: (msg: any) => void) => {
   };
 
   connection.onmessage = (event) => {
-    console.log("Message from WebSocket: ", event);
     const parsedMessage = JSON.parse(event.data);
     cb(parsedMessage);
   };
@@ -23,7 +22,6 @@ const connect = (cb: (msg: any) => void) => {
 };
 
 const sendMsg = <T>(msg: T) => {
-  console.log("sending msg: ", msg);
   const stringifiedMessage = JSON.stringify(msg);
   connection.send(stringifiedMessage);
 };

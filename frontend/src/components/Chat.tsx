@@ -30,7 +30,6 @@ const Chat = () => {
 
     sendMsg({
       content: message,
-      type: "user",
     });
 
     setMessage("");
