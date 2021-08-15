@@ -1,5 +1,4 @@
-// const connection = new WebSocket("ws://" + location.host + "/ws");
-const connection = new WebSocket("ws://localhost:8080/ws");
+const connection = new WebSocket("ws://" + location.host + "/ws");
 
 const connect = (cb: (msg: any) => void) => {
   console.log("connecting");
