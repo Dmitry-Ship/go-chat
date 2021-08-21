@@ -104,10 +104,7 @@ func (c *Client) SendMessages() {
 				return
 			}
 
-			if message.Sender.Id == c.Id {
-				message.Type = "outbound"
-			}
-
+			message.UpdateType(c.Sender.Id)
 			messages := []domain.Message{message}
 
 			if err := c.Conn.WriteJSON(messages); err != nil {
@@ -119,9 +116,9 @@ func (c *Client) SendMessages() {
 			for i := 0; i < len(c.Send); i++ {
 				fmt.Println("in a loop")
 				message := <-c.Send
-				if message.Sender.Id == c.Id {
-					message.Type = "outbound"
-				}
+
+				message.UpdateType(c.Sender.Id)
+
 				messages = append(messages, message)
 				if err := c.Conn.WriteJSON(messages); err != nil {
 					return
