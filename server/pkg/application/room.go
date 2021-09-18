@@ -23,15 +23,15 @@ func NewRoom() *Room {
 	}
 }
 
-func (h *Room) Run() {
+func (room *Room) Run() {
 	for {
 		select {
-		case client := <-h.Join:
-			h.Clients[client] = true
+		case client := <-room.Join:
+			room.Clients[client] = true
 
 			message := domain.NewMessage(fmt.Sprintf("%s %s joined", client.Sender.Avatar, client.Sender.Name), "system", client.Sender)
 
-			for currentClient := range h.Clients {
+			for currentClient := range room.Clients {
 				if currentClient.Id == client.Id {
 					continue
 				}
@@ -39,32 +39,32 @@ func (h *Room) Run() {
 				case currentClient.Send <- message:
 				default:
 					close(currentClient.Send)
-					delete(h.Clients, currentClient)
+					delete(room.Clients, currentClient)
 				}
 			}
-		case client := <-h.Leave:
-			if _, ok := h.Clients[client]; ok {
-				delete(h.Clients, client)
+		case client := <-room.Leave:
+			if _, ok := room.Clients[client]; ok {
+				delete(room.Clients, client)
 				close(client.Send)
 			}
 
 			message := domain.NewMessage(fmt.Sprintf("%s %s left", client.Sender.Avatar, client.Sender.Name), "system", client.Sender)
 
-			for currentClient := range h.Clients {
+			for currentClient := range room.Clients {
 				select {
 				case currentClient.Send <- message:
 				default:
 					close(currentClient.Send)
-					delete(h.Clients, currentClient)
+					delete(room.Clients, currentClient)
 				}
 			}
-		case message := <-h.Broadcast:
-			for client := range h.Clients {
+		case message := <-room.Broadcast:
+			for client := range room.Clients {
 				select {
 				case client.Send <- message:
 				default:
 					close(client.Send)
-					delete(h.Clients, client)
+					delete(room.Clients, client)
 				}
 			}
 		}
