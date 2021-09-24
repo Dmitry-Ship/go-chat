@@ -1,6 +1,4 @@
-const connection = new WebSocket(
-  "wss://" + "go-chat-23rpzgbtta-uc.a.run.app" + "/ws"
-);
+const connection = new WebSocket(import.meta.env.VITE_WS_DOMAIN + "/ws");
 
 const connect = (cb: (msg: any) => void) => {
   console.log("connecting");

@@ -28,7 +28,9 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build
+        run: |
+          VITE_WS_DOMAIN=${{ secrets.WS_DOMAIN }} 
+          npm run build
 
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v1.2

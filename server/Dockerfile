@@ -9,8 +9,6 @@ RUN go mod download
 
 COPY . .
 
-ENV PORT=${PORT}
-
 # stage 2: build binary for production
 FROM base as build
 

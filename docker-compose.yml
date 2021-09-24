@@ -13,6 +13,8 @@ services:
       - ./server:/app
 
   frontend:
+    environment:
+      - VITE_WS_DOMAIN
     restart: always
     build:
       context: ./frontend
