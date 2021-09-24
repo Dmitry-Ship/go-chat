@@ -1,8 +1,6 @@
 const connection = new WebSocket(import.meta.env.VITE_WS_DOMAIN + "/ws");
 
 const connect = (cb: (msg: any) => void) => {
-  console.log("connecting");
-
   connection.onopen = () => {
     console.log("Successfully Connected");
   };
