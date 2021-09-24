@@ -3,14 +3,14 @@ version: "3.8"
 services:
   api:
     environment:
-      - PORT=${PORT}
+      - PORT
     build:
-      context: ./server
+      context: ./backend
       target: dev
     ports:
       - ${PORT}:${PORT}
     volumes:
-      - ./server:/app
+      - ./backend:/app
 
   frontend:
     environment:

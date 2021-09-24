@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	"GitHub/go-chat/server/pkg/application"
+	"GitHub/go-chat/backend/pkg/application"
 	"log"
 	"net/http"
 

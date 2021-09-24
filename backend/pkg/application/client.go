@@ -1,7 +1,7 @@
 package application
 
 import (
-	"GitHub/go-chat/server/domain"
+	"GitHub/go-chat/backend/domain"
 	"encoding/json"
 	"fmt"
 	"log"
