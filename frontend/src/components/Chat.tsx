@@ -1,27 +1,35 @@
 import React, { useEffect, useState } from "react";
 import { connect, sendMsg } from "../api";
-import { Message } from "../types/coreTypes";
+import { Message, MessageEvent } from "../types/coreTypes";
 import styles from "./Chat.module.css";
 import ChatForm from "./ChatForm";
 import ChatLog from "./ChatLog";
 
 const Chat = () => {
   const [logs, setLogs] = useState<Message[]>([]);
-  const [message, setMessage] = useState<string>("");
 
   const appendLog = (items: Message[]) => {
     setLogs((oldLogs) => [...oldLogs, ...items]);
   };
 
   useEffect(() => {
-    connect((msgs) => {
-      const messages = msgs.map((msg: any) => ({
-        text: msg.content,
-        type: msg.type,
-        sender: msg.sender,
-        created_at: msg.created_at,
-      }));
-      appendLog(messages);
+    connect((events) => {
+      events.forEach((event: MessageEvent) => {
+        switch (event.type) {
+          case "message":
+            appendLog([
+              {
+                text: event.data.content,
+                type: event.data.type,
+                sender: event.data.sender,
+                created_at: event.data.created_at,
+              },
+            ]);
+            break;
+          default:
+            break;
+        }
+      });
     });
 
     let vh = window.innerHeight * 0.01;
@@ -33,25 +41,11 @@ const Chat = () => {
     });
   }, []);
 
-  const handleSubmit = (e: React.MouseEvent<HTMLElement>) => {
-    e.preventDefault();
-
-    sendMsg({
-      content: message,
-    });
-
-    setMessage("");
-  };
-
   return (
     <div className={styles.wrap}>
       <ChatLog logs={logs} />
 
-      <ChatForm
-        message={message}
-        onChange={setMessage}
-        onSubmit={handleSubmit}
-      />
+      <ChatForm onSubmit={sendMsg} />
     </div>
   );
 };

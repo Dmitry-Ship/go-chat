@@ -3,7 +3,6 @@ package application
 import (
 	"GitHub/go-chat/backend/domain"
 	"encoding/json"
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -30,8 +29,13 @@ type Client struct {
 	Id     string
 	Room   *Room
 	Conn   *websocket.Conn
-	Send   chan domain.Message
+	Send   chan Notification
 	Sender *domain.Sender
+}
+
+type Notification struct {
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
 }
 
 func NewClient(conn *websocket.Conn, room *Room) *Client {
@@ -40,7 +44,7 @@ func NewClient(conn *websocket.Conn, room *Room) *Client {
 		Id:     id,
 		Room:   room,
 		Conn:   conn,
-		Send:   make(chan domain.Message, 256),
+		Send:   make(chan Notification, 256),
 		Sender: domain.NewSender(id),
 	}
 }
@@ -96,7 +100,7 @@ func (c *Client) SendMessages() {
 
 	for {
 		select {
-		case message, ok := <-c.Send:
+		case notification, ok := <-c.Send:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The room closed the channel.
@@ -104,23 +108,18 @@ func (c *Client) SendMessages() {
 				return
 			}
 
-			message.UpdateType(c.Sender.Id)
-			messages := []domain.Message{message}
+			notifications := []Notification{notification}
 
-			if err := c.Conn.WriteJSON(messages); err != nil {
+			if err := c.Conn.WriteJSON(notifications); err != nil {
 				return
 			}
-			fmt.Println("sent")
 
 			// Add queued chat messages to the current websocket message.
 			for i := 0; i < len(c.Send); i++ {
-				fmt.Println("in a loop")
-				message := <-c.Send
+				notification := <-c.Send
 
-				message.UpdateType(c.Sender.Id)
-
-				messages = append(messages, message)
-				if err := c.Conn.WriteJSON(messages); err != nil {
+				notifications = append(notifications, notification)
+				if err := c.Conn.WriteJSON(notifications); err != nil {
 					return
 				}
 			}
@@ -131,5 +130,12 @@ func (c *Client) SendMessages() {
 				return
 			}
 		}
+	}
+}
+
+func (c *Client) NewNotification(notificationType string, data interface{}) Notification {
+	return Notification{
+		Type: notificationType,
+		Data: data,
 	}
 }

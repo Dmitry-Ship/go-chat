@@ -1,11 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "./ChatForm.module.css";
 
 const ChatForm: React.FC<{
-  message: string;
-  onChange: (value: string) => void;
-  onSubmit: (e: React.MouseEvent<HTMLElement>) => void;
-}> = ({ message, onChange, onSubmit }) => {
+  onSubmit: (message: string) => void;
+}> = ({ onSubmit }) => {
+  const [message, setMessage] = useState<string>("");
+
+  const handleSubmit = (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+    onSubmit(message);
+    setMessage("");
+  };
+
   return (
     <form className={styles.form}>
       <input
@@ -14,13 +20,13 @@ const ChatForm: React.FC<{
         size={64}
         autoFocus
         value={message}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => setMessage(e.target.value)}
       />
       <button
         disabled={!message}
         type="submit"
         className={styles.submitBtn}
-        onClick={onSubmit}
+        onClick={handleSubmit}
       >
         ⬆️
       </button>

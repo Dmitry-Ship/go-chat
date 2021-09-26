@@ -35,8 +35,11 @@ func (room *Room) Run() {
 				if currentClient.Id == client.Id {
 					continue
 				}
+				message.UpdateType(currentClient.Sender.Id)
+				notification := currentClient.NewNotification("message", message)
+
 				select {
-				case currentClient.Send <- message:
+				case currentClient.Send <- notification:
 				default:
 					close(currentClient.Send)
 					delete(room.Clients, currentClient)
@@ -51,8 +54,11 @@ func (room *Room) Run() {
 			message := domain.NewMessage(fmt.Sprintf("%s %s left", client.Sender.Avatar, client.Sender.Name), "system", client.Sender)
 
 			for currentClient := range room.Clients {
+				message.UpdateType(currentClient.Sender.Id)
+				notification := currentClient.NewNotification("message", message)
+
 				select {
-				case currentClient.Send <- message:
+				case currentClient.Send <- notification:
 				default:
 					close(currentClient.Send)
 					delete(room.Clients, currentClient)
@@ -60,8 +66,11 @@ func (room *Room) Run() {
 			}
 		case message := <-room.Broadcast:
 			for client := range room.Clients {
+				message.UpdateType(client.Sender.Id)
+				notification := client.NewNotification("message", message)
+
 				select {
-				case client.Send <- message:
+				case client.Send <- notification:
 				default:
 					close(client.Send)
 					delete(room.Clients, client)

@@ -1,6 +1,6 @@
 const connection = new WebSocket(import.meta.env.VITE_WS_DOMAIN + "/ws");
 
-const connect = (cb: (msg: any) => void) => {
+export const connect = (cb: (msg: any) => void) => {
   connection.onopen = () => {
     console.log("Successfully Connected");
   };
@@ -19,9 +19,7 @@ const connect = (cb: (msg: any) => void) => {
   };
 };
 
-const sendMsg = <T>(msg: T) => {
-  const stringifiedMessage = JSON.stringify(msg);
+export const sendMsg = (msg: string) => {
+  const stringifiedMessage = JSON.stringify({ content: msg });
   connection.send(stringifiedMessage);
 };
-
-export { connect, sendMsg };
