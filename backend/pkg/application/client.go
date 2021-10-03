@@ -86,12 +86,12 @@ func (c *Client) ReceiveMessages() {
 	}
 }
 
-// SendMessages pumps messages from the hub to the websocket connection.
+// SendNotifications pumps messages from the hub to the websocket connection.
 //
-// A goroutine running SendMessages is started for each connection. The
+// A goroutine running SendNotifications is started for each connection. The
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
-func (c *Client) SendMessages() {
+func (c *Client) SendNotifications() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()

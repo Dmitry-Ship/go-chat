@@ -19,9 +19,3 @@ func NewMessage(content string, messageType string, sender *Sender) Message {
 		Sender:    sender,
 	}
 }
-
-func (message *Message) UpdateType(destinationId string) {
-	if message.Sender.Id == destinationId {
-		message.Type = "outbound"
-	}
-}

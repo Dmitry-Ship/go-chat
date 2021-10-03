@@ -23,4 +23,11 @@ export type MessageEvent = {
   };
 };
 
-export type Event = MessageEvent;
+export type AuthEvent = {
+  type: "client_id";
+  data: {
+    client_id: string;
+  };
+};
+
+export type Event = MessageEvent | AuthEvent;

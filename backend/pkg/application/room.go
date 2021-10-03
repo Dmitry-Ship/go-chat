@@ -23,6 +23,19 @@ func NewRoom() *Room {
 	}
 }
 
+func (room *Room) broadcastMessage(message interface{}) {
+	for currentClient := range room.Clients {
+		notification := currentClient.NewNotification("message", message)
+
+		select {
+		case currentClient.Send <- notification:
+		default:
+			close(currentClient.Send)
+			delete(room.Clients, currentClient)
+		}
+	}
+}
+
 func (room *Room) Run() {
 	for {
 		select {
@@ -31,20 +44,7 @@ func (room *Room) Run() {
 
 			message := domain.NewMessage(fmt.Sprintf("%s %s joined", client.Sender.Avatar, client.Sender.Name), "system", client.Sender)
 
-			for currentClient := range room.Clients {
-				if currentClient.Id == client.Id {
-					continue
-				}
-				message.UpdateType(currentClient.Sender.Id)
-				notification := currentClient.NewNotification("message", message)
-
-				select {
-				case currentClient.Send <- notification:
-				default:
-					close(currentClient.Send)
-					delete(room.Clients, currentClient)
-				}
-			}
+			room.broadcastMessage(message)
 		case client := <-room.Leave:
 			if _, ok := room.Clients[client]; ok {
 				delete(room.Clients, client)
@@ -53,29 +53,9 @@ func (room *Room) Run() {
 
 			message := domain.NewMessage(fmt.Sprintf("%s %s left", client.Sender.Avatar, client.Sender.Name), "system", client.Sender)
 
-			for currentClient := range room.Clients {
-				message.UpdateType(currentClient.Sender.Id)
-				notification := currentClient.NewNotification("message", message)
-
-				select {
-				case currentClient.Send <- notification:
-				default:
-					close(currentClient.Send)
-					delete(room.Clients, currentClient)
-				}
-			}
+			room.broadcastMessage(message)
 		case message := <-room.Broadcast:
-			for client := range room.Clients {
-				message.UpdateType(client.Sender.Id)
-				notification := client.NewNotification("message", message)
-
-				select {
-				case client.Send <- notification:
-				default:
-					close(client.Send)
-					delete(room.Clients, client)
-				}
-			}
+			room.broadcastMessage(message)
 		}
 	}
 }

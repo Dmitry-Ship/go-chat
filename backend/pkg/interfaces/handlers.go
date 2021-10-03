@@ -28,11 +28,17 @@ func handeleWS(room *application.Room) func(w http.ResponseWriter, r *http.Reque
 
 		client := application.NewClient(conn, room)
 
+		data := struct {
+			ClientId string `json:"client_id"`
+		}{
+			ClientId: client.Id,
+		}
+
+		client.Send <- client.NewNotification("client_id", data)
+
 		client.Room.Join <- client
 
-		// Allow collection of memory referenced by the caller by doing all work in
-		// new goroutines.
-		go client.SendMessages()
+		go client.SendNotifications()
 		go client.ReceiveMessages()
 	}
 }
