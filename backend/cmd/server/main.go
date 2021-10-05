@@ -1,7 +1,7 @@
 package main
 
 import (
-	"GitHub/go-chat/backend/pkg/application"
+	"GitHub/go-chat/backend/domain"
 	"GitHub/go-chat/backend/pkg/interfaces"
 	"fmt"
 	"log"
@@ -10,10 +10,10 @@ import (
 )
 
 func main() {
-	room := application.NewRoom()
-	go room.Run()
+	hub := domain.NewHub()
+	go hub.Run()
 
-	interfaces.HandleRequests(room)
+	interfaces.HandleRequests(hub)
 
 	port := os.Getenv("PORT")
 

@@ -13,12 +13,8 @@ const MessageComponent: React.FC<{
 
   const user = useContext(UserContext);
 
-  const isInbound = message.sender.id === user.id;
+  const isInbound = message.user.id === user.id;
   const isSystem = message.type === "system";
-
-  if (isInbound && isSystem) {
-    return null;
-  }
 
   return (
     <div className={styles.message}>
@@ -28,7 +24,7 @@ const MessageComponent: React.FC<{
         <>
           <div className={styles.avatarColumn}>
             {isLastInAGroup && (
-              <div className={styles.avatar}>{message.sender.avatar}</div>
+              <div className={styles.avatar}>{message.user.avatar}</div>
             )}
           </div>
 
@@ -38,7 +34,7 @@ const MessageComponent: React.FC<{
             }`}
           >
             {isFistInAGroup && (
-              <div className={styles.userName}>{message.sender.name}</div>
+              <div className={styles.userName}>{message.user.name}</div>
             )}
             {message.text}
             <div className={styles.time}>{time}</div>

@@ -3,6 +3,7 @@ package application
 import (
 	"GitHub/go-chat/backend/domain"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -26,26 +27,19 @@ const (
 
 // Client is a middleman between the websocket connection and the room.
 type Client struct {
-	Id     string
-	Room   *Room
-	Conn   *websocket.Conn
-	Send   chan Notification
-	Sender *domain.Sender
+	Id   string
+	Hub  *domain.Hub
+	Conn *websocket.Conn
+	User *domain.User
 }
 
-type Notification struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
-}
-
-func NewClient(conn *websocket.Conn, room *Room) *Client {
+func NewClient(conn *websocket.Conn, hub *domain.Hub, user *domain.User) *Client {
 	id := strconv.Itoa(int(time.Now().UnixNano()))
 	return &Client{
-		Id:     id,
-		Room:   room,
-		Conn:   conn,
-		Send:   make(chan Notification, 256),
-		Sender: domain.NewSender(id),
+		Id:   id,
+		Hub:  hub,
+		Conn: conn,
+		User: user,
 	}
 }
 
@@ -56,7 +50,7 @@ func NewClient(conn *websocket.Conn, room *Room) *Client {
 // reads from this goroutine.
 func (c *Client) ReceiveMessages() {
 	defer func() {
-		c.Room.Leave <- c
+		c.Hub.Leave <- domain.NewSubscription(c.User, 123)
 		c.Conn.Close()
 	}()
 
@@ -80,9 +74,9 @@ func (c *Client) ReceiveMessages() {
 			panic(err)
 		}
 
-		parsedMessage := domain.NewMessage(m.Content, "user", c.Sender)
+		parsedMessage := domain.NewMessage(m.Content, "user", m.RoomId, c.User)
 
-		c.Room.Broadcast <- parsedMessage
+		c.Hub.Broadcast <- parsedMessage
 	}
 }
 
@@ -100,7 +94,7 @@ func (c *Client) SendNotifications() {
 
 	for {
 		select {
-		case notification, ok := <-c.Send:
+		case notification, ok := <-c.User.Send:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The room closed the channel.
@@ -108,15 +102,15 @@ func (c *Client) SendNotifications() {
 				return
 			}
 
-			notifications := []Notification{notification}
+			notifications := []domain.Notification{notification}
 
 			if err := c.Conn.WriteJSON(notifications); err != nil {
 				return
 			}
 
 			// Add queued chat messages to the current websocket message.
-			for i := 0; i < len(c.Send); i++ {
-				notification := <-c.Send
+			for i := 0; i < len(c.User.Send); i++ {
+				notification := <-c.User.Send
 
 				notifications = append(notifications, notification)
 				if err := c.Conn.WriteJSON(notifications); err != nil {
@@ -124,18 +118,36 @@ func (c *Client) SendNotifications() {
 				}
 			}
 
+		// case notification, ok := <-c.Send:
+		// 	c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+		// 	if !ok {
+		// 		// The room closed the channel.
+		// 		c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+		// 		return
+		// 	}
+
+		// 	notifications := []Notification{notification}
+
+		// 	if err := c.Conn.WriteJSON(notifications); err != nil {
+		// 		return
+		// 	}
+
+		// 	// Add queued chat messages to the current websocket message.
+		// 	for i := 0; i < len(c.Send); i++ {
+		// 		notification := <-c.Send
+
+		// 		notifications = append(notifications, notification)
+		// 		if err := c.Conn.WriteJSON(notifications); err != nil {
+		// 			return
+		// 		}
+		// 	}
+
 		case <-ticker.C:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			fmt.Println("sending ping")
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		}
-	}
-}
-
-func (c *Client) NewNotification(notificationType string, data interface{}) Notification {
-	return Notification{
-		Type: notificationType,
-		Data: data,
 	}
 }

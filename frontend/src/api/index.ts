@@ -19,7 +19,7 @@ export const connect = (cb: (msg: any) => void) => {
   };
 };
 
-export const sendMsg = (msg: string) => {
-  const stringifiedMessage = JSON.stringify({ content: msg });
+export const sendMsg = (msg: string, roomId: number) => {
+  const stringifiedMessage = JSON.stringify({ content: msg, room_id: roomId });
   connection.send(stringifiedMessage);
 };

@@ -23,14 +23,15 @@ const Chat = () => {
               {
                 text: event.data.content,
                 type: event.data.type,
-                sender: event.data.sender,
+                user: event.data.user,
                 created_at: event.data.created_at,
+                roomId: event.data.room_id,
               },
             ]);
             break;
 
-          case "client_id":
-            setClientId(event.data.client_id);
+          case "user_id":
+            setClientId(event.data.user_id);
             break;
           default:
             break;

@@ -11,14 +11,12 @@ const ChatLog: React.FC<{ logs: Message[] }> = ({ logs }) => {
         const isFistInAGroup =
           !previous ||
           previous?.type === "system" ||
-          item.sender.id !== previous?.sender.id;
+          item.user.id !== previous?.user.id;
 
         const next = logs[i + 1];
 
         const isLastInAGroup =
-          !next ||
-          next?.type === "system" ||
-          item.sender.id !== next?.sender.id;
+          !next || next?.type === "system" || item.user.id !== next?.user.id;
 
         return (
           <MessageComponent

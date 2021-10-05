@@ -1,7 +1,8 @@
 export type Message = {
   text: string;
   type: "user" | "system";
-  sender: {
+  roomId: number;
+  user: {
     id: string;
     avatar: string;
     name: string;
@@ -14,7 +15,8 @@ export type MessageEvent = {
   data: {
     content: string;
     type: "user" | "system";
-    sender: {
+    room_id: number;
+    user: {
       id: string;
       avatar: string;
       name: string;
@@ -24,9 +26,9 @@ export type MessageEvent = {
 };
 
 export type AuthEvent = {
-  type: "client_id";
+  type: "user_id";
   data: {
-    client_id: string;
+    user_id: string;
   };
 };
 

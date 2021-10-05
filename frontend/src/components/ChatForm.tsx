@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import styles from "./ChatForm.module.css";
 
 const ChatForm: React.FC<{
-  onSubmit: (message: string) => void;
+  onSubmit: (message: string, roomId: number) => void;
 }> = ({ onSubmit }) => {
   const [message, setMessage] = useState<string>("");
 
   const handleSubmit = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
-    onSubmit(message);
+    onSubmit(message, 123);
     setMessage("");
   };
 
