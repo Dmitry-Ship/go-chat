@@ -14,7 +14,8 @@ services:
 
   frontend:
     environment:
-      - VITE_WS_DOMAIN=ws://localhost:${PORT}
+      - VITE_WS_DOMAIN=ws://api:${PORT}
+      - VITE_DOMAIN=http://api:${PORT}
     restart: always
     build:
       context: ./frontend
@@ -24,5 +25,7 @@ services:
       - /client/node_modules/
     ports:
       - 3000:3000
+    links:
+      - api
     depends_on:
       - api

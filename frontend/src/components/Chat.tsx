@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { connect, sendMsg } from "../api";
+import { connect, sendMsg } from "../api/ws";
 import { Message, Event } from "../types/coreTypes";
 import styles from "./Chat.module.css";
 import ChatForm from "./ChatForm";
 import ChatLog from "./ChatLog";
 import { UserContext } from "../userContext";
+import { Link } from "react-router-dom";
 
 const Chat = () => {
   const [logs, setLogs] = useState<Message[]>([]);
@@ -50,6 +51,8 @@ const Chat = () => {
 
   return (
     <UserContext.Provider value={{ id: clientId }}>
+      <Link to="/">leave</Link>
+
       <div className={styles.wrap}>
         <ChatLog logs={logs} />
 

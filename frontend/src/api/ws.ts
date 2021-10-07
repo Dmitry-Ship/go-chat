@@ -1,4 +1,12 @@
-const connection = new WebSocket(import.meta.env.VITE_WS_DOMAIN + "/ws");
+let url = "/ws";
+if (import.meta.env.DEV) {
+  const { hostname, port } = window.location;
+  url = `ws://${hostname}${port ? ":" + port : ""}` + url;
+} else {
+  url = import.meta.env.VITE_WS_DOMAIN + url;
+}
+
+const connection = new WebSocket(url);
 
 export const connect = (cb: (msg: any) => void) => {
   connection.onopen = () => {

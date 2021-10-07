@@ -30,6 +30,7 @@ jobs:
       - name: Build
         env:
           VITE_WS_DOMAIN: ${{ secrets.WS_DOMAIN }}
+          VITE_DOMAIN: ${{ secrets.DOMAIN }}
         run: npm run build
 
       - name: Deploy to Netlify

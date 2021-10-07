@@ -3,9 +3,9 @@ package domain
 // Room maintains the set of active clients and broadcasts messages to the
 // clients.
 type Room struct {
-	Users map[*User]bool
-	Name  string
-	Id    int64
+	Users map[*User]bool `json:"-"`
+	Name  string         `json:"name"`
+	Id    int64          `json:"id"`
 }
 
 func NewRoom(name string) *Room {

@@ -1,6 +1,7 @@
 package interfaces
 
 import (
+	"GitHub/go-chat/backend/common"
 	"GitHub/go-chat/backend/domain"
 	"GitHub/go-chat/backend/pkg/application"
 	"log"
@@ -11,12 +12,15 @@ import (
 
 func HandleRequests(hub *domain.Hub) {
 	http.HandleFunc("/ws", handeleWS(hub))
+	http.HandleFunc("/getRooms", handeleGetRooms)
 }
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true },
+	CheckOrigin: func(r *http.Request) bool {
+		return r.URL.Path == "/ws"
+	},
 }
 
 func handeleWS(hub *domain.Hub) func(w http.ResponseWriter, r *http.Request) {
@@ -43,4 +47,12 @@ func handeleWS(hub *domain.Hub) func(w http.ResponseWriter, r *http.Request) {
 		go client.SendNotifications()
 		go client.ReceiveMessages()
 	}
+}
+
+func handeleGetRooms(w http.ResponseWriter, r *http.Request) {
+
+	defaultRoom := domain.NewRoom("default")
+	rooms := []domain.Room{*defaultRoom}
+
+	common.SendJSONresponse(rooms, w)
 }

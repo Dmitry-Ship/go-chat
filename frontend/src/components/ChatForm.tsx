@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import styles from "./ChatForm.module.css";
+import { useParams } from "react-router-dom";
 
 const ChatForm: React.FC<{
   onSubmit: (message: string, roomId: number) => void;
 }> = ({ onSubmit }) => {
   const [message, setMessage] = useState<string>("");
 
+  const { roomId } = useParams<{ roomId: string }>();
+
   const handleSubmit = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
-    onSubmit(message, 123);
+    onSubmit(message, Number(roomId));
     setMessage("");
   };
 

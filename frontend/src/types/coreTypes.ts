@@ -10,6 +10,11 @@ export type Message = {
   created_at: number;
 };
 
+export type Room = {
+  name: string;
+  id: number;
+};
+
 export type MessageEvent = {
   type: "message";
   data: {
