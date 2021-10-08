@@ -10,7 +10,6 @@
 }
 
 .messageBubble {
-  background-color: var(--primary);
   padding: 10px;
   border-radius: var(--br);
   min-width: 100px;
@@ -56,6 +55,10 @@
   padding: 10px;
 }
 
-.outboundMessage {
+.inboundMessage {
   background-color: var(--secondary);
+}
+
+.outboundMessage {
+  background-color: var(--primary);
 }

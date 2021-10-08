@@ -6,28 +6,32 @@ if (import.meta.env.DEV) {
   url = import.meta.env.VITE_WS_DOMAIN + url;
 }
 
-const connection = new WebSocket(url);
+const events: Record<string, (msg: any) => void> = {};
 
-export const connect = (cb: (msg: any) => void) => {
-  connection.onopen = () => {
-    console.log("Successfully Connected");
-  };
+export const onEvent = (event: string, cb: (msg: any) => void) => {
+  events[event] = cb;
+};
 
-  connection.onmessage = (event) => {
-    const parsedMessage = JSON.parse(event.data);
-    cb(parsedMessage);
-  };
+export const connection = new WebSocket(url);
 
-  connection.onclose = (event) => {
-    console.log("Socket Closed Connection: ", event);
-  };
+connection.onmessage = (event) => {
+  const parsedMessage = JSON.parse(event.data);
+  parsedMessage.forEach((element: Event) => {
+    events[element.type]?.(element);
+  });
+};
 
-  connection.onerror = (error) => {
-    console.log("Socket Error: ", error);
-  };
+export const sendNotification = (notification: {
+  type: string;
+  data: Record<string, any>;
+}) => {
+  const stringifiedMessage = JSON.stringify(notification);
+  connection.send(stringifiedMessage);
 };
 
 export const sendMsg = (msg: string, roomId: number) => {
-  const stringifiedMessage = JSON.stringify({ content: msg, room_id: roomId });
-  connection.send(stringifiedMessage);
+  sendNotification({
+    type: "message",
+    data: { content: msg, room_id: roomId },
+  });
 };

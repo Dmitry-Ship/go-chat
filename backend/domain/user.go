@@ -3,7 +3,6 @@ package domain
 import (
 	"math/rand"
 	"strings"
-	"time"
 )
 
 type Notification struct {
@@ -12,7 +11,7 @@ type Notification struct {
 }
 
 type User struct {
-	Id     int64             `json:"id"`
+	Id     int32             `json:"id"`
 	Avatar string            `json:"avatar"`
 	Name   string            `json:"name"`
 	Send   chan Notification `json:"-"`
@@ -169,7 +168,7 @@ func getRandomWord() string {
 
 func NewUser() *User {
 	return &User{
-		Id:     int64(time.Now().UnixNano()),
+		Id:     int32(rand.Int31()),
 		Avatar: getRandomEmoji(),
 		Name:   getRandomWord() + " " + getRandomWord(),
 		Send:   make(chan Notification, 256),

@@ -1,44 +1,39 @@
 import React, { useEffect, useState } from "react";
-import { connect, sendMsg } from "../api/ws";
-import { Message, Event } from "../types/coreTypes";
+import { onEvent, sendMsg, sendNotification } from "../api/ws";
+import { Message, Room } from "../types/coreTypes";
 import styles from "./Chat.module.css";
 import ChatForm from "./ChatForm";
 import ChatLog from "./ChatLog";
-import { UserContext } from "../userContext";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { useRequest } from "../api/hooks";
 
 const Chat = () => {
   const [logs, setLogs] = useState<Message[]>([]);
-  const [clientId, setClientId] = useState<string | null>(null);
 
   const appendLog = (items: Message[]) => {
     setLogs((oldLogs) => [...oldLogs, ...items]);
   };
 
-  useEffect(() => {
-    connect((events) => {
-      events.forEach((event: Event) => {
-        switch (event.type) {
-          case "message":
-            appendLog([
-              {
-                text: event.data.content,
-                type: event.data.type,
-                user: event.data.user,
-                created_at: event.data.created_at,
-                roomId: event.data.room_id,
-              },
-            ]);
-            break;
+  const { roomId } = useParams<{ roomId: string }>();
 
-          case "user_id":
-            setClientId(event.data.user_id);
-            break;
-          default:
-            break;
-        }
-      });
+  const { data, loading } = useRequest<{ room: Room; messages: Message[] }>(
+    "/getRoomsMessages?room_id=" + roomId
+  );
+
+  useEffect(() => {
+    onEvent("message", (event) => {
+      appendLog([
+        {
+          text: event.data.content,
+          type: event.data.type,
+          user: event.data.user,
+          created_at: event.data.created_at,
+          roomId: event.data.room_id,
+        },
+      ]);
     });
+
+    sendNotification({ type: "join", data: { room_id: Number(roomId) } });
 
     let vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty("--vh", `${vh}px`);
@@ -47,18 +42,24 @@ const Chat = () => {
       let vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty("--vh", `${vh}px`);
     });
+    return () => {
+      sendNotification({ type: "leave", data: { room_id: Number(roomId) } });
+    };
   }, []);
 
   return (
-    <UserContext.Provider value={{ id: clientId }}>
-      <Link to="/">leave</Link>
-
-      <div className={styles.wrap}>
-        <ChatLog logs={logs} />
-
-        <ChatForm onSubmit={sendMsg} />
+    <>
+      <div className={styles.header}>
+        <Link className={styles.backButton} to="/">
+          ⏪
+        </Link>
+        <b>{data?.room?.name}</b>
       </div>
-    </UserContext.Provider>
+
+      <ChatLog logs={logs} />
+
+      <ChatForm onSubmit={sendMsg} />
+    </>
   );
 };
 

@@ -1,17 +1,16 @@
 package domain
 
-// Room maintains the set of active clients and broadcasts messages to the
-// clients.
+import "math/rand"
+
 type Room struct {
 	Users map[*User]bool `json:"-"`
 	Name  string         `json:"name"`
-	Id    int64          `json:"id"`
+	Id    int32          `json:"id"`
 }
 
 func NewRoom(name string) *Room {
 	return &Room{
-		// Id:    int64(time.Now().UnixNano()),
-		Id: 123,
+		Id: int32(rand.Int31()),
 
 		Users: make(map[*User]bool),
 

@@ -13,7 +13,7 @@ const MessageComponent: React.FC<{
 
   const user = useContext(UserContext);
 
-  const isInbound = message.user.id === user.id;
+  const isOutbound = message.user.id === user.id;
   const isSystem = message.type === "system";
 
   return (
@@ -29,9 +29,9 @@ const MessageComponent: React.FC<{
           </div>
 
           <div
-            className={`${isInbound ? "" : styles.outboundMessage} ${
-              styles.messageBubble
-            }`}
+            className={`${
+              isOutbound ? styles.outboundMessage : styles.inboundMessage
+            } ${styles.messageBubble}`}
           >
             {isFistInAGroup && (
               <div className={styles.userName}>{message.user.name}</div>

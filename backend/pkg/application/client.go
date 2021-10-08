@@ -24,6 +24,11 @@ const (
 	maxMessageSize = 512
 )
 
+type IncomingNotification struct {
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
+}
+
 // Client is a middleman between the websocket connection and the room.
 type Client struct {
 	Id   string
@@ -47,9 +52,10 @@ func NewClient(conn *websocket.Conn, hub *domain.Hub, user *domain.User) *Client
 // The application runs ReceiveMessages in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
+
 func (c *Client) ReceiveMessages() {
 	defer func() {
-		c.Hub.Leave <- domain.NewSubscription(c.User, 123)
+		// c.Hub.Leave <- domain.NewSubscription(c.User, 123)
 		c.Conn.Close()
 	}()
 
@@ -67,15 +73,49 @@ func (c *Client) ReceiveMessages() {
 			break
 		}
 
-		m := domain.Message{}
+		var data json.RawMessage
 
-		if err := json.Unmarshal(message, &m); err != nil {
+		notification := IncomingNotification{
+			Data: &data,
+		}
+
+		if err := json.Unmarshal(message, &notification); err != nil {
 			panic(err)
 		}
 
-		parsedMessage := domain.NewMessage(m.Content, "user", m.RoomId, c.User)
+		switch notification.Type {
+		case "message":
+			chatMessage := domain.ChatMessage{}
 
-		c.Hub.Broadcast <- parsedMessage
+			if err := json.Unmarshal([]byte(data), &chatMessage); err != nil {
+				panic(err)
+			}
+
+			chatMessage = domain.NewChatMessage(chatMessage.Content, "user", chatMessage.RoomId, c.User)
+
+			c.Hub.Broadcast <- chatMessage
+		case "join":
+			join := struct {
+				RoomId int32 `json:"room_id"`
+			}{}
+
+			if err := json.Unmarshal(data, &join); err != nil {
+				panic(err)
+			}
+
+			c.Hub.Join <- domain.NewSubscription(c.User, join.RoomId)
+		case "leave":
+			leave := struct {
+				RoomId int32 `json:"room_id"`
+			}{}
+
+			if err := json.Unmarshal(data, &leave); err != nil {
+				panic(err)
+			}
+
+			c.Hub.Leave <- domain.NewSubscription(c.User, leave.RoomId)
+		}
+
 	}
 }
 

@@ -1,9 +1,12 @@
-.wrap {
-  height: calc(var(--vh, 1vh) * 100);
-  padding: 10px;
-  max-width: 400px;
-  background: #282c34;
-  border-radius: var(--br);
+.backButton {
+  font-size: xx-large;
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+
+.header {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
 }

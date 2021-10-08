@@ -1,22 +1,25 @@
 package domain
 
-import "time"
+import (
+	"math/rand"
+	"time"
+)
 
-type Message struct {
-	Id        int64  `json:"id"`
-	RoomId    int64  `json:"room_id"`
+type ChatMessage struct {
+	Id        int32  `json:"id"`
+	RoomId    int32  `json:"room_id"`
 	Content   string `json:"content"`
-	CreatedAt int64  `json:"created_at"`
+	CreatedAt int32  `json:"created_at"`
 	Type      string `json:"type"`
 	User      *User  `json:"user"`
 }
 
-func NewMessage(content string, messageType string, roomId int64, user *User) Message {
-	return Message{
-		Id:        int64(time.Now().UnixNano()),
+func NewChatMessage(content string, messageType string, roomId int32, user *User) ChatMessage {
+	return ChatMessage{
+		Id:        int32(rand.Int31()),
 		RoomId:    roomId,
 		Content:   content,
-		CreatedAt: int64(time.Now().Unix()),
+		CreatedAt: int32(time.Now().Unix()),
 		Type:      messageType,
 		User:      user,
 	}

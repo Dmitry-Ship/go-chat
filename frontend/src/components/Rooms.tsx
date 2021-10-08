@@ -1,29 +1,32 @@
-import React, { useEffect } from "react";
+import React from "react";
 import styles from "./Rooms.module.css";
 import { Link } from "react-router-dom";
 import { Room } from "../types/coreTypes";
-import { makeRequest } from "../api/fetch";
+import { useRequest } from "../api/hooks";
 
 function Rooms() {
-  const [rooms, setRooms] = React.useState<Room[]>([]);
-
-  useEffect(() => {
-    const fetchRooms = async () => {
-      const rooms = await makeRequest("/getRooms", "GET", null);
-      setRooms(rooms);
-    };
-
-    fetchRooms();
-  }, []);
+  const { data, loading } = useRequest<Room[]>("/getRooms");
 
   return (
-    <Link to="room/123">
-      {rooms.map((room, i) => (
-        <div key={i} className={styles.room}>
-          {room.name}
-        </div>
-      ))}
-    </Link>
+    <>
+      <h2 className={styles.header}>Rooms</h2>
+
+      {loading
+        ? [{}, {}, {}].map((_, i) => (
+            <div key={i} className={styles.room}>
+              <div>
+                <h3>loading...</h3>
+              </div>
+            </div>
+          ))
+        : data?.map((room, i) => (
+            <Link key={i} to={"room/" + room.id} className={styles.room}>
+              <div>
+                <h3>{room.name}</h3>
+              </div>
+            </Link>
+          ))}
+    </>
   );
 }
 
