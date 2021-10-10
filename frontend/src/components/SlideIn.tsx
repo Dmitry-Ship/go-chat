@@ -13,6 +13,7 @@ const SlideIn: React.FC<{
   }
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // @ts-ignore
     if (!node?.current?.contains(e.target as Node)) {
       onClose();
     }
