@@ -15,7 +15,7 @@ const Chat = () => {
   const [logs, setLogs] = useState<Message[]>([]);
 
   const appendLog = (items: Message[]) => {
-    setLogs((oldLogs) => [...oldLogs, ...items]);
+    setLogs((oldLogs) => Array.from(new Set([...oldLogs, ...items])));
   };
 
   const { data, loading } = useRequest<{ room: Room; messages: MessageRaw[] }>(

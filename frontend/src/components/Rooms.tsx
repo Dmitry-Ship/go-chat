@@ -3,6 +3,7 @@ import styles from "./Rooms.module.css";
 import { Link } from "react-router-dom";
 import { Room } from "../types/coreTypes";
 import { useRequest } from "../api/hooks";
+import NewRoomBtn from "./NewRoomBtn";
 
 function Rooms() {
   const { data, loading } = useRequest<Room[]>("/getRooms");
@@ -28,6 +29,7 @@ function Rooms() {
               </Link>
             ))}
       </div>
+      <NewRoomBtn />
     </>
   );
 }

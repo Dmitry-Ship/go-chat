@@ -1,0 +1,19 @@
+.slideIn {
+  border-radius: var(--br) var(--br) 0 0;
+  background-color: var(--primary);
+  padding: 1rem;
+  width: 100%;
+  height: 50vh;
+  position: fixed;
+  bottom: 0;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.overlay {
+  background-color: rgba(0, 0, 0, 0.2);
+  height: 100vh;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}

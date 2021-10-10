@@ -4,6 +4,7 @@ import (
 	"GitHub/go-chat/backend/common"
 	"GitHub/go-chat/backend/domain"
 	"GitHub/go-chat/backend/pkg/application"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,6 +16,7 @@ func HandleRequests(userService application.UserService, messageService applicat
 	http.HandleFunc("/ws", handeleWS(userService, messageService, roomService))
 	http.HandleFunc("/getRooms", handleGetRooms(roomService))
 	http.HandleFunc("/getRoomsMessages", handleRoomsMessages(messageService, roomService))
+	http.HandleFunc("/createRoom", handleCreateRoom(roomService))
 }
 
 var upgrader = websocket.Upgrader{
@@ -113,5 +115,36 @@ func handleRoomsMessages(messageService application.MessageService, roomService 
 		}
 
 		common.SendJSONresponse(data, w)
+	}
+}
+
+func handleCreateRoom(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		request := struct {
+			RoomName string `json:"room_name"`
+			UserId   int32  `json:"user_id"`
+		}{}
+
+		err := common.DecodeJSONBody(w, r, &request)
+		if err != nil {
+			var mr *common.MalformedRequest
+			if errors.As(err, &mr) {
+				http.Error(w, mr.Msg, mr.Status)
+			} else {
+				log.Println(err.Error())
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		room, err := roomService.CreateRoom(request.RoomName, request.UserId)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		common.SendJSONresponse(room, w)
 	}
 }

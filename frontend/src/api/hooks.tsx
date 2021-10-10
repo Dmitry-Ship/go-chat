@@ -37,8 +37,7 @@ export const useRequest = <T,>(
   useEffect(() => {
     const fetchData = async () => {
       const response = await makeRequest(url, request);
-
-      setData(response);
+      setData(response.data);
       setLoading(false);
     };
 

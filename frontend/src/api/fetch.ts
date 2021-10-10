@@ -10,7 +10,7 @@ export type Request =
 export const makeRequest = async (
   url: string,
   request: Request = { method: "GET" }
-) => {
+): Promise<{ status: boolean; data: any }> => {
   if (import.meta.env.DEV) {
     url = "/api" + url;
   } else {
@@ -45,12 +45,22 @@ export const makeRequest = async (
     });
 
     if (result.status === 200) {
-      return result.json();
+      const data = await result.json();
+      return {
+        status: true,
+        data,
+      };
     } else {
-      throw new Error(result.statusText);
+      return {
+        status: false,
+        data: null,
+      };
     }
   } catch (error) {
     console.error(error);
-    return null;
+    return {
+      status: false,
+      data: null,
+    };
   }
 };

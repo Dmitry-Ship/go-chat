@@ -1,0 +1,29 @@
+.newRoom {
+  margin-top: 1rem;
+  border-radius: var(--br);
+  background-color: var(--warn);
+  padding: 1rem;
+  color: white;
+  text-align: center;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  display: block;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.input {
+  border-radius: 10px;
+  border: none;
+  margin-top: 1rem;
+}
