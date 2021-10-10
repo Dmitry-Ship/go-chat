@@ -11,10 +11,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func HandleRequests(hub *domain.Hub) {
-	http.HandleFunc("/ws", handeleWS(hub))
-	http.HandleFunc("/getRooms", handleGetRooms(hub))
-	http.HandleFunc("/getRoomsMessages", handleRoomsMessages(hub))
+func HandleRequests(userService application.UserService, messageService application.MessageService, roomService application.RoomService) {
+	http.HandleFunc("/ws", handeleWS(userService, messageService, roomService))
+	http.HandleFunc("/getRooms", handleGetRooms(roomService))
+	http.HandleFunc("/getRoomsMessages", handleRoomsMessages(messageService, roomService))
 }
 
 var upgrader = websocket.Upgrader{
@@ -25,7 +25,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handeleWS(hub *domain.Hub) func(w http.ResponseWriter, r *http.Request) {
+func handeleWS(userService application.UserService, messageService application.MessageService, roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -33,9 +33,16 @@ func handeleWS(hub *domain.Hub) func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		user := domain.NewUser()
+		user, err := userService.CreateUser(domain.NewUser())
 
-		client := application.NewClient(conn, hub, user)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		sendChan := userService.AddWSClient(user.Id)
+
+		client := application.NewClient(conn, messageService, userService, roomService, sendChan)
 
 		data := struct {
 			UserId int32 `json:"user_id"`
@@ -43,26 +50,27 @@ func handeleWS(hub *domain.Hub) func(w http.ResponseWriter, r *http.Request) {
 			UserId: user.Id,
 		}
 
-		client.User.Send <- user.NewNotification("user_id", data)
+		client.Send <- userService.NewNotification("user_id", data)
 
 		go client.SendNotifications()
 		go client.ReceiveMessages()
 	}
 }
 
-func handleGetRooms(hub *domain.Hub) func(w http.ResponseWriter, r *http.Request) {
+func handleGetRooms(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rooms := make([]domain.Room, 0, len(hub.Rooms))
+		rooms, err := roomService.GetRooms()
 
-		for _, value := range hub.Rooms {
-			rooms = append(rooms, *value)
+		if err != nil {
+			log.Println(err)
+			return
 		}
 
 		common.SendJSONresponse(rooms, w)
 	}
 }
 
-func handleRoomsMessages(hub *domain.Hub) func(w http.ResponseWriter, r *http.Request) {
+func handleRoomsMessages(messageService application.MessageService, roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		query := r.URL.Query()
@@ -77,12 +85,31 @@ func handleRoomsMessages(hub *domain.Hub) func(w http.ResponseWriter, r *http.Re
 
 		result := int32(roomIdInt)
 
+		messages, err := messageService.GetMessagesFull(result)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		room, err := roomService.GetRoom(result)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		var messagesValue []application.MessageFull
+		for _, message := range messages {
+			messagesValue = append(messagesValue, *message)
+		}
+
 		data := struct {
-			Room     domain.Room          `json:"room"`
-			Messages []domain.ChatMessage `json:"messages"`
+			Room     domain.Room               `json:"room"`
+			Messages []application.MessageFull `json:"messages"`
 		}{
-			Room:     *hub.Rooms[result],
-			Messages: []domain.ChatMessage{},
+			Room:     *room,
+			Messages: messagesValue,
 		}
 
 		common.SendJSONresponse(data, w)

@@ -29,9 +29,9 @@ export const sendNotification = (notification: {
   connection.send(stringifiedMessage);
 };
 
-export const sendMsg = (msg: string, roomId: number) => {
+export const sendMsg = (msg: string, roomId: number, userId: number) => {
   sendNotification({
     type: "message",
-    data: { content: msg, room_id: roomId },
+    data: { content: msg, room_id: roomId, user_id: userId },
   });
 };

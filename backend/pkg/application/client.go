@@ -1,7 +1,6 @@
 package application
 
 import (
-	"GitHub/go-chat/backend/domain"
 	"encoding/json"
 	"log"
 	"strconv"
@@ -31,19 +30,23 @@ type IncomingNotification struct {
 
 // Client is a middleman between the websocket connection and the room.
 type Client struct {
-	Id   string
-	Hub  *domain.Hub
-	Conn *websocket.Conn
-	User *domain.User
+	Id             string
+	messageService MessageService
+	roomService    RoomService
+	userService    UserService
+	Conn           *websocket.Conn
+	Send           chan Notification
 }
 
-func NewClient(conn *websocket.Conn, hub *domain.Hub, user *domain.User) *Client {
+func NewClient(conn *websocket.Conn, messageService MessageService, userService UserService, roomService RoomService, Send chan Notification) *Client {
 	id := strconv.Itoa(int(time.Now().UnixNano()))
 	return &Client{
-		Id:   id,
-		Hub:  hub,
-		Conn: conn,
-		User: user,
+		Id:             id,
+		messageService: messageService,
+		roomService:    roomService,
+		userService:    userService,
+		Conn:           conn,
+		Send:           Send,
 	}
 }
 
@@ -85,35 +88,39 @@ func (c *Client) ReceiveMessages() {
 
 		switch notification.Type {
 		case "message":
-			chatMessage := domain.ChatMessage{}
+			request := struct {
+				Content string `json:"content"`
+				RoomId  int32  `json:"room_id"`
+				UserId  int32  `json:"user_id"`
+			}{}
 
-			if err := json.Unmarshal([]byte(data), &chatMessage); err != nil {
+			if err := json.Unmarshal([]byte(data), &request); err != nil {
 				panic(err)
 			}
 
-			chatMessage = domain.NewChatMessage(chatMessage.Content, "user", chatMessage.RoomId, c.User)
-
-			c.Hub.Broadcast <- chatMessage
+			c.messageService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
 		case "join":
-			join := struct {
+			request := struct {
 				RoomId int32 `json:"room_id"`
+				UserId int32 `json:"user_id"`
 			}{}
 
-			if err := json.Unmarshal(data, &join); err != nil {
+			if err := json.Unmarshal(data, &request); err != nil {
 				panic(err)
 			}
 
-			c.Hub.Join <- domain.NewSubscription(c.User, join.RoomId)
+			c.roomService.JoinRoom(request.UserId, request.RoomId)
 		case "leave":
-			leave := struct {
+			request := struct {
 				RoomId int32 `json:"room_id"`
+				UserId int32 `json:"user_id"`
 			}{}
 
-			if err := json.Unmarshal(data, &leave); err != nil {
+			if err := json.Unmarshal(data, &request); err != nil {
 				panic(err)
 			}
 
-			c.Hub.Leave <- domain.NewSubscription(c.User, leave.RoomId)
+			c.roomService.LeaveRoom(request.UserId, request.RoomId)
 		}
 
 	}
@@ -133,7 +140,7 @@ func (c *Client) SendNotifications() {
 
 	for {
 		select {
-		case notification, ok := <-c.User.Send:
+		case notification, ok := <-c.Send:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The room closed the channel.
@@ -141,15 +148,15 @@ func (c *Client) SendNotifications() {
 				return
 			}
 
-			notifications := []domain.Notification{notification}
+			notifications := []Notification{notification}
 
 			if err := c.Conn.WriteJSON(notifications); err != nil {
 				return
 			}
 
 			// Add queued chat messages to the current websocket message.
-			for i := 0; i < len(c.User.Send); i++ {
-				notification := <-c.User.Send
+			for i := 0; i < len(c.Send); i++ {
+				notification := <-c.Send
 
 				notifications = append(notifications, notification)
 				if err := c.Conn.WriteJSON(notifications); err != nil {

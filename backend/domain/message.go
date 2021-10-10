@@ -11,16 +11,16 @@ type ChatMessage struct {
 	Content   string `json:"content"`
 	CreatedAt int32  `json:"created_at"`
 	Type      string `json:"type"`
-	User      *User  `json:"user"`
+	UserId    int32  `json:"user_id"`
 }
 
-func NewChatMessage(content string, messageType string, roomId int32, user *User) ChatMessage {
+func NewChatMessage(content string, messageType string, roomId int32, userId int32) ChatMessage {
 	return ChatMessage{
 		Id:        int32(rand.Int31()),
 		RoomId:    roomId,
 		Content:   content,
 		CreatedAt: int32(time.Now().Unix()),
 		Type:      messageType,
-		User:      user,
+		UserId:    userId,
 	}
 }

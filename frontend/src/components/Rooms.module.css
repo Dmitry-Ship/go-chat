@@ -1,6 +1,6 @@
 .room {
   margin-bottom: 20px;
-  background-color: var(--secondary);
+  background-color: var(--primary);
   border-radius: var(--br);
   height: 100px;
   width: 100%;
@@ -13,4 +13,14 @@
 
 .header {
   color: white;
+}
+
+.wrapper {
+  background-color: var(--secondary);
+  padding: 1rem;
+  border-radius: var(--br);
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  flex-grow: 1;
 }

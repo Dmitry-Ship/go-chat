@@ -5,16 +5,10 @@ import (
 	"strings"
 )
 
-type Notification struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
-}
-
 type User struct {
-	Id     int32             `json:"id"`
-	Avatar string            `json:"avatar"`
-	Name   string            `json:"name"`
-	Send   chan Notification `json:"-"`
+	Id     int32  `json:"id"`
+	Avatar string `json:"avatar"`
+	Name   string `json:"name"`
 }
 
 func getRandomEmoji() string {
@@ -171,13 +165,5 @@ func NewUser() *User {
 		Id:     int32(rand.Int31()),
 		Avatar: getRandomEmoji(),
 		Name:   getRandomWord() + " " + getRandomWord(),
-		Send:   make(chan Notification, 256),
-	}
-}
-
-func (c *User) NewNotification(notificationType string, data interface{}) Notification {
-	return Notification{
-		Type: notificationType,
-		Data: data,
 	}
 }
