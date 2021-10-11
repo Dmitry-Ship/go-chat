@@ -16,14 +16,14 @@ type RoomService interface {
 type roomService struct {
 	rooms          domain.RoomRepository
 	participants   domain.ParticipantRepository
-	userService    UserService
+	users          domain.UserRepository
 	messageService MessageService
 }
 
-func NewRoomService(rooms domain.RoomRepository, participants domain.ParticipantRepository, userService UserService, messageService MessageService) *roomService {
+func NewRoomService(rooms domain.RoomRepository, participants domain.ParticipantRepository, users domain.UserRepository, messageService MessageService) *roomService {
 	return &roomService{
 		rooms:          rooms,
-		userService:    userService,
+		users:          users,
 		participants:   participants,
 		messageService: messageService,
 	}
@@ -58,7 +58,7 @@ func (s *roomService) JoinRoom(userId int32, roomID int32) (*domain.Participant,
 		return nil, err
 	}
 
-	user, err := s.userService.GetUser(userId)
+	user, err := s.users.FindByID(userId)
 
 	if err != nil {
 		fmt.Println("err", err)
@@ -80,7 +80,7 @@ func (s *roomService) LeaveRoom(userId int32, roomID int32) error {
 
 	s.participants.Delete(participant.Id)
 
-	user, err := s.userService.GetUser(userId)
+	user, err := s.users.FindByID(userId)
 
 	if err != nil {
 		return err

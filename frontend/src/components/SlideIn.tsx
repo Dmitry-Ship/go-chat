@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import styles from "./SlideIn.module.css";
 
 const SlideIn: React.FC<{
@@ -22,7 +22,9 @@ const SlideIn: React.FC<{
   return (
     <div className={styles.overlay} onClick={handleClick}>
       <div ref={node} className={styles.slideIn}>
-        <div onClick={onClose}>❌</div>
+        <button className={styles.closeBtn} onClick={onClose}>
+          ❌
+        </button>
         {children}
       </div>
     </div>

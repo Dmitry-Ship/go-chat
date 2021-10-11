@@ -3,10 +3,19 @@
   background-color: var(--primary);
   padding: 1rem;
   width: 100%;
-  height: 50vh;
+  height: 25vh;
   position: fixed;
   bottom: 0;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: all 0.5s ease-in-out;
+  z-index: 10;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 1rem;
 }
 
 .overlay {

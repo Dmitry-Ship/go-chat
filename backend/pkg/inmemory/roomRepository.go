@@ -9,7 +9,7 @@ type roomRepository struct {
 	rooms map[int32]*domain.Room
 }
 
-func NewRoomRepository() domain.RoomRepository {
+func NewRoomRepository() *roomRepository {
 	return &roomRepository{
 		rooms: make(map[int32]*domain.Room),
 	}

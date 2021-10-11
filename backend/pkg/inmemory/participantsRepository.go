@@ -9,7 +9,7 @@ type participantRepository struct {
 	participants map[int32]*domain.Participant
 }
 
-func NewParticipantRepository() domain.ParticipantRepository {
+func NewParticipantRepository() *participantRepository {
 	return &participantRepository{
 		participants: make(map[int32]*domain.Participant),
 	}

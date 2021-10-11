@@ -3,11 +3,13 @@ import { makeRequest } from "../api/fetch";
 import { UserContext } from "../userContext";
 import styles from "./NewRoomBtn.module.css";
 import SlideIn from "./SlideIn";
+import { useHistory } from "react-router-dom";
 
 function NewRoomBtn() {
   const [isCreating, setIsCreating] = React.useState(false);
   const [roomName, setRoomName] = React.useState("");
   const user = useContext(UserContext);
+  const history = useHistory();
 
   const handleCreate = async () => {
     setRoomName("");
@@ -19,23 +21,18 @@ function NewRoomBtn() {
     });
 
     if (result.status) {
-      window.location.href = `/room/${result.data.id}`;
+      history.push(`/room/${result.data.id}`);
     }
   };
 
   return (
-    <>
+    <div className="controls-for-scrollable">
       <button className={styles.newRoom} onClick={() => setIsCreating(true)}>
         + New Room
       </button>
       <SlideIn isOpen={isCreating} onClose={() => setIsCreating(false)}>
-        <form className={styles.form}>
-          <button
-            type="submit"
-            disabled={!roomName}
-            className={styles.newRoom}
-            onClick={handleCreate}
-          >
+        <form className={styles.form} onSubmit={handleCreate}>
+          <button type="submit" disabled={!roomName} className={styles.newRoom}>
             Create
           </button>
           <input
@@ -49,7 +46,7 @@ function NewRoomBtn() {
           />
         </form>
       </SlideIn>
-    </>
+    </div>
   );
 }
 

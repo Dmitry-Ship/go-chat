@@ -24,3 +24,21 @@ code {
 * {
   box-sizing: border-box;
 }
+
+.header-for-scrollable {
+  height: 3rem;
+  padding: 0 10px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.controls-for-scrollable {
+  height: 3rem;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 0 10px;
+}

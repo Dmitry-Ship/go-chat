@@ -10,7 +10,9 @@ function Rooms() {
 
   return (
     <>
-      <h2 className={styles.header}>Rooms</h2>
+      <div className={`${styles.header} header-for-scrollable`}>
+        <h2>Rooms</h2>
+      </div>
 
       <div className={styles.wrapper}>
         {loading

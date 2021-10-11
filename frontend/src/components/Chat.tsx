@@ -8,6 +8,7 @@ import { Link, useParams } from "react-router-dom";
 import { useRequest } from "../api/hooks";
 import { UserContext } from "../userContext";
 import { parseMessage } from "../messages";
+import EditRoomBtn from "./EditRoomBtn";
 
 const Chat = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -15,7 +16,7 @@ const Chat = () => {
   const [logs, setLogs] = useState<Message[]>([]);
 
   const appendLog = (items: Message[]) => {
-    setLogs((oldLogs) => Array.from(new Set([...oldLogs, ...items])));
+    setLogs((oldLogs) => [...oldLogs, ...items]);
   };
 
   const { data, loading } = useRequest<{ room: Room; messages: MessageRaw[] }>(
@@ -57,11 +58,13 @@ const Chat = () => {
 
   return (
     <>
-      <div className={styles.header}>
+      <div className={`${styles.header} header-for-scrollable`}>
         <Link className={styles.backButton} to="/">
           ⏪
         </Link>
         <b>{data?.room?.name}</b>
+
+        <EditRoomBtn />
       </div>
 
       <ChatLog logs={logs} />

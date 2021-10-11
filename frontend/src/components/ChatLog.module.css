@@ -6,4 +6,5 @@
   flex-direction: column;
   overflow-y: scroll;
   flex-grow: 1;
+  margin: 3rem 0;
 }

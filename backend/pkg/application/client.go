@@ -148,20 +148,8 @@ func (c *Client) SendNotifications() {
 				return
 			}
 
-			notifications := []Notification{notification}
-
-			if err := c.Conn.WriteJSON(notifications); err != nil {
+			if err := c.Conn.WriteJSON(notification); err != nil {
 				return
-			}
-
-			// Add queued chat messages to the current websocket message.
-			for i := 0; i < len(c.Send); i++ {
-				notification := <-c.Send
-
-				notifications = append(notifications, notification)
-				if err := c.Conn.WriteJSON(notifications); err != nil {
-					return
-				}
 			}
 
 		case <-ticker.C:

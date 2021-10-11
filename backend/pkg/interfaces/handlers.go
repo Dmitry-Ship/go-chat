@@ -12,8 +12,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func HandleRequests(userService application.UserService, messageService application.MessageService, roomService application.RoomService) {
-	http.HandleFunc("/ws", handeleWS(userService, messageService, roomService))
+func HandleRequests(
+	userService application.UserService,
+	messageService application.MessageService,
+	roomService application.RoomService,
+	notificationService application.NotificationService,
+) {
+	http.HandleFunc("/ws", handeleWS(userService, messageService, roomService, notificationService))
 	http.HandleFunc("/getRooms", handleGetRooms(roomService))
 	http.HandleFunc("/getRoomsMessages", handleRoomsMessages(messageService, roomService))
 	http.HandleFunc("/createRoom", handleCreateRoom(roomService))
@@ -27,7 +32,12 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handeleWS(userService application.UserService, messageService application.MessageService, roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
+func handeleWS(
+	userService application.UserService,
+	messageService application.MessageService,
+	roomService application.RoomService,
+	notificationService application.NotificationService,
+) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -42,7 +52,7 @@ func handeleWS(userService application.UserService, messageService application.M
 			return
 		}
 
-		sendChan := userService.AddWSClient(user.Id)
+		sendChan := notificationService.AddWSClient(user.Id)
 
 		client := application.NewClient(conn, messageService, userService, roomService, sendChan)
 
@@ -52,7 +62,7 @@ func handeleWS(userService application.UserService, messageService application.M
 			UserId: user.Id,
 		}
 
-		client.Send <- userService.NewNotification("user_id", data)
+		client.Send <- notificationService.NewNotification("user_id", data)
 
 		go client.SendNotifications()
 		go client.ReceiveMessages()

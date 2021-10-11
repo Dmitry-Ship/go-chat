@@ -14,8 +14,8 @@ type ChatMessage struct {
 	UserId    int32  `json:"user_id"`
 }
 
-func NewChatMessage(content string, messageType string, roomId int32, userId int32) ChatMessage {
-	return ChatMessage{
+func NewChatMessage(content string, messageType string, roomId int32, userId int32) *ChatMessage {
+	return &ChatMessage{
 		Id:        int32(rand.Int31()),
 		RoomId:    roomId,
 		Content:   content,

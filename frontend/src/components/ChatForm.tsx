@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { FormEvent, useContext, useState } from "react";
 import styles from "./ChatForm.module.css";
 import { useParams } from "react-router-dom";
 import { UserContext } from "../userContext";
@@ -11,14 +11,17 @@ const ChatForm: React.FC<{
   const { roomId } = useParams<{ roomId: string }>();
   const user = useContext(UserContext);
 
-  const handleSubmit = (e: React.MouseEvent<HTMLElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit(message, Number(roomId), Number(user.id));
     setMessage("");
   };
 
   return (
-    <form className={styles.form}>
+    <form
+      className={`${styles.form} controls-for-scrollable`}
+      onSubmit={handleSubmit}
+    >
       <input
         type="text"
         className={styles.input}
@@ -27,12 +30,7 @@ const ChatForm: React.FC<{
         value={message}
         onChange={(e) => setMessage(e.target.value)}
       />
-      <button
-        disabled={!message}
-        type="submit"
-        className={styles.submitBtn}
-        onClick={handleSubmit}
-      >
+      <button disabled={!message} type="submit" className={styles.submitBtn}>
         ⬆️
       </button>
     </form>

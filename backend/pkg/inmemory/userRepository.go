@@ -9,7 +9,7 @@ type userRepository struct {
 	users map[int32]*domain.User
 }
 
-func NewUserRepository() domain.UserRepository {
+func NewUserRepository() *userRepository {
 	return &userRepository{
 		users: make(map[int32]*domain.User),
 	}

@@ -16,9 +16,7 @@ export const connection = new WebSocket(url);
 
 connection.onmessage = (event) => {
   const parsedMessage = JSON.parse(event.data);
-  parsedMessage.forEach((element: Event) => {
-    events[element.type]?.(element);
-  });
+  events[parsedMessage.type]?.(parsedMessage);
 };
 
 export const sendNotification = (notification: {

@@ -23,7 +23,11 @@ type MessageFull struct {
 }
 
 func NewMessageService(messages domain.ChatMessageRepository, users domain.UserRepository, broadcast chan *MessageFull) *messageService {
-	return &messageService{messages: messages, users: users, Broadcast: broadcast}
+	return &messageService{
+		messages:  messages,
+		users:     users,
+		Broadcast: broadcast,
+	}
 }
 
 func (s *messageService) GetMessages(roomId int32) ([]*domain.ChatMessage, error) {
@@ -72,7 +76,7 @@ func (s *messageService) MakeMessageFull(message *domain.ChatMessage) (*MessageF
 func (s *messageService) SendMessage(messageText string, messageType string, roomId int32, userId int32) (*MessageFull, error) {
 	message := domain.NewChatMessage(messageText, messageType, roomId, userId)
 
-	newMessage, err := s.messages.Create(&message)
+	newMessage, err := s.messages.Create(message)
 
 	if err != nil {
 		return nil, err

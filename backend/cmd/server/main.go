@@ -15,18 +15,17 @@ func main() {
 	messagesRepository := inmemory.NewChatMessageRepository()
 	usersRepository := inmemory.NewUserRepository()
 	roomsRepository := inmemory.NewRoomRepository()
+	roomsRepository.Create(domain.NewRoom("Default Room"))
 	participantRepository := inmemory.NewParticipantRepository()
 
-	userService := application.NewUserService(usersRepository)
-	notificationService := application.NewNotificationService(participantRepository, userService)
-	messageService := application.NewMessageService(messagesRepository, usersRepository, notificationService.Broadcast)
-	roomService := application.NewRoomService(roomsRepository, participantRepository, userService, messageService)
-
-	roomsRepository.Create(domain.NewRoom("Defalt Room"))
-
+	notificationService := application.NewNotificationService(participantRepository)
 	go notificationService.Run()
 
-	interfaces.HandleRequests(userService, messageService, roomService)
+	userService := application.NewUserService(usersRepository)
+	messageService := application.NewMessageService(messagesRepository, usersRepository, notificationService.Broadcast)
+	roomService := application.NewRoomService(roomsRepository, participantRepository, usersRepository, messageService)
+
+	interfaces.HandleRequests(userService, messageService, roomService, notificationService)
 
 	port := os.Getenv("PORT")
 

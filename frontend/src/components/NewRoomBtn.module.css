@@ -1,8 +1,7 @@
 .newRoom {
-  margin-top: 1rem;
   border-radius: var(--br);
   background-color: var(--warn);
-  padding: 1rem;
+  padding: 0.7rem;
   color: white;
   text-align: center;
   font-weight: 700;
@@ -11,7 +10,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  display: block;
+  width: 100%;
 }
 
 .form {
@@ -26,4 +25,7 @@
   border-radius: 10px;
   border: none;
   margin-top: 1rem;
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--br);
 }
