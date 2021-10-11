@@ -1,24 +1,9 @@
-.newRoom {
-  border-radius: var(--br);
-  background-color: var(--warn);
-  padding: 0.7rem;
-  color: white;
-  text-align: center;
-  font-weight: 700;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  width: 100%;
-}
-
 .form {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  /* width: 100%; */
 }
 
 .input {

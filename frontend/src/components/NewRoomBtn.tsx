@@ -27,12 +27,12 @@ function NewRoomBtn() {
 
   return (
     <div className={`${styles.form} controls-for-scrollable`}>
-      <button className={styles.newRoom} onClick={() => setIsCreating(true)}>
+      <button className={"btn"} onClick={() => setIsCreating(true)}>
         + New Room
       </button>
       <SlideIn isOpen={isCreating} onClose={() => setIsCreating(false)}>
         <form className={styles.form} onSubmit={handleCreate}>
-          <button type="submit" disabled={!roomName} className={styles.newRoom}>
+          <button type="submit" disabled={!roomName} className={"btn"}>
             Create
           </button>
           <input

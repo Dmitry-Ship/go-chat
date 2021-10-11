@@ -22,10 +22,7 @@
   background-color: var(--secondary);
   padding: 1rem;
   border-radius: var(--br);
-  display: flex;
-  flex-direction: column;
   overflow-y: scroll;
-  /* flex-grow: 1; */
-  margin: 3rem 0;
-  height: calc(100vh - 6rem);
+  margin: 7vh 0;
+  height: calc(100vh - 14vh);
 }

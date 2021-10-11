@@ -26,25 +26,39 @@ code {
 }
 
 .header-for-scrollable {
-  height: 3rem;
+  max-width: 756px;
+  height: 7vh;
   padding: 0 10px;
   position: fixed;
   top: 0;
-  left: 0;
   width: 100%;
+  background-color: #282c34;
 }
 
 .controls-for-scrollable {
-  height: 3rem;
+  max-width: 756px;
+  height: 7vh;
   position: fixed;
   bottom: 0;
-  left: 0;
   width: 100%;
-  padding: 0 10px;
 }
 
 .wrap {
-  min-height: 100vh;
+  background-color: #282c34;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.btn {
+  border-radius: var(--br);
+  background-color: var(--warn);
+  padding: 0.7rem;
+  color: white;
+  text-align: center;
+  font-weight: 700;
+  border: none;
+  width: 100%;
+  display: block;
 }

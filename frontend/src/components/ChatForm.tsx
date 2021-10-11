@@ -18,22 +18,21 @@ const ChatForm: React.FC<{
   };
 
   return (
-    <form
-      className={`${styles.form} controls-for-scrollable`}
-      onSubmit={handleSubmit}
-    >
-      <input
-        type="text"
-        className={styles.input}
-        size={64}
-        autoFocus
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
-      <button disabled={!message} type="submit" className={styles.submitBtn}>
-        ⬆️
-      </button>
-    </form>
+    <div className={"controls-for-scrollable"}>
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <input
+          type="text"
+          className={styles.input}
+          size={64}
+          autoFocus
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+        <button disabled={!message} type="submit" className={styles.submitBtn}>
+          ⬆️
+        </button>
+      </form>
+    </div>
   );
 };
 
