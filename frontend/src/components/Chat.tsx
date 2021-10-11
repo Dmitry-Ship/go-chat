@@ -41,13 +41,6 @@ const Chat = () => {
       data: { room_id: Number(roomId), user_id: user.id },
     });
 
-    // let vh = window.innerHeight * 0.01;
-    // document.documentElement.style.setProperty("--vh", `${vh}px`);
-
-    // window.addEventListener("resize", () => {
-    //   let vh = window.innerHeight * 0.01;
-    //   document.documentElement.style.setProperty("--vh", `${vh}px`);
-    // });
     return () => {
       sendNotification({
         type: "leave",
@@ -58,14 +51,14 @@ const Chat = () => {
 
   return (
     <>
-      <div className={`${styles.header} header-for-scrollable`}>
+      <header className={`${styles.header} header-for-scrollable`}>
         <Link className={styles.backButton} to="/">
           ⏪
         </Link>
         <b>{data?.room?.name}</b>
 
         <EditRoomBtn />
-      </div>
+      </header>
 
       <ChatLog logs={logs} />
 

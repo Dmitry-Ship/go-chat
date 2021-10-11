@@ -5,7 +5,7 @@ import MessageComponent from "./Message";
 
 const ChatLog: React.FC<{ logs: Message[] }> = ({ logs }) => {
   return (
-    <div className={styles.log}>
+    <main className={styles.log}>
       {logs.map((item, i) => {
         const previous = logs[i - 1];
         const isFistInAGroup =
@@ -27,7 +27,7 @@ const ChatLog: React.FC<{ logs: Message[] }> = ({ logs }) => {
           />
         );
       })}
-    </div>
+    </main>
   );
 };
 
