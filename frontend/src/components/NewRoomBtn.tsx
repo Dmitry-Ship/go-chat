@@ -26,7 +26,7 @@ function NewRoomBtn() {
   };
 
   return (
-    <div className="controls-for-scrollable">
+    <div className={`${styles.form} controls-for-scrollable`}>
       <button className={styles.newRoom} onClick={() => setIsCreating(true)}>
         + New Room
       </button>
