@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { onEvent, sendMsg, sendNotification } from "../api/ws";
 import { Message, MessageRaw, Room } from "../types/coreTypes";
 import styles from "./Chat.module.css";
@@ -11,6 +11,7 @@ import { parseMessage } from "../messages";
 import EditRoomBtn from "./EditRoomBtn";
 
 const Chat = () => {
+  const dummy = useRef();
   const { roomId } = useParams<{ roomId: string }>();
 
   const [logs, setLogs] = useState<Message[]>([]);
@@ -49,6 +50,12 @@ const Chat = () => {
     };
   }, []);
 
+  const handleSubmit = (msg: string, roomId: number, userId: number) => {
+    sendMsg(msg, roomId, userId);
+
+    dummy.current.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <>
       <header className={`${styles.header} header-for-scrollable`}>
@@ -61,8 +68,8 @@ const Chat = () => {
       </header>
       <section className="wrap">
         <ChatLog logs={logs} />
-
-        <ChatForm onSubmit={sendMsg} />
+        <span ref={dummy}></span>
+        <ChatForm onSubmit={handleSubmit} />
       </section>
     </>
   );

@@ -5,7 +5,7 @@ import MessageComponent from "./Message";
 
 const ChatLog: React.FC<{ logs: Message[] }> = ({ logs }) => {
   return (
-    <main className={styles.log}>
+    <main className={`${styles.log} scrollable-content`}>
       {logs.map((item, i) => {
         const previous = logs[i - 1];
         const isFistInAGroup =

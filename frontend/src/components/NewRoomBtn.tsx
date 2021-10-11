@@ -12,6 +12,7 @@ function NewRoomBtn() {
   const history = useHistory();
 
   const handleCreate = async () => {
+    console.log("creating room");
     setRoomName("");
     setIsCreating(false);
 
@@ -26,15 +27,12 @@ function NewRoomBtn() {
   };
 
   return (
-    <div className={`${styles.form} controls-for-scrollable`}>
+    <div className={`${styles.wrap} controls-for-scrollable`}>
       <button className={"btn"} onClick={() => setIsCreating(true)}>
         + New Room
       </button>
       <SlideIn isOpen={isCreating} onClose={() => setIsCreating(false)}>
         <form className={styles.form} onSubmit={handleCreate}>
-          <button type="submit" disabled={!roomName} className={"btn"}>
-            Create
-          </button>
           <input
             type="text"
             placeholder="Room name"
@@ -44,6 +42,9 @@ function NewRoomBtn() {
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
           />
+          <button type="submit" disabled={!roomName} className={"btn"}>
+            Create
+          </button>
         </form>
       </SlideIn>
     </div>

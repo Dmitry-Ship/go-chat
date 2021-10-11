@@ -20,9 +20,4 @@
 
 .wrapper {
   background-color: var(--secondary);
-  padding: 1rem;
-  border-radius: var(--br);
-  overflow-y: scroll;
-  margin: 7vh 0;
-  height: calc(100vh - 14vh);
 }

@@ -1,6 +1,4 @@
 .app {
-  background-color: hsl(220, 13%, 18%);
   margin: 0 auto;
-  min-width: 375px;
   max-width: 756px;
 }

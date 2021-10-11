@@ -24,7 +24,6 @@ const ChatForm: React.FC<{
           type="text"
           className={styles.input}
           size={64}
-          autoFocus
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />

@@ -14,7 +14,7 @@ function Rooms() {
         <h2>Rooms</h2>
       </header>
       <section className="wrap">
-        <div className={styles.wrapper}>
+        <div className={`${styles.wrapper} scrollable-content`}>
           {loading
             ? [{}, {}, {}].map((_, i) => (
                 <div key={i} className={styles.room}>

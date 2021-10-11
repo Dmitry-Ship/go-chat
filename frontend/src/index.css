@@ -19,6 +19,8 @@ code {
   --primary: #b56576;
   --secondary: #6d597a;
   --tertiary: #355070;
+  --vh: 1px;
+  --bar-height: calc(7 * var(--vh));
 }
 
 * {
@@ -27,7 +29,7 @@ code {
 
 .header-for-scrollable {
   max-width: 756px;
-  height: 7vh;
+  height: var(--bar-height);
   padding: 0 10px;
   position: fixed;
   top: 0;
@@ -37,18 +39,26 @@ code {
 
 .controls-for-scrollable {
   max-width: 756px;
-  height: 7vh;
+  height: var(--bar-height);
   position: fixed;
   bottom: 0;
   width: 100%;
 }
 
 .wrap {
-  background-color: #282c34;
+  justify-content: center;
+  min-height: calc(var(--vh) * 100);
+  background-color: #282535;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  min-height: 100vh;
+}
+
+.scrollable-content {
+  padding: 10px;
+  border-radius: 20px;
+  margin: var(--bar-height) 0;
+  height: calc(var(--vh) * 100 - var(--bar-height) * 2);
+  overflow-y: scroll;
 }
 
 .btn {
@@ -61,4 +71,8 @@ code {
   border: none;
   width: 100%;
   display: block;
+}
+
+.btn:disabled {
+  background-color: grey;
 }
