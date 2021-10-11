@@ -1,18 +1,10 @@
-let url = "/ws";
-if (import.meta.env.DEV) {
-  const { hostname, port } = window.location;
-  url = `ws://${hostname}${port ? ":" + port : ""}` + url;
-} else {
-  url = import.meta.env.VITE_WS_DOMAIN + url;
-}
-
 const events: Record<string, (msg: any) => void> = {};
 
 export const onEvent = (event: string, cb: (msg: any) => void) => {
   events[event] = cb;
 };
 
-export const connection = new WebSocket(url);
+export const connection = new WebSocket(import.meta.env.VITE_WS_DOMAIN + "/ws");
 
 connection.onmessage = (event) => {
   const parsedMessage = JSON.parse(event.data);

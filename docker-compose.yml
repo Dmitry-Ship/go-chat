@@ -4,6 +4,7 @@ services:
   api:
     environment:
       - PORT
+      - ORIGIN_URL
     build:
       context: ./backend
       target: dev
@@ -14,8 +15,8 @@ services:
 
   frontend:
     environment:
-      - VITE_WS_DOMAIN=ws://api:${PORT}
-      - VITE_DOMAIN=http://api:${PORT}
+      - VITE_WS_DOMAIN=ws://localhost:${PORT}
+      - VITE_DOMAIN=http://localhost:${PORT}
     restart: always
     build:
       context: ./frontend

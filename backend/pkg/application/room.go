@@ -68,7 +68,6 @@ func (s *roomService) JoinRoom(userId int32, roomID int32) (*domain.Participant,
 	}
 
 	user, err := s.users.FindByID(userId)
-
 	if err != nil {
 		return nil, err
 	}

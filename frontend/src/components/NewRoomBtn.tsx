@@ -12,7 +12,6 @@ function NewRoomBtn() {
   const history = useHistory();
 
   const handleCreate = async () => {
-    console.log("creating room");
     setRoomName("");
     setIsCreating(false);
 

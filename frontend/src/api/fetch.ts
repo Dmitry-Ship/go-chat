@@ -11,12 +11,7 @@ export const makeRequest = async (
   url: string,
   request: Request = { method: "GET" }
 ): Promise<{ status: boolean; data: any }> => {
-  if (import.meta.env.DEV) {
-    url = "/api" + url;
-  } else {
-    url = String(import.meta.env.VITE_DOMAIN) + url;
-  }
-
+  url = String(import.meta.env.VITE_DOMAIN) + url;
   try {
     let req: Record<string, any> = {};
     switch (request.method) {

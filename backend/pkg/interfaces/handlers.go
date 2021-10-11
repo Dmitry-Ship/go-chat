@@ -4,9 +4,11 @@ import (
 	"GitHub/go-chat/backend/common"
 	"GitHub/go-chat/backend/domain"
 	"GitHub/go-chat/backend/pkg/application"
-	"errors"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gorilla/websocket"
@@ -19,16 +21,18 @@ func HandleRequests(
 	notificationService application.NotificationService,
 ) {
 	http.HandleFunc("/ws", handeleWS(userService, messageService, roomService, notificationService))
-	http.HandleFunc("/getRooms", handleGetRooms(roomService))
-	http.HandleFunc("/getRoomsMessages", handleRoomsMessages(messageService, roomService))
-	http.HandleFunc("/createRoom", handleCreateRoom(roomService))
+	http.HandleFunc("/getRooms", common.AddDefaultHeaders(handleGetRooms(roomService)))
+	http.HandleFunc("/getRoomsMessages", common.AddDefaultHeaders(handleRoomsMessages(messageService, roomService)))
+	http.HandleFunc("/createRoom", common.AddDefaultHeaders(handleCreateRoom(roomService)))
 }
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return r.URL.Path == "/ws"
+		clientURL := os.Getenv("ORIGIN_URL")
+
+		return r.Header.Get("Origin") == clientURL
 	},
 }
 
@@ -94,7 +98,6 @@ func handleRoomsMessages(messageService application.MessageService, roomService 
 			log.Println(err)
 			return
 		}
-
 		result := int32(roomIdInt)
 
 		messages, err := messageService.GetMessagesFull(result)
@@ -130,28 +133,24 @@ func handleRoomsMessages(messageService application.MessageService, roomService 
 
 func handleCreateRoom(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		request := struct {
 			RoomName string `json:"room_name"`
 			UserId   int32  `json:"user_id"`
 		}{}
 
-		err := common.DecodeJSONBody(w, r, &request)
+		err := json.NewDecoder(r.Body).Decode(&request)
+
 		if err != nil {
-			var mr *common.MalformedRequest
-			if errors.As(err, &mr) {
-				http.Error(w, mr.Msg, mr.Status)
-			} else {
-				log.Println(err.Error())
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
+			fmt.Println("Body parse error", err)
+			w.WriteHeader(400) // Return 400 Bad Request.
 			return
 		}
 
 		room, err := roomService.CreateRoom(request.RoomName, request.UserId)
 
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
+			w.WriteHeader(500)
 			return
 		}
 
