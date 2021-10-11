@@ -20,22 +20,20 @@ function App() {
   return (
     <UserContext.Provider value={{ id: userId }}>
       <div className={styles.app}>
-        <div className={styles.wrap}>
-          {status === "connecting" ? (
-            <div>connecting...</div>
-          ) : (
-            <Router>
-              <Switch>
-                <Route path="/room/:roomId">
-                  <Chat />
-                </Route>
-                <Route path="/">
-                  <Rooms />
-                </Route>
-              </Switch>
-            </Router>
-          )}
-        </div>
+        {status === "connecting" ? (
+          <div>connecting...</div>
+        ) : (
+          <Router>
+            <Switch>
+              <Route path="/room/:roomId">
+                <Chat />
+              </Route>
+              <Route path="/">
+                <Rooms />
+              </Route>
+            </Switch>
+          </Router>
+        )}
       </div>
     </UserContext.Provider>
   );

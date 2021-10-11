@@ -59,10 +59,11 @@ const Chat = () => {
 
         <EditRoomBtn />
       </header>
+      <section className="wrap">
+        <ChatLog logs={logs} />
 
-      <ChatLog logs={logs} />
-
-      <ChatForm onSubmit={sendMsg} />
+        <ChatForm onSubmit={sendMsg} />
+      </section>
     </>
   );
 };

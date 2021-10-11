@@ -1,14 +1,9 @@
 .app {
   background-color: #282c34;
-  display: flex;
+  /* display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: center; */
   padding: 0 10px;
   min-width: 375px;
-}
-
-.wrap {
-  width: 100%;
-  height: 100vh;
 }

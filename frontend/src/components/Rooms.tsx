@@ -13,25 +13,26 @@ function Rooms() {
       <header className={`${styles.header} header-for-scrollable`}>
         <h2>Rooms</h2>
       </header>
-
-      <div className={styles.wrapper}>
-        {loading
-          ? [{}, {}, {}].map((_, i) => (
-              <div key={i} className={styles.room}>
-                <div>
-                  <h3>loading...</h3>
+      <section className="wrap">
+        <div className={styles.wrapper}>
+          {loading
+            ? [{}, {}, {}].map((_, i) => (
+                <div key={i} className={styles.room}>
+                  <div>
+                    <h3>loading...</h3>
+                  </div>
                 </div>
-              </div>
-            ))
-          : data?.map((room, i) => (
-              <Link key={i} to={"room/" + room.id} className={styles.room}>
-                <div>
-                  <h3>{room.name}</h3>
-                </div>
-              </Link>
-            ))}
-      </div>
-      <NewRoomBtn />
+              ))
+            : data?.map((room, i) => (
+                <Link key={i} to={"room/" + room.id} className={styles.room}>
+                  <div>
+                    <h3>{room.name}</h3>
+                  </div>
+                </Link>
+              ))}
+        </div>
+        <NewRoomBtn />
+      </section>
     </>
   );
 }

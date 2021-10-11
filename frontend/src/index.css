@@ -42,3 +42,9 @@ code {
   width: 100%;
   padding: 0 10px;
 }
+
+.wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
