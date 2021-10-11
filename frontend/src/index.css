@@ -34,7 +34,7 @@ code {
   position: fixed;
   top: 0;
   width: 100%;
-  background-color: #282c34;
+  background-color: var(--secondary);
 }
 
 .controls-for-scrollable {
@@ -43,12 +43,13 @@ code {
   position: fixed;
   bottom: 0;
   width: 100%;
+  padding: 0 10px;
 }
 
 .wrap {
   justify-content: center;
   min-height: calc(var(--vh) * 100);
-  background-color: #282535;
+  background-color: var(--secondary);
   display: flex;
   flex-direction: column;
 }
@@ -56,14 +57,14 @@ code {
 .scrollable-content {
   padding: 10px;
   border-radius: 20px;
-  margin: var(--bar-height) 0;
+  margin: var(--bar-height) 10px;
   height: calc(var(--vh) * 100 - var(--bar-height) * 2);
   overflow-y: scroll;
 }
 
 .btn {
   border-radius: var(--br);
-  background-color: var(--warn);
+  background-color: var(--accent);
   padding: 0.7rem;
   color: white;
   text-align: center;
@@ -75,4 +76,23 @@ code {
 
 .btn:disabled {
   background-color: grey;
+}
+
+.input {
+  width: 100%;
+  height: 40px;
+  padding: 10px;
+  line-height: 30px;
+  border-radius: var(--br);
+  border: none;
+  outline: none;
+  border: 2px solid transparent;
+  color: white;
+  background-color: var(--tertiary);
+  margin-right: 10px;
+}
+
+.input:focus {
+  color: white;
+  border-color: var(--accent);
 }

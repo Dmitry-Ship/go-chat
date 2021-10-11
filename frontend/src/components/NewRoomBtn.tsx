@@ -38,7 +38,7 @@ function NewRoomBtn() {
             placeholder="Room name"
             autoFocus
             size={32}
-            className={styles.input}
+            className={`${styles.input} input`}
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
           />

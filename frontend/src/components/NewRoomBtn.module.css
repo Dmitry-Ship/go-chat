@@ -6,11 +6,6 @@
 }
 
 .input {
-  border-radius: 10px;
-  border: none;
-  width: 100%;
-  padding: 10px;
-  border-radius: var(--br);
   margin-bottom: 1rem;
 }
 

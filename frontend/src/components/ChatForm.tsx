@@ -22,7 +22,7 @@ const ChatForm: React.FC<{
       <form className={styles.form} onSubmit={handleSubmit}>
         <input
           type="text"
-          className={styles.input}
+          className={"input"}
           size={64}
           value={message}
           onChange={(e) => setMessage(e.target.value)}

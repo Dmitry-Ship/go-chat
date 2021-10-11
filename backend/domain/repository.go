@@ -34,5 +34,6 @@ type ParticipantRepository interface {
 	FindByID(id int32) (*Participant, error)
 	FindByRoomID(roomID int32) ([]*Participant, error)
 	FindByUserID(userID int32) (*Participant, error)
+	FindByRoomIDAndUserID(roomID int32, userID int32) (*Participant, error)
 	FindAll() ([]*Participant, error)
 }

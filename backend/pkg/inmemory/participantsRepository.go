@@ -18,7 +18,7 @@ func NewParticipantRepository() *participantRepository {
 func (r *participantRepository) FindByID(id int32) (*domain.Participant, error) {
 	participant, ok := r.participants[id]
 	if !ok {
-		return nil, errors.New("not found")
+		return nil, errors.New("participant not found")
 	}
 	return participant, nil
 }
@@ -39,7 +39,7 @@ func (r *participantRepository) Create(participant *domain.Participant) (*domain
 func (r *participantRepository) Update(participant *domain.Participant) error {
 	_, ok := r.participants[participant.Id]
 	if !ok {
-		return errors.New("not found")
+		return errors.New("participant not found")
 	}
 	r.participants[participant.Id] = participant
 	return nil
@@ -48,7 +48,7 @@ func (r *participantRepository) Update(participant *domain.Participant) error {
 func (r *participantRepository) Delete(id int32) error {
 	_, ok := r.participants[id]
 	if !ok {
-		return errors.New("not found")
+		return errors.New("participant not found")
 	}
 	delete(r.participants, id)
 	return nil
@@ -70,5 +70,14 @@ func (r *participantRepository) FindByUserID(userID int32) (*domain.Participant,
 			return participant, nil
 		}
 	}
-	return nil, errors.New("not found")
+	return nil, errors.New("participant not found")
+}
+
+func (r *participantRepository) FindByRoomIDAndUserID(roomID int32, userID int32) (*domain.Participant, error) {
+	for _, participant := range r.participants {
+		if participant.RoomId == roomID && participant.UserId == userID {
+			return participant, nil
+		}
+	}
+	return nil, errors.New("participant not found")
 }

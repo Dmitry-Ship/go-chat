@@ -37,7 +37,11 @@ func (s *roomService) CreateRoom(name string, userId int32) (*domain.Room, error
 		return nil, err
 	}
 
-	s.JoinRoom(userId, room.Id)
+	_, err = s.JoinRoom(userId, room.Id)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return newRoom, nil
 }
@@ -51,8 +55,13 @@ func (s *roomService) GetRooms() ([]*domain.Room, error) {
 }
 
 func (s *roomService) JoinRoom(userId int32, roomID int32) (*domain.Participant, error) {
-	participant := domain.NewParticipant(roomID, userId)
-	newParticipant, err := s.participants.Create(participant)
+	participant, err := s.participants.FindByRoomIDAndUserID(roomID, userId)
+
+	if err == nil {
+		return participant, nil
+	}
+
+	newParticipant, err := s.participants.Create(domain.NewParticipant(roomID, userId))
 
 	if err != nil {
 		return nil, err
@@ -61,8 +70,6 @@ func (s *roomService) JoinRoom(userId int32, roomID int32) (*domain.Participant,
 	user, err := s.users.FindByID(userId)
 
 	if err != nil {
-		fmt.Println("err", err)
-
 		return nil, err
 	}
 

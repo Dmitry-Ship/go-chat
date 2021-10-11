@@ -98,7 +98,10 @@ func (c *Client) ReceiveMessages() {
 				panic(err)
 			}
 
-			c.messageService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
+			_, err := c.messageService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
+			if err != nil {
+				panic(err)
+			}
 		case "join":
 			request := struct {
 				RoomId int32 `json:"room_id"`
@@ -109,7 +112,10 @@ func (c *Client) ReceiveMessages() {
 				panic(err)
 			}
 
-			c.roomService.JoinRoom(request.UserId, request.RoomId)
+			_, err := c.roomService.JoinRoom(request.UserId, request.RoomId)
+			if err != nil {
+				panic(err)
+			}
 		case "leave":
 			request := struct {
 				RoomId int32 `json:"room_id"`
@@ -120,7 +126,11 @@ func (c *Client) ReceiveMessages() {
 				panic(err)
 			}
 
-			c.roomService.LeaveRoom(request.UserId, request.RoomId)
+			err := c.roomService.LeaveRoom(request.UserId, request.RoomId)
+
+			if err != nil {
+				panic(err)
+			}
 		}
 
 	}

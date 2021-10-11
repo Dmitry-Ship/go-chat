@@ -1,6 +1,6 @@
 .slideIn {
   border-radius: var(--br) var(--br) 0 0;
-  background-color: var(--primary);
+  background-color: var(--secondary);
   padding: 1rem;
   width: 100%;
   height: 25vh;
