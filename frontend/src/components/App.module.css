@@ -5,11 +5,10 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  padding: 0 10px;
+  min-width: 375px;
 }
 
 .wrap {
-  padding: 0 10px;
-  min-width: 375px;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
 }
