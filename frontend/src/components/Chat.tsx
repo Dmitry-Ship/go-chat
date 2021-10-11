@@ -11,7 +11,6 @@ import { parseMessage } from "../messages";
 import EditRoomBtn from "./EditRoomBtn";
 
 const Chat = () => {
-  const dummy = useRef();
   const { roomId } = useParams<{ roomId: string }>();
 
   const [logs, setLogs] = useState<Message[]>([]);
@@ -52,8 +51,6 @@ const Chat = () => {
 
   const handleSubmit = (msg: string, roomId: number, userId: number) => {
     sendMsg(msg, roomId, userId);
-
-    dummy.current.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -68,7 +65,6 @@ const Chat = () => {
       </header>
       <section className="wrap">
         <ChatLog logs={logs} />
-        <span ref={dummy}></span>
         <ChatForm onSubmit={handleSubmit} />
       </section>
     </>
