@@ -1,22 +1,23 @@
 package domain
 
 import (
-	"math/rand"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type ChatMessage struct {
-	Id        int32  `json:"id"`
-	RoomId    int32  `json:"room_id"`
-	Content   string `json:"content"`
-	CreatedAt int32  `json:"created_at"`
-	Type      string `json:"type"`
-	UserId    int32  `json:"user_id"`
+	Id        uuid.UUID `json:"id"`
+	RoomId    uuid.UUID `json:"room_id"`
+	Content   string    `json:"content"`
+	CreatedAt int32     `json:"created_at"`
+	Type      string    `json:"type"`
+	UserId    uuid.UUID `json:"user_id"`
 }
 
-func NewChatMessage(content string, messageType string, roomId int32, userId int32) *ChatMessage {
+func NewChatMessage(content string, messageType string, roomId uuid.UUID, userId uuid.UUID) *ChatMessage {
 	return &ChatMessage{
-		Id:        int32(rand.Int31()),
+		Id:        uuid.New(),
 		RoomId:    roomId,
 		Content:   content,
 		CreatedAt: int32(time.Now().Unix()),

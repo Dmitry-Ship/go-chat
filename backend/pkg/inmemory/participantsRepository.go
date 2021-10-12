@@ -3,19 +3,21 @@ package inmemory
 import (
 	"GitHub/go-chat/backend/domain"
 	"errors"
+
+	"github.com/google/uuid"
 )
 
 type participantRepository struct {
-	participants map[int32]*domain.Participant
+	participants map[uuid.UUID]*domain.Participant
 }
 
 func NewParticipantRepository() *participantRepository {
 	return &participantRepository{
-		participants: make(map[int32]*domain.Participant),
+		participants: make(map[uuid.UUID]*domain.Participant),
 	}
 }
 
-func (r *participantRepository) FindByID(id int32) (*domain.Participant, error) {
+func (r *participantRepository) FindByID(id uuid.UUID) (*domain.Participant, error) {
 	participant, ok := r.participants[id]
 	if !ok {
 		return nil, errors.New("participant not found")
@@ -45,7 +47,7 @@ func (r *participantRepository) Update(participant *domain.Participant) error {
 	return nil
 }
 
-func (r *participantRepository) Delete(id int32) error {
+func (r *participantRepository) Delete(id uuid.UUID) error {
 	_, ok := r.participants[id]
 	if !ok {
 		return errors.New("participant not found")
@@ -54,7 +56,7 @@ func (r *participantRepository) Delete(id int32) error {
 	return nil
 }
 
-func (r *participantRepository) FindByRoomID(roomID int32) ([]*domain.Participant, error) {
+func (r *participantRepository) FindByRoomID(roomID uuid.UUID) ([]*domain.Participant, error) {
 	participants := make([]*domain.Participant, 0, len(r.participants))
 	for _, participant := range r.participants {
 		if participant.RoomId == roomID {
@@ -64,7 +66,7 @@ func (r *participantRepository) FindByRoomID(roomID int32) ([]*domain.Participan
 	return participants, nil
 }
 
-func (r *participantRepository) FindByUserID(userID int32) (*domain.Participant, error) {
+func (r *participantRepository) FindByUserID(userID uuid.UUID) (*domain.Participant, error) {
 	for _, participant := range r.participants {
 		if participant.UserId == userID {
 			return participant, nil
@@ -73,7 +75,7 @@ func (r *participantRepository) FindByUserID(userID int32) (*domain.Participant,
 	return nil, errors.New("participant not found")
 }
 
-func (r *participantRepository) FindByRoomIDAndUserID(roomID int32, userID int32) (*domain.Participant, error) {
+func (r *participantRepository) FindByRoomIDAndUserID(roomID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
 	for _, participant := range r.participants {
 		if participant.RoomId == roomID && participant.UserId == userID {
 			return participant, nil
@@ -82,7 +84,7 @@ func (r *participantRepository) FindByRoomIDAndUserID(roomID int32, userID int32
 	return nil, errors.New("participant not found")
 }
 
-func (r *participantRepository) DeleteByRoomID(roomID int32) error {
+func (r *participantRepository) DeleteByRoomID(roomID uuid.UUID) error {
 	for _, participant := range r.participants {
 		if participant.RoomId == roomID {
 			delete(r.participants, participant.Id)

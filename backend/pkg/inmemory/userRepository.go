@@ -3,19 +3,21 @@ package inmemory
 import (
 	"GitHub/go-chat/backend/domain"
 	"errors"
+
+	"github.com/google/uuid"
 )
 
 type userRepository struct {
-	users map[int32]*domain.User
+	users map[uuid.UUID]*domain.User
 }
 
 func NewUserRepository() *userRepository {
 	return &userRepository{
-		users: make(map[int32]*domain.User),
+		users: make(map[uuid.UUID]*domain.User),
 	}
 }
 
-func (r *userRepository) FindByID(id int32) (*domain.User, error) {
+func (r *userRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 	user, ok := r.users[id]
 	if !ok {
 		return nil, errors.New("user not found")
@@ -54,7 +56,7 @@ func (r *userRepository) Update(user *domain.User) error {
 	return nil
 }
 
-func (r *userRepository) Delete(id int32) error {
+func (r *userRepository) Delete(id uuid.UUID) error {
 	_, ok := r.users[id]
 	if !ok {
 		return errors.New("not found")

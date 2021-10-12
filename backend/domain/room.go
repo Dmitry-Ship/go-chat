@@ -1,15 +1,17 @@
 package domain
 
-import "math/rand"
+import (
+	"github.com/google/uuid"
+)
 
 type Room struct {
-	Name string `json:"name"`
-	Id   int32  `json:"id"`
+	Name string    `json:"name"`
+	Id   uuid.UUID `json:"id"`
 }
 
 func NewRoom(name string) *Room {
 	return &Room{
-		Id:   int32(rand.Int31()),
+		Id:   uuid.New(),
 		Name: name,
 	}
 }

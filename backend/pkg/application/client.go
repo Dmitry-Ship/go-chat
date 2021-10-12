@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -34,10 +35,10 @@ type Client struct {
 	userService    UserService
 	Conn           *websocket.Conn
 	Send           chan Notification
-	userID         int32
+	userID         uuid.UUID
 }
 
-func NewClient(conn *websocket.Conn, messageService MessageService, userService UserService, roomService RoomService, userID int32) *Client {
+func NewClient(conn *websocket.Conn, messageService MessageService, userService UserService, roomService RoomService, userID uuid.UUID) *Client {
 	id := strconv.Itoa(int(time.Now().UnixNano()))
 	return &Client{
 		Id:             id,
@@ -84,9 +85,9 @@ func (c *Client) ReceiveMessages() {
 		switch notification.Type {
 		case "message":
 			request := struct {
-				Content string `json:"content"`
-				RoomId  int32  `json:"room_id"`
-				UserId  int32  `json:"user_id"`
+				Content string    `json:"content"`
+				RoomId  uuid.UUID `json:"room_id"`
+				UserId  uuid.UUID `json:"user_id"`
 			}{}
 
 			if err := json.Unmarshal([]byte(data), &request); err != nil {
@@ -100,8 +101,8 @@ func (c *Client) ReceiveMessages() {
 			}
 		case "join":
 			request := struct {
-				RoomId int32 `json:"room_id"`
-				UserId int32 `json:"user_id"`
+				RoomId uuid.UUID `json:"room_id"`
+				UserId uuid.UUID `json:"user_id"`
 			}{}
 
 			if err := json.Unmarshal(data, &request); err != nil {
@@ -114,8 +115,8 @@ func (c *Client) ReceiveMessages() {
 			}
 		case "leave":
 			request := struct {
-				RoomId int32 `json:"room_id"`
-				UserId int32 `json:"user_id"`
+				RoomId uuid.UUID `json:"room_id"`
+				UserId uuid.UUID `json:"user_id"`
 			}{}
 
 			if err := json.Unmarshal(data, &request); err != nil {

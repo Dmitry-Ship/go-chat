@@ -3,19 +3,21 @@ package inmemory
 import (
 	"GitHub/go-chat/backend/domain"
 	"errors"
+
+	"github.com/google/uuid"
 )
 
 type chatMessageRepository struct {
-	chatMessages map[int32]*domain.ChatMessage
+	chatMessages map[uuid.UUID]*domain.ChatMessage
 }
 
 func NewChatMessageRepository() *chatMessageRepository {
 	return &chatMessageRepository{
-		chatMessages: make(map[int32]*domain.ChatMessage),
+		chatMessages: make(map[uuid.UUID]*domain.ChatMessage),
 	}
 }
 
-func (r *chatMessageRepository) FindByID(id int32) (*domain.ChatMessage, error) {
+func (r *chatMessageRepository) FindByID(id uuid.UUID) (*domain.ChatMessage, error) {
 	chatMessage, ok := r.chatMessages[id]
 	if !ok {
 		return nil, errors.New("not found")
@@ -45,7 +47,7 @@ func (r *chatMessageRepository) Update(chatMessage *domain.ChatMessage) error {
 	return nil
 }
 
-func (r *chatMessageRepository) Delete(id int32) error {
+func (r *chatMessageRepository) Delete(id uuid.UUID) error {
 	_, ok := r.chatMessages[id]
 	if !ok {
 		return errors.New("not found")
@@ -54,7 +56,7 @@ func (r *chatMessageRepository) Delete(id int32) error {
 	return nil
 }
 
-func (r *chatMessageRepository) FindByRoomID(roomID int32) ([]*domain.ChatMessage, error) {
+func (r *chatMessageRepository) FindByRoomID(roomID uuid.UUID) ([]*domain.ChatMessage, error) {
 	chatMessages := make([]*domain.ChatMessage, 0, len(r.chatMessages))
 	for _, message := range r.chatMessages {
 

@@ -3,16 +3,18 @@ package application
 import (
 	"GitHub/go-chat/backend/domain"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type RoomService interface {
-	CreateRoom(name string, userId int32) (*domain.Room, error)
-	GetRoom(id int32) (*domain.Room, error)
-	HasJoined(userId int32, roomID int32) bool
+	CreateRoom(name string, userId uuid.UUID) (*domain.Room, error)
+	GetRoom(id uuid.UUID) (*domain.Room, error)
+	HasJoined(userId uuid.UUID, roomId uuid.UUID) bool
 	GetRooms() ([]*domain.Room, error)
-	JoinRoom(userId int32, roomId int32) (*domain.Participant, error)
-	LeaveRoom(userId int32, roomId int32) error
-	DeleteRoom(id int32) error
+	JoinRoom(userId uuid.UUID, roomId uuid.UUID) (*domain.Participant, error)
+	LeaveRoom(userId uuid.UUID, roomId uuid.UUID) error
+	DeleteRoom(id uuid.UUID) error
 }
 
 type roomService struct {
@@ -33,7 +35,7 @@ func NewRoomService(rooms domain.RoomRepository, participants domain.Participant
 	}
 }
 
-func (s *roomService) CreateRoom(name string, userId int32) (*domain.Room, error) {
+func (s *roomService) CreateRoom(name string, userId uuid.UUID) (*domain.Room, error) {
 	room := domain.NewRoom(name)
 	newRoom, err := s.rooms.Create(room)
 
@@ -50,7 +52,7 @@ func (s *roomService) CreateRoom(name string, userId int32) (*domain.Room, error
 	return newRoom, nil
 }
 
-func (s *roomService) GetRoom(id int32) (*domain.Room, error) {
+func (s *roomService) GetRoom(id uuid.UUID) (*domain.Room, error) {
 	return s.rooms.FindByID(id)
 }
 
@@ -58,7 +60,7 @@ func (s *roomService) GetRooms() ([]*domain.Room, error) {
 	return s.rooms.FindAll()
 }
 
-func (s *roomService) JoinRoom(userId int32, roomID int32) (*domain.Participant, error) {
+func (s *roomService) JoinRoom(userId uuid.UUID, roomID uuid.UUID) (*domain.Participant, error) {
 	participant, err := s.participants.FindByRoomIDAndUserID(roomID, userId)
 
 	if err == nil {
@@ -83,7 +85,7 @@ func (s *roomService) JoinRoom(userId int32, roomID int32) (*domain.Participant,
 	return newParticipant, nil
 }
 
-func (s *roomService) LeaveRoom(userId int32, roomID int32) error {
+func (s *roomService) LeaveRoom(userId uuid.UUID, roomID uuid.UUID) error {
 	participant, err := s.participants.FindByUserID(userId)
 
 	if err != nil {
@@ -104,7 +106,7 @@ func (s *roomService) LeaveRoom(userId int32, roomID int32) error {
 	return nil
 }
 
-func (s *roomService) DeleteRoom(id int32) error {
+func (s *roomService) DeleteRoom(id uuid.UUID) error {
 	room, err := s.rooms.FindByID(id)
 
 	if err != nil {
@@ -119,7 +121,7 @@ func (s *roomService) DeleteRoom(id int32) error {
 	return nil
 }
 
-func (s *roomService) HasJoined(userId int32, roomID int32) bool {
+func (s *roomService) HasJoined(userId uuid.UUID, roomID uuid.UUID) bool {
 	_, err := s.participants.FindByRoomIDAndUserID(roomID, userId)
 
 	return err == nil

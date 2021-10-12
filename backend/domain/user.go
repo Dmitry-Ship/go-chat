@@ -3,12 +3,14 @@ package domain
 import (
 	"math/rand"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type User struct {
-	Id     int32  `json:"id"`
-	Avatar string `json:"avatar"`
-	Name   string `json:"name"`
+	Id     uuid.UUID `json:"id"`
+	Avatar string    `json:"avatar"`
+	Name   string    `json:"name"`
 }
 
 func getRandomEmoji() string {
@@ -162,7 +164,7 @@ func getRandomWord() string {
 
 func NewUser() *User {
 	return &User{
-		Id:     int32(rand.Int31()),
+		Id:     uuid.New(),
 		Avatar: getRandomEmoji(),
 		Name:   getRandomWord() + " " + getRandomWord(),
 	}

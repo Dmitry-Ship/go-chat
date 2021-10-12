@@ -2,10 +2,12 @@ package application
 
 import (
 	"GitHub/go-chat/backend/domain"
+
+	"github.com/google/uuid"
 )
 
 type UserService interface {
-	GetUser(id int32) (*domain.User, error)
+	GetUser(id uuid.UUID) (*domain.User, error)
 	CreateUser(user *domain.User) (*domain.User, error)
 }
 
@@ -19,7 +21,7 @@ func NewUserService(users domain.UserRepository) *userService {
 	}
 }
 
-func (s *userService) GetUser(id int32) (*domain.User, error) {
+func (s *userService) GetUser(id uuid.UUID) (*domain.User, error) {
 	return s.users.FindByID(id)
 }
 

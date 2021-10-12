@@ -22,7 +22,7 @@ const EditRoomBtn: React.FC<{ joined: boolean; onLeave: () => void }> = ({
   const handleLeave = () => {
     sendNotification({
       type: "leave",
-      data: { room_id: Number(roomId), user_id: user.id },
+      data: { room_id: roomId, user_id: user.id },
     });
     onLeave();
     history.push("/");
@@ -32,7 +32,7 @@ const EditRoomBtn: React.FC<{ joined: boolean; onLeave: () => void }> = ({
   const handleDelete = async () => {
     await makeRequest("/deleteRoom", {
       method: "POST",
-      body: { room_id: Number(roomId), user_id: user.id },
+      body: { room_id: roomId, user_id: user.id },
     });
 
     history.push("/");

@@ -9,8 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -62,7 +62,7 @@ func handeleWS(
 		hub.Register(client)
 
 		data := struct {
-			UserId int32 `json:"user_id"`
+			UserId uuid.UUID `json:"user_id"`
 		}{
 			UserId: user.Id,
 		}
@@ -92,31 +92,29 @@ func handleRoomsMessages(messageService application.MessageService, roomService 
 		query := r.URL.Query()
 
 		roomIdQuery := query.Get("room_id")
-		roomIdInt, err := strconv.ParseInt(roomIdQuery, 0, 32)
-
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		roomIdInt32 := int32(roomIdInt)
-
-		userId := query.Get("user_id")
-		userIdInt, err := strconv.ParseInt(userId, 0, 32)
-
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		userIdInt32 := int32(userIdInt)
-
-		room, err := roomService.GetRoom(roomIdInt32)
+		roomId, err := uuid.Parse(roomIdQuery)
 
 		if err != nil {
 			log.Println(err)
 			return
 		}
 
-		messages, err := messageService.GetMessagesFull(roomIdInt32)
+		userIdQuery := query.Get("user_id")
+		userId, err := uuid.Parse(userIdQuery)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		room, err := roomService.GetRoom(roomId)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		messages, err := messageService.GetMessagesFull(roomId)
 
 		if err != nil {
 			log.Println(err)
@@ -134,7 +132,7 @@ func handleRoomsMessages(messageService application.MessageService, roomService 
 			Messages []application.MessageFull `json:"messages"`
 		}{
 			Room:     *room,
-			Joined:   roomService.HasJoined(userIdInt32, roomIdInt32),
+			Joined:   roomService.HasJoined(userId, roomId),
 			Messages: messagesValue,
 		}
 
@@ -145,8 +143,8 @@ func handleRoomsMessages(messageService application.MessageService, roomService 
 func handleCreateRoom(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
-			RoomName string `json:"room_name"`
-			UserId   int32  `json:"user_id"`
+			RoomName string    `json:"room_name"`
+			UserId   uuid.UUID `json:"user_id"`
 		}{}
 
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -172,7 +170,7 @@ func handleCreateRoom(roomService application.RoomService) func(w http.ResponseW
 func handleDeleteRoom(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
-			RoomId int32 `json:"room_id"`
+			RoomId uuid.UUID `json:"room_id"`
 		}{}
 
 		err := json.NewDecoder(r.Body).Decode(&request)

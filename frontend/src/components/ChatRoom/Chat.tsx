@@ -43,7 +43,7 @@ const Chat = () => {
     });
 
     onEvent("room_deleted", (event) => {
-      if (event.data.room_id === Number(roomId)) {
+      if (event.data.room_id === roomId) {
         history.push("/");
       }
     });

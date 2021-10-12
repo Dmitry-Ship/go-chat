@@ -1,32 +1,36 @@
 package application
 
+import (
+	"github.com/google/uuid"
+)
+
 type Notification struct {
 	Type string      `json:"type"`
 	Data interface{} `json:"data"`
 }
 
 type subscription struct {
-	userId int32
-	roomId int32
+	userId uuid.UUID
+	roomId uuid.UUID
 }
 
 type Hub interface {
 	NewNotification(notificationType string, data interface{}) Notification
 	Register(client *Client)
 	Unregister(client *Client)
-	JoinRoom(userId int32, roomId int32)
-	LeaveRoom(userId int32, roomId int32)
-	DeleteRoom(roomId int32)
+	JoinRoom(userId uuid.UUID, roomId uuid.UUID)
+	LeaveRoom(userId uuid.UUID, roomId uuid.UUID)
+	DeleteRoom(roomId uuid.UUID)
 	Run()
 }
 
 type hub struct {
 	Broadcast   chan *MessageFull
-	deleteRoom  chan int32
+	deleteRoom  chan uuid.UUID
 	register    chan *Client
 	unregister  chan *Client
-	clients     map[int32][]*Client
-	roomClients map[int32][]*Client
+	clients     map[uuid.UUID][]*Client
+	roomClients map[uuid.UUID][]*Client
 	joinRoom    chan subscription
 	leaveRoom   chan subscription
 }
@@ -34,13 +38,13 @@ type hub struct {
 func NewHub() *hub {
 	return &hub{
 		Broadcast:   make(chan *MessageFull, 1024),
-		deleteRoom:  make(chan int32),
+		deleteRoom:  make(chan uuid.UUID),
 		register:    make(chan *Client),
 		unregister:  make(chan *Client),
 		joinRoom:    make(chan subscription),
 		leaveRoom:   make(chan subscription),
-		clients:     make(map[int32][]*Client),
-		roomClients: make(map[int32][]*Client),
+		clients:     make(map[uuid.UUID][]*Client),
+		roomClients: make(map[uuid.UUID][]*Client),
 	}
 }
 
@@ -86,7 +90,7 @@ func (s *hub) Run() {
 			clients := s.roomClients[roomId]
 
 			message := struct {
-				RoomId int32 `json:"room_id"`
+				RoomId uuid.UUID `json:"room_id"`
 			}{
 				RoomId: roomId,
 			}
@@ -109,21 +113,21 @@ func (s *hub) Unregister(client *Client) {
 	s.unregister <- client
 }
 
-func (s *hub) JoinRoom(userId int32, roomId int32) {
+func (s *hub) JoinRoom(userId uuid.UUID, roomId uuid.UUID) {
 	s.joinRoom <- subscription{
 		userId: userId,
 		roomId: roomId,
 	}
 }
 
-func (s *hub) LeaveRoom(userId int32, roomId int32) {
+func (s *hub) LeaveRoom(userId uuid.UUID, roomId uuid.UUID) {
 	s.leaveRoom <- subscription{
 		userId: userId,
 		roomId: roomId,
 	}
 }
 
-func (s *hub) DeleteRoom(roomId int32) {
+func (s *hub) DeleteRoom(roomId uuid.UUID) {
 	s.deleteRoom <- roomId
 }
 
