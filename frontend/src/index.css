@@ -21,7 +21,7 @@ code {
   --secondary: #6d597a;
   --tertiary: #355070;
   --vh: 1px;
-  --bar-height: calc(8 * var(--vh));
+  --bar-height: calc(9 * var(--vh));
 }
 
 * {
@@ -56,6 +56,8 @@ code {
   bottom: 0;
   width: 100%;
   padding: 0 10px;
+  display: flex;
+  align-items: center;
 }
 
 .wrap {

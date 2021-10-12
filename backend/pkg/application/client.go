@@ -2,6 +2,7 @@ package application
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -17,9 +18,7 @@ const (
 	pongWait = 60 * time.Second
 
 	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
-
-	// Maximum message size allowed from peer.
+	pingPeriod     = (pongWait * 9) / 10
 	maxMessageSize = 512
 )
 
@@ -28,7 +27,6 @@ type IncomingNotification struct {
 	Data interface{} `json:"data"`
 }
 
-// Client is a middleman between the websocket connection and the room.
 type Client struct {
 	Id             string
 	messageService MessageService
@@ -36,9 +34,10 @@ type Client struct {
 	userService    UserService
 	Conn           *websocket.Conn
 	Send           chan Notification
+	userID         int32
 }
 
-func NewClient(conn *websocket.Conn, messageService MessageService, userService UserService, roomService RoomService, Send chan Notification) *Client {
+func NewClient(conn *websocket.Conn, messageService MessageService, userService UserService, roomService RoomService, userID int32) *Client {
 	id := strconv.Itoa(int(time.Now().UnixNano()))
 	return &Client{
 		Id:             id,
@@ -46,15 +45,10 @@ func NewClient(conn *websocket.Conn, messageService MessageService, userService 
 		roomService:    roomService,
 		userService:    userService,
 		Conn:           conn,
-		Send:           Send,
+		Send:           make(chan Notification, 1024),
+		userID:         userID,
 	}
 }
-
-// ReceiveMessages pumps messages from the websocket connection to the room.
-//
-// The application runs ReceiveMessages in a per-connection goroutine. The application
-// ensures that there is at most one reader on a connection by executing all
-// reads from this goroutine.
 
 func (c *Client) ReceiveMessages() {
 	defer func() {
@@ -83,7 +77,8 @@ func (c *Client) ReceiveMessages() {
 		}
 
 		if err := json.Unmarshal(message, &notification); err != nil {
-			panic(err)
+			fmt.Println(err)
+			continue
 		}
 
 		switch notification.Type {
@@ -95,12 +90,13 @@ func (c *Client) ReceiveMessages() {
 			}{}
 
 			if err := json.Unmarshal([]byte(data), &request); err != nil {
-				panic(err)
+				fmt.Println(err)
+				return
 			}
 
 			_, err := c.messageService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
 			if err != nil {
-				panic(err)
+				fmt.Println(err)
 			}
 		case "join":
 			request := struct {
@@ -109,12 +105,12 @@ func (c *Client) ReceiveMessages() {
 			}{}
 
 			if err := json.Unmarshal(data, &request); err != nil {
-				panic(err)
+				fmt.Println(err)
 			}
 
 			_, err := c.roomService.JoinRoom(request.UserId, request.RoomId)
 			if err != nil {
-				panic(err)
+				fmt.Println(err)
 			}
 		case "leave":
 			request := struct {
@@ -123,24 +119,20 @@ func (c *Client) ReceiveMessages() {
 			}{}
 
 			if err := json.Unmarshal(data, &request); err != nil {
-				panic(err)
+				fmt.Println(err)
+				return
 			}
 
 			err := c.roomService.LeaveRoom(request.UserId, request.RoomId)
 
 			if err != nil {
-				panic(err)
+				fmt.Println(err)
 			}
 		}
 
 	}
 }
 
-// SendNotifications pumps messages from the hub to the websocket connection.
-//
-// A goroutine running SendNotifications is started for each connection. The
-// application ensures that there is at most one writer to a connection by
-// executing all writes from this goroutine.
 func (c *Client) SendNotifications() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {

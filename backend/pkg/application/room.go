@@ -8,6 +8,7 @@ import (
 type RoomService interface {
 	CreateRoom(name string, userId int32) (*domain.Room, error)
 	GetRoom(id int32) (*domain.Room, error)
+	HasJoined(userId int32, roomID int32) bool
 	GetRooms() ([]*domain.Room, error)
 	JoinRoom(userId int32, roomId int32) (*domain.Participant, error)
 	LeaveRoom(userId int32, roomId int32) error
@@ -17,14 +18,16 @@ type roomService struct {
 	rooms          domain.RoomRepository
 	participants   domain.ParticipantRepository
 	users          domain.UserRepository
+	hub            Hub
 	messageService MessageService
 }
 
-func NewRoomService(rooms domain.RoomRepository, participants domain.ParticipantRepository, users domain.UserRepository, messageService MessageService) *roomService {
+func NewRoomService(rooms domain.RoomRepository, participants domain.ParticipantRepository, users domain.UserRepository, messageService MessageService, hub Hub) *roomService {
 	return &roomService{
 		rooms:          rooms,
 		users:          users,
 		participants:   participants,
+		hub:            hub,
 		messageService: messageService,
 	}
 }
@@ -67,6 +70,8 @@ func (s *roomService) JoinRoom(userId int32, roomID int32) (*domain.Participant,
 		return nil, err
 	}
 
+	s.hub.JoinRoom(userId, roomID)
+
 	user, err := s.users.FindByID(userId)
 	if err != nil {
 		return nil, err
@@ -86,6 +91,8 @@ func (s *roomService) LeaveRoom(userId int32, roomID int32) error {
 
 	s.participants.Delete(participant.Id)
 
+	s.hub.LeaveRoom(userId, roomID)
+
 	user, err := s.users.FindByID(userId)
 
 	if err != nil {
@@ -94,4 +101,10 @@ func (s *roomService) LeaveRoom(userId int32, roomID int32) error {
 
 	s.messageService.SendMessage(fmt.Sprintf("%s %s left", user.Avatar, user.Name), "system", roomID, user.Id)
 	return nil
+}
+
+func (s *roomService) HasJoined(userId int32, roomID int32) bool {
+	_, err := s.participants.FindByRoomIDAndUserID(roomID, userId)
+
+	return err == nil
 }

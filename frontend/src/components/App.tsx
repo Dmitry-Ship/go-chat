@@ -21,7 +21,7 @@ function App() {
   return (
     <UserContext.Provider value={{ id: userId }}>
       <div className={styles.app}>
-        {status === "connecting" ? (
+        {status === "connecting" || !userId ? (
           <Loader />
         ) : (
           <Router>

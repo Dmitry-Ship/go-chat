@@ -12,46 +12,35 @@ import EditRoomBtn from "./EditRoomBtn";
 
 const Chat = () => {
   const { roomId } = useParams<{ roomId: string }>();
+  const user = useContext(UserContext);
 
   const [logs, setLogs] = useState<Message[]>([]);
+  const [room, setRoom] = useState<Room>();
+  const [isJoined, setIsJoined] = useState(false);
 
   const appendLog = (items: Message[]) => {
     setLogs((oldLogs) => [...oldLogs, ...items]);
   };
 
-  const { data, loading } = useRequest<{ room: Room; messages: MessageRaw[] }>(
-    "/getRoomsMessages?room_id=" + roomId
-  );
+  const { data, loading } = useRequest<{
+    room: Room;
+    messages: MessageRaw[];
+    joined: boolean;
+  }>(`/getRoomsMessages?room_id=${roomId}&user_id=${user.id}`);
 
   useEffect(() => {
     if (data && !loading) {
       appendLog(data.messages.map((m) => parseMessage(m)));
+      setRoom(data.room);
+      setIsJoined(data.joined);
     }
   }, [data, loading]);
-
-  const user = useContext(UserContext);
 
   useEffect(() => {
     onEvent("message", (event) => {
       appendLog([parseMessage(event.data)]);
     });
-
-    sendNotification({
-      type: "join",
-      data: { room_id: Number(roomId), user_id: user.id },
-    });
-
-    return () => {
-      sendNotification({
-        type: "leave",
-        data: { room_id: Number(roomId), user_id: user.id },
-      });
-    };
   }, []);
-
-  const handleSubmit = (msg: string, roomId: number, userId: number) => {
-    sendMsg(msg, roomId, userId);
-  };
 
   return (
     <>
@@ -59,13 +48,19 @@ const Chat = () => {
         <Link className={styles.backButton} to="/">
           ⏪
         </Link>
-        <b>{data?.room?.name}</b>
+        <b>{room?.name}</b>
 
-        <EditRoomBtn />
+        <EditRoomBtn joined={isJoined} onLeave={() => setIsJoined(false)} />
       </header>
       <section className="wrap">
-        <ChatLog logs={logs} />
-        <ChatForm onSubmit={handleSubmit} />
+        <ChatLog logs={logs} loading={loading} />
+
+        <ChatForm
+          onSubmit={sendMsg}
+          loading={loading}
+          joined={isJoined}
+          onJoin={() => setIsJoined(true)}
+        />
       </section>
     </>
   );

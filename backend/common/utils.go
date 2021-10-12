@@ -14,8 +14,6 @@ func AddDefaultHeaders(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		clientURL := os.Getenv("ORIGIN_URL")
 
-		fmt.Println(clientURL)
-
 		w.Header().Set("Access-Control-Allow-Origin", clientURL)
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Origin, X-Auth-Token")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")

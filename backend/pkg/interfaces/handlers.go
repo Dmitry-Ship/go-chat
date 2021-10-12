@@ -18,9 +18,9 @@ func HandleRequests(
 	userService application.UserService,
 	messageService application.MessageService,
 	roomService application.RoomService,
-	notificationService application.NotificationService,
+	hub application.Hub,
 ) {
-	http.HandleFunc("/ws", handeleWS(userService, messageService, roomService, notificationService))
+	http.HandleFunc("/ws", handeleWS(userService, messageService, roomService, hub))
 	http.HandleFunc("/getRooms", common.AddDefaultHeaders(handleGetRooms(roomService)))
 	http.HandleFunc("/getRoomsMessages", common.AddDefaultHeaders(handleRoomsMessages(messageService, roomService)))
 	http.HandleFunc("/createRoom", common.AddDefaultHeaders(handleCreateRoom(roomService)))
@@ -40,7 +40,7 @@ func handeleWS(
 	userService application.UserService,
 	messageService application.MessageService,
 	roomService application.RoomService,
-	notificationService application.NotificationService,
+	hub application.Hub,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
@@ -56,9 +56,9 @@ func handeleWS(
 			return
 		}
 
-		sendChan := notificationService.AddWSClient(user.Id)
+		client := application.NewClient(conn, messageService, userService, roomService, user.Id)
 
-		client := application.NewClient(conn, messageService, userService, roomService, sendChan)
+		hub.Register(client)
 
 		data := struct {
 			UserId int32 `json:"user_id"`
@@ -66,7 +66,7 @@ func handeleWS(
 			UserId: user.Id,
 		}
 
-		client.Send <- notificationService.NewNotification("user_id", data)
+		client.Send <- hub.NewNotification("user_id", data)
 
 		go client.SendNotifications()
 		go client.ReceiveMessages()
@@ -88,42 +88,52 @@ func handleGetRooms(roomService application.RoomService) func(w http.ResponseWri
 
 func handleRoomsMessages(messageService application.MessageService, roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		query := r.URL.Query()
-		roomId := query.Get("room_id")
 
-		roomIdInt, err := strconv.ParseInt(roomId, 0, 32)
-
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		result := int32(roomIdInt)
-
-		messages, err := messageService.GetMessagesFull(result)
+		roomIdQuery := query.Get("room_id")
+		roomIdInt, err := strconv.ParseInt(roomIdQuery, 0, 32)
 
 		if err != nil {
 			log.Println(err)
 			return
 		}
+		roomIdInt32 := int32(roomIdInt)
 
-		room, err := roomService.GetRoom(result)
+		userId := query.Get("user_id")
+		userIdInt, err := strconv.ParseInt(userId, 0, 32)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		userIdInt32 := int32(userIdInt)
+
+		room, err := roomService.GetRoom(roomIdInt32)
 
 		if err != nil {
 			log.Println(err)
 			return
 		}
 
-		var messagesValue []application.MessageFull
+		messages, err := messageService.GetMessagesFull(roomIdInt32)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		messagesValue := []application.MessageFull{}
 		for _, message := range messages {
 			messagesValue = append(messagesValue, *message)
 		}
 
 		data := struct {
 			Room     domain.Room               `json:"room"`
+			Joined   bool                      `json:"joined"`
 			Messages []application.MessageFull `json:"messages"`
 		}{
 			Room:     *room,
+			Joined:   roomService.HasJoined(userIdInt32, roomIdInt32),
 			Messages: messagesValue,
 		}
 
@@ -142,7 +152,7 @@ func handleCreateRoom(roomService application.RoomService) func(w http.ResponseW
 
 		if err != nil {
 			fmt.Println("Body parse error", err)
-			w.WriteHeader(400) // Return 400 Bad Request.
+			w.WriteHeader(400)
 			return
 		}
 

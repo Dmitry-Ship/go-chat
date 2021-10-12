@@ -18,14 +18,14 @@ func main() {
 	roomsRepository.Create(domain.NewRoom("Default Room"))
 	participantRepository := inmemory.NewParticipantRepository()
 
-	notificationService := application.NewNotificationService(participantRepository)
-	go notificationService.Run()
+	hub := application.NewHub()
+	go hub.Run()
 
 	userService := application.NewUserService(usersRepository)
-	messageService := application.NewMessageService(messagesRepository, usersRepository, notificationService.Broadcast)
-	roomService := application.NewRoomService(roomsRepository, participantRepository, usersRepository, messageService)
+	messageService := application.NewMessageService(messagesRepository, usersRepository, hub.Broadcast)
+	roomService := application.NewRoomService(roomsRepository, participantRepository, usersRepository, messageService, hub)
 
-	interfaces.HandleRequests(userService, messageService, roomService, notificationService)
+	interfaces.HandleRequests(userService, messageService, roomService, hub)
 
 	port := os.Getenv("PORT")
 
