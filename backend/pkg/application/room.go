@@ -12,6 +12,7 @@ type RoomService interface {
 	GetRooms() ([]*domain.Room, error)
 	JoinRoom(userId int32, roomId int32) (*domain.Participant, error)
 	LeaveRoom(userId int32, roomId int32) error
+	DeleteRoom(id int32) error
 }
 
 type roomService struct {
@@ -100,6 +101,21 @@ func (s *roomService) LeaveRoom(userId int32, roomID int32) error {
 	}
 
 	s.messageService.SendMessage(fmt.Sprintf("%s %s left", user.Avatar, user.Name), "system", roomID, user.Id)
+	return nil
+}
+
+func (s *roomService) DeleteRoom(id int32) error {
+	room, err := s.rooms.FindByID(id)
+
+	if err != nil {
+		return err
+	}
+
+	s.participants.DeleteByRoomID(id)
+	s.rooms.Delete(id)
+
+	s.hub.DeleteRoom(room.Id)
+
 	return nil
 }
 

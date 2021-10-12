@@ -16,11 +16,13 @@ type Hub interface {
 	Unregister(client *Client)
 	JoinRoom(userId int32, roomId int32)
 	LeaveRoom(userId int32, roomId int32)
+	DeleteRoom(roomId int32)
 	Run()
 }
 
 type hub struct {
 	Broadcast   chan *MessageFull
+	deleteRoom  chan int32
 	register    chan *Client
 	unregister  chan *Client
 	clients     map[int32][]*Client
@@ -32,6 +34,7 @@ type hub struct {
 func NewHub() *hub {
 	return &hub{
 		Broadcast:   make(chan *MessageFull, 1024),
+		deleteRoom:  make(chan int32),
 		register:    make(chan *Client),
 		unregister:  make(chan *Client),
 		joinRoom:    make(chan subscription),
@@ -79,7 +82,22 @@ func (s *hub) Run() {
 				}
 			}
 
+		case roomId := <-s.deleteRoom:
+			clients := s.roomClients[roomId]
+
+			message := struct {
+				RoomId int32 `json:"room_id"`
+			}{
+				RoomId: roomId,
+			}
+
+			for _, client := range clients {
+				client.Send <- s.NewNotification("room_deleted", message)
+			}
+
+			delete(s.roomClients, roomId)
 		}
+
 	}
 }
 
@@ -103,6 +121,10 @@ func (s *hub) LeaveRoom(userId int32, roomId int32) {
 		userId: userId,
 		roomId: roomId,
 	}
+}
+
+func (s *hub) DeleteRoom(roomId int32) {
+	s.deleteRoom <- roomId
 }
 
 func (c *hub) NewNotification(notificationType string, data interface{}) Notification {

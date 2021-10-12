@@ -3,7 +3,7 @@ import styles from "./EditRoomBtn.module.css";
 import SlideIn from "../SlideIn";
 import { sendNotification } from "../../api/ws";
 import { UserContext } from "../../userContext";
-import { useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 
 const EditRoomBtn: React.FC<{ joined: boolean; onLeave: () => void }> = ({
   joined,
@@ -12,6 +12,7 @@ const EditRoomBtn: React.FC<{ joined: boolean; onLeave: () => void }> = ({
   const { roomId } = useParams<{ roomId: string }>();
   const user = useContext(UserContext);
   const [isEditing, setIsEditing] = useState(false);
+  const history = useHistory();
 
   const handleClose = () => {
     setIsEditing(false);
@@ -22,8 +23,18 @@ const EditRoomBtn: React.FC<{ joined: boolean; onLeave: () => void }> = ({
       type: "leave",
       data: { room_id: Number(roomId), user_id: user.id },
     });
-    setIsEditing(false);
     onLeave();
+    history.push("/");
+    setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    sendNotification({
+      type: "delete_room",
+      data: { room_id: Number(roomId), user_id: user.id },
+    });
+    history.push("/");
+    setIsEditing(false);
   };
 
   return (
@@ -33,6 +44,9 @@ const EditRoomBtn: React.FC<{ joined: boolean; onLeave: () => void }> = ({
       </button>
       <SlideIn onClose={handleClose} isOpen={isEditing}>
         <>
+          <button onClick={handleDelete} className={`btn ${styles.menuItem}`}>
+            🗑 Delete
+          </button>
           {joined && (
             <button onClick={handleLeave} className={`btn ${styles.menuItem}`}>
               ✌️ Leave

@@ -22,6 +22,7 @@ code {
   --tertiary: #355070;
   --vh: 1px;
   --bar-height: calc(9 * var(--vh));
+  --max-width: 756px;
 }
 
 * {
@@ -40,7 +41,7 @@ code {
 }
 
 .header-for-scrollable {
-  max-width: 756px;
+  max-width: var(--max-width);
   height: var(--bar-height);
   padding: 0 10px;
   position: fixed;
@@ -50,7 +51,7 @@ code {
 }
 
 .controls-for-scrollable {
-  max-width: 756px;
+  max-width: var(--max-width);
   height: var(--bar-height);
   position: fixed;
   bottom: 0;
@@ -90,6 +91,10 @@ code {
 
 .btn:disabled {
   background-color: grey;
+}
+
+.btn:active {
+  background-color: var(--secondary);
 }
 
 .input {

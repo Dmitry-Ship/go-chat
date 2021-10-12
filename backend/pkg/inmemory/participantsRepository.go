@@ -81,3 +81,12 @@ func (r *participantRepository) FindByRoomIDAndUserID(roomID int32, userID int32
 	}
 	return nil, errors.New("participant not found")
 }
+
+func (r *participantRepository) DeleteByRoomID(roomID int32) error {
+	for _, participant := range r.participants {
+		if participant.RoomId == roomID {
+			delete(r.participants, participant.Id)
+		}
+	}
+	return nil
+}

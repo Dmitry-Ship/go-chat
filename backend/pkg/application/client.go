@@ -128,6 +128,23 @@ func (c *Client) ReceiveMessages() {
 			if err != nil {
 				fmt.Println(err)
 			}
+
+		case "delete_room":
+			request := struct {
+				RoomId int32 `json:"room_id"`
+				UserId int32 `json:"user_id"`
+			}{}
+
+			if err := json.Unmarshal(data, &request); err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			err := c.roomService.DeleteRoom(request.RoomId)
+
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 
 	}

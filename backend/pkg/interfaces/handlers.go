@@ -167,3 +167,29 @@ func handleCreateRoom(roomService application.RoomService) func(w http.ResponseW
 		common.SendJSONresponse(room, w)
 	}
 }
+
+func handleDeleteRoom(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		request := struct {
+			RoomId int32 `json:"room_id"`
+		}{}
+
+		err := json.NewDecoder(r.Body).Decode(&request)
+
+		if err != nil {
+			fmt.Println("Body parse error", err)
+			w.WriteHeader(400)
+			return
+		}
+
+		err = roomService.DeleteRoom(request.RoomId)
+
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+
+		w.WriteHeader(200)
+	}
+}

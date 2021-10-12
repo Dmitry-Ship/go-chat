@@ -1,10 +1,10 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { onEvent, sendMsg, sendNotification } from "../../api/ws";
+import React, { useContext, useEffect, useState } from "react";
+import { onEvent, sendMsg } from "../../api/ws";
 import { Message, MessageRaw, Room } from "../../types/coreTypes";
 import styles from "./Chat.module.css";
 import ChatForm from "./ChatForm";
 import ChatLog from "./ChatLog";
-import { Link, useParams } from "react-router-dom";
+import { Link, useHistory, useParams } from "react-router-dom";
 import { useRequest } from "../../api/hooks";
 import { UserContext } from "../../userContext";
 import { parseMessage } from "../../messages";
@@ -13,6 +13,7 @@ import EditRoomBtn from "./EditRoomBtn";
 const Chat = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const user = useContext(UserContext);
+  const history = useHistory();
 
   const [logs, setLogs] = useState<Message[]>([]);
   const [room, setRoom] = useState<Room>();
@@ -39,6 +40,12 @@ const Chat = () => {
   useEffect(() => {
     onEvent("message", (event) => {
       appendLog([parseMessage(event.data)]);
+    });
+
+    onEvent("room_deleted", (event) => {
+      if (event.data.room_id === Number(roomId)) {
+        history.push("/");
+      }
     });
   }, []);
 
