@@ -24,6 +24,7 @@ func HandleRequests(
 	http.HandleFunc("/getRooms", common.AddDefaultHeaders(handleGetRooms(roomService)))
 	http.HandleFunc("/getRoomsMessages", common.AddDefaultHeaders(handleRoomsMessages(messageService, roomService)))
 	http.HandleFunc("/createRoom", common.AddDefaultHeaders(handleCreateRoom(roomService)))
+	http.HandleFunc("/deleteRoom", common.AddDefaultHeaders(handleDeleteRoom(roomService)))
 }
 
 var upgrader = websocket.Upgrader{

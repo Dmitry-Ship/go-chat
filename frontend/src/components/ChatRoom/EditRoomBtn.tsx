@@ -4,6 +4,7 @@ import SlideIn from "../SlideIn";
 import { sendNotification } from "../../api/ws";
 import { UserContext } from "../../userContext";
 import { useHistory, useParams } from "react-router-dom";
+import { makeRequest } from "../../api/fetch";
 
 const EditRoomBtn: React.FC<{ joined: boolean; onLeave: () => void }> = ({
   joined,
@@ -28,11 +29,12 @@ const EditRoomBtn: React.FC<{ joined: boolean; onLeave: () => void }> = ({
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
-    sendNotification({
-      type: "delete_room",
-      data: { room_id: Number(roomId), user_id: user.id },
+  const handleDelete = async () => {
+    await makeRequest("/deleteRoom", {
+      method: "POST",
+      body: { room_id: Number(roomId), user_id: user.id },
     });
+
     history.push("/");
     setIsEditing(false);
   };
