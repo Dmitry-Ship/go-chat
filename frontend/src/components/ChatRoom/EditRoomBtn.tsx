@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useState } from "react";
 import styles from "./EditRoomBtn.module.css";
-import SlideIn from "./SlideIn";
+import SlideIn from "../SlideIn";
 
 const EditRoomBtn = () => {
   const [isEditing, setIsEditing] = useState(false);

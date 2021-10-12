@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import styles from "./App.module.css";
-import Chat from "./Chat";
+import Chat from "./ChatRoom/Chat";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Rooms from "./Rooms";
 import { UserContext } from "../userContext";
 import { onEvent } from "../api/ws";
 import { useWS } from "../api/hooks";
+import Loader from "./Loader";
 
 function App() {
   const { status } = useWS();
@@ -21,7 +22,7 @@ function App() {
     <UserContext.Provider value={{ id: userId }}>
       <div className={styles.app}>
         {status === "connecting" ? (
-          <div>connecting...</div>
+          <Loader />
         ) : (
           <Router>
             <Switch>

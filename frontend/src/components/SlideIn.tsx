@@ -1,4 +1,6 @@
 import React, { useRef } from "react";
+import { usePortal } from "../utils";
+import Portal from "./Portal";
 import styles from "./SlideIn.module.css";
 
 const SlideIn: React.FC<{
@@ -20,14 +22,16 @@ const SlideIn: React.FC<{
   };
 
   return (
-    <div className={styles.overlay} onClick={handleClick}>
-      <div ref={node} className={styles.slideIn}>
-        <button className={styles.closeBtn} onClick={onClose}>
-          ❌
-        </button>
-        {children}
+    <Portal id="modal">
+      <div className={styles.overlay} onClick={handleClick}>
+        <div ref={node} className={styles.slideIn}>
+          <button className={styles.closeBtn} onClick={onClose}>
+            ❌
+          </button>
+          {children}
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 };
 

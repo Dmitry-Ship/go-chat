@@ -5,6 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--secondary);
 }
 
 code {
@@ -20,11 +21,22 @@ code {
   --secondary: #6d597a;
   --tertiary: #355070;
   --vh: 1px;
-  --bar-height: calc(7 * var(--vh));
+  --bar-height: calc(8 * var(--vh));
 }
 
 * {
   box-sizing: border-box;
+}
+
+.rounded {
+  border-radius: var(--br);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
 }
 
 .header-for-scrollable {

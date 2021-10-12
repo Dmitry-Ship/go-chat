@@ -1,13 +1,13 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { onEvent, sendMsg, sendNotification } from "../api/ws";
-import { Message, MessageRaw, Room } from "../types/coreTypes";
+import { onEvent, sendMsg, sendNotification } from "../../api/ws";
+import { Message, MessageRaw, Room } from "../../types/coreTypes";
 import styles from "./Chat.module.css";
 import ChatForm from "./ChatForm";
 import ChatLog from "./ChatLog";
 import { Link, useParams } from "react-router-dom";
-import { useRequest } from "../api/hooks";
-import { UserContext } from "../userContext";
-import { parseMessage } from "../messages";
+import { useRequest } from "../../api/hooks";
+import { UserContext } from "../../userContext";
+import { parseMessage } from "../../messages";
 import EditRoomBtn from "./EditRoomBtn";
 
 const Chat = () => {
@@ -55,7 +55,7 @@ const Chat = () => {
 
   return (
     <>
-      <header className={`${styles.header} header-for-scrollable`}>
+      <header className={`header header-for-scrollable`}>
         <Link className={styles.backButton} to="/">
           ⏪
         </Link>

@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import styles from "./Message.module.css";
-import { Message } from "../types/coreTypes";
-import { UserContext } from "../userContext";
+import { Message } from "../../types/coreTypes";
+import { UserContext } from "../../userContext";
 
 const MessageComponent: React.FC<{
   message: Message;

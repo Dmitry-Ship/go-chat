@@ -1,7 +1,7 @@
 import React, { FormEvent, useContext, useState } from "react";
 import styles from "./ChatForm.module.css";
 import { useParams } from "react-router-dom";
-import { UserContext } from "../userContext";
+import { UserContext } from "../../userContext";
 
 const ChatForm: React.FC<{
   onSubmit: (message: string, roomId: number, userId: number) => void;

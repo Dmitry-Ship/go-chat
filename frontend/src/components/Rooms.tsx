@@ -10,21 +10,25 @@ function Rooms() {
 
   return (
     <>
-      <header className={`${styles.header} header-for-scrollable`}>
+      <header className={`header header-for-scrollable`}>
         <h2>Rooms</h2>
       </header>
       <section className="wrap">
         <div className={`${styles.wrapper} scrollable-content`}>
           {loading
             ? [{}, {}, {}].map((_, i) => (
-                <div key={i} className={styles.room}>
+                <div key={i} className={`${styles.room} rounded`}>
                   <div>
                     <h3>loading...</h3>
                   </div>
                 </div>
               ))
             : data?.map((room, i) => (
-                <Link key={i} to={"room/" + room.id} className={styles.room}>
+                <Link
+                  key={i}
+                  to={"room/" + room.id}
+                  className={`${styles.room} rounded`}
+                >
                   <div>
                     <h3>{room.name}</h3>
                   </div>
