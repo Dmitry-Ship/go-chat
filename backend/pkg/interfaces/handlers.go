@@ -67,7 +67,7 @@ func handeleWS(
 			UserId: user.Id,
 		}
 
-		client.Send <- hub.NewNotification("user_id", data)
+		client.SendNotification("user_id", data)
 
 		go client.SendNotifications()
 		go client.ReceiveMessages()

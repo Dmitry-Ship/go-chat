@@ -4,18 +4,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type Notification struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
-}
-
 type subscription struct {
 	userId uuid.UUID
 	roomId uuid.UUID
 }
 
 type Hub interface {
-	NewNotification(notificationType string, data interface{}) Notification
 	Register(client *Client)
 	Unregister(client *Client)
 	JoinRoom(userId uuid.UUID, roomId uuid.UUID)
@@ -52,12 +46,10 @@ func (s *hub) Run() {
 	for {
 		select {
 		case message := <-s.Broadcast:
-			notification := s.NewNotification("message", message)
-
 			clients := s.roomClients[message.RoomId]
 
 			for _, client := range clients {
-				client.Send <- notification
+				client.SendNotification("message", message)
 			}
 
 		case client := <-s.register:
@@ -96,7 +88,7 @@ func (s *hub) Run() {
 			}
 
 			for _, client := range clients {
-				client.Send <- s.NewNotification("room_deleted", message)
+				client.SendNotification("room_deleted", message)
 			}
 
 			delete(s.roomClients, roomId)
@@ -129,11 +121,4 @@ func (s *hub) LeaveRoom(userId uuid.UUID, roomId uuid.UUID) {
 
 func (s *hub) DeleteRoom(roomId uuid.UUID) {
 	s.deleteRoom <- roomId
-}
-
-func (c *hub) NewNotification(notificationType string, data interface{}) Notification {
-	return Notification{
-		Type: notificationType,
-		Data: data,
-	}
 }

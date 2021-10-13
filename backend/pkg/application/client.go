@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,30 +22,34 @@ const (
 	maxMessageSize = 512
 )
 
-type IncomingNotification struct {
+type incomingNotification struct {
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
+}
+
+type outgoingNotification struct {
 	Type string      `json:"type"`
 	Data interface{} `json:"data"`
 }
 
 type Client struct {
-	Id             string
+	Id             uuid.UUID
 	messageService MessageService
 	roomService    RoomService
 	userService    UserService
 	Conn           *websocket.Conn
-	Send           chan Notification
+	send           chan outgoingNotification
 	userID         uuid.UUID
 }
 
 func NewClient(conn *websocket.Conn, messageService MessageService, userService UserService, roomService RoomService, userID uuid.UUID) *Client {
-	id := strconv.Itoa(int(time.Now().UnixNano()))
 	return &Client{
-		Id:             id,
+		Id:             uuid.New(),
 		messageService: messageService,
 		roomService:    roomService,
 		userService:    userService,
 		Conn:           conn,
-		Send:           make(chan Notification, 1024),
+		send:           make(chan outgoingNotification, 1024),
 		userID:         userID,
 	}
 }
@@ -73,7 +76,7 @@ func (c *Client) ReceiveMessages() {
 
 		var data json.RawMessage
 
-		notification := IncomingNotification{
+		notification := incomingNotification{
 			Data: &data,
 		}
 
@@ -144,7 +147,7 @@ func (c *Client) SendNotifications() {
 
 	for {
 		select {
-		case notification, ok := <-c.Send:
+		case notification, ok := <-c.send:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The room closed the channel.
@@ -162,5 +165,12 @@ func (c *Client) SendNotifications() {
 				return
 			}
 		}
+	}
+}
+
+func (c *Client) SendNotification(notificationType string, data interface{}) {
+	c.send <- outgoingNotification{
+		Type: notificationType,
+		Data: data,
 	}
 }
