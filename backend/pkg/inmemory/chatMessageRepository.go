@@ -20,7 +20,7 @@ func NewChatMessageRepository() *chatMessageRepository {
 func (r *chatMessageRepository) FindByID(id uuid.UUID) (*domain.ChatMessage, error) {
 	chatMessage, ok := r.chatMessages[id]
 	if !ok {
-		return nil, errors.New("not found")
+		return nil, errors.New("message not found")
 	}
 	return chatMessage, nil
 }
@@ -41,7 +41,7 @@ func (r *chatMessageRepository) Create(chatMessage *domain.ChatMessage) (*domain
 func (r *chatMessageRepository) Update(chatMessage *domain.ChatMessage) error {
 	_, ok := r.chatMessages[chatMessage.Id]
 	if !ok {
-		return errors.New("not found")
+		return errors.New("message not found")
 	}
 	r.chatMessages[chatMessage.Id] = chatMessage
 	return nil
@@ -50,7 +50,7 @@ func (r *chatMessageRepository) Update(chatMessage *domain.ChatMessage) error {
 func (r *chatMessageRepository) Delete(id uuid.UUID) error {
 	_, ok := r.chatMessages[id]
 	if !ok {
-		return errors.New("not found")
+		return errors.New("message not found")
 	}
 	delete(r.chatMessages, id)
 	return nil

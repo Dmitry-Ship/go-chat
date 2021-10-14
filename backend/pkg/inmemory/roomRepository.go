@@ -21,7 +21,7 @@ func NewRoomRepository() *roomRepository {
 func (r *roomRepository) FindByID(id uuid.UUID) (*domain.Room, error) {
 	room, ok := r.rooms[id]
 	if !ok {
-		return nil, errors.New("not found")
+		return nil, errors.New("room not found")
 	}
 	return room, nil
 }
@@ -32,7 +32,7 @@ func (r *roomRepository) FindByName(name string) (*domain.Room, error) {
 			return room, nil
 		}
 	}
-	return nil, errors.New("not found")
+	return nil, errors.New("room not found")
 }
 
 func (r *roomRepository) FindAll() ([]*domain.Room, error) {
@@ -52,7 +52,7 @@ func (r *roomRepository) Create(room *domain.Room) (*domain.Room, error) {
 func (r *roomRepository) Update(room *domain.Room) error {
 	_, ok := r.rooms[room.Id]
 	if !ok {
-		return errors.New("not found")
+		return errors.New("room not found")
 	}
 	r.rooms[room.Id] = room
 	return nil

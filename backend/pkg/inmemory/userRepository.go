@@ -31,7 +31,7 @@ func (r *userRepository) FindByName(name string) (*domain.User, error) {
 			return user, nil
 		}
 	}
-	return nil, errors.New("not found")
+	return nil, errors.New("user not found")
 }
 
 func (r *userRepository) FindAll() ([]*domain.User, error) {
@@ -50,7 +50,7 @@ func (r *userRepository) Create(user *domain.User) (*domain.User, error) {
 func (r *userRepository) Update(user *domain.User) error {
 	_, ok := r.users[user.Id]
 	if !ok {
-		return errors.New("not found")
+		return errors.New("user not found")
 	}
 	r.users[user.Id] = user
 	return nil
@@ -59,7 +59,7 @@ func (r *userRepository) Update(user *domain.User) error {
 func (r *userRepository) Delete(id uuid.UUID) error {
 	_, ok := r.users[id]
 	if !ok {
-		return errors.New("not found")
+		return errors.New("user not found")
 	}
 	delete(r.users, id)
 	return nil
