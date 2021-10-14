@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import styles from "./ChatLog.module.css";
 import { Message } from "../../types/coreTypes";
 import MessageComponent from "./Message";
@@ -8,6 +8,13 @@ const ChatLog: React.FC<{ logs: Message[]; loading: boolean }> = ({
   logs,
   loading,
 }) => {
+  const logComponent = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (logs.length > 0) {
+      logComponent.current?.scrollIntoView();
+    }
+  }, [logs]);
+
   return (
     <main className={`${styles.log} scrollable-content`}>
       {loading ? (
@@ -37,6 +44,7 @@ const ChatLog: React.FC<{ logs: Message[]; loading: boolean }> = ({
               />
             );
           })}
+          <div ref={logComponent} />
         </>
       )}
     </main>

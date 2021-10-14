@@ -23,7 +23,8 @@ func HandleRequests(
 ) {
 	http.HandleFunc("/ws", handeleWS(userService, wsMessageChannel, hub))
 	http.HandleFunc("/getRooms", common.AddDefaultHeaders(handleGetRooms(roomService)))
-	http.HandleFunc("/getRoomsMessages", common.AddDefaultHeaders(handleRoomsMessages(messageService, roomService)))
+	http.HandleFunc("/getRoom", common.AddDefaultHeaders(handleGetRoom(messageService, roomService)))
+	http.HandleFunc("/getRoomsMessages", common.AddDefaultHeaders(handleGetRoomsMessages(messageService, roomService)))
 	http.HandleFunc("/createRoom", common.AddDefaultHeaders(handleCreateRoom(roomService)))
 	http.HandleFunc("/deleteRoom", common.AddDefaultHeaders(handleDeleteRoom(roomService)))
 }
@@ -87,7 +88,41 @@ func handleGetRooms(roomService application.RoomService) func(w http.ResponseWri
 	}
 }
 
-func handleRoomsMessages(messageService application.MessageService, roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
+func handleGetRoomsMessages(messageService application.MessageService, roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+
+		roomIdQuery := query.Get("room_id")
+		roomId, err := uuid.Parse(roomIdQuery)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		messages, err := messageService.GetMessagesFull(roomId)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		messagesValue := []application.MessageFull{}
+		for _, message := range messages {
+			messagesValue = append(messagesValue, *message)
+		}
+
+		data := struct {
+			Messages []application.MessageFull `json:"messages"`
+		}{
+			Messages: messagesValue,
+		}
+
+		common.SendJSONresponse(data, w)
+	}
+}
+
+func handleGetRoom(messageService application.MessageService, roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
@@ -114,26 +149,12 @@ func handleRoomsMessages(messageService application.MessageService, roomService 
 			return
 		}
 
-		messages, err := messageService.GetMessagesFull(roomId)
-
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		messagesValue := []application.MessageFull{}
-		for _, message := range messages {
-			messagesValue = append(messagesValue, *message)
-		}
-
 		data := struct {
-			Room     domain.Room               `json:"room"`
-			Joined   bool                      `json:"joined"`
-			Messages []application.MessageFull `json:"messages"`
+			Room   domain.Room `json:"room"`
+			Joined bool        `json:"joined"`
 		}{
-			Room:     *room,
-			Joined:   roomService.HasJoined(userId, roomId),
-			Messages: messagesValue,
+			Room:   *room,
+			Joined: roomService.HasJoined(userId, roomId),
 		}
 
 		common.SendJSONresponse(data, w)

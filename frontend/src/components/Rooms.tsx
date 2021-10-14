@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Room } from "../types/coreTypes";
 import { useRequest } from "../api/hooks";
 import NewRoomBtn from "./NewRoomBtn";
+import Loader from "./Loader";
 
 function Rooms() {
   const { data, loading } = useRequest<Room[]>("/getRooms");
@@ -15,25 +16,21 @@ function Rooms() {
       </header>
       <section className="wrap">
         <div className={`${styles.wrapper} scrollable-content`}>
-          {loading
-            ? [{}, {}, {}].map((_, i) => (
-                <div key={i} className={`${styles.room} rounded`}>
-                  <div>
-                    <h3>loading...</h3>
-                  </div>
+          {loading ? (
+            <Loader />
+          ) : (
+            data?.map((room, i) => (
+              <Link
+                key={i}
+                to={"room/" + room.id}
+                className={`${styles.room} rounded`}
+              >
+                <div>
+                  <h3>{room.name}</h3>
                 </div>
-              ))
-            : data?.map((room, i) => (
-                <Link
-                  key={i}
-                  to={"room/" + room.id}
-                  className={`${styles.room} rounded`}
-                >
-                  <div>
-                    <h3>{room.name}</h3>
-                  </div>
-                </Link>
-              ))}
+              </Link>
+            ))
+          )}
         </div>
         <NewRoomBtn />
       </section>

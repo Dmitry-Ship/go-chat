@@ -23,15 +23,23 @@ const Chat = () => {
     setLogs((oldLogs) => [...oldLogs, ...items]);
   };
 
+  const { data: messagesData, loading: messagesLoading } = useRequest<{
+    messages: MessageRaw[];
+  }>(`/getRoomsMessages?room_id=${roomId}&user_id=${user.id}`);
+
   const { data, loading } = useRequest<{
     room: Room;
-    messages: MessageRaw[];
     joined: boolean;
-  }>(`/getRoomsMessages?room_id=${roomId}&user_id=${user.id}`);
+  }>(`/getRoom?room_id=${roomId}&user_id=${user.id}`);
+
+  useEffect(() => {
+    if (messagesData && !messagesLoading) {
+      appendLog(messagesData.messages.map((m) => parseMessage(m)));
+    }
+  }, [messagesData, messagesLoading]);
 
   useEffect(() => {
     if (data && !loading) {
-      appendLog(data.messages.map((m) => parseMessage(m)));
       setRoom(data.room);
       setIsJoined(data.joined);
     }
@@ -59,8 +67,9 @@ const Chat = () => {
 
         <EditRoomBtn joined={isJoined} onLeave={() => setIsJoined(false)} />
       </header>
+
       <section className="wrap">
-        <ChatLog logs={logs} loading={loading} />
+        <ChatLog logs={logs} loading={messagesLoading} />
 
         <ChatForm
           onSubmit={sendMsg}

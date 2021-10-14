@@ -117,7 +117,7 @@ func (s *roomService) DeleteRoom(id uuid.UUID) error {
 	}
 
 	for _, participant := range participants {
-		s.hub.BroadcastMessage("room_deleted", message, participant.UserId)
+		s.hub.BroadcastNotification("room_deleted", message, participant.UserId)
 	}
 
 	s.participants.DeleteByRoomID(id)

@@ -99,7 +99,7 @@ func (s *messageService) SendMessage(messageText string, messageType string, roo
 	}
 
 	for _, participant := range participants {
-		s.hub.BroadcastMessage("message", fullMessage, participant.UserId)
+		s.hub.BroadcastNotification("message", fullMessage, participant.UserId)
 	}
 
 	return fullMessage, nil

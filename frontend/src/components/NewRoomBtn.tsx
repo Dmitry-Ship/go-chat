@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { makeRequest } from "../api/fetch";
 import { UserContext } from "../userContext";
 import styles from "./NewRoomBtn.module.css";
@@ -10,6 +10,13 @@ function NewRoomBtn() {
   const [roomName, setRoomName] = React.useState("");
   const user = useContext(UserContext);
   const history = useHistory();
+  const input = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isCreating) {
+      input.current?.focus();
+    }
+  }, [isCreating]);
 
   const handleCreate = async () => {
     setRoomName("");
@@ -34,8 +41,8 @@ function NewRoomBtn() {
         <form className={styles.form} onSubmit={handleCreate}>
           <input
             type="text"
+            ref={input}
             placeholder="Room name"
-            autoFocus
             size={32}
             className={`${styles.input} input`}
             value={roomName}
