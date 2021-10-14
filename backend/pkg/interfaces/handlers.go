@@ -19,8 +19,9 @@ func HandleRequests(
 	messageService application.MessageService,
 	roomService application.RoomService,
 	hub application.Hub,
+	wsMessageChannel chan json.RawMessage,
 ) {
-	http.HandleFunc("/ws", handeleWS(userService, messageService, roomService, hub))
+	http.HandleFunc("/ws", handeleWS(userService, wsMessageChannel, hub))
 	http.HandleFunc("/getRooms", common.AddDefaultHeaders(handleGetRooms(roomService)))
 	http.HandleFunc("/getRoomsMessages", common.AddDefaultHeaders(handleRoomsMessages(messageService, roomService)))
 	http.HandleFunc("/createRoom", common.AddDefaultHeaders(handleCreateRoom(roomService)))
@@ -39,8 +40,7 @@ var upgrader = websocket.Upgrader{
 
 func handeleWS(
 	userService application.UserService,
-	messageService application.MessageService,
-	roomService application.RoomService,
+	wsMessageChannel chan json.RawMessage,
 	hub application.Hub,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +57,7 @@ func handeleWS(
 			return
 		}
 
-		client := application.NewClient(conn, messageService, userService, roomService, user.Id)
+		client := application.NewClient(conn, hub, wsMessageChannel, user.Id)
 
 		hub.Register(client)
 

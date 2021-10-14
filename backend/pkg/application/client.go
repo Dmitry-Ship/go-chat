@@ -2,7 +2,6 @@ package application
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"time"
 
@@ -22,41 +21,34 @@ const (
 	maxMessageSize = 512
 )
 
-type incomingNotification struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
-}
-
 type outgoingNotification struct {
 	Type string      `json:"type"`
 	Data interface{} `json:"data"`
 }
 
 type Client struct {
-	Id             uuid.UUID
-	messageService MessageService
-	roomService    RoomService
-	userService    UserService
-	Conn           *websocket.Conn
-	send           chan outgoingNotification
-	userID         uuid.UUID
+	Id               uuid.UUID
+	wsMessageChannel chan json.RawMessage
+	hub              Hub
+	Conn             *websocket.Conn
+	send             chan outgoingNotification
+	userID           uuid.UUID
 }
 
-func NewClient(conn *websocket.Conn, messageService MessageService, userService UserService, roomService RoomService, userID uuid.UUID) *Client {
+func NewClient(conn *websocket.Conn, hub Hub, wsMessageChannel chan json.RawMessage, userID uuid.UUID) *Client {
 	return &Client{
-		Id:             uuid.New(),
-		messageService: messageService,
-		roomService:    roomService,
-		userService:    userService,
-		Conn:           conn,
-		send:           make(chan outgoingNotification, 1024),
-		userID:         userID,
+		Id:               uuid.New(),
+		wsMessageChannel: wsMessageChannel,
+		Conn:             conn,
+		hub:              hub,
+		send:             make(chan outgoingNotification, 1024),
+		userID:           userID,
 	}
 }
 
 func (c *Client) ReceiveMessages() {
 	defer func() {
-		// c.Hub.Leave <- domain.NewSubscription(c.User, 123)
+		c.hub.Unregister(c)
 		c.Conn.Close()
 	}()
 
@@ -74,66 +66,7 @@ func (c *Client) ReceiveMessages() {
 			break
 		}
 
-		var data json.RawMessage
-
-		notification := incomingNotification{
-			Data: &data,
-		}
-
-		if err := json.Unmarshal(message, &notification); err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		switch notification.Type {
-		case "message":
-			request := struct {
-				Content string    `json:"content"`
-				RoomId  uuid.UUID `json:"room_id"`
-				UserId  uuid.UUID `json:"user_id"`
-			}{}
-
-			if err := json.Unmarshal([]byte(data), &request); err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			_, err := c.messageService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
-			if err != nil {
-				fmt.Println(err)
-			}
-		case "join":
-			request := struct {
-				RoomId uuid.UUID `json:"room_id"`
-				UserId uuid.UUID `json:"user_id"`
-			}{}
-
-			if err := json.Unmarshal(data, &request); err != nil {
-				fmt.Println(err)
-			}
-
-			_, err := c.roomService.JoinRoom(request.UserId, request.RoomId)
-			if err != nil {
-				fmt.Println(err)
-			}
-		case "leave":
-			request := struct {
-				RoomId uuid.UUID `json:"room_id"`
-				UserId uuid.UUID `json:"user_id"`
-			}{}
-
-			if err := json.Unmarshal(data, &request); err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			err := c.roomService.LeaveRoom(request.UserId, request.RoomId)
-
-			if err != nil {
-				fmt.Println(err)
-			}
-
-		}
+		c.wsMessageChannel <- message
 
 	}
 }
