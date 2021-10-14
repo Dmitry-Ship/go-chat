@@ -38,7 +38,6 @@ func NewWSMessageHandler(
 }
 
 func (h *wsMessageHandler) Run() {
-
 	for {
 		message := <-h.MessageChannel
 		var data json.RawMessage
@@ -101,6 +100,7 @@ func (h *wsMessageHandler) Run() {
 
 			if err != nil {
 				fmt.Println(err)
+				continue
 			}
 
 		}

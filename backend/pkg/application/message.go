@@ -14,9 +14,10 @@ type MessageService interface {
 }
 
 type messageService struct {
-	messages  domain.ChatMessageRepository
-	users     domain.UserRepository
-	Broadcast chan *MessageFull
+	messages     domain.ChatMessageRepository
+	users        domain.UserRepository
+	participants domain.ParticipantRepository
+	hub          Hub
 }
 
 type MessageFull struct {
@@ -24,11 +25,12 @@ type MessageFull struct {
 	*domain.ChatMessage
 }
 
-func NewMessageService(messages domain.ChatMessageRepository, users domain.UserRepository, broadcast chan *MessageFull) *messageService {
+func NewMessageService(messages domain.ChatMessageRepository, users domain.UserRepository, participants domain.ParticipantRepository, hub Hub) *messageService {
 	return &messageService{
-		messages:  messages,
-		users:     users,
-		Broadcast: broadcast,
+		messages:     messages,
+		users:        users,
+		participants: participants,
+		hub:          hub,
 	}
 }
 
@@ -90,7 +92,15 @@ func (s *messageService) SendMessage(messageText string, messageType string, roo
 		return nil, err
 	}
 
-	s.Broadcast <- fullMessage
+	participants, err := s.participants.FindByRoomID(roomId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, participant := range participants {
+		s.hub.BroadcastMessage("message", fullMessage, participant.UserId)
+	}
 
 	return fullMessage, nil
 }

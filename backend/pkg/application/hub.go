@@ -4,52 +4,43 @@ import (
 	"github.com/google/uuid"
 )
 
-type subscription struct {
-	userId uuid.UUID
-	roomId uuid.UUID
+type message struct {
+	Type    string      `json:"type"`
+	Payload interface{} `json:"payload"`
+	UserId  uuid.UUID   `json:"userId"`
 }
 
 type Hub interface {
 	Register(client *Client)
 	Unregister(client *Client)
-	JoinRoom(userId uuid.UUID, roomId uuid.UUID)
-	LeaveRoom(userId uuid.UUID, roomId uuid.UUID)
-	DeleteRoom(roomId uuid.UUID)
+	BroadcastMessage(messageType string, payload interface{}, userID uuid.UUID)
 	Run()
 }
 
 type hub struct {
-	Broadcast   chan *MessageFull
-	deleteRoom  chan uuid.UUID
-	register    chan *Client
-	unregister  chan *Client
-	clients     map[uuid.UUID][]*Client
-	roomClients map[uuid.UUID][]*Client
-	joinRoom    chan subscription
-	leaveRoom   chan subscription
+	broadcast  chan *message
+	register   chan *Client
+	unregister chan *Client
+	clients    map[uuid.UUID][]*Client
 }
 
 func NewHub() *hub {
 	return &hub{
-		Broadcast:   make(chan *MessageFull, 1024),
-		deleteRoom:  make(chan uuid.UUID),
-		register:    make(chan *Client),
-		unregister:  make(chan *Client),
-		joinRoom:    make(chan subscription),
-		leaveRoom:   make(chan subscription),
-		clients:     make(map[uuid.UUID][]*Client),
-		roomClients: make(map[uuid.UUID][]*Client),
+		broadcast:  make(chan *message, 1024),
+		register:   make(chan *Client),
+		unregister: make(chan *Client),
+		clients:    make(map[uuid.UUID][]*Client),
 	}
 }
 
 func (s *hub) Run() {
 	for {
 		select {
-		case message := <-s.Broadcast:
-			clients := s.roomClients[message.RoomId]
+		case message := <-s.broadcast:
+			clients := s.clients[message.UserId]
 
 			for _, client := range clients {
-				client.SendNotification("message", message)
+				client.SendNotification(message.Type, message.Payload)
 			}
 
 		case client := <-s.register:
@@ -63,35 +54,6 @@ func (s *hub) Run() {
 				}
 			}
 
-		case sub := <-s.joinRoom:
-			clients := s.clients[sub.userId]
-
-			s.roomClients[sub.roomId] = append(s.roomClients[sub.roomId], clients...)
-
-		case sub := <-s.leaveRoom:
-			clients := s.roomClients[sub.roomId]
-
-			for i, c := range clients {
-				if c.userID == sub.userId {
-					s.roomClients[sub.roomId] = append(clients[:i], clients[i+1:]...)
-					break
-				}
-			}
-
-		case roomId := <-s.deleteRoom:
-			clients := s.roomClients[roomId]
-
-			message := struct {
-				RoomId uuid.UUID `json:"room_id"`
-			}{
-				RoomId: roomId,
-			}
-
-			for _, client := range clients {
-				client.SendNotification("room_deleted", message)
-			}
-
-			delete(s.roomClients, roomId)
 		}
 
 	}
@@ -105,20 +67,10 @@ func (s *hub) Unregister(client *Client) {
 	s.unregister <- client
 }
 
-func (s *hub) JoinRoom(userId uuid.UUID, roomId uuid.UUID) {
-	s.joinRoom <- subscription{
-		userId: userId,
-		roomId: roomId,
+func (s *hub) BroadcastMessage(messageType string, payload interface{}, userID uuid.UUID) {
+	s.broadcast <- &message{
+		Type:    messageType,
+		Payload: payload,
+		UserId:  userID,
 	}
-}
-
-func (s *hub) LeaveRoom(userId uuid.UUID, roomId uuid.UUID) {
-	s.leaveRoom <- subscription{
-		userId: userId,
-		roomId: roomId,
-	}
-}
-
-func (s *hub) DeleteRoom(roomId uuid.UUID) {
-	s.deleteRoom <- roomId
 }

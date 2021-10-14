@@ -73,8 +73,6 @@ func (s *roomService) JoinRoom(userId uuid.UUID, roomID uuid.UUID) (*domain.Part
 		return nil, err
 	}
 
-	s.hub.JoinRoom(userId, roomID)
-
 	user, err := s.users.FindByID(userId)
 	if err != nil {
 		return nil, err
@@ -94,8 +92,6 @@ func (s *roomService) LeaveRoom(userId uuid.UUID, roomID uuid.UUID) error {
 
 	s.participants.Delete(participant.Id)
 
-	s.hub.LeaveRoom(userId, roomID)
-
 	user, err := s.users.FindByID(userId)
 
 	if err != nil {
@@ -107,16 +103,25 @@ func (s *roomService) LeaveRoom(userId uuid.UUID, roomID uuid.UUID) error {
 }
 
 func (s *roomService) DeleteRoom(id uuid.UUID) error {
-	room, err := s.rooms.FindByID(id)
+
+	participants, err := s.participants.FindByRoomID(id)
 
 	if err != nil {
 		return err
 	}
 
+	message := struct {
+		RoomId uuid.UUID `json:"room_id"`
+	}{
+		RoomId: id,
+	}
+
+	for _, participant := range participants {
+		s.hub.BroadcastMessage("room_deleted", message, participant.UserId)
+	}
+
 	s.participants.DeleteByRoomID(id)
 	s.rooms.Delete(id)
-
-	s.hub.DeleteRoom(room.Id)
 
 	return nil
 }

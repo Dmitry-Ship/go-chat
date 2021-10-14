@@ -22,7 +22,7 @@ func main() {
 	go hub.Run()
 
 	userService := application.NewUserService(usersRepository)
-	messageService := application.NewMessageService(messagesRepository, usersRepository, hub.Broadcast)
+	messageService := application.NewMessageService(messagesRepository, usersRepository, participantRepository, hub)
 	roomService := application.NewRoomService(roomsRepository, participantRepository, usersRepository, messageService, hub)
 	wsHandler := interfaces.NewWSMessageHandler(userService, messageService, roomService)
 	go wsHandler.Run()
