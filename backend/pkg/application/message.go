@@ -7,7 +7,7 @@ import (
 )
 
 type MessageService interface {
-	GetMessages(roomId uuid.UUID) ([]*domain.ChatMessage, error)
+	GetRoomMessages(roomId uuid.UUID) ([]*domain.ChatMessage, error)
 	SendMessage(messageText string, messageType string, roomId uuid.UUID, userId uuid.UUID) (*MessageFull, error)
 	GetMessagesFull(roomId uuid.UUID) ([]*MessageFull, error)
 	MakeMessageFull(message *domain.ChatMessage) (*MessageFull, error)
@@ -34,12 +34,12 @@ func NewMessageService(messages domain.ChatMessageRepository, users domain.UserR
 	}
 }
 
-func (s *messageService) GetMessages(roomId uuid.UUID) ([]*domain.ChatMessage, error) {
-	return s.messages.FindByRoomID(roomId)
+func (s *messageService) GetRoomMessages(roomId uuid.UUID) ([]*domain.ChatMessage, error) {
+	return s.messages.FindAllByRoomID(roomId)
 }
 
 func (s *messageService) GetMessagesFull(roomId uuid.UUID) ([]*MessageFull, error) {
-	messages, err := s.GetMessages(roomId)
+	messages, err := s.GetRoomMessages(roomId)
 
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (s *messageService) SendMessage(messageText string, messageType string, roo
 		return nil, err
 	}
 
-	participants, err := s.participants.FindByRoomID(roomId)
+	participants, err := s.participants.FindAllByRoomID(roomId)
 
 	if err != nil {
 		return nil, err

@@ -25,26 +25,9 @@ func (r *participantRepository) FindByID(id uuid.UUID) (*domain.Participant, err
 	return participant, nil
 }
 
-func (r *participantRepository) FindAll() ([]*domain.Participant, error) {
-	participants := make([]*domain.Participant, 0, len(r.participants))
-	for _, participant := range r.participants {
-		participants = append(participants, participant)
-	}
-	return participants, nil
-}
-
 func (r *participantRepository) Create(participant *domain.Participant) (*domain.Participant, error) {
 	r.participants[participant.Id] = participant
 	return participant, nil
-}
-
-func (r *participantRepository) Update(participant *domain.Participant) error {
-	_, ok := r.participants[participant.Id]
-	if !ok {
-		return errors.New("participant not found")
-	}
-	r.participants[participant.Id] = participant
-	return nil
 }
 
 func (r *participantRepository) Delete(id uuid.UUID) error {
@@ -56,7 +39,7 @@ func (r *participantRepository) Delete(id uuid.UUID) error {
 	return nil
 }
 
-func (r *participantRepository) FindByRoomID(roomID uuid.UUID) ([]*domain.Participant, error) {
+func (r *participantRepository) FindAllByRoomID(roomID uuid.UUID) ([]*domain.Participant, error) {
 	participants := make([]*domain.Participant, 0, len(r.participants))
 	for _, participant := range r.participants {
 		if participant.RoomId == roomID {
@@ -64,15 +47,6 @@ func (r *participantRepository) FindByRoomID(roomID uuid.UUID) ([]*domain.Partic
 		}
 	}
 	return participants, nil
-}
-
-func (r *participantRepository) FindByUserID(userID uuid.UUID) (*domain.Participant, error) {
-	for _, participant := range r.participants {
-		if participant.UserId == userID {
-			return participant, nil
-		}
-	}
-	return nil, errors.New("participant not found")
 }
 
 func (r *participantRepository) FindByRoomIDAndUserID(roomID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
@@ -84,7 +58,7 @@ func (r *participantRepository) FindByRoomIDAndUserID(roomID uuid.UUID, userID u
 	return nil, errors.New("participant not found")
 }
 
-func (r *participantRepository) DeleteByRoomID(roomID uuid.UUID) error {
+func (r *participantRepository) DeleteAllByRoomID(roomID uuid.UUID) error {
 	for _, participant := range r.participants {
 		if participant.RoomId == roomID {
 			delete(r.participants, participant.Id)

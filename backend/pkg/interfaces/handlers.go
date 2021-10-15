@@ -211,5 +211,14 @@ func handleDeleteRoom(roomService application.RoomService) func(w http.ResponseW
 		}
 
 		w.WriteHeader(200)
+
+		response := struct {
+			RoomId uuid.UUID `json:"room_id"`
+		}{
+			RoomId: request.RoomId,
+		}
+
+		common.SendJSONresponse(response, w)
+
 	}
 }

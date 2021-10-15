@@ -26,15 +26,6 @@ func (r *roomRepository) FindByID(id uuid.UUID) (*domain.Room, error) {
 	return room, nil
 }
 
-func (r *roomRepository) FindByName(name string) (*domain.Room, error) {
-	for _, room := range r.rooms {
-		if room.Name == name {
-			return room, nil
-		}
-	}
-	return nil, errors.New("room not found")
-}
-
 func (r *roomRepository) FindAll() ([]*domain.Room, error) {
 	rooms := make([]*domain.Room, 0, len(r.rooms))
 	for _, room := range r.rooms {
@@ -61,7 +52,7 @@ func (r *roomRepository) Update(room *domain.Room) error {
 func (r *roomRepository) Delete(id uuid.UUID) error {
 	_, ok := r.rooms[id]
 	if !ok {
-		return errors.New("not found")
+		return errors.New("room not found")
 	}
 	delete(r.rooms, id)
 	return nil
