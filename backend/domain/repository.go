@@ -21,8 +21,7 @@ type ChatMessageRepository interface {
 
 type ParticipantRepository interface {
 	Create(participant *Participant) (*Participant, error)
-	Delete(id uuid.UUID) error
-	FindByID(id uuid.UUID) (*Participant, error)
+	DeleteByRoomIDAndUserID(roomId uuid.UUID, userId uuid.UUID) error
 	FindAllByRoomID(roomId uuid.UUID) ([]*Participant, error)
 	FindByRoomIDAndUserID(roomId uuid.UUID, userId uuid.UUID) (*Participant, error)
 	DeleteAllByRoomID(roomId uuid.UUID) error

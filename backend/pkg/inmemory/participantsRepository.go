@@ -17,26 +17,9 @@ func NewParticipantRepository() *participantRepository {
 	}
 }
 
-func (r *participantRepository) FindByID(id uuid.UUID) (*domain.Participant, error) {
-	participant, ok := r.participants[id]
-	if !ok {
-		return nil, errors.New("participant not found")
-	}
-	return participant, nil
-}
-
 func (r *participantRepository) Create(participant *domain.Participant) (*domain.Participant, error) {
 	r.participants[participant.Id] = participant
 	return participant, nil
-}
-
-func (r *participantRepository) Delete(id uuid.UUID) error {
-	_, ok := r.participants[id]
-	if !ok {
-		return errors.New("participant not found")
-	}
-	delete(r.participants, id)
-	return nil
 }
 
 func (r *participantRepository) FindAllByRoomID(roomID uuid.UUID) ([]*domain.Participant, error) {
@@ -65,4 +48,14 @@ func (r *participantRepository) DeleteAllByRoomID(roomID uuid.UUID) error {
 		}
 	}
 	return nil
+}
+
+func (r *participantRepository) DeleteByRoomIDAndUserID(roomID uuid.UUID, userID uuid.UUID) error {
+	for _, participant := range r.participants {
+		if participant.RoomId == roomID && participant.UserId == userID {
+			delete(r.participants, participant.Id)
+			return nil
+		}
+	}
+	return errors.New("participants not found")
 }

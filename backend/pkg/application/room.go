@@ -84,13 +84,7 @@ func (s *roomService) JoinRoom(userId uuid.UUID, roomID uuid.UUID) (*domain.Part
 }
 
 func (s *roomService) LeaveRoom(userId uuid.UUID, roomID uuid.UUID) error {
-	participant, err := s.participants.FindByRoomIDAndUserID(roomID, userId)
-
-	if err != nil {
-		return err
-	}
-
-	err = s.participants.Delete(participant.Id)
+	err := s.participants.DeleteByRoomIDAndUserID(roomID, userId)
 
 	if err != nil {
 		return err

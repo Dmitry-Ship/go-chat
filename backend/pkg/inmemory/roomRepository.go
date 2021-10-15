@@ -40,15 +40,6 @@ func (r *roomRepository) Create(room *domain.Room) (*domain.Room, error) {
 	return room, nil
 }
 
-func (r *roomRepository) Update(room *domain.Room) error {
-	_, ok := r.rooms[room.Id]
-	if !ok {
-		return errors.New("room not found")
-	}
-	r.rooms[room.Id] = room
-	return nil
-}
-
 func (r *roomRepository) Delete(id uuid.UUID) error {
 	_, ok := r.rooms[id]
 	if !ok {
