@@ -14,7 +14,6 @@ type WSMessageHandler interface {
 
 type wsMessageHandler struct {
 	userService    application.UserService
-	messageService application.MessageService
 	roomService    application.RoomService
 	MessageChannel chan json.RawMessage
 }
@@ -26,12 +25,10 @@ type incomingNotification struct {
 
 func NewWSMessageHandler(
 	userService application.UserService,
-	messageService application.MessageService,
 	roomService application.RoomService,
 ) *wsMessageHandler {
 	return &wsMessageHandler{
 		userService:    userService,
-		messageService: messageService,
 		roomService:    roomService,
 		MessageChannel: make(chan json.RawMessage, 100),
 	}
@@ -64,7 +61,7 @@ func (h *wsMessageHandler) Run() {
 				continue
 			}
 
-			_, err := h.messageService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
+			_, err := h.roomService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
 			if err != nil {
 				fmt.Println(err)
 				continue

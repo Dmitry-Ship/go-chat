@@ -16,15 +16,14 @@ import (
 
 func HandleRequests(
 	userService application.UserService,
-	messageService application.MessageService,
 	roomService application.RoomService,
 	hub application.Hub,
 	wsMessageChannel chan json.RawMessage,
 ) {
 	http.HandleFunc("/ws", handeleWS(userService, wsMessageChannel, hub))
 	http.HandleFunc("/getRooms", common.AddDefaultHeaders(handleGetRooms(roomService)))
-	http.HandleFunc("/getRoom", common.AddDefaultHeaders(handleGetRoom(messageService, roomService)))
-	http.HandleFunc("/getRoomsMessages", common.AddDefaultHeaders(handleGetRoomsMessages(messageService, roomService)))
+	http.HandleFunc("/getRoom", common.AddDefaultHeaders(handleGetRoom(roomService)))
+	http.HandleFunc("/getRoomsMessages", common.AddDefaultHeaders(handleGetRoomsMessages(roomService)))
 	http.HandleFunc("/createRoom", common.AddDefaultHeaders(handleCreateRoom(roomService)))
 	http.HandleFunc("/deleteRoom", common.AddDefaultHeaders(handleDeleteRoom(roomService)))
 }
@@ -88,7 +87,7 @@ func handleGetRooms(roomService application.RoomService) func(w http.ResponseWri
 	}
 }
 
-func handleGetRoomsMessages(messageService application.MessageService, roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
+func handleGetRoomsMessages(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
@@ -100,7 +99,7 @@ func handleGetRoomsMessages(messageService application.MessageService, roomServi
 			return
 		}
 
-		messages, err := messageService.GetMessagesFull(roomId)
+		messages, err := roomService.GetRoomMessages(roomId)
 
 		if err != nil {
 			log.Println(err)
@@ -122,7 +121,7 @@ func handleGetRoomsMessages(messageService application.MessageService, roomServi
 	}
 }
 
-func handleGetRoom(messageService application.MessageService, roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
+func handleGetRoom(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 

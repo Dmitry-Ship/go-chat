@@ -21,13 +21,12 @@ func main() {
 	hub := application.NewHub()
 	go hub.Run()
 
+	roomService := application.NewRoomService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)
 	userService := application.NewUserService(usersRepository)
-	messageService := application.NewMessageService(messagesRepository, usersRepository, participantRepository, hub)
-	roomService := application.NewRoomService(roomsRepository, participantRepository, usersRepository, messageService, hub)
-	wsHandler := interfaces.NewWSMessageHandler(userService, messageService, roomService)
+	wsHandler := interfaces.NewWSMessageHandler(userService, roomService)
 	go wsHandler.Run()
 
-	interfaces.HandleRequests(userService, messageService, roomService, hub, wsHandler.MessageChannel)
+	interfaces.HandleRequests(userService, roomService, hub, wsHandler.MessageChannel)
 
 	port := os.Getenv("PORT")
 

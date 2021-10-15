@@ -18,7 +18,14 @@ func NewParticipantRepository() *participantRepository {
 }
 
 func (r *participantRepository) Create(participant *domain.Participant) (*domain.Participant, error) {
+	for _, currentParticipant := range r.participants {
+		if currentParticipant.RoomId == participant.RoomId && currentParticipant.UserId == participant.UserId {
+			return nil, errors.New("participant already exists")
+		}
+	}
+
 	r.participants[participant.Id] = participant
+
 	return participant, nil
 }
 
