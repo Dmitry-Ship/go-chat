@@ -28,14 +28,14 @@ type outgoingNotification struct {
 
 type Client struct {
 	Id               uuid.UUID
-	wsMessageChannel chan json.RawMessage
+	wsMessageChannel chan<- json.RawMessage
 	hub              Hub
 	Conn             *websocket.Conn
 	send             chan outgoingNotification
 	userID           uuid.UUID
 }
 
-func NewClient(conn *websocket.Conn, hub Hub, wsMessageChannel chan json.RawMessage, userID uuid.UUID) *Client {
+func NewClient(conn *websocket.Conn, hub Hub, wsMessageChannel chan<- json.RawMessage, userID uuid.UUID) *Client {
 	return &Client{
 		Id:               uuid.New(),
 		wsMessageChannel: wsMessageChannel,

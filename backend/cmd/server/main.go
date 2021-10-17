@@ -12,17 +12,18 @@ import (
 )
 
 func main() {
+	hub := application.NewHub()
+	go hub.Run()
+
 	messagesRepository := inmemory.NewChatMessageRepository()
 	usersRepository := inmemory.NewUserRepository()
 	roomsRepository := inmemory.NewRoomRepository()
 	roomsRepository.Create(domain.NewRoom("Default Room"))
 	participantRepository := inmemory.NewParticipantRepository()
 
-	hub := application.NewHub()
-	go hub.Run()
-
 	roomService := application.NewRoomService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)
 	userService := application.NewUserService(usersRepository)
+
 	wsHandler := interfaces.NewWSMessageHandler(userService, roomService)
 	go wsHandler.Run()
 

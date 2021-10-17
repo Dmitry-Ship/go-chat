@@ -35,8 +35,7 @@ func NewWSMessageHandler(
 }
 
 func (h *wsMessageHandler) Run() {
-	for {
-		message := <-h.MessageChannel
+	for message := range h.MessageChannel {
 		var data json.RawMessage
 
 		notification := incomingNotification{

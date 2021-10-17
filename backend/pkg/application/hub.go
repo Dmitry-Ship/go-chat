@@ -14,7 +14,6 @@ type Hub interface {
 	Register(client *Client)
 	Unregister(client *Client)
 	BroadcastNotification(notificationType string, payload interface{}, userID uuid.UUID)
-	Run()
 }
 
 type hub struct {
