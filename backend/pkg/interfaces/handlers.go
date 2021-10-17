@@ -50,7 +50,8 @@ func handeleWS(
 			return
 		}
 
-		user, err := userService.CreateUser(domain.NewUser())
+		user := domain.NewUser()
+		err = userService.CreateUser(user)
 
 		if err != nil {
 			log.Println(err)
@@ -165,6 +166,7 @@ func handleCreateRoom(roomService application.RoomService) func(w http.ResponseW
 		request := struct {
 			RoomName string    `json:"room_name"`
 			UserId   uuid.UUID `json:"user_id"`
+			RoomId   uuid.UUID `json:"room_id"`
 		}{}
 
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -175,7 +177,7 @@ func handleCreateRoom(roomService application.RoomService) func(w http.ResponseW
 			return
 		}
 
-		room, err := roomService.CreateRoom(request.RoomName, request.UserId)
+		err = roomService.CreateRoom(request.RoomId, request.RoomName, request.UserId)
 
 		if err != nil {
 			fmt.Println(err)
@@ -183,7 +185,7 @@ func handleCreateRoom(roomService application.RoomService) func(w http.ResponseW
 			return
 		}
 
-		common.SendJSONresponse(room, w)
+		common.SendJSONresponse(nil, w)
 	}
 }
 

@@ -9,9 +9,9 @@ type Room struct {
 	Id   uuid.UUID `json:"id"`
 }
 
-func NewRoom(name string) *Room {
+func NewRoom(id uuid.UUID, name string) *Room {
 	return &Room{
-		Id:   uuid.New(),
+		Id:   id,
 		Name: name,
 	}
 }

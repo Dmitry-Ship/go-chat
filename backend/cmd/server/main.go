@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -18,7 +20,7 @@ func main() {
 	messagesRepository := inmemory.NewChatMessageRepository()
 	usersRepository := inmemory.NewUserRepository()
 	roomsRepository := inmemory.NewRoomRepository()
-	roomsRepository.Create(domain.NewRoom("Default Room"))
+	roomsRepository.Create(domain.NewRoom(uuid.New(), "Default Room"))
 	participantRepository := inmemory.NewParticipantRepository()
 
 	roomService := application.NewRoomService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)

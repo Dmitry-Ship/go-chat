@@ -16,9 +16,9 @@ func NewChatMessageRepository() *chatMessageRepository {
 	}
 }
 
-func (r *chatMessageRepository) Create(chatMessage *domain.ChatMessage) (*domain.ChatMessage, error) {
+func (r *chatMessageRepository) Create(chatMessage *domain.ChatMessage) error {
 	r.chatMessages[chatMessage.Id] = chatMessage
-	return chatMessage, nil
+	return nil
 }
 
 func (r *chatMessageRepository) FindAllByRoomID(roomID uuid.UUID) ([]*domain.ChatMessage, error) {

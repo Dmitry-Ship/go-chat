@@ -4,6 +4,7 @@ import { UserContext } from "../userContext";
 import styles from "./NewRoomBtn.module.css";
 import SlideIn from "./SlideIn";
 import { useHistory } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 function NewRoomBtn() {
   const [isCreating, setIsCreating] = React.useState(false);
@@ -21,14 +22,15 @@ function NewRoomBtn() {
   const handleCreate = async () => {
     setRoomName("");
     setIsCreating(false);
+    const roomId = uuidv4();
 
     const result = await makeRequest("/createRoom", {
       method: "POST",
-      body: { room_name: roomName, user_id: user.id },
+      body: { room_name: roomName, user_id: user.id, room_id: roomId },
     });
 
     if (result.status) {
-      history.push(`/room/${result.data.id}`);
+      history.push(`/room/${roomId}`);
     }
   };
 

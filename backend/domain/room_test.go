@@ -3,12 +3,14 @@ package domain
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRoom(t *testing.T) {
 	name := "test"
-	room := NewRoom(name)
-	assert.NotNil(t, room.Id)
+	roomId := uuid.New()
+	room := NewRoom(roomId, name)
+	assert.Equal(t, room.Id, roomId)
 	assert.Equal(t, name, room.Name)
 }

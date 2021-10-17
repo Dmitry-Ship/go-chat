@@ -25,7 +25,7 @@ func (r *userRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 	return user, nil
 }
 
-func (r *userRepository) Create(user *domain.User) (*domain.User, error) {
+func (r *userRepository) Create(user *domain.User) error {
 	r.users[user.Id] = user
-	return user, nil
+	return nil
 }

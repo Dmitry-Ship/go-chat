@@ -34,10 +34,10 @@ func (r *roomRepository) FindAll() ([]*domain.Room, error) {
 	return rooms, nil
 }
 
-func (r *roomRepository) Create(room *domain.Room) (*domain.Room, error) {
+func (r *roomRepository) Create(room *domain.Room) error {
 	r.rooms[room.Id] = room
 
-	return room, nil
+	return nil
 }
 
 func (r *roomRepository) Delete(id uuid.UUID) error {
