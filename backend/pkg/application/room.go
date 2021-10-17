@@ -45,7 +45,7 @@ func NewRoomService(rooms domain.RoomRepository, participants domain.Participant
 
 func (s *roomService) CreateRoom(id uuid.UUID, name string, userId uuid.UUID) error {
 	room := domain.NewRoom(id, name)
-	err := s.rooms.Create(room)
+	err := s.rooms.Store(room)
 
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func (s *roomService) JoinRoom(userId uuid.UUID, roomID uuid.UUID) error {
 		return errors.New("user already joined")
 	}
 
-	err := s.participants.Create(domain.NewParticipant(roomID, userId))
+	err := s.participants.Store(domain.NewParticipant(roomID, userId))
 
 	if err != nil {
 		return err
@@ -128,12 +128,6 @@ func (s *roomService) DeleteRoom(id uuid.UUID) error {
 		return err
 	}
 
-	err = s.participants.DeleteAllByRoomID(id)
-
-	if err != nil {
-		return err
-	}
-
 	err = s.rooms.Delete(id)
 
 	if err != nil {
@@ -166,7 +160,7 @@ func (s *roomService) NotifyAllParticipants(roomID uuid.UUID, messageType string
 func (s *roomService) SendMessage(messageText string, messageType string, roomId uuid.UUID, userId uuid.UUID) error {
 	message := domain.NewChatMessage(messageText, messageType, roomId, userId)
 
-	err := s.messages.Create(message)
+	err := s.messages.Store(message)
 
 	if err != nil {
 		return err

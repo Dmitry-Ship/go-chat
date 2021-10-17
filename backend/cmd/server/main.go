@@ -20,7 +20,7 @@ func main() {
 	messagesRepository := inmemory.NewChatMessageRepository()
 	usersRepository := inmemory.NewUserRepository()
 	roomsRepository := inmemory.NewRoomRepository()
-	roomsRepository.Create(domain.NewRoom(uuid.New(), "Default Room"))
+	roomsRepository.Store(domain.NewRoom(uuid.New(), "Default Room"))
 	participantRepository := inmemory.NewParticipantRepository()
 
 	roomService := application.NewRoomService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)

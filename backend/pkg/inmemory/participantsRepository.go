@@ -17,7 +17,7 @@ func NewParticipantRepository() *participantRepository {
 	}
 }
 
-func (r *participantRepository) Create(participant *domain.Participant) error {
+func (r *participantRepository) Store(participant *domain.Participant) error {
 	for _, currentParticipant := range r.participants {
 		if currentParticipant.RoomId == participant.RoomId && currentParticipant.UserId == participant.UserId {
 			return errors.New("participant already exists")
@@ -46,15 +46,6 @@ func (r *participantRepository) FindByRoomIDAndUserID(roomID uuid.UUID, userID u
 		}
 	}
 	return nil, errors.New("participant not found")
-}
-
-func (r *participantRepository) DeleteAllByRoomID(roomID uuid.UUID) error {
-	for _, participant := range r.participants {
-		if participant.RoomId == roomID {
-			delete(r.participants, participant.Id)
-		}
-	}
-	return nil
 }
 
 func (r *participantRepository) DeleteByRoomIDAndUserID(roomID uuid.UUID, userID uuid.UUID) error {

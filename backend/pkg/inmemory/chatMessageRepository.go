@@ -16,7 +16,7 @@ func NewChatMessageRepository() *chatMessageRepository {
 	}
 }
 
-func (r *chatMessageRepository) Create(chatMessage *domain.ChatMessage) error {
+func (r *chatMessageRepository) Store(chatMessage *domain.ChatMessage) error {
 	r.chatMessages[chatMessage.Id] = chatMessage
 	return nil
 }

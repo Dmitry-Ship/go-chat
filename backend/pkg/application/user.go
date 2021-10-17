@@ -19,5 +19,5 @@ func NewUserService(users domain.UserRepository) *userService {
 }
 
 func (s *userService) CreateUser(user *domain.User) error {
-	return s.users.Create(user)
+	return s.users.Store(user)
 }
