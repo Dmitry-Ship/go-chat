@@ -21,11 +21,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Run tests
-        run: go test ./...
-
       - name: Build Container
         run: docker build --target prod -t $IMAGE_NAME .
+
+      - name: Run tests
+        run: docker run $IMAGE_NAME sh -c "go test ./..."
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.0
