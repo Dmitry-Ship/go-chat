@@ -11,10 +11,10 @@ import (
 type RoomService interface {
 	CreateRoom(id uuid.UUID, name string, userId uuid.UUID) error
 	GetRoom(id uuid.UUID) (*domain.Room, error)
-	HasJoined(userId uuid.UUID, roomId uuid.UUID) bool
+	HasJoined(roomId uuid.UUID, userId uuid.UUID) bool
 	GetRooms() ([]*domain.Room, error)
-	JoinRoom(userId uuid.UUID, roomId uuid.UUID) error
-	LeaveRoom(userId uuid.UUID, roomId uuid.UUID) error
+	JoinRoom(roomId uuid.UUID, userId uuid.UUID) error
+	LeaveRoom(roomId uuid.UUID, userId uuid.UUID) error
 	DeleteRoom(id uuid.UUID) error
 	SendMessage(messageText string, messageType string, roomId uuid.UUID, userId uuid.UUID) error
 	GetRoomMessages(roomId uuid.UUID) ([]*MessageFull, error)
@@ -51,7 +51,7 @@ func (s *roomService) CreateRoom(id uuid.UUID, name string, userId uuid.UUID) er
 		return err
 	}
 
-	err = s.JoinRoom(userId, room.Id)
+	err = s.JoinRoom(room.Id, userId)
 
 	if err != nil {
 		return err
@@ -68,8 +68,8 @@ func (s *roomService) GetRooms() ([]*domain.Room, error) {
 	return s.rooms.FindAll()
 }
 
-func (s *roomService) JoinRoom(userId uuid.UUID, roomID uuid.UUID) error {
-	if s.HasJoined(userId, roomID) {
+func (s *roomService) JoinRoom(roomID uuid.UUID, userId uuid.UUID) error {
+	if s.HasJoined(roomID, userId) {
 		return errors.New("user already joined")
 	}
 
@@ -93,7 +93,7 @@ func (s *roomService) JoinRoom(userId uuid.UUID, roomID uuid.UUID) error {
 	return nil
 }
 
-func (s *roomService) LeaveRoom(userId uuid.UUID, roomID uuid.UUID) error {
+func (s *roomService) LeaveRoom(roomID uuid.UUID, userId uuid.UUID) error {
 	err := s.participants.DeleteByRoomIDAndUserID(roomID, userId)
 
 	if err != nil {
@@ -137,7 +137,7 @@ func (s *roomService) DeleteRoom(id uuid.UUID) error {
 	return nil
 }
 
-func (s *roomService) HasJoined(userId uuid.UUID, roomID uuid.UUID) bool {
+func (s *roomService) HasJoined(roomID uuid.UUID, userId uuid.UUID) bool {
 	_, err := s.participants.FindByRoomIDAndUserID(roomID, userId)
 
 	return err == nil

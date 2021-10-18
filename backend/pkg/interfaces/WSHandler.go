@@ -77,7 +77,7 @@ func (h *wsMessageHandler) Run() {
 				continue
 			}
 
-			err := h.roomService.JoinRoom(request.UserId, request.RoomId)
+			err := h.roomService.JoinRoom(request.RoomId, request.UserId)
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -93,7 +93,7 @@ func (h *wsMessageHandler) Run() {
 				continue
 			}
 
-			err := h.roomService.LeaveRoom(request.UserId, request.RoomId)
+			err := h.roomService.LeaveRoom(request.RoomId, request.UserId)
 
 			if err != nil {
 				fmt.Println(err)

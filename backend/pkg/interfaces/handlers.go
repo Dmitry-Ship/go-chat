@@ -154,7 +154,7 @@ func handleGetRoom(roomService application.RoomService) func(w http.ResponseWrit
 			Joined bool        `json:"joined"`
 		}{
 			Room:   *room,
-			Joined: roomService.HasJoined(userId, roomId),
+			Joined: roomService.HasJoined(roomId, userId),
 		}
 
 		common.SendJSONresponse(data, w)
