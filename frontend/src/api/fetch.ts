@@ -31,8 +31,8 @@ export const makeRequest = async (
       default:
         break;
     }
-
     const result = await fetch(url, {
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
@@ -40,6 +40,7 @@ export const makeRequest = async (
     });
 
     if (result.status === 200) {
+      console.log(result);
       const data = await result.json();
       return {
         status: true,

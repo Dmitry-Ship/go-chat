@@ -1,5 +1,4 @@
 import React, { useRef } from "react";
-import { usePortal } from "../utils";
 import Portal from "./Portal";
 import styles from "./SlideIn.module.css";
 

@@ -1,9 +1,9 @@
-import React, { FormEvent, useContext, useState } from "react";
+import React, { FormEvent, useState } from "react";
 import styles from "./ChatForm.module.css";
 import { useParams } from "react-router-dom";
-import { UserContext } from "../../userContext";
 import Loader from "../Loader";
 import { sendNotification } from "../../api/ws";
+import { useAuth } from "../../authContext";
 
 const ChatForm: React.FC<{
   loading: boolean;
@@ -14,18 +14,18 @@ const ChatForm: React.FC<{
   const [message, setMessage] = useState<string>("");
 
   const { roomId } = useParams<{ roomId: string }>();
-  const user = useContext(UserContext);
+  const auth = useAuth();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSubmit(message, roomId, user.id || "");
+    onSubmit(message, roomId, auth.user?.id || "");
     setMessage("");
   };
 
   const handleJoin = () => {
     sendNotification({
       type: "join",
-      data: { room_id: roomId, user_id: user.id },
+      data: { room_id: roomId, user_id: auth.user?.id },
     });
     onJoin();
   };

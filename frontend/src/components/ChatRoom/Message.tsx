@@ -1,7 +1,7 @@
-import React, { useContext } from "react";
+import React from "react";
 import styles from "./Message.module.css";
 import { Message } from "../../types/coreTypes";
-import { UserContext } from "../../userContext";
+import { useAuth } from "../../authContext";
 
 const MessageComponent: React.FC<{
   message: Message;
@@ -11,9 +11,9 @@ const MessageComponent: React.FC<{
   const date = new Date(message.createdAt * 1000);
   const time = `${date.getHours()}:${date.getMinutes()}`;
 
-  const user = useContext(UserContext);
+  const user = useAuth().user;
 
-  const isOutbound = message.user.id === user.id;
+  const isOutbound = message.user.id === user?.id;
   const isSystem = message.type === "system";
 
   return (

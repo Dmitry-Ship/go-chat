@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - backend/**
-      - .github/workflows/**
+      - .github/workflows/back.yml
 
 env:
   IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}:${{ github.run_number }}

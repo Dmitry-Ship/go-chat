@@ -5,6 +5,7 @@ import { Room } from "../types/coreTypes";
 import { useRequest } from "../api/hooks";
 import NewRoomBtn from "./NewRoomBtn";
 import Loader from "./Loader";
+import AccountSettingsBtn from "./AccountSettingsBtn";
 
 function Rooms() {
   const { data, loading } = useRequest<Room[]>("/getRooms");
@@ -13,6 +14,8 @@ function Rooms() {
     <>
       <header className={`header header-for-scrollable`}>
         <h2>Rooms</h2>
+
+        <AccountSettingsBtn />
       </header>
       <section className="wrap">
         <div className={`${styles.wrapper} scrollable-content`}>

@@ -7,8 +7,9 @@ import (
 )
 
 func TestNewUser(t *testing.T) {
-	user := NewUser()
+	user := NewUser("test", "123")
 	assert.NotNil(t, user.Id)
 	assert.NotNil(t, user.Avatar)
-	assert.NotNil(t, user.Name)
+	assert.Equal(t, user.Password, "123")
+	assert.Equal(t, user.Name, "test")
 }

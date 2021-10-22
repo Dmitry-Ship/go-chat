@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - frontend/**
-      - .github/workflows/**
+      - .github/workflows/front.yml
 
 jobs:
   build:
@@ -41,8 +41,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
           enable-pull-request-comment: false
-          enable-commit-comment: true
-          overwrites-pull-request-comment: true
+          netlify-config-path: frontend/netlify.toml
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

@@ -34,11 +34,10 @@ export type MessageEvent = {
   data: MessageRaw;
 };
 
-export type AuthEvent = {
-  type: "user_id";
-  data: {
-    user_id: string;
-  };
+export type User = {
+  id: string;
+  avatar: string;
+  name: string;
 };
 
-export type Event = MessageEvent | AuthEvent;
+export type Event = MessageEvent;

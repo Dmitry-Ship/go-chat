@@ -3,7 +3,7 @@ package interfaces
 import (
 	"GitHub/go-chat/backend/pkg/application"
 	"encoding/json"
-	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 )
@@ -13,7 +13,6 @@ type WSMessageHandler interface {
 }
 
 type wsMessageHandler struct {
-	userService    application.UserService
 	roomService    application.RoomService
 	MessageChannel chan json.RawMessage
 }
@@ -24,11 +23,9 @@ type incomingNotification struct {
 }
 
 func NewWSMessageHandler(
-	userService application.UserService,
 	roomService application.RoomService,
 ) *wsMessageHandler {
 	return &wsMessageHandler{
-		userService:    userService,
 		roomService:    roomService,
 		MessageChannel: make(chan json.RawMessage, 100),
 	}
@@ -43,7 +40,7 @@ func (h *wsMessageHandler) Run() {
 		}
 
 		if err := json.Unmarshal(message, &notification); err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			continue
 		}
 
@@ -56,14 +53,14 @@ func (h *wsMessageHandler) Run() {
 			}{}
 
 			if err := json.Unmarshal([]byte(data), &request); err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 
 			err := h.roomService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
 
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 		case "join":
@@ -73,13 +70,13 @@ func (h *wsMessageHandler) Run() {
 			}{}
 
 			if err := json.Unmarshal(data, &request); err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 
 			err := h.roomService.JoinRoom(request.RoomId, request.UserId)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 		case "leave":
@@ -89,14 +86,14 @@ func (h *wsMessageHandler) Run() {
 			}{}
 
 			if err := json.Unmarshal(data, &request); err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 
 			err := h.roomService.LeaveRoom(request.RoomId, request.UserId)
 
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 

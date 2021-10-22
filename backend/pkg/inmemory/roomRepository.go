@@ -18,6 +18,12 @@ func NewRoomRepository() *roomRepository {
 
 }
 
+func (r *roomRepository) Store(room *domain.Room) error {
+	r.rooms[room.Id] = room
+
+	return nil
+}
+
 func (r *roomRepository) FindByID(id uuid.UUID) (*domain.Room, error) {
 	room, ok := r.rooms[id]
 	if !ok {
@@ -32,12 +38,6 @@ func (r *roomRepository) FindAll() ([]*domain.Room, error) {
 		rooms = append(rooms, room)
 	}
 	return rooms, nil
-}
-
-func (r *roomRepository) Store(room *domain.Room) error {
-	r.rooms[room.Id] = room
-
-	return nil
 }
 
 func (r *roomRepository) Delete(id uuid.UUID) error {

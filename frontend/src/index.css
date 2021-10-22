@@ -25,6 +25,10 @@ code {
   --max-width: 756px;
 }
 
+.m-top-1 {
+  margin-top: 1rem;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -38,12 +42,12 @@ code {
   align-items: center;
   justify-content: space-between;
   color: #fff;
+  padding: 0 10px;
 }
 
 .header-for-scrollable {
   max-width: var(--max-width);
   height: var(--bar-height);
-  padding: 0 10px;
   position: fixed;
   top: 0;
   width: 100%;

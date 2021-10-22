@@ -12,6 +12,7 @@ type RoomRepository interface {
 type UserRepository interface {
 	Store(user *User) error
 	FindByID(id uuid.UUID) (*User, error)
+	FindByUsername(username string) (*User, error)
 }
 
 type ChatMessageRepository interface {

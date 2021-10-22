@@ -10,13 +10,14 @@ import (
 
 type RoomService interface {
 	CreateRoom(id uuid.UUID, name string, userId uuid.UUID) error
-	GetRoom(id uuid.UUID) (*domain.Room, error)
 	HasJoined(roomId uuid.UUID, userId uuid.UUID) bool
-	GetRooms() ([]*domain.Room, error)
 	JoinRoom(roomId uuid.UUID, userId uuid.UUID) error
 	LeaveRoom(roomId uuid.UUID, userId uuid.UUID) error
 	DeleteRoom(id uuid.UUID) error
 	SendMessage(messageText string, messageType string, roomId uuid.UUID, userId uuid.UUID) error
+	NotifyAllParticipants(roomId uuid.UUID, messageType string, message interface{}) error
+	GetRoom(id uuid.UUID) (*domain.Room, error)
+	GetRooms() ([]*domain.Room, error)
 	GetRoomMessages(roomId uuid.UUID) ([]*MessageFull, error)
 }
 
