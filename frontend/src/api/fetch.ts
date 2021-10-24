@@ -40,7 +40,6 @@ export const makeRequest = async (
     });
 
     if (result.status === 200) {
-      console.log(result);
       const data = await result.json();
       return {
         status: true,

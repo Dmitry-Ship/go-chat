@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Room } from "../types/coreTypes";
 import { useRequest } from "../api/hooks";
 import NewRoomBtn from "./NewRoomBtn";
-import Loader from "./Loader";
+import Loader from "./common/Loader";
 import AccountSettingsBtn from "./AccountSettingsBtn";
 
 function Rooms() {
@@ -14,8 +14,7 @@ function Rooms() {
     <>
       <header className={`header header-for-scrollable`}>
         <h2>Rooms</h2>
-
-        <AccountSettingsBtn />
+        <NewRoomBtn />
       </header>
       <section className="wrap">
         <div className={`${styles.wrapper} scrollable-content`}>
@@ -35,7 +34,6 @@ function Rooms() {
             ))
           )}
         </div>
-        <NewRoomBtn />
       </section>
     </>
   );

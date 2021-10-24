@@ -30,20 +30,9 @@
 }
 
 .avatarColumn {
-  --avatar-size: 36px;
   width: var(--avatar-size);
   margin-right: 10px;
   flex-shrink: 0;
-}
-
-.avatar {
-  width: var(--avatar-size);
-  height: var(--avatar-size);
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .systemMessage {

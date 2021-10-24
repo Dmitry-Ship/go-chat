@@ -1,8 +1,8 @@
 import React from "react";
 import { Redirect, Route } from "react-router-dom";
-import { useAuth } from "../authContext";
+import { useAuth } from "../../authContext";
 
-const AuthRoute: React.FC<{
+const PrivateRoute: React.FC<{
   children: React.ReactNode;
   [key: string]: any;
 }> = ({ children, ...rest }) => {
@@ -12,12 +12,12 @@ const AuthRoute: React.FC<{
     <Route
       {...rest}
       render={({ location }) =>
-        !auth.isAuthenticated ? (
+        auth.isAuthenticated ? (
           children
         ) : (
           <Redirect
             to={{
-              pathname: "/",
+              pathname: "/login",
               state: { from: location },
             }}
           />
@@ -27,4 +27,4 @@ const AuthRoute: React.FC<{
   );
 };
 
-export default AuthRoute;
+export default PrivateRoute;

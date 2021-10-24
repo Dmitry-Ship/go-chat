@@ -23,6 +23,7 @@ code {
   --vh: 1px;
   --bar-height: calc(9 * var(--vh));
   --max-width: 756px;
+  --avatar-size: 36px;
 }
 
 .m-top-1 {
@@ -62,6 +63,7 @@ code {
   width: 100%;
   padding: 0 10px;
   display: flex;
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -118,4 +120,12 @@ code {
 .input:focus {
   color: white;
   border-color: var(--accent);
+}
+
+.navBtn {
+  font-size: xx-large;
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: none;
 }

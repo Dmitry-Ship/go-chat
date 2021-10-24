@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { usePortal } from "../utils";
+import { usePortal } from "../../utils";
 
 const Portal: React.FC<{ id: string; children: React.ReactNode }> = ({
   id,

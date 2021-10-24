@@ -43,16 +43,14 @@ func handleLogin(authService application.AuthService) func(w http.ResponseWriter
 		err := json.NewDecoder(r.Body).Decode(&request)
 
 		if err != nil {
-			log.Println("Body parse error", err)
-			w.WriteHeader(400)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		tokens, err := authService.Login(request.UserName, request.Password)
 
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -83,8 +81,7 @@ func handleLogout(authService application.AuthService) func(w http.ResponseWrite
 		err := authService.Logout(userID)
 
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -116,16 +113,14 @@ func handleSignUp(authService application.AuthService) func(w http.ResponseWrite
 		err := json.NewDecoder(r.Body).Decode(&request)
 
 		if err != nil {
-			log.Println("Body parse error", err)
-			w.WriteHeader(400)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		tokens, err := authService.SignUp(request.UserName, request.Password)
 
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -157,18 +152,17 @@ func handleRefreshToken(authService application.AuthService) func(w http.Respons
 
 		if err != nil {
 			if err == http.ErrNoCookie {
-				w.WriteHeader(http.StatusUnauthorized)
+				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
 			}
-			w.WriteHeader(http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		newAccessToken, err := authService.RefreshAccessToken(refreshToken.Value)
 
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -190,8 +184,7 @@ func handleGetUser(authService application.AuthService) func(w http.ResponseWrit
 		user, err := authService.GetUser(userID)
 
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -217,8 +210,7 @@ func handeleWS(
 	return func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -236,8 +228,7 @@ func handleGetRooms(roomService application.RoomService) func(w http.ResponseWri
 		rooms, err := roomService.GetRooms()
 
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -253,14 +244,14 @@ func handleGetRoomsMessages(roomService application.RoomService) func(w http.Res
 		roomId, err := uuid.Parse(roomIdQuery)
 
 		if err != nil {
-			log.Println(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		messages, err := roomService.GetRoomMessages(roomId)
 
 		if err != nil {
-			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -287,7 +278,7 @@ func handleGetRoom(roomService application.RoomService) func(w http.ResponseWrit
 		roomId, err := uuid.Parse(roomIdQuery)
 
 		if err != nil {
-			log.Println(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -320,8 +311,7 @@ func handleCreateRoom(roomService application.RoomService) func(w http.ResponseW
 		err := json.NewDecoder(r.Body).Decode(&request)
 
 		if err != nil {
-			log.Println("Body parse error", err)
-			w.WriteHeader(400)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -346,20 +336,16 @@ func handleDeleteRoom(roomService application.RoomService) func(w http.ResponseW
 		err := json.NewDecoder(r.Body).Decode(&request)
 
 		if err != nil {
-			log.Println("Body parse error", err)
-			w.WriteHeader(400)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		err = roomService.DeleteRoom(request.RoomId)
 
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		json.NewEncoder(w).Encode("OK")
 
 		response := struct {
 			RoomId uuid.UUID `json:"room_id"`

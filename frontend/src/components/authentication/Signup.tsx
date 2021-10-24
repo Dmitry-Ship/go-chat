@@ -1,22 +1,21 @@
 import React, { FormEvent } from "react";
 import styles from "./Login.module.css";
-import { Link } from "react-router-dom";
-import { useAuth } from "../authContext";
+import { useAuth } from "../../authContext";
 
-function Login() {
+function SignUp() {
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const { login } = useAuth();
+  const { signup } = useAuth();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    login(username, password);
+    signup(username, password);
   };
 
   return (
     <>
       <header className={`header`}>
-        <h2>Login</h2>
+        <h2>Sign Up</h2>
       </header>
       <section className={styles.wrap}>
         <form onSubmit={handleSubmit}>
@@ -42,15 +41,12 @@ function Login() {
             type="submit"
             className="btn m-top-1"
           >
-            Login
+            SignUp
           </button>
-          <Link to="/signup" className={`m-top-1 ${styles.signUpLink}`}>
-            or Sign Up
-          </Link>
         </form>
       </section>
     </>
   );
 }
 
-export default Login;
+export default SignUp;

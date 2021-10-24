@@ -44,7 +44,6 @@ func EnsureAuth(handlerToWrap authenticatedHandler, authService application.Auth
 		userId, err := authService.ParseAccessToken(accessToken.Value)
 
 		if err != nil {
-
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}

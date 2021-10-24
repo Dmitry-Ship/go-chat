@@ -2,13 +2,14 @@ import React, { useEffect, useRef } from "react";
 import styles from "./ChatLog.module.css";
 import { Message } from "../../types/coreTypes";
 import MessageComponent from "./Message";
-import Loader from "../Loader";
+import Loader from "../common/Loader";
 
 const ChatLog: React.FC<{ logs: Message[]; loading: boolean }> = ({
   logs,
   loading,
 }) => {
   const logComponent = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (logs.length > 0) {
       logComponent.current?.scrollIntoView();

@@ -2,6 +2,7 @@ import React from "react";
 import styles from "./Message.module.css";
 import { Message } from "../../types/coreTypes";
 import { useAuth } from "../../authContext";
+import Avatar from "../common/Avatar";
 
 const MessageComponent: React.FC<{
   message: Message;
@@ -11,7 +12,7 @@ const MessageComponent: React.FC<{
   const date = new Date(message.createdAt * 1000);
   const time = `${date.getHours()}:${date.getMinutes()}`;
 
-  const user = useAuth().user;
+  const { user } = useAuth();
 
   const isOutbound = message.user.id === user?.id;
   const isSystem = message.type === "system";
@@ -23,9 +24,7 @@ const MessageComponent: React.FC<{
       ) : (
         <>
           <div className={styles.avatarColumn}>
-            {isLastInAGroup && (
-              <div className={styles.avatar}>{message.user.avatar}</div>
-            )}
+            {isLastInAGroup && <Avatar src={message.user.avatar} />}
           </div>
 
           <div

@@ -66,7 +66,7 @@ export const useProvideAuth = (): auth => {
       });
 
       if (result.status) {
-        window.location.replace("/");
+        window.location.reload();
       }
     },
     logout: async () => {
@@ -75,7 +75,7 @@ export const useProvideAuth = (): auth => {
       });
 
       if (result.status) {
-        window.location.replace("/");
+        window.location.reload();
       }
     },
     signup: async (username: string, password: string) => {
@@ -86,8 +86,9 @@ export const useProvideAuth = (): auth => {
           password,
         },
       });
+
       if (result.status) {
-        window.location.replace("/");
+        window.location.reload();
       }
     },
   };

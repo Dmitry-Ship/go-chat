@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { onEvent, sendMsg } from "../../api/ws";
 import { Message, MessageRaw, Room } from "../../types/coreTypes";
 import styles from "./Chat.module.css";
 import ChatForm from "./ChatForm";
@@ -9,15 +8,17 @@ import { useRequest } from "../../api/hooks";
 import { parseMessage } from "../../messages";
 import EditRoomBtn from "./EditRoomBtn";
 import { useAuth } from "../../authContext";
+import { useWS } from "../../WSContext";
 
 const Chat = () => {
   const { roomId } = useParams<{ roomId: string }>();
-  const user = useAuth().user;
+  const { user } = useAuth();
   const history = useHistory();
 
   const [logs, setLogs] = useState<Message[]>([]);
   const [room, setRoom] = useState<Room>();
   const [isJoined, setIsJoined] = useState(false);
+  const { sendNotification, subscribe } = useWS();
 
   const appendLog = (items: Message[]) => {
     setLogs((oldLogs) => [...oldLogs, ...items]);
@@ -46,21 +47,28 @@ const Chat = () => {
   }, [data, loading]);
 
   useEffect(() => {
-    onEvent("message", (event) => {
+    subscribe("message", (event) => {
       appendLog([parseMessage(event.data)]);
     });
 
-    onEvent("room_deleted", (event) => {
+    subscribe("room_deleted", (event) => {
       if (event.data.room_id === roomId) {
         history.push("/");
       }
     });
   }, []);
 
+  const sendMessage = (msg: string, roomId: string, userId: string) => {
+    sendNotification({
+      type: "message",
+      data: { content: msg, room_id: roomId, user_id: userId },
+    });
+  };
+
   return (
     <>
       <header className={`header header-for-scrollable`}>
-        <Link className={styles.backButton} to="/">
+        <Link className={styles.backButton} to="/rooms">
           ⏪
         </Link>
         <b>{room?.name}</b>
@@ -72,7 +80,7 @@ const Chat = () => {
         <ChatLog logs={logs} loading={messagesLoading} />
 
         <ChatForm
-          onSubmit={sendMsg}
+          onSubmit={sendMessage}
           loading={loading}
           joined={isJoined}
           onJoin={() => setIsJoined(true)}

@@ -1,9 +1,9 @@
 import React, { FormEvent, useState } from "react";
 import styles from "./ChatForm.module.css";
 import { useParams } from "react-router-dom";
-import Loader from "../Loader";
-import { sendNotification } from "../../api/ws";
+import Loader from "../common/Loader";
 import { useAuth } from "../../authContext";
+import { useWS } from "../../WSContext";
 
 const ChatForm: React.FC<{
   loading: boolean;
@@ -15,6 +15,7 @@ const ChatForm: React.FC<{
 
   const { roomId } = useParams<{ roomId: string }>();
   const auth = useAuth();
+  const { sendNotification } = useWS();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

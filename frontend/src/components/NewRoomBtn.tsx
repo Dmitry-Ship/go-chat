@@ -1,17 +1,17 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { makeRequest } from "../api/fetch";
 import styles from "./NewRoomBtn.module.css";
-import SlideIn from "./SlideIn";
+import SlideIn from "./common/SlideIn";
 import { useHistory } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { useAuth } from "../authContext";
 
 function NewRoomBtn() {
-  const [isCreating, setIsCreating] = React.useState(false);
-  const [roomName, setRoomName] = React.useState("");
-  const user = useAuth().user;
+  const [isCreating, setIsCreating] = useState(false);
+  const [roomName, setRoomName] = useState("");
+  const { user } = useAuth();
   const history = useHistory();
-  const input = React.useRef<HTMLInputElement>(null);
+  const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isCreating) {
@@ -35,7 +35,7 @@ function NewRoomBtn() {
   };
 
   return (
-    <div className={`${styles.wrap} controls-for-scrollable`}>
+    <div>
       <button className={"btn"} onClick={() => setIsCreating(true)}>
         + New Room
       </button>

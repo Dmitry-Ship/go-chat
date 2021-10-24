@@ -1,27 +1,30 @@
-const events: Record<string, (msg: any) => void> = {};
+export type ConnectionState = "disconnected" | "connecting" | "connected";
 
-export const onEvent = (event: string, cb: (msg: any) => void) => {
-  events[event] = cb;
-};
+export const connectWS = (
+  onUpdateStatus: (status: ConnectionState) => void
+) => {
+  const connection = new WebSocket(import.meta.env.VITE_WS_DOMAIN + "/ws");
+  onUpdateStatus("connecting");
 
-export const connection = new WebSocket(import.meta.env.VITE_WS_DOMAIN + "/ws");
+  connection.onopen = () => {
+    onUpdateStatus("connected");
+  };
 
-connection.onmessage = (event) => {
-  const parsedMessage = JSON.parse(event.data);
-  events[parsedMessage.type]?.(parsedMessage);
-};
+  connection.onclose = () => {
+    const interval = setInterval(() => {
+      onUpdateStatus("connecting");
 
-export const sendNotification = (notification: {
-  type: string;
-  data: Record<string, any>;
-}) => {
-  const stringifiedMessage = JSON.stringify(notification);
-  connection.send(stringifiedMessage);
-};
+      if (connection.readyState === WebSocket.OPEN) {
+        clearInterval(interval);
+      } else {
+        connectWS(onUpdateStatus);
+      }
+    }, 10000);
+  };
 
-export const sendMsg = (msg: string, roomId: string, userId: string) => {
-  sendNotification({
-    type: "message",
-    data: { content: msg, room_id: roomId, user_id: userId },
-  });
+  connection.onerror = () => {
+    onUpdateStatus("disconnected");
+  };
+
+  return connection;
 };

@@ -1,19 +1,20 @@
 import React, { useState } from "react";
 import styles from "./EditRoomBtn.module.css";
-import SlideIn from "../SlideIn";
-import { sendNotification } from "../../api/ws";
+import SlideIn from "../common/SlideIn";
 import { useHistory, useParams } from "react-router-dom";
 import { makeRequest } from "../../api/fetch";
 import { useAuth } from "../../authContext";
+import { useWS } from "../../WSContext";
 
 const EditRoomBtn: React.FC<{ joined: boolean; onLeave: () => void }> = ({
   joined,
   onLeave,
 }) => {
   const { roomId } = useParams<{ roomId: string }>();
-  const user = useAuth().user;
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const history = useHistory();
+  const { sendNotification } = useWS();
 
   const handleClose = () => {
     setIsEditing(false);
