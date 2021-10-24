@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { makeRequest } from "../api/fetch";
+import { makeCommand } from "../api/fetch";
 import styles from "./NewRoomBtn.module.css";
 import SlideIn from "./common/SlideIn";
 import { useHistory } from "react-router-dom";
@@ -24,9 +24,10 @@ function NewRoomBtn() {
     setIsCreating(false);
     const roomId = uuidv4();
 
-    const result = await makeRequest("/createRoom", {
-      method: "POST",
-      body: { room_name: roomName, user_id: user?.id, room_id: roomId },
+    const result = await makeCommand("/createRoom", {
+      room_name: roomName,
+      user_id: user?.id,
+      room_id: roomId,
     });
 
     if (result.status) {

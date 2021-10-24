@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import styles from "./EditRoomBtn.module.css";
 import SlideIn from "../common/SlideIn";
 import { useHistory, useParams } from "react-router-dom";
-import { makeRequest } from "../../api/fetch";
+import { makeCommand } from "../../api/fetch";
 import { useAuth } from "../../authContext";
 import { useWS } from "../../WSContext";
 
@@ -21,20 +21,14 @@ const EditRoomBtn: React.FC<{ joined: boolean; onLeave: () => void }> = ({
   };
 
   const handleLeave = () => {
-    sendNotification({
-      type: "leave",
-      data: { room_id: roomId, user_id: user?.id },
-    });
+    sendNotification("leave", { room_id: roomId, user_id: user?.id });
     onLeave();
     history.push("/");
     setIsEditing(false);
   };
 
   const handleDelete = async () => {
-    await makeRequest("/deleteRoom", {
-      method: "POST",
-      body: { room_id: roomId, user_id: user?.id },
-    });
+    await makeCommand("/deleteRoom", { room_id: roomId, user_id: user?.id });
 
     history.push("/");
     setIsEditing(false);

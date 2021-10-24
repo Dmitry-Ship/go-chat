@@ -13,9 +13,6 @@ import Navigation from "./Navigation";
 
 const Routes = () => {
   const auth = useAuth();
-  if (auth.isChecking) {
-    return <Loader />;
-  }
 
   return (
     <ProvideWS isEnabled={auth.isAuthenticated}>

@@ -1,25 +1,24 @@
 import { useEffect, useState } from "react";
-import { makeRequest, Request } from "./fetch";
+import { makeQuery } from "./fetch";
 
-export const useRequest = <T,>(
-  url: string,
-  request?: Request
-): { data: T; loading: boolean } => {
-  const [data, setData] = useState<any>();
-  const [loading, setLoading] = useState(true);
+type Response<T> =
+  | { status: "fetching" }
+  | { status: "done"; data: T | null }
+  | { status: "error" };
+
+export const useQuery = <T,>(url: string): Response<T> => {
+  const [response, setResponse] = useState<Response<T>>({
+    status: "fetching",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await makeRequest(url, request);
-      setData(response.data);
-      setLoading(false);
+      const response = await makeQuery(url);
+      setResponse({ status: "done", data: response.data });
     };
 
     fetchData();
   }, []);
 
-  return {
-    data,
-    loading,
-  };
+  return response;
 };

@@ -1,14 +1,36 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./ChatLog.module.css";
-import { Message } from "../../types/coreTypes";
+import { Message, MessageRaw } from "../../types/coreTypes";
 import MessageComponent from "./Message";
 import Loader from "../common/Loader";
+import { useParams } from "react-router-dom";
+import { useQuery } from "../../api/hooks";
+import { useAuth } from "../../authContext";
+import { parseMessage } from "../../messages";
+import { useWS } from "../../WSContext";
 
-const ChatLog: React.FC<{ logs: Message[]; loading: boolean }> = ({
-  logs,
-  loading,
-}) => {
+const ChatLog: React.FC = () => {
+  const { roomId } = useParams<{ roomId: string }>();
+  const { user } = useAuth();
+  const { subscribe } = useWS();
+
+  const [logs, setLogs] = useState<Message[]>([]);
+
+  const appendLog = (items: Message[]) => {
+    setLogs((oldLogs) => [...oldLogs, ...items]);
+  };
+
+  const messagesQuery = useQuery<{
+    messages: MessageRaw[];
+  }>(`/getRoomsMessages?room_id=${roomId}&user_id=${user?.id}`);
+
   const logComponent = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (messagesQuery.status === "done" && messagesQuery.data) {
+      appendLog(messagesQuery.data.messages?.map((m) => parseMessage(m)));
+    }
+  }, [messagesQuery]);
 
   useEffect(() => {
     if (logs.length > 0) {
@@ -16,9 +38,15 @@ const ChatLog: React.FC<{ logs: Message[]; loading: boolean }> = ({
     }
   }, [logs]);
 
+  useEffect(() => {
+    subscribe("message", (event) => {
+      appendLog([parseMessage(event.data)]);
+    });
+  }, []);
+
   return (
     <main className={`${styles.log} scrollable-content`}>
-      {loading ? (
+      {messagesQuery.status === "fetching" ? (
         <Loader />
       ) : (
         <>

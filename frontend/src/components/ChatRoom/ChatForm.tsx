@@ -9,8 +9,7 @@ const ChatForm: React.FC<{
   loading: boolean;
   joined: boolean;
   onJoin: () => void;
-  onSubmit: (message: string, roomId: string, userId: string) => void;
-}> = ({ onSubmit, loading, joined, onJoin }) => {
+}> = ({ loading, joined, onJoin }) => {
   const [message, setMessage] = useState<string>("");
 
   const { roomId } = useParams<{ roomId: string }>();
@@ -19,15 +18,18 @@ const ChatForm: React.FC<{
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSubmit(message, roomId, auth.user?.id || "");
+
+    sendNotification("message", {
+      content: message,
+      room_id: roomId,
+      user_id: auth.user?.id || "",
+    });
+
     setMessage("");
   };
 
   const handleJoin = () => {
-    sendNotification({
-      type: "join",
-      data: { room_id: roomId, user_id: auth.user?.id },
-    });
+    sendNotification("join", { room_id: roomId, user_id: auth.user?.id });
     onJoin();
   };
 

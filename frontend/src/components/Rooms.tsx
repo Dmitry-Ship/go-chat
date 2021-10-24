@@ -2,13 +2,12 @@ import React from "react";
 import styles from "./Rooms.module.css";
 import { Link } from "react-router-dom";
 import { Room } from "../types/coreTypes";
-import { useRequest } from "../api/hooks";
+import { useQuery } from "../api/hooks";
 import NewRoomBtn from "./NewRoomBtn";
 import Loader from "./common/Loader";
-import AccountSettingsBtn from "./AccountSettingsBtn";
 
 function Rooms() {
-  const { data, loading } = useRequest<Room[]>("/getRooms");
+  const response = useQuery<Room[]>("/getRooms");
 
   return (
     <>
@@ -18,21 +17,26 @@ function Rooms() {
       </header>
       <section className="wrap">
         <div className={`${styles.wrapper} scrollable-content`}>
-          {loading ? (
-            <Loader />
-          ) : (
-            data?.map((room, i) => (
-              <Link
-                key={i}
-                to={"room/" + room.id}
-                className={`${styles.room} rounded`}
-              >
-                <div>
-                  <h3>{room.name}</h3>
-                </div>
-              </Link>
-            ))
-          )}
+          {(() => {
+            switch (response.status) {
+              case "fetching":
+                return <Loader />;
+              case "done":
+                return response.data?.map((room, i) => (
+                  <Link
+                    key={i}
+                    to={"room/" + room.id}
+                    className={`${styles.room} rounded`}
+                  >
+                    <div>
+                      <h3>{room.name}</h3>
+                    </div>
+                  </Link>
+                ));
+              default:
+                return null;
+            }
+          })()}
         </div>
       </section>
     </>

@@ -3,10 +3,7 @@ import { ConnectionState, connectWS } from "./api/ws";
 
 type ws = {
   status: ConnectionState;
-  sendNotification: (notification: {
-    type: string;
-    data: Record<string, any>;
-  }) => void;
+  sendNotification: (type: string, payload: Record<string, any>) => void;
   subscribe: (event: string, cb: (msg: any) => void) => void;
 };
 
@@ -37,9 +34,14 @@ export const useProvideWS = ({ isEnabled }: { isEnabled: boolean }): ws => {
 
   return {
     status,
-    sendNotification: (notification) => {
-      const stringifiedMessage = JSON.stringify(notification);
-      connection?.send(stringifiedMessage);
+    sendNotification: (type, payload) => {
+      const notificationObj = {
+        type: type,
+        data: payload,
+      };
+
+      const stringified = JSON.stringify(notificationObj);
+      connection?.send(stringified);
     },
     subscribe: (event, cb) => {
       setEvents((prev) => ({ ...prev, [event]: cb }));
