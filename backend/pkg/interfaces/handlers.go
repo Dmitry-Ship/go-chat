@@ -62,6 +62,7 @@ func handleLogin(authService application.AuthService) func(w http.ResponseWriter
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
 			HttpOnly: true,
 			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -70,6 +71,7 @@ func handleLogin(authService application.AuthService) func(w http.ResponseWriter
 			Expires:  time.Now().Add(application.RefreshTokenExpiration),
 			HttpOnly: true,
 			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
 		})
 
 		json.NewEncoder(w).Encode("OK")
@@ -169,10 +171,6 @@ func handleRefreshToken(authService application.AuthService) func(w http.Respons
 			w.WriteHeader(500)
 			return
 		}
-
-		url := os.Getenv("ORIGIN_URL")
-
-		url = url[8:]
 
 		http.SetCookie(w, &http.Cookie{
 			Name:     "access_token",
