@@ -27,22 +27,22 @@ type outgoingNotification struct {
 }
 
 type Client struct {
-	Id               uuid.UUID
-	wsMessageChannel chan<- json.RawMessage
-	hub              Hub
-	Conn             *websocket.Conn
-	send             chan outgoingNotification
-	userID           uuid.UUID
+	Id                     uuid.UUID
+	incomingMessageChannel chan<- json.RawMessage
+	hub                    Hub
+	Conn                   *websocket.Conn
+	send                   chan outgoingNotification
+	userID                 uuid.UUID
 }
 
-func NewClient(conn *websocket.Conn, hub Hub, wsMessageChannel chan<- json.RawMessage, userID uuid.UUID) *Client {
+func NewClient(conn *websocket.Conn, hub Hub, incomingMessageChannel chan<- json.RawMessage, userID uuid.UUID) *Client {
 	return &Client{
-		Id:               uuid.New(),
-		wsMessageChannel: wsMessageChannel,
-		Conn:             conn,
-		hub:              hub,
-		send:             make(chan outgoingNotification, 1024),
-		userID:           userID,
+		Id:                     uuid.New(),
+		incomingMessageChannel: incomingMessageChannel,
+		Conn:                   conn,
+		hub:                    hub,
+		send:                   make(chan outgoingNotification, 1024),
+		userID:                 userID,
 	}
 }
 
@@ -66,7 +66,7 @@ func (c *Client) ReceiveMessages() {
 			break
 		}
 
-		c.wsMessageChannel <- message
+		c.incomingMessageChannel <- message
 
 	}
 }

@@ -24,13 +24,13 @@ const ChatLog: React.FC = () => {
     messages: MessageRaw[];
   }>(`/getRoomsMessages?room_id=${roomId}&user_id=${user?.id}`);
 
-  const logComponent = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (messagesQuery.status === "done" && messagesQuery.data) {
       appendLog(messagesQuery.data.messages?.map((m) => parseMessage(m)));
     }
   }, [messagesQuery]);
+
+  const logComponent = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (logs.length > 0) {

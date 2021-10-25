@@ -4,7 +4,6 @@ import (
 	"GitHub/go-chat/backend/domain"
 	"GitHub/go-chat/backend/pkg/application"
 	"encoding/json"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -17,14 +16,14 @@ func HandleRequests(
 	roomService application.RoomService,
 	authService application.AuthService,
 	hub application.Hub,
-	wsMessageChannel chan json.RawMessage,
+	incomingMessageChannel chan json.RawMessage,
 ) {
 	http.HandleFunc("/signup", AddDefaultHeaders(handleSignUp(authService)))
 	http.HandleFunc("/login", AddDefaultHeaders(handleLogin(authService)))
 	http.HandleFunc("/logout", AddDefaultHeaders(EnsureAuth(handleLogout(authService), authService)))
 	http.HandleFunc("/refreshToken", AddDefaultHeaders((handleRefreshToken(authService))))
 
-	http.HandleFunc("/ws", EnsureAuth(handeleWS(wsMessageChannel, hub), authService))
+	http.HandleFunc("/ws", EnsureAuth(handeleWS(incomingMessageChannel, hub), authService))
 	http.HandleFunc("/getRooms", AddDefaultHeaders(EnsureAuth(handleGetRooms(roomService), authService)))
 	http.HandleFunc("/getRoom", AddDefaultHeaders(EnsureAuth(handleGetRoom(roomService), authService)))
 	http.HandleFunc("/getUser", AddDefaultHeaders(EnsureAuth(handleGetUser(authService), authService)))
@@ -204,7 +203,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func handeleWS(
-	wsMessageChannel chan json.RawMessage,
+	incomingMessageChannel chan json.RawMessage,
 	hub application.Hub,
 ) func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
 	return func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
@@ -214,7 +213,7 @@ func handeleWS(
 			return
 		}
 
-		client := application.NewClient(conn, hub, wsMessageChannel, userID)
+		client := application.NewClient(conn, hub, incomingMessageChannel, userID)
 
 		hub.Register(client)
 
@@ -285,7 +284,7 @@ func handleGetRoom(roomService application.RoomService) func(w http.ResponseWrit
 		room, err := roomService.GetRoom(roomId)
 
 		if err != nil {
-			log.Println(err)
+			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 
@@ -318,7 +317,6 @@ func handleCreateRoom(roomService application.RoomService) func(w http.ResponseW
 		err = roomService.CreateRoom(request.RoomId, request.RoomName, userID)
 
 		if err != nil {
-			log.Println(err)
 			w.WriteHeader(500)
 			return
 		}

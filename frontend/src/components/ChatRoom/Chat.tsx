@@ -17,6 +17,14 @@ const Chat = () => {
   const [isJoined, setIsJoined] = useState(false);
   const { subscribe } = useWS();
 
+  useEffect(() => {
+    subscribe("room_deleted", (event) => {
+      if (event.data.room_id === roomId) {
+        history.push("/");
+      }
+    });
+  }, []);
+
   const roomQuery = useQuery<{
     room: Room;
     joined: boolean;
@@ -28,14 +36,6 @@ const Chat = () => {
       setIsJoined(roomQuery.data.joined);
     }
   }, [roomQuery]);
-
-  useEffect(() => {
-    subscribe("room_deleted", (event) => {
-      if (event.data.room_id === roomId) {
-        history.push("/");
-      }
-    });
-  }, []);
 
   return (
     <>
