@@ -5,6 +5,7 @@ services:
     environment:
       - PORT
       - ORIGIN_URL
+      - DOMAIN=localhost
     build:
       context: ./backend
       target: dev
