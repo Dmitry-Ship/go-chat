@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useAuth } from "../authContext";
-import { ProvideWS, useWS } from "../WSContext";
+import { ProvideWS } from "../WSContext";
 import { BrowserRouter as Router, Switch } from "react-router-dom";
 import Loader from "./common/Loader";
 import AuthRoute from "./common/AuthRoute";
@@ -13,6 +13,10 @@ import Navigation from "./Navigation";
 
 const Routes = () => {
   const auth = useAuth();
+
+  if (auth.isChecking) {
+    return <Loader />;
+  }
 
   return (
     <ProvideWS isEnabled={auth.isAuthenticated}>

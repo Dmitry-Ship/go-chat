@@ -8,16 +8,15 @@ const ACCESS_TOKEN_REFETCH_TIME = ACCESS_TOKEN_LIFETIME / 2;
 type auth = {
   user: null | User;
   isAuthenticated: boolean;
+  isChecking: boolean;
   signup: (username: string, password: string) => void;
   login: (username: string, password: string) => void;
   logout: () => void;
 };
 
 export const useProvideAuth = (): auth => {
-  const isPreviouslyAuthenticated = Boolean(
-    localStorage.getItem("isAuthenticated")
-  );
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isChecking, setIsChecking] = useState<boolean>(true);
   const [user, setUser] = useState<User | null>(null);
 
   const refreshToken = async () => {
@@ -25,39 +24,34 @@ export const useProvideAuth = (): auth => {
 
     if (!result.status) {
       setIsAuthenticated(false);
-      localStorage.setItem("isAuthenticated", "");
     } else {
       setIsAuthenticated(true);
-      localStorage.setItem("isAuthenticated", "true");
+    }
+    setIsChecking(false);
+  };
+
+  const fetchUser = async () => {
+    const result = await makeQuery("/getUser");
+
+    if (result.status) {
+      setUser(result.data);
     }
   };
 
   useEffect(() => {
-    if (isPreviouslyAuthenticated) {
-      refreshToken();
+    refreshToken();
 
+    if (isAuthenticated) {
+      fetchUser();
       const interval = setInterval(refreshToken, ACCESS_TOKEN_REFETCH_TIME);
 
       return () => clearInterval(interval);
-    }
-  }, [isPreviouslyAuthenticated]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      const fetchUser = async () => {
-        const result = await makeQuery("/getUser");
-
-        if (result.status) {
-          setUser(result.data);
-        }
-      };
-
-      fetchUser();
     }
   }, [isAuthenticated]);
 
   return {
     isAuthenticated,
+    isChecking,
     user,
     login: async (username: string, password: string) => {
       const result = await makeCommand("/login", {
@@ -66,7 +60,6 @@ export const useProvideAuth = (): auth => {
       });
 
       if (result.status) {
-        localStorage.setItem("isAuthenticated", "true");
         window.location.reload();
       }
     },
@@ -74,7 +67,6 @@ export const useProvideAuth = (): auth => {
       const result = await makeCommand("/logout");
 
       if (result.status) {
-        localStorage.setItem("isAuthenticated", "");
         window.location.reload();
       }
     },
@@ -85,7 +77,6 @@ export const useProvideAuth = (): auth => {
       });
 
       if (result.status) {
-        localStorage.setItem("isAuthenticated", "true");
         window.location.reload();
       }
     },
@@ -95,6 +86,7 @@ export const useProvideAuth = (): auth => {
 const authContext = createContext<auth>({
   user: null,
   isAuthenticated: false,
+  isChecking: true,
   signup: (username: string, password: string) => {},
   login: (username: string, password: string) => {},
   logout: () => {},
