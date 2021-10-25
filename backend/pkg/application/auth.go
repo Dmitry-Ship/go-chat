@@ -4,7 +4,6 @@ import (
 	"GitHub/go-chat/backend/domain"
 	"errors"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -43,11 +42,6 @@ type AuthService interface {
 func NewAuthService(users domain.UserRepository) *authService {
 	domain := os.Getenv("ORIGIN_URL")
 	domain = domain[8:]
-
-	// add www. if not present
-	if !strings.HasPrefix(domain, "www.") {
-		domain = "www." + domain
-	}
 
 	return &authService{
 		users:  users,
