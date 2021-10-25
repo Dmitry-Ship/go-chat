@@ -16,7 +16,7 @@ function Login() {
   return (
     <>
       <header className={`header`}>
-        <h2>Login</h2>
+        <h2>Go Chat</h2>
       </header>
       <section className={styles.wrap}>
         <form onSubmit={handleSubmit}>

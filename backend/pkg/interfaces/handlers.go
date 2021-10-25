@@ -129,6 +129,8 @@ func handleSignUp(authService application.AuthService) func(w http.ResponseWrite
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
+			Path:     "/",
+			Domain:   authService.GetDomain(),
 			SameSite: http.SameSiteNoneMode,
 		})
 
@@ -138,6 +140,8 @@ func handleSignUp(authService application.AuthService) func(w http.ResponseWrite
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.RefreshTokenExpiration),
+			Path:     "/",
+			Domain:   authService.GetDomain(),
 			SameSite: http.SameSiteNoneMode,
 		})
 
@@ -171,6 +175,8 @@ func handleRefreshToken(authService application.AuthService) func(w http.Respons
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
+			Path:     "/",
+			Domain:   authService.GetDomain(),
 			SameSite: http.SameSiteNoneMode,
 		})
 

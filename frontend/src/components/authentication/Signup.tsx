@@ -1,6 +1,7 @@
 import React, { FormEvent } from "react";
 import styles from "./Login.module.css";
 import { useAuth } from "../../authContext";
+import { Link } from "react-router-dom";
 
 function SignUp() {
   const [username, setUsername] = React.useState("");
@@ -15,7 +16,7 @@ function SignUp() {
   return (
     <>
       <header className={`header`}>
-        <h2>Sign Up</h2>
+        <h2>Go Chat</h2>
       </header>
       <section className={styles.wrap}>
         <form onSubmit={handleSubmit}>
@@ -43,6 +44,9 @@ function SignUp() {
           >
             SignUp
           </button>
+          <Link to="/login" className={`m-top-1 ${styles.signUpLink}`}>
+            I already have an account
+          </Link>
         </form>
       </section>
     </>

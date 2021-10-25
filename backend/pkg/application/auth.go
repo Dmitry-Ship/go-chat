@@ -20,7 +20,8 @@ type tokenClaims struct {
 }
 
 type authService struct {
-	users domain.UserRepository
+	users  domain.UserRepository
+	Domain string
 }
 
 type Tokens struct {
@@ -35,12 +36,21 @@ type AuthService interface {
 	GetUser(userId uuid.UUID) (*domain.User, error)
 	ParseAccessToken(tokenString string) (uuid.UUID, error)
 	RefreshAccessToken(refreshTokenString string) (string, error)
+	GetDomain() string
 }
 
 func NewAuthService(users domain.UserRepository) *authService {
+	domain := os.Getenv("ORIGIN_URL")
+	domain = domain[8:]
+
 	return &authService{
-		users: users,
+		users:  users,
+		Domain: domain,
 	}
+}
+
+func (s *authService) GetDomain() string {
+	return s.Domain
 }
 
 func (s *authService) GetUser(userId uuid.UUID) (*domain.User, error) {
