@@ -10,18 +10,6 @@ export const connectWS = (
     onUpdateStatus("connected");
   };
 
-  connection.onclose = () => {
-    const interval = setInterval(() => {
-      onUpdateStatus("connecting");
-
-      if (connection.readyState === WebSocket.OPEN) {
-        clearInterval(interval);
-      } else {
-        connectWS(onUpdateStatus);
-      }
-    }, 10000);
-  };
-
   connection.onerror = () => {
     onUpdateStatus("disconnected");
   };

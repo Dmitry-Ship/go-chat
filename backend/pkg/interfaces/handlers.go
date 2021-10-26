@@ -35,7 +35,7 @@ func HandleRequests(
 func handleLogin(authService application.AuthService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
-			UserName string `json:"user_name"`
+			UserName string `json:"username"`
 			Password string `json:"password"`
 		}{}
 
@@ -59,7 +59,6 @@ func handleLogin(authService application.AuthService) func(w http.ResponseWriter
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
 			HttpOnly: true,
 			Secure:   true,
-			SameSite: http.SameSiteNoneMode,
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -68,7 +67,6 @@ func handleLogin(authService application.AuthService) func(w http.ResponseWriter
 			Expires:  time.Now().Add(application.RefreshTokenExpiration),
 			HttpOnly: true,
 			Secure:   true,
-			SameSite: http.SameSiteNoneMode,
 		})
 
 		json.NewEncoder(w).Encode("OK")
@@ -105,7 +103,7 @@ func handleLogout(authService application.AuthService) func(w http.ResponseWrite
 func handleSignUp(authService application.AuthService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
-			UserName string `json:"user_name"`
+			UserName string `json:"username"`
 			Password string `json:"password"`
 		}{}
 
@@ -129,9 +127,6 @@ func handleSignUp(authService application.AuthService) func(w http.ResponseWrite
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
-			Path:     "/",
-			Domain:   authService.GetDomain(),
-			SameSite: http.SameSiteNoneMode,
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -140,9 +135,6 @@ func handleSignUp(authService application.AuthService) func(w http.ResponseWrite
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.RefreshTokenExpiration),
-			Path:     "/",
-			Domain:   authService.GetDomain(),
-			SameSite: http.SameSiteNoneMode,
 		})
 
 		json.NewEncoder(w).Encode("OK")
@@ -175,9 +167,6 @@ func handleRefreshToken(authService application.AuthService) func(w http.Respons
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
-			Path:     "/",
-			Domain:   authService.GetDomain(),
-			SameSite: http.SameSiteNoneMode,
 		})
 
 		json.NewEncoder(w).Encode("OK")

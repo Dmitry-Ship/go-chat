@@ -55,7 +55,7 @@ export const useProvideAuth = (): auth => {
     user,
     login: async (username: string, password: string) => {
       const result = await makeCommand("/login", {
-        user_name: username,
+        username: username,
         password,
       });
 
@@ -72,7 +72,7 @@ export const useProvideAuth = (): auth => {
     },
     signup: async (username: string, password: string) => {
       const result = await makeCommand("/signup", {
-        user_name: username,
+        username: username,
         password,
       });
 
