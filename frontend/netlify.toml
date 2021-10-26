@@ -1,6 +1,6 @@
 [[redirects]]
-  from = "https://agitated-lalande-771c50.netlify.app/api/*"
-  to = "https://go-chat-23rpzgbtta-uc.a.run.app:splat"
+  from = "/api/*"
+  to = "https://go-chat-23rpzgbtta-uc.a.run.app/:splat"
   status = 200
 
 
