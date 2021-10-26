@@ -59,7 +59,7 @@ func handleLogin(authService application.AuthService) func(w http.ResponseWriter
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
 			HttpOnly: true,
 			Secure:   true,
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteNoneMode,
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -68,7 +68,7 @@ func handleLogin(authService application.AuthService) func(w http.ResponseWriter
 			Expires:  time.Now().Add(application.RefreshTokenExpiration),
 			HttpOnly: true,
 			Secure:   true,
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteNoneMode,
 		})
 
 		json.NewEncoder(w).Encode("OK")
@@ -129,7 +129,7 @@ func handleSignUp(authService application.AuthService) func(w http.ResponseWrite
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteNoneMode,
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -138,7 +138,7 @@ func handleSignUp(authService application.AuthService) func(w http.ResponseWrite
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.RefreshTokenExpiration),
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteNoneMode,
 		})
 
 		json.NewEncoder(w).Encode("OK")
@@ -171,7 +171,7 @@ func handleRefreshToken(authService application.AuthService) func(w http.Respons
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteNoneMode,
 		})
 
 		json.NewEncoder(w).Encode("OK")
