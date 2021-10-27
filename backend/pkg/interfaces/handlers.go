@@ -59,6 +59,7 @@ func handleLogin(authService application.AuthService) func(w http.ResponseWriter
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
 			HttpOnly: true,
 			Secure:   true,
+			Path:     "/",
 			SameSite: http.SameSiteNoneMode,
 		})
 
@@ -68,6 +69,7 @@ func handleLogin(authService application.AuthService) func(w http.ResponseWriter
 			Expires:  time.Now().Add(application.RefreshTokenExpiration),
 			HttpOnly: true,
 			Secure:   true,
+			Path:     "/",
 			SameSite: http.SameSiteNoneMode,
 		})
 
@@ -129,6 +131,7 @@ func handleSignUp(authService application.AuthService) func(w http.ResponseWrite
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
+			Path:     "/",
 			SameSite: http.SameSiteNoneMode,
 		})
 
@@ -137,6 +140,7 @@ func handleSignUp(authService application.AuthService) func(w http.ResponseWrite
 			Value:    tokens.RefreshToken,
 			HttpOnly: true,
 			Secure:   true,
+			Path:     "/",
 			Expires:  time.Now().Add(application.RefreshTokenExpiration),
 			SameSite: http.SameSiteNoneMode,
 		})
@@ -171,6 +175,7 @@ func handleRefreshToken(authService application.AuthService) func(w http.Respons
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(application.AccessTokenExpiration),
+			Path:     "/",
 			SameSite: http.SameSiteNoneMode,
 		})
 
@@ -196,9 +201,9 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		clientURL := os.Getenv("ORIGIN_URL")
+		origin := os.Getenv("ORIGIN_URL")
 
-		return r.Header.Get("Origin") == clientURL
+		return r.Header.Get("Origin") == origin
 	},
 }
 

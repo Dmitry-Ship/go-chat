@@ -15,8 +15,7 @@ services:
 
   frontend:
     environment:
-      - VITE_WS_DOMAIN=ws://localhost:${PORT}
-      - VITE_DOMAIN=http://localhost:${PORT}
+      - VITE_WS_DOMAIN=ws://localhost:3000
     restart: always
     build:
       context: ./frontend
