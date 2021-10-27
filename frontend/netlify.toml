@@ -5,7 +5,7 @@
 
 [[redirects]]
   from = "/ws"
-  to = "https://go-chat-23rpzgbtta-uc.a.run.app/ws"
+  to = "wss://go-chat-23rpzgbtta-uc.a.run.app/ws"
   status = 200
   
   
