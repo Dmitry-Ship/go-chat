@@ -2,6 +2,14 @@
 
 real time chat app
 
-[https://agitated-lalande-771c50.netlify.app/](https://agitated-lalande-771c50.netlify.app/)
+[https://coverfield.app](https://coverfield.app)
 
+## ⚡️ Quick Start
 
+1. Install and boot up docker
+2. Create `.env` file at root directory taking `.env.example` as a base.
+3. Run following command:
+
+```
+docker-compose up --build
+```

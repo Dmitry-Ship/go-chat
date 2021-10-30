@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { makeCommand, makeQuery } from "./api/fetch";
-import { User } from "./types/coreTypes";
+import { makeCommand, makeQuery } from "../api/fetch";
+import { User } from "../types/coreTypes";
 
 const ACCESS_TOKEN_LIFETIME = 1000 * 60 * 10;
 const ACCESS_TOKEN_REFETCH_TIME = ACCESS_TOKEN_LIFETIME / 2;

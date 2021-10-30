@@ -3,14 +3,12 @@ import styles from "./ChatLog.module.css";
 import { Message, MessageRaw } from "../../types/coreTypes";
 import MessageComponent from "./Message";
 import Loader from "../common/Loader";
-import { useParams } from "react-router-dom";
 import { useQuery } from "../../api/hooks";
-import { useAuth } from "../../authContext";
+import { useAuth } from "../../contexts/authContext";
 import { parseMessage } from "../../messages";
-import { useWS } from "../../WSContext";
+import { useWS } from "../../contexts/WSContext";
 
-const ChatLog: React.FC = () => {
-  const { roomId } = useParams<{ roomId: string }>();
+const ChatLog: React.FC<{ roomId: string }> = ({ roomId }) => {
   const { user } = useAuth();
   const { subscribe } = useWS();
 

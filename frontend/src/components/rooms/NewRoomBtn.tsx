@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { makeCommand } from "../api/fetch";
+import { makeCommand } from "../../api/fetch";
 import styles from "./NewRoomBtn.module.css";
-import SlideIn from "./common/SlideIn";
-import { useHistory } from "react-router-dom";
+import SlideIn from "../common/SlideIn";
 import { v4 as uuidv4 } from "uuid";
-import { useAuth } from "../authContext";
+import { useAuth } from "../../contexts/authContext";
+import { useRouter } from "next/router";
 
 function NewRoomBtn() {
   const [isCreating, setIsCreating] = useState(false);
   const [roomName, setRoomName] = useState("");
   const { user } = useAuth();
-  const history = useHistory();
+  const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ function NewRoomBtn() {
     });
 
     if (result.status) {
-      history.push(`/room/${roomId}`);
+      router.push(`/rooms/${roomId}`);
     }
   };
 

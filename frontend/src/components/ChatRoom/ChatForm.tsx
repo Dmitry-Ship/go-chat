@@ -1,18 +1,17 @@
 import React, { FormEvent, useState } from "react";
 import styles from "./ChatForm.module.css";
-import { useParams } from "react-router-dom";
 import Loader from "../common/Loader";
-import { useAuth } from "../../authContext";
-import { useWS } from "../../WSContext";
+import { useAuth } from "../../contexts/authContext";
+import { useWS } from "../../contexts/WSContext";
 
 const ChatForm: React.FC<{
   loading: boolean;
   joined: boolean;
+  roomId: string;
   onJoin: () => void;
-}> = ({ loading, joined, onJoin }) => {
+}> = ({ loading, joined, onJoin, roomId }) => {
   const [message, setMessage] = useState<string>("");
 
-  const { roomId } = useParams<{ roomId: string }>();
   const auth = useAuth();
   const { sendNotification } = useWS();
 

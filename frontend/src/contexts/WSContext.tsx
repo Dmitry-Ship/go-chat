@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { ConnectionState, connectWS } from "./api/ws";
+import { ConnectionState, connectWS } from "../api/ws";
 
 type ws = {
   status: ConnectionState;

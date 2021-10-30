@@ -1,7 +1,7 @@
 import React, { FormEvent } from "react";
 import styles from "./Login.module.css";
-import { Link } from "react-router-dom";
-import { useAuth } from "../../authContext";
+import Link from "next/link";
+import { useAuth } from "../../contexts/authContext";
 
 function Login() {
   const [username, setUsername] = React.useState("");
@@ -44,8 +44,9 @@ function Login() {
           >
             Login
           </button>
-          <Link to="/signup" className={`m-top-1 ${styles.signUpLink}`}>
-            or Sign Up
+
+          <Link href="/signup">
+            <a className={`m-top-1 ${styles.signUpLink}`}>or Sign Up</a>
           </Link>
         </form>
       </section>

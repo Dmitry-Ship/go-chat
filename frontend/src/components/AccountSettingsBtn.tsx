@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styles from "./AccountSettingsBtn.module.css";
 import SlideIn from "./common/SlideIn";
-import { useAuth } from "../authContext";
+import { useAuth } from "../contexts/authContext";
 import Avatar from "./common/Avatar";
 
 const AccountSettingsBtn: React.FC = () => {

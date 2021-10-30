@@ -29,7 +29,8 @@ jobs:
 
       - name: Build
         env:
-          VITE_WS_DOMAIN: ${{ secrets.WS_DOMAIN }}
+          NEXT_PUBLIC_WS_DOMAIN: ${{ secrets.WS_DOMAIN }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
         run: npm run build
 
       - name: Deploy to Netlify
@@ -40,7 +41,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
           enable-pull-request-comment: false
-          netlify-config-path: frontend/netlify.toml
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

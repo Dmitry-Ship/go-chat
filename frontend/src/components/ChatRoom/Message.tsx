@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./Message.module.css";
 import { Message } from "../../types/coreTypes";
-import { useAuth } from "../../authContext";
+import { useAuth } from "../../contexts/authContext";
 import Avatar from "../common/Avatar";
 
 const MessageComponent: React.FC<{

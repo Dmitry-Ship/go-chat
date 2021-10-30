@@ -1,7 +1,7 @@
 import React, { FormEvent } from "react";
 import styles from "./Login.module.css";
-import { useAuth } from "../../authContext";
-import { Link } from "react-router-dom";
+import { useAuth } from "../../contexts/authContext";
+import Link from "next/link";
 
 function SignUp() {
   const [username, setUsername] = React.useState("");
@@ -44,8 +44,10 @@ function SignUp() {
           >
             SignUp
           </button>
-          <Link to="/login" className={`m-top-1 ${styles.signUpLink}`}>
-            I already have an account
+          <Link href="/login">
+            <a className={`m-top-1 ${styles.signUpLink}`}>
+              I already have an account
+            </a>
           </Link>
         </form>
       </section>

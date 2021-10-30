@@ -1,10 +1,10 @@
 import React from "react";
 import styles from "./Rooms.module.css";
-import { Link } from "react-router-dom";
-import { Room } from "../types/coreTypes";
-import { useQuery } from "../api/hooks";
+import { Room } from "../../types/coreTypes";
+import { useQuery } from "../../api/hooks";
 import NewRoomBtn from "./NewRoomBtn";
-import Loader from "./common/Loader";
+import Loader from "../../components/common/Loader";
+import Link from "next/link";
 
 function Rooms() {
   const response = useQuery<Room[]>("/getRooms");
@@ -23,14 +23,12 @@ function Rooms() {
                 return <Loader />;
               case "done":
                 return response.data?.map((room, i) => (
-                  <Link
-                    key={i}
-                    to={"room/" + room.id}
-                    className={`${styles.room} rounded`}
-                  >
-                    <div>
-                      <h3>{room.name}</h3>
-                    </div>
+                  <Link key={i} href={"rooms/" + room.id}>
+                    <a className={`${styles.room} rounded`}>
+                      <div>
+                        <h3>{room.name}</h3>
+                      </div>
+                    </a>
                   </Link>
                 ));
               default:

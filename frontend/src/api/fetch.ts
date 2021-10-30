@@ -16,7 +16,7 @@ const returnResult = async (response: Response) => {
 export const makeQuery = async (
   url: string
 ): Promise<{ status: boolean; data: any }> => {
-  url = "/api" + url;
+  url = process.env.NEXT_PUBLIC_API_URL + url;
   try {
     const result = await fetch(url, {
       method: "GET",
@@ -40,7 +40,7 @@ export const makeCommand = async (
   url: string,
   body?: Record<string, any>
 ): Promise<{ status: boolean; data: any }> => {
-  url = "/api" + url;
+  url = process.env.NEXT_PUBLIC_API_URL + url;
   try {
     const result = await fetch(url, {
       method: "POST",

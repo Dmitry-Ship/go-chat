@@ -3,16 +3,17 @@ import { Room } from "../../types/coreTypes";
 import styles from "./Chat.module.css";
 import ChatForm from "./ChatForm";
 import ChatLog from "./ChatLog";
-import { Link, useHistory, useParams } from "react-router-dom";
 import { useQuery } from "../../api/hooks";
 import EditRoomBtn from "./EditRoomBtn";
-import { useAuth } from "../../authContext";
-import { useWS } from "../../WSContext";
+import { useAuth } from "../../contexts/authContext";
+import { useWS } from "../../contexts/WSContext";
+import { useRouter } from "next/router";
+import Link from "next/link";
 
 const Chat = () => {
-  const { roomId } = useParams<{ roomId: string }>();
   const { user } = useAuth();
-  const history = useHistory();
+  const router = useRouter();
+  const roomId = router.query.roomId as string;
   const [room, setRoom] = useState<Room>();
   const [isJoined, setIsJoined] = useState(false);
   const { subscribe } = useWS();
@@ -20,7 +21,7 @@ const Chat = () => {
   useEffect(() => {
     subscribe("room_deleted", (event) => {
       if (event.data.room_id === roomId) {
-        history.push("/");
+        router.push("/");
       }
     });
   }, []);
@@ -40,18 +41,23 @@ const Chat = () => {
   return (
     <>
       <header className={`header header-for-scrollable`}>
-        <Link className={styles.backButton} to="/rooms">
-          ⏪
+        <Link href="/">
+          <a className={styles.backButton}>⏪</a>
         </Link>
         <b>{room?.name}</b>
 
-        <EditRoomBtn joined={isJoined} onLeave={() => setIsJoined(false)} />
+        <EditRoomBtn
+          roomId={roomId}
+          joined={isJoined}
+          onLeave={() => setIsJoined(false)}
+        />
       </header>
 
       <section className="wrap">
-        <ChatLog />
+        <ChatLog roomId={roomId} />
 
         <ChatForm
+          roomId={roomId}
           loading={roomQuery.status === "fetching"}
           joined={isJoined}
           onJoin={() => setIsJoined(true)}
