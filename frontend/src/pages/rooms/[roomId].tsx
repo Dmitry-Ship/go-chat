@@ -1,13 +1,13 @@
 import React from "react";
-import Chat from "../../components/chatRoom/Chat";
+import ChatRoom from "../../components/chr/ChatRoom";
 import LoggedInLayout from "../../components/common/LoggedInLayout";
 
-function Index() {
+function ChatRoomPage() {
   return (
     <LoggedInLayout>
-      <Chat />
+      <ChatRoom />
     </LoggedInLayout>
   );
 }
 
-export default Index;
+export default ChatRoomPage;

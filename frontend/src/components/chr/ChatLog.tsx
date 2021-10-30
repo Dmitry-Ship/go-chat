@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./ChatLog.module.css";
 import { Message, MessageRaw } from "../../types/coreTypes";
-import MessageComponent from "./Message";
+import MessageComponent from "./MessageComponent";
 import Loader from "../common/Loader";
 import { useQuery } from "../../api/hooks";
 import { useAuth } from "../../contexts/authContext";
@@ -40,6 +40,7 @@ const ChatLog: React.FC<{ roomId: string }> = ({ roomId }) => {
     subscribe("message", (event) => {
       appendLog([parseMessage(event.data)]);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

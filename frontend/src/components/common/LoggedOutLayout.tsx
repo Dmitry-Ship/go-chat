@@ -13,7 +13,7 @@ const LoggedOutLayout: React.FC<{ children: React.ReactNode }> = ({
     if (auth.isAuthenticated && !auth.isChecking) {
       router.push("/");
     }
-  }, [auth.isAuthenticated, auth.isChecking]);
+  }, [auth.isAuthenticated, auth.isChecking, router]);
 
   if (auth.isChecking) {
     return <Loader />;

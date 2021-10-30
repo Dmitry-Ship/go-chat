@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./Message.module.css";
+import styles from "./MessageComponent.module.css";
 import { Message } from "../../types/coreTypes";
 import { useAuth } from "../../contexts/authContext";
 import Avatar from "../common/Avatar";

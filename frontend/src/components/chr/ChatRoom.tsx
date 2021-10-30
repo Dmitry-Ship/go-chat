@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Room } from "../../types/coreTypes";
-import styles from "./Chat.module.css";
+import styles from "./ChatRoom.module.css";
 import ChatForm from "./ChatForm";
 import ChatLog from "./ChatLog";
 import { useQuery } from "../../api/hooks";
@@ -10,7 +10,7 @@ import { useWS } from "../../contexts/WSContext";
 import { useRouter } from "next/router";
 import Link from "next/link";
 
-const Chat = () => {
+const ChatRoom: React.FC = () => {
   const { user } = useAuth();
   const router = useRouter();
   const roomId = router.query.roomId as string;
@@ -24,7 +24,8 @@ const Chat = () => {
         router.push("/");
       }
     });
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, router]);
 
   const roomQuery = useQuery<{
     room: Room;
@@ -67,4 +68,4 @@ const Chat = () => {
   );
 };
 
-export default Chat;
+export default ChatRoom;
