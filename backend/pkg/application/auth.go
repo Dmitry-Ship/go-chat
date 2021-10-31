@@ -63,6 +63,10 @@ func (a *authService) Login(username string, password string) (Tokens, error) {
 		return Tokens{}, err
 	}
 
+	if !a.checkPasswordHash(password, user.Password) {
+		return Tokens{}, errors.New("password is incorrect")
+	}
+
 	newTokens, err := a.createTokens(user.Id)
 
 	if err != nil {
@@ -70,11 +74,8 @@ func (a *authService) Login(username string, password string) (Tokens, error) {
 	}
 
 	user.UpdateRefreshToken(newTokens.RefreshToken)
-	a.users.Store(user)
 
-	if !a.checkPasswordHash(password, user.Password) {
-		return Tokens{}, errors.New("password is incorrect")
-	}
+	a.users.Store(user)
 
 	return newTokens, nil
 }

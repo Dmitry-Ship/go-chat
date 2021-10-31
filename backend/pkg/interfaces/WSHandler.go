@@ -59,40 +59,6 @@ func (h *wsMessageHandler) Run() {
 				log.Println(err)
 				continue
 			}
-		case "join":
-			request := struct {
-				RoomId uuid.UUID `json:"room_id"`
-				UserId uuid.UUID `json:"user_id"`
-			}{}
-
-			if err := json.Unmarshal(data, &request); err != nil {
-				log.Println(err)
-				continue
-			}
-
-			err := h.roomService.JoinRoom(request.RoomId, request.UserId)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-		case "leave":
-			request := struct {
-				RoomId uuid.UUID `json:"room_id"`
-				UserId uuid.UUID `json:"user_id"`
-			}{}
-
-			if err := json.Unmarshal(data, &request); err != nil {
-				log.Println(err)
-				continue
-			}
-
-			err := h.roomService.LeaveRoom(request.RoomId, request.UserId)
-
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
 		}
 	}
 }

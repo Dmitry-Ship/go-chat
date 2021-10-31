@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func HandleLogin(authService application.AuthService) func(w http.ResponseWriter, r *http.Request) {
+func HandleLogin(authService application.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			UserName string `json:"username"`
@@ -56,8 +56,9 @@ func HandleLogin(authService application.AuthService) func(w http.ResponseWriter
 	}
 }
 
-func HandleLogout(authService application.AuthService) func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
-	return func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
+func HandleLogout(authService application.AuthService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		err := authService.Logout(userID)
 
 		if err != nil {
@@ -83,7 +84,7 @@ func HandleLogout(authService application.AuthService) func(w http.ResponseWrite
 	}
 }
 
-func HandleSignUp(authService application.AuthService) func(w http.ResponseWriter, r *http.Request) {
+func HandleSignUp(authService application.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			UserName string `json:"username"`
@@ -128,7 +129,7 @@ func HandleSignUp(authService application.AuthService) func(w http.ResponseWrite
 	}
 }
 
-func HandleRefreshToken(authService application.AuthService) func(w http.ResponseWriter, r *http.Request) {
+func HandleRefreshToken(authService application.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		refreshToken, err := r.Cookie("refresh_token")
 
@@ -162,8 +163,9 @@ func HandleRefreshToken(authService application.AuthService) func(w http.Respons
 	}
 }
 
-func HandleGetUser(authService application.AuthService) func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
-	return func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
+func HandleGetUser(authService application.AuthService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		user, err := authService.GetUser(userID)
 
 		if err != nil {
@@ -190,8 +192,10 @@ func HandleWS(
 	incomingMessageChannel chan<- json.RawMessage,
 	registerClientChan chan<- *application.Client,
 	unregisterClientChan chan<- *application.Client,
-) func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
-	return func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, _ := r.Context().Value("userId").(uuid.UUID)
+
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -207,8 +211,8 @@ func HandleWS(
 	}
 }
 
-func HandleGetRooms(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
-	return func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
+func HandleGetRooms(roomService application.RoomService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		rooms, err := roomService.GetRooms()
 
 		if err != nil {
@@ -220,8 +224,8 @@ func HandleGetRooms(roomService application.RoomService) func(w http.ResponseWri
 	}
 }
 
-func HandleGetRoomsMessages(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
-	return func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
+func HandleGetRoomsMessages(roomService application.RoomService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
 		roomIdQuery := query.Get("room_id")
@@ -254,8 +258,9 @@ func HandleGetRoomsMessages(roomService application.RoomService) func(w http.Res
 	}
 }
 
-func HandleGetRoom(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
-	return func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
+func HandleGetRoom(roomService application.RoomService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		query := r.URL.Query()
 
 		roomIdQuery := query.Get("room_id")
@@ -277,8 +282,8 @@ func HandleGetRoom(roomService application.RoomService) func(w http.ResponseWrit
 	}
 }
 
-func HandleCreateRoom(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
-	return func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
+func HandleCreateRoom(roomService application.RoomService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			RoomName string    `json:"room_name"`
 			RoomId   uuid.UUID `json:"room_id"`
@@ -291,6 +296,8 @@ func HandleCreateRoom(roomService application.RoomService) func(w http.ResponseW
 			return
 		}
 
+		userID, _ := r.Context().Value("userId").(uuid.UUID)
+
 		err = roomService.CreateRoom(request.RoomId, request.RoomName, userID)
 
 		if err != nil {
@@ -302,8 +309,8 @@ func HandleCreateRoom(roomService application.RoomService) func(w http.ResponseW
 	}
 }
 
-func HandleDeleteRoom(roomService application.RoomService) func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
-	return func(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
+func HandleDeleteRoom(roomService application.RoomService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			RoomId uuid.UUID `json:"room_id"`
 		}{}
@@ -329,5 +336,56 @@ func HandleDeleteRoom(roomService application.RoomService) func(w http.ResponseW
 		}
 
 		json.NewEncoder(w).Encode(response)
+	}
+}
+
+func HandleJoinRoom(roomService application.RoomService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		request := struct {
+			RoomId uuid.UUID `json:"room_id"`
+		}{}
+
+		err := json.NewDecoder(r.Body).Decode(&request)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		userID, _ := r.Context().Value("userId").(uuid.UUID)
+
+		err = roomService.JoinRoom(request.RoomId, userID)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode("OK")
+	}
+}
+
+func HandleLeaveRoom(roomService application.RoomService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, _ := r.Context().Value("userId").(uuid.UUID)
+		request := struct {
+			RoomId uuid.UUID `json:"room_id"`
+		}{}
+
+		err := json.NewDecoder(r.Body).Decode(&request)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = roomService.LeaveRoom(request.RoomId, userID)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode("OK")
 	}
 }

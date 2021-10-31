@@ -1,13 +1,14 @@
 package interfaces
 
 import (
+	"context"
 	"net/http"
 	"os"
 
 	"github.com/google/uuid"
 )
 
-func AddDefaultHeaders(fn http.HandlerFunc) http.HandlerFunc {
+func AddDefaultHeaders(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		clientURL := os.Getenv("ORIGIN_URL")
 
@@ -21,21 +22,20 @@ func AddDefaultHeaders(fn http.HandlerFunc) http.HandlerFunc {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		fn(w, r)
+
+		next.ServeHTTP(w, r)
 	}
 }
-
-type authenticatedHandler func(http.ResponseWriter, *http.Request, uuid.UUID)
 
 type accessTokenParser interface {
 	ParseAccessToken(tokenString string) (uuid.UUID, error)
 }
 
-type ensureAuthMiddleware func(handlerToWrap authenticatedHandler) http.HandlerFunc
+type ensureAuthMiddleware func(handlerToWrap http.HandlerFunc) http.HandlerFunc
 
 func MakeEnsureAuth(authService accessTokenParser) ensureAuthMiddleware {
-	return func(handlerToWrap authenticatedHandler) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			accessToken, err := r.Cookie("access_token")
 
 			if err != nil {
@@ -54,7 +54,9 @@ func MakeEnsureAuth(authService accessTokenParser) ensureAuthMiddleware {
 				return
 			}
 
-			handlerToWrap(w, r, userId)
-		}
+			ctx := context.WithValue(r.Context(), "userId", userId)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
 }

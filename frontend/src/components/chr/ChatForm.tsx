@@ -3,6 +3,7 @@ import styles from "./ChatForm.module.css";
 import Loader from "../common/Loader";
 import { useAuth } from "../../contexts/authContext";
 import { useWS } from "../../contexts/WSContext";
+import { makeCommand } from "../../api/fetch";
 
 const ChatForm: React.FC<{
   loading: boolean;
@@ -27,8 +28,8 @@ const ChatForm: React.FC<{
     setMessage("");
   };
 
-  const handleJoin = () => {
-    sendNotification("join", { room_id: roomId, user_id: auth.user?.id });
+  const handleJoin = async () => {
+    await makeCommand("/joinRoom", { room_id: roomId, user_id: auth.user?.id });
     onJoin();
   };
 

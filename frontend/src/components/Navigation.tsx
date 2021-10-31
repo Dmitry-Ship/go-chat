@@ -5,7 +5,7 @@ import AccountSettingsBtn from "./AccountSettingsBtn";
 const Navigation = () => {
   return (
     <div className="controls-for-scrollable">
-      <Link href="/rooms">
+      <Link href="/">
         <a className="navBtn">💬</a>
       </Link>
       <Link href="/people">
