@@ -16,14 +16,28 @@ func main() {
 	participantRepository := inmemory.NewParticipantRepository()
 
 	hub := application.NewHub()
-	go hub.Run()
 	authService := application.NewAuthService(usersRepository)
 	roomService := application.NewRoomService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)
 
 	wsHandler := interfaces.NewWSMessageHandler(roomService)
-	go wsHandler.Run()
 
-	interfaces.HandleRequests(roomService, authService, hub, wsHandler.MessageChannel)
+	ensureAuth := interfaces.MakeEnsureAuth(authService)
+
+	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(wsHandler.MessageChannel, hub.Register, hub.Unregister)))
+
+	http.HandleFunc("/signup", interfaces.AddDefaultHeaders(interfaces.HandleSignUp(authService)))
+	http.HandleFunc("/login", interfaces.AddDefaultHeaders(interfaces.HandleLogin(authService)))
+	http.HandleFunc("/logout", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleLogout(authService))))
+	http.HandleFunc("/refreshToken", interfaces.AddDefaultHeaders((interfaces.HandleRefreshToken(authService))))
+	http.HandleFunc("/getUser", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetUser(authService))))
+	http.HandleFunc("/getRooms", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetRooms(roomService))))
+	http.HandleFunc("/getRoom", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetRoom(roomService))))
+	http.HandleFunc("/getRoomsMessages", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetRoomsMessages(roomService))))
+	http.HandleFunc("/createRoom", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleCreateRoom(roomService))))
+	http.HandleFunc("/deleteRoom", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleDeleteRoom(roomService))))
+
+	go wsHandler.Run()
+	go hub.Run()
 
 	port := os.Getenv("PORT")
 

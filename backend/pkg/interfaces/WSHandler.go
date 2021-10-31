@@ -8,10 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type WSMessageHandler interface {
-	Run()
-}
-
 type wsMessageHandler struct {
 	roomService    application.RoomService
 	MessageChannel chan json.RawMessage

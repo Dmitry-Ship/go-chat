@@ -8,17 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type RoomService interface {
-	CreateRoom(id uuid.UUID, name string, userId uuid.UUID) error
-	HasJoined(roomId uuid.UUID, userId uuid.UUID) bool
-	JoinRoom(roomId uuid.UUID, userId uuid.UUID) error
-	LeaveRoom(roomId uuid.UUID, userId uuid.UUID) error
-	DeleteRoom(id uuid.UUID) error
-	SendMessage(messageText string, messageType string, roomId uuid.UUID, userId uuid.UUID) error
-	NotifyAllParticipants(roomId uuid.UUID, messageType string, message interface{}) error
-	GetRoom(id uuid.UUID) (*domain.Room, error)
-	GetRooms() ([]*domain.Room, error)
-	GetRoomMessages(roomId uuid.UUID) ([]*MessageFull, error)
+type roomData struct {
+	Room   domain.Room `json:"room"`
+	Joined bool        `json:"joined"`
 }
 
 type MessageFull struct {
@@ -26,15 +18,26 @@ type MessageFull struct {
 	*domain.ChatMessage
 }
 
+type RoomService interface {
+	CreateRoom(id uuid.UUID, name string, userId uuid.UUID) error
+	JoinRoom(roomId uuid.UUID, userId uuid.UUID) error
+	LeaveRoom(roomId uuid.UUID, userId uuid.UUID) error
+	DeleteRoom(id uuid.UUID) error
+	SendMessage(messageText string, messageType string, roomId uuid.UUID, userId uuid.UUID) error
+	GetRoom(roomId uuid.UUID, userId uuid.UUID) (*roomData, error)
+	GetRooms() ([]*domain.Room, error)
+	GetRoomMessages(roomId uuid.UUID) ([]*MessageFull, error)
+}
+
 type roomService struct {
 	rooms        domain.RoomRepository
 	participants domain.ParticipantRepository
 	users        domain.UserRepository
 	messages     domain.ChatMessageRepository
-	hub          Hub
+	hub          HubBroadcaster
 }
 
-func NewRoomService(rooms domain.RoomRepository, participants domain.ParticipantRepository, users domain.UserRepository, messages domain.ChatMessageRepository, hub Hub) *roomService {
+func NewRoomService(rooms domain.RoomRepository, participants domain.ParticipantRepository, users domain.UserRepository, messages domain.ChatMessageRepository, hub HubBroadcaster) *roomService {
 	return &roomService{
 		rooms:        rooms,
 		users:        users,
@@ -61,8 +64,20 @@ func (s *roomService) CreateRoom(id uuid.UUID, name string, userId uuid.UUID) er
 	return nil
 }
 
-func (s *roomService) GetRoom(id uuid.UUID) (*domain.Room, error) {
-	return s.rooms.FindByID(id)
+func (s *roomService) GetRoom(roomId uuid.UUID, userId uuid.UUID) (*roomData, error) {
+
+	room, err := s.rooms.FindByID(roomId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	data := roomData{
+		Room:   *room,
+		Joined: s.hasJoined(roomId, userId),
+	}
+
+	return &data, nil
 }
 
 func (s *roomService) GetRooms() ([]*domain.Room, error) {
@@ -70,7 +85,7 @@ func (s *roomService) GetRooms() ([]*domain.Room, error) {
 }
 
 func (s *roomService) JoinRoom(roomID uuid.UUID, userId uuid.UUID) error {
-	if s.HasJoined(roomID, userId) {
+	if s.hasJoined(roomID, userId) {
 		return errors.New("user already joined")
 	}
 
@@ -123,7 +138,7 @@ func (s *roomService) DeleteRoom(id uuid.UUID) error {
 		RoomId: id,
 	}
 
-	err := s.NotifyAllParticipants(id, "room_deleted", message)
+	err := s.notifyAllParticipants(id, "room_deleted", message)
 
 	if err != nil {
 		return err
@@ -138,13 +153,13 @@ func (s *roomService) DeleteRoom(id uuid.UUID) error {
 	return nil
 }
 
-func (s *roomService) HasJoined(roomID uuid.UUID, userId uuid.UUID) bool {
+func (s *roomService) hasJoined(roomID uuid.UUID, userId uuid.UUID) bool {
 	_, err := s.participants.FindByRoomIDAndUserID(roomID, userId)
 
 	return err == nil
 }
 
-func (s *roomService) NotifyAllParticipants(roomID uuid.UUID, messageType string, message interface{}) error {
+func (s *roomService) notifyAllParticipants(roomID uuid.UUID, messageType string, message interface{}) error {
 	participants, err := s.participants.FindAllByRoomID(roomID)
 
 	if err != nil {
@@ -173,7 +188,7 @@ func (s *roomService) SendMessage(messageText string, messageType string, roomId
 		return err
 	}
 
-	err = s.NotifyAllParticipants(roomId, "message", fullMessage)
+	err = s.notifyAllParticipants(roomId, "message", fullMessage)
 
 	if err != nil {
 		return err

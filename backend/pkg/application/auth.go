@@ -32,9 +32,8 @@ type AuthService interface {
 	Login(username string, password string) (Tokens, error)
 	Logout(userId uuid.UUID) error
 	SignUp(username string, password string) (Tokens, error)
-	GetUser(userId uuid.UUID) (*domain.User, error)
-	ParseAccessToken(tokenString string) (uuid.UUID, error)
 	RefreshAccessToken(refreshTokenString string) (string, error)
+	GetUser(userId uuid.UUID) (*domain.User, error)
 }
 
 func NewAuthService(users domain.UserRepository) *authService {

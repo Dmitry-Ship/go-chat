@@ -10,24 +10,22 @@ type notification struct {
 	UserId  uuid.UUID   `json:"userId"`
 }
 
-type Hub interface {
-	Register(client *Client)
-	Unregister(client *Client)
+type HubBroadcaster interface {
 	BroadcastNotification(notificationType string, payload interface{}, userID uuid.UUID)
 }
 
 type hub struct {
 	broadcast  chan *notification
-	register   chan *Client
-	unregister chan *Client
+	Register   chan *Client
+	Unregister chan *Client
 	clients    map[uuid.UUID]map[uuid.UUID]*Client
 }
 
 func NewHub() *hub {
 	return &hub{
 		broadcast:  make(chan *notification, 1024),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
+		Register:   make(chan *Client),
+		Unregister: make(chan *Client),
 		clients:    make(map[uuid.UUID]map[uuid.UUID]*Client),
 	}
 }
@@ -42,7 +40,7 @@ func (s *hub) Run() {
 				client.SendNotification(message.Type, message.Payload)
 			}
 
-		case client := <-s.register:
+		case client := <-s.Register:
 			userClients := s.clients[client.userID]
 			if userClients == nil {
 				userClients = make(map[uuid.UUID]*Client)
@@ -50,7 +48,7 @@ func (s *hub) Run() {
 			}
 			userClients[client.Id] = client
 
-		case client := <-s.unregister:
+		case client := <-s.Unregister:
 			if _, ok := s.clients[client.userID]; ok {
 				delete(s.clients[client.userID], client.Id)
 				close(client.send)
@@ -58,14 +56,6 @@ func (s *hub) Run() {
 		}
 
 	}
-}
-
-func (s *hub) Register(client *Client) {
-	s.register <- client
-}
-
-func (s *hub) Unregister(client *Client) {
-	s.unregister <- client
 }
 
 func (s *hub) BroadcastNotification(notificationType string, payload interface{}, userID uuid.UUID) {

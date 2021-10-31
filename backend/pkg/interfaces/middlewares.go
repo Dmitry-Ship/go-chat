@@ -1,7 +1,6 @@
 package interfaces
 
 import (
-	"GitHub/go-chat/backend/pkg/application"
 	"net/http"
 	"os"
 
@@ -28,26 +27,34 @@ func AddDefaultHeaders(fn http.HandlerFunc) http.HandlerFunc {
 
 type authenticatedHandler func(http.ResponseWriter, *http.Request, uuid.UUID)
 
-func EnsureAuth(handlerToWrap authenticatedHandler, authService application.AuthService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		accessToken, err := r.Cookie("access_token")
+type accessTokenParser interface {
+	ParseAccessToken(tokenString string) (uuid.UUID, error)
+}
 
-		if err != nil {
-			if err == http.ErrNoCookie {
-				w.WriteHeader(http.StatusUnauthorized)
+type ensureAuthMiddleware func(handlerToWrap authenticatedHandler) http.HandlerFunc
+
+func MakeEnsureAuth(authService accessTokenParser) ensureAuthMiddleware {
+	return func(handlerToWrap authenticatedHandler) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			accessToken, err := r.Cookie("access_token")
+
+			if err != nil {
+				if err == http.ErrNoCookie {
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			w.WriteHeader(http.StatusBadRequest)
-			return
+
+			userId, err := authService.ParseAccessToken(accessToken.Value)
+
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
+
+			handlerToWrap(w, r, userId)
 		}
-
-		userId, err := authService.ParseAccessToken(accessToken.Value)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		handlerToWrap(w, r, userId)
 	}
 }
