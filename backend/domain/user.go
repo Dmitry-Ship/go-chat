@@ -5,23 +5,17 @@ import (
 )
 
 type User struct {
-	Id           uuid.UUID `json:"id"`
-	Avatar       string    `json:"avatar"`
-	Name         string    `json:"name"`
-	Password     string    `json:"-"`
-	RefreshToken string    `json:"-"`
+	Id       uuid.UUID `json:"id"`
+	Avatar   string    `json:"avatar"`
+	Name     string    `json:"name"`
+	Password string    `json:"-"`
 }
 
 func NewUser(username string, password string) *User {
 	return &User{
-		Id:           uuid.New(),
-		Avatar:       string(username[0]),
-		Name:         username,
-		Password:     password,
-		RefreshToken: "",
+		Id:       uuid.New(),
+		Avatar:   string(username[0]),
+		Name:     username,
+		Password: password,
 	}
-}
-
-func (u *User) UpdateRefreshToken(token string) {
-	u.RefreshToken = token
 }

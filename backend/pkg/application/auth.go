@@ -73,21 +73,17 @@ func (a *authService) Login(username string, password string) (Tokens, error) {
 		return newTokens, err
 	}
 
-	user.UpdateRefreshToken(newTokens.RefreshToken)
-
-	a.users.Store(user)
+	a.users.StoreRefreshToken(user.Id, newTokens.RefreshToken)
 
 	return newTokens, nil
 }
 
 func (a *authService) Logout(userId uuid.UUID) error {
-	user, err := a.users.FindByID(userId)
+	err := a.users.DeleteRefreshToken(userId)
 
 	if err != nil {
 		return err
 	}
-
-	user.UpdateRefreshToken("")
 
 	return nil
 }
@@ -101,18 +97,22 @@ func (a *authService) SignUp(username string, password string) (Tokens, error) {
 
 	user := domain.NewUser(username, hashedPassword)
 
+	err = a.users.Store(user)
+
+	if err != nil {
+		return Tokens{}, err
+	}
+
 	newTokens, err := a.createTokens(user.Id)
 
 	if err != nil {
 		return newTokens, err
 	}
 
-	user.UpdateRefreshToken(newTokens.RefreshToken)
-
-	err = a.users.Store(user)
+	err = a.users.StoreRefreshToken(user.Id, newTokens.RefreshToken)
 
 	if err != nil {
-		return Tokens{}, err
+		return newTokens, err
 	}
 
 	return newTokens, nil
@@ -226,13 +226,13 @@ func (a *authService) parseRefreshToken(tokenString string) (uuid.UUID, error) {
 
 	if token.Valid {
 		userId := token.Claims.(*tokenClaims).UserId
-		user, err := a.users.FindByID(userId)
+		refreshToken, err := a.users.GetRefreshTokenByUserId(userId)
 
 		if err != nil {
 			return uuid.Nil, err
 		}
 
-		if user.RefreshToken != tokenString {
+		if refreshToken != tokenString {
 			return uuid.Nil, errors.New("invalid token")
 		}
 

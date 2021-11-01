@@ -13,6 +13,9 @@ type UserRepository interface {
 	Store(user *User) error
 	FindByID(id uuid.UUID) (*User, error)
 	FindByUsername(username string) (*User, error)
+	StoreRefreshToken(userID uuid.UUID, refreshToken string) error
+	GetRefreshTokenByUserId(userID uuid.UUID) (string, error)
+	DeleteRefreshToken(userID uuid.UUID) error
 }
 
 type ChatMessageRepository interface {
