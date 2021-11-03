@@ -217,7 +217,6 @@ func (s *roomService) GetRoomMessages(roomId uuid.UUID) ([]*MessageFull, error) 
 	}
 
 	return messagesFull, nil
-
 }
 
 func (s *roomService) makeMessageFull(message *domain.ChatMessage) (*MessageFull, error) {
@@ -233,5 +232,4 @@ func (s *roomService) makeMessageFull(message *domain.ChatMessage) (*MessageFull
 	}
 
 	return &m, nil
-
 }

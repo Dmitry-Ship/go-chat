@@ -29,10 +29,15 @@ const EditRoomBtn: React.FC<{
   };
 
   const handleDelete = async () => {
-    await makeCommand("/deleteRoom", { room_id: roomId, user_id: user?.id });
+    const result = await makeCommand("/deleteRoom", {
+      room_id: roomId,
+      user_id: user?.id,
+    });
 
-    router.push("/");
-    setIsEditing(false);
+    if (result.status) {
+      router.push("/");
+      setIsEditing(false);
+    }
   };
 
   return (

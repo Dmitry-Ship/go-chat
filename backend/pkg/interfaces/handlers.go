@@ -329,13 +329,7 @@ func HandleDeleteRoom(roomService application.RoomService) http.HandlerFunc {
 			return
 		}
 
-		response := struct {
-			RoomId uuid.UUID `json:"room_id"`
-		}{
-			RoomId: request.RoomId,
-		}
-
-		json.NewEncoder(w).Encode(response)
+		json.NewEncoder(w).Encode("OK")
 	}
 }
 
