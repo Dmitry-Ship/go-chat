@@ -9,8 +9,8 @@ import (
 )
 
 type wsMessageHandler struct {
-	roomService    application.RoomService
-	MessageChannel chan json.RawMessage
+	roomCommandService application.RoomCommandService
+	MessageChannel     chan json.RawMessage
 }
 
 type incomingNotification struct {
@@ -19,11 +19,11 @@ type incomingNotification struct {
 }
 
 func NewWSMessageHandler(
-	roomService application.RoomService,
+	roomCommandService application.RoomCommandService,
 ) *wsMessageHandler {
 	return &wsMessageHandler{
-		roomService:    roomService,
-		MessageChannel: make(chan json.RawMessage, 100),
+		roomCommandService: roomCommandService,
+		MessageChannel:     make(chan json.RawMessage, 100),
 	}
 }
 
@@ -53,7 +53,7 @@ func (h *wsMessageHandler) Run() {
 				continue
 			}
 
-			err := h.roomService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
+			err := h.roomCommandService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
 
 			if err != nil {
 				log.Println(err)

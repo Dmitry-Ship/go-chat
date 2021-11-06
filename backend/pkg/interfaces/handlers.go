@@ -2,6 +2,8 @@ package interfaces
 
 import (
 	"GitHub/go-chat/backend/pkg/application"
+	ws "GitHub/go-chat/backend/pkg/websocket"
+
 	"encoding/json"
 	"net/http"
 	"os"
@@ -190,8 +192,8 @@ var upgrader = websocket.Upgrader{
 
 func HandleWS(
 	incomingMessageChannel chan<- json.RawMessage,
-	registerClientChan chan<- *application.Client,
-	unregisterClientChan chan<- *application.Client,
+	registerClientChan chan<- *ws.Client,
+	unregisterClientChan chan<- *ws.Client,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
@@ -202,7 +204,7 @@ func HandleWS(
 			return
 		}
 
-		client := application.NewClient(conn, unregisterClientChan, incomingMessageChannel, userID)
+		client := ws.NewClient(conn, unregisterClientChan, incomingMessageChannel, userID)
 
 		registerClientChan <- client
 
@@ -211,7 +213,7 @@ func HandleWS(
 	}
 }
 
-func HandleGetRooms(roomService application.RoomService) http.HandlerFunc {
+func HandleGetRooms(roomService application.RoomQueryService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rooms, err := roomService.GetRooms()
 
@@ -224,7 +226,7 @@ func HandleGetRooms(roomService application.RoomService) http.HandlerFunc {
 	}
 }
 
-func HandleGetRoomsMessages(roomService application.RoomService) http.HandlerFunc {
+func HandleGetRoomsMessages(roomService application.RoomQueryService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
@@ -243,22 +245,17 @@ func HandleGetRoomsMessages(roomService application.RoomService) http.HandlerFun
 			return
 		}
 
-		messagesValue := []application.MessageFull{}
-		for _, message := range messages {
-			messagesValue = append(messagesValue, *message)
-		}
-
 		data := struct {
 			Messages []application.MessageFull `json:"messages"`
 		}{
-			Messages: messagesValue,
+			Messages: messages,
 		}
 
 		json.NewEncoder(w).Encode(data)
 	}
 }
 
-func HandleGetRoom(roomService application.RoomService) http.HandlerFunc {
+func HandleGetRoom(roomService application.RoomQueryService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		query := r.URL.Query()
@@ -282,7 +279,7 @@ func HandleGetRoom(roomService application.RoomService) http.HandlerFunc {
 	}
 }
 
-func HandleCreateRoom(roomService application.RoomService) http.HandlerFunc {
+func HandleCreateRoom(roomService application.RoomCommandService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			RoomName string    `json:"room_name"`
@@ -309,7 +306,7 @@ func HandleCreateRoom(roomService application.RoomService) http.HandlerFunc {
 	}
 }
 
-func HandleDeleteRoom(roomService application.RoomService) http.HandlerFunc {
+func HandleDeleteRoom(roomService application.RoomCommandService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			RoomId uuid.UUID `json:"room_id"`
@@ -333,7 +330,7 @@ func HandleDeleteRoom(roomService application.RoomService) http.HandlerFunc {
 	}
 }
 
-func HandleJoinRoom(roomService application.RoomService) http.HandlerFunc {
+func HandleJoinRoom(roomService application.RoomCommandService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			RoomId uuid.UUID `json:"room_id"`
@@ -359,7 +356,7 @@ func HandleJoinRoom(roomService application.RoomService) http.HandlerFunc {
 	}
 }
 
-func HandleLeaveRoom(roomService application.RoomService) http.HandlerFunc {
+func HandleLeaveRoom(roomService application.RoomCommandService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		request := struct {
