@@ -1,5 +1,5 @@
 # stage 1: install dependencies
-FROM golang:1.16.7-alpine AS base
+FROM golang:1.17.3-alpine3.14 AS base
 
 WORKDIR /app
 
