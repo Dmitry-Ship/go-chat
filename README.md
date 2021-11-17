@@ -6,10 +6,17 @@ real time chat app
 
 ## ⚡️ Quick Start
 
-1. Install and boot up docker
+1. Install and boot up Docker
 2. Create `.env` file at root directory taking `.env.example` as a base.
-3. Run following command:
+3. Run the following command:
 
 ```
 docker-compose up --build
 ```
+
+4. open browser and go to `http://localhost:3000`
+
+## ☁️ Hosting platforms
+
+- backend: https://console.cloud.google.com/run/detail/us-central1/go-chat/metrics?project=go-playground-311723
+- frontend: https://vercel.com/dmitry-ship/go-chat
