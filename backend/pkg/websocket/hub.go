@@ -1,6 +1,10 @@
 package ws
 
 import (
+	"GitHub/go-chat/backend/pkg/redis"
+	"encoding/json"
+	"log"
+
 	"github.com/google/uuid"
 )
 
@@ -15,29 +19,36 @@ type HubBroadcaster interface {
 }
 
 type hub struct {
-	broadcast  chan *notification
-	Register   chan *Client
-	Unregister chan *Client
-	clients    map[uuid.UUID]map[uuid.UUID]*Client
+	Register    chan *Client
+	Unregister  chan *Client
+	clients     map[uuid.UUID]map[uuid.UUID]*Client
+	redisClient redis.RedisClient
 }
 
-func NewHub() *hub {
+func NewHub(redisClient redis.RedisClient) *hub {
 	return &hub{
-		broadcast:  make(chan *notification, 1024),
-		Register:   make(chan *Client),
-		Unregister: make(chan *Client),
-		clients:    make(map[uuid.UUID]map[uuid.UUID]*Client),
+		Register:    make(chan *Client),
+		Unregister:  make(chan *Client),
+		clients:     make(map[uuid.UUID]map[uuid.UUID]*Client),
+		redisClient: redisClient,
 	}
 }
 
 func (s *hub) Run() {
+	redisMessageChannel := s.redisClient.GetMessageChannel()
 	for {
 		select {
-		case message := <-s.broadcast:
-			clients := s.clients[message.UserId]
+		case message := <-redisMessageChannel:
+			var n notification
+			err := json.Unmarshal([]byte(message), &n)
+			if err != nil {
+				log.Println(err)
+			}
+
+			clients := s.clients[n.UserId]
 
 			for _, client := range clients {
-				client.SendNotification(message.Type, message.Payload)
+				client.SendNotification(n.Type, n.Payload)
 			}
 
 		case client := <-s.Register:
@@ -59,9 +70,11 @@ func (s *hub) Run() {
 }
 
 func (s *hub) BroadcastNotification(notificationType string, payload interface{}, userID uuid.UUID) {
-	s.broadcast <- &notification{
+	n := &notification{
 		Type:    notificationType,
 		Payload: payload,
 		UserId:  userID,
 	}
+
+	s.redisClient.SendToChannel("chat", n)
 }

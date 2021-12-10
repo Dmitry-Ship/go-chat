@@ -5,11 +5,15 @@ services:
     environment:
       - PORT=${API_PORT}
       - ORIGIN_URL
+      - REDIS_HOST
+      - REDIS_PASSWORD
     build:
       context: ./backend
       target: dev
     ports:
       - ${API_PORT}:${API_PORT}
+    depends_on:
+      - redis
     volumes:
       - ./backend:/app
 
@@ -30,3 +34,10 @@ services:
       - api
     depends_on:
       - api
+
+  redis:
+    container_name: go-chat_redis
+    image: "redis:6.2.6-alpine"
+    ports:
+      - 6379:6379
+    command: redis-server --save 60 1 --requirepass ${REDIS_PASSWORD} --loglevel warning

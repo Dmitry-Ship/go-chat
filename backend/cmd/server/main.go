@@ -4,6 +4,7 @@ import (
 	"GitHub/go-chat/backend/pkg/application"
 	"GitHub/go-chat/backend/pkg/inmemory"
 	"GitHub/go-chat/backend/pkg/interfaces"
+	"GitHub/go-chat/backend/pkg/redis"
 	ws "GitHub/go-chat/backend/pkg/websocket"
 
 	"log"
@@ -12,12 +13,14 @@ import (
 )
 
 func main() {
+	redisClient := redis.NewRedisConnection()
+	go redisClient.ReadFromChannel("chat")
 	messagesRepository := inmemory.NewChatMessageRepository()
 	usersRepository := inmemory.NewUserRepository()
 	roomsRepository := inmemory.NewRoomRepository()
 	participantRepository := inmemory.NewParticipantRepository()
 
-	hub := ws.NewHub()
+	hub := ws.NewHub(redisClient)
 
 	authService := application.NewAuthService(usersRepository)
 	roomCommandService := application.NewRoomCommandService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)
