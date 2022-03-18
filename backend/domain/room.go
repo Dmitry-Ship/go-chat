@@ -6,12 +6,12 @@ import (
 
 type Room struct {
 	Name string    `json:"name"`
-	Id   uuid.UUID `json:"id"`
+	ID   uuid.UUID `json:"id" gorm:"type:uuid"`
 }
 
 func NewRoom(id uuid.UUID, name string) *Room {
 	return &Room{
-		Id:   id,
+		ID:   id,
 		Name: name,
 	}
 }

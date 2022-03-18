@@ -7,7 +7,7 @@ import (
 )
 
 type Participant struct {
-	Id        uuid.UUID `json:"id"`
+	ID        uuid.UUID `json:"id" gorm:"type:uuid"`
 	RoomId    uuid.UUID `json:"room_id"`
 	UserId    uuid.UUID `json:"user_id"`
 	CreatedAt int64     `json:"created_at"`
@@ -15,7 +15,7 @@ type Participant struct {
 
 func NewParticipant(roomId uuid.UUID, userId uuid.UUID) *Participant {
 	return &Participant{
-		Id:        uuid.New(),
+		ID:        uuid.New(),
 		RoomId:    roomId,
 		UserId:    userId,
 		CreatedAt: int64(time.Now().Unix()),

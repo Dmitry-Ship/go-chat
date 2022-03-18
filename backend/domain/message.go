@@ -7,7 +7,7 @@ import (
 )
 
 type ChatMessage struct {
-	Id        uuid.UUID `json:"id"`
+	ID        uuid.UUID `gorm:"type:uuid" json:"id"`
 	RoomId    uuid.UUID `json:"room_id"`
 	Content   string    `json:"content"`
 	CreatedAt int32     `json:"created_at"`
@@ -17,7 +17,7 @@ type ChatMessage struct {
 
 func NewChatMessage(content string, messageType string, roomId uuid.UUID, userId uuid.UUID) *ChatMessage {
 	return &ChatMessage{
-		Id:        uuid.New(),
+		ID:        uuid.New(),
 		RoomId:    roomId,
 		Content:   content,
 		CreatedAt: int32(time.Now().Unix()),

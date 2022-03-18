@@ -67,13 +67,13 @@ func (a *authService) Login(username string, password string) (Tokens, error) {
 		return Tokens{}, errors.New("password is incorrect")
 	}
 
-	newTokens, err := a.createTokens(user.Id)
+	newTokens, err := a.createTokens(user.ID)
 
 	if err != nil {
 		return newTokens, err
 	}
 
-	a.users.StoreRefreshToken(user.Id, newTokens.RefreshToken)
+	a.users.StoreRefreshToken(user.ID, newTokens.RefreshToken)
 
 	return newTokens, nil
 }
@@ -103,13 +103,13 @@ func (a *authService) SignUp(username string, password string) (Tokens, error) {
 		return Tokens{}, err
 	}
 
-	newTokens, err := a.createTokens(user.Id)
+	newTokens, err := a.createTokens(user.ID)
 
 	if err != nil {
 		return newTokens, err
 	}
 
-	err = a.users.StoreRefreshToken(user.Id, newTokens.RefreshToken)
+	err = a.users.StoreRefreshToken(user.ID, newTokens.RefreshToken)
 
 	if err != nil {
 		return newTokens, err

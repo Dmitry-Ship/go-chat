@@ -2,8 +2,10 @@ package main
 
 import (
 	"GitHub/go-chat/backend/pkg/application"
-	"GitHub/go-chat/backend/pkg/inmemory"
+	"GitHub/go-chat/backend/pkg/database"
 	"GitHub/go-chat/backend/pkg/interfaces"
+	"GitHub/go-chat/backend/pkg/postgres"
+
 	ws "GitHub/go-chat/backend/pkg/websocket"
 
 	"log"
@@ -12,10 +14,12 @@ import (
 )
 
 func main() {
-	messagesRepository := inmemory.NewChatMessageRepository()
-	usersRepository := inmemory.NewUserRepository()
-	roomsRepository := inmemory.NewRoomRepository()
-	participantRepository := inmemory.NewParticipantRepository()
+	db := database.GetDatabaseConnection()
+
+	messagesRepository := postgres.NewChatMessageRepository(db)
+	usersRepository := postgres.NewUserRepository(db)
+	roomsRepository := postgres.NewRoomRepository(db)
+	participantRepository := postgres.NewParticipantRepository(db)
 
 	hub := ws.NewHub()
 
@@ -28,7 +32,6 @@ func main() {
 	ensureAuth := interfaces.MakeEnsureAuth(authService)
 
 	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(wsHandler.MessageChannel, hub.Register, hub.Unregister)))
-
 	http.HandleFunc("/signup", interfaces.AddDefaultHeaders(interfaces.HandleSignUp(authService)))
 	http.HandleFunc("/login", interfaces.AddDefaultHeaders(interfaces.HandleLogin(authService)))
 	http.HandleFunc("/logout", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleLogout(authService))))

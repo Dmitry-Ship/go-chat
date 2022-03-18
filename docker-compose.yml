@@ -1,10 +1,29 @@
 version: "3.8"
 
 services:
+  database:
+    container_name: composepostgres
+    image: postgres:14.2-alpine
+    # restart: always
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    environment:
+      - POSTGRES_DB=$DB_NAME
+      - POSTGRES_USER=$DB_USER
+      - PGDATA=/pgdata
+      - POSTGRES_PASSWORD=$DB_PASSWORD
+    volumes:
+      - ./db/pgdata:/pgdata
+
   api:
     environment:
       - PORT=${API_PORT}
-      - ORIGIN_URL
+      - ORIGIN_URL      
+      - DB_PORT
+      - DB_HOST
+      - DB_NAME
+      - DB_USER
+      - DB_PASSWORD
     build:
       context: ./backend
       target: dev
@@ -12,6 +31,8 @@ services:
       - ${API_PORT}:${API_PORT}
     volumes:
       - ./backend:/app
+    depends_on:
+      - composepostgres
 
   frontend:
     environment:
@@ -30,3 +51,24 @@ services:
       - api
     depends_on:
       - api
+
+
+  # sql_proxy:
+  #   environment:
+  #     - CLOUDSQL_CONNECTION_NAME
+  #     - CLOUDSQL_USER=${DB_USER}
+  #     - CLOUDSQL_PASSWORD=${DB_PASSWORD}
+  #   image: gcr.io/cloudsql-docker/gce-proxy:1.19.1
+  #   command:
+  #     - "/cloud_sql_proxy"
+  #     - "-dir=/cloudsql"
+  #     - "-instances=${CLOUDSQL_CONNECTION_NAME}"
+  #     - "-credential_file=/tmp/keys/keyfile.json"
+  #   # Allow the container to bind to the unix socket.
+  #   user: root
+  #   volumes:
+  #     - ${GCP_KEY_PATH}:/tmp/keys/keyfile.json:ro
+  # - cloudsql:/cloudsql
+# volumes:
+#   # This empty property initializes a named volume.
+#   database:

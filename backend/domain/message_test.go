@@ -17,5 +17,5 @@ func TestNewChatMessage(t *testing.T) {
 	assert.Equal(t, roomID, message.RoomId)
 	assert.Equal(t, userID, message.UserId)
 	assert.NotNil(t, message.CreatedAt)
-	assert.NotNil(t, message.Id)
+	assert.NotNil(t, message.ID)
 }

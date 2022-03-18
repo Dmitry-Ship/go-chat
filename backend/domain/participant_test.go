@@ -14,5 +14,5 @@ func TestNewParticipant(t *testing.T) {
 	assert.Equal(t, roomID, participant.RoomId)
 	assert.Equal(t, userID, participant.UserId)
 	assert.NotNil(t, participant.CreatedAt)
-	assert.NotNil(t, participant.Id)
+	assert.NotNil(t, participant.ID)
 }

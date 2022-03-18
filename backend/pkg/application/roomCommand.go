@@ -43,7 +43,7 @@ func (s *roomCommandService) CreateRoom(id uuid.UUID, name string, userId uuid.U
 		return err
 	}
 
-	err = s.JoinRoom(room.Id, userId)
+	err = s.JoinRoom(room.ID, userId)
 
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (s *roomCommandService) JoinRoom(roomID uuid.UUID, userId uuid.UUID) error 
 		return err
 	}
 
-	err = s.SendMessage(fmt.Sprintf(" %s joined", user.Name), "system", roomID, user.Id)
+	err = s.SendMessage(fmt.Sprintf(" %s joined", user.Name), "system", roomID, user.ID)
 
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ func (s *roomCommandService) LeaveRoom(roomID uuid.UUID, userId uuid.UUID) error
 		return err
 	}
 
-	err = s.SendMessage(fmt.Sprintf("%s left", user.Name), "system", roomID, user.Id)
+	err = s.SendMessage(fmt.Sprintf("%s left", user.Name), "system", roomID, user.ID)
 
 	if err != nil {
 		return err
