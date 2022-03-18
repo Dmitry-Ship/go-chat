@@ -1,5 +1,5 @@
 # stage 1: install dependencies
-FROM golang:1.17.3-alpine3.14 AS base
+FROM golang:1.18.0-alpine3.14 AS base
 
 WORKDIR /app
 
@@ -22,7 +22,7 @@ COPY --from=build /app/main .
 
 ENTRYPOINT "./main"
 
-# stage 4: install dev dependencies 
+# stage 3: run in watch mode
 FROM base as dev
 
 RUN go get github.com/githubnemo/CompileDaemon
