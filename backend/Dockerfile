@@ -25,7 +25,7 @@ ENTRYPOINT "./main"
 # stage 3: run in watch mode
 FROM base as dev
 
-RUN go get github.com/githubnemo/CompileDaemon
+RUN go install github.com/githubnemo/CompileDaemon@latest
 
 ENTRYPOINT CompileDaemon --build="go build -v -o go-bin ./cmd/server/main.go" --command=./go-bin
 
