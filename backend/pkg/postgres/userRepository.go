@@ -36,7 +36,7 @@ func (r *userRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
 	user := domain.User{}
 
-	err := r.users.Where("username = ?", username).First(&user).Error
+	err := r.users.Where("name = ?", username).First(&user).Error
 
 	return &user, err
 }
