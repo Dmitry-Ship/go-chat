@@ -12,7 +12,7 @@ import (
 )
 
 const RefreshTokenExpiration = 24 * 7 * time.Hour
-const AccessTokenExpiration = 30 * time.Second
+const AccessTokenExpiration = 10 * time.Minute
 
 type tokenClaims struct {
 	UserId uuid.UUID

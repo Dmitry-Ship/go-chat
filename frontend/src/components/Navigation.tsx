@@ -1,17 +1,29 @@
 import React from "react";
 import Link from "next/link";
-import AccountSettingsBtn from "./AccountSettingsBtn";
+import { useRouter } from "next/router";
+import styles from "./Navigation.module.css";
 
 const Navigation = () => {
+  const router = useRouter();
+
+  const links = [
+    { href: "/", label: "💬" },
+    { href: "/settings", label: "⚙️" },
+  ];
+
   return (
     <div className="controls-for-scrollable">
-      <Link href="/">
-        <a className="navBtn">💬</a>
-      </Link>
-      <Link href="/people">
-        <a className="navBtn">👥</a>
-      </Link>
-      <AccountSettingsBtn />
+      {links.map((link) => (
+        <Link href={link.href} key={link.href}>
+          <a
+            className={`${styles.navBtn} ${
+              router.pathname === link.href ? styles.active : ""
+            }`}
+          >
+            {link.label}
+          </a>
+        </Link>
+      ))}
     </div>
   );
 };

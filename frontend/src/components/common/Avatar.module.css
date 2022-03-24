@@ -2,7 +2,9 @@
   width: var(--avatar-size);
   height: var(--avatar-size);
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.4);
+  color: white;
+  font-size: 34px;
   display: flex;
   align-items: center;
   justify-content: center;

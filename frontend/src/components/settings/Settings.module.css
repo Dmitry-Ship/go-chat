@@ -1,0 +1,14 @@
+.accountInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.settingsPage {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: calc(var(--vh) * 100 - var(--bar-height));
+  padding: 10px;
+}
