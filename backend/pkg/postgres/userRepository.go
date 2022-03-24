@@ -55,9 +55,7 @@ func (r *userRepository) GetRefreshTokenByUserId(userID uuid.UUID) (string, erro
 }
 
 func (r *userRepository) DeleteRefreshToken(userID uuid.UUID) error {
-	user := domain.User{}
+	delete(r.refreshTokens, userID)
 
-	err := r.users.Where("id = ?", userID).Delete(user).Error
-
-	return err
+	return nil
 }

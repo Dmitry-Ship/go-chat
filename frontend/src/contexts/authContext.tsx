@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { makeCommand, makeQuery } from "../api/fetch";
+import { login, logout, signup, rotateTokens, fetchUser } from "../auth";
 import { User } from "../types/coreTypes";
 
 type auth = {
@@ -14,70 +14,46 @@ type auth = {
 export const useProvideAuth = (): auth => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isChecking, setIsChecking] = useState<boolean>(true);
-  const [accessTokenRefreshInterval, setAccessTokenRefreshInterval] =
-    useState<Number>(0);
   const [user, setUser] = useState<User | null>(null);
 
-  const refreshToken = async () => {
-    const result = await makeCommand("/refreshToken");
-
-    const accessTokenRefreshInterval =
-      result.data?.access_token_expiration / 1000000 / 2;
-
-    setAccessTokenRefreshInterval(accessTokenRefreshInterval);
-    setIsAuthenticated(Boolean(result.status));
-  };
-
-  useEffect(async () => {
-    if (!isAuthenticated) {
-      await refreshToken();
-    }
-
-    setIsChecking(false);
+  useEffect(() => {
+    const getUser = async () => {
+      const user = await fetchUser();
+      setUser(user);
+    };
 
     if (isAuthenticated) {
-      const getUserResult = await makeQuery("/getUser");
-
-      if (getUserResult.status) {
-        setUser(getUserResult.data);
-      }
-
-      const interval = setInterval(refreshToken, accessTokenRefreshInterval);
-
-      return () => clearInterval(interval);
+      getUser();
     }
-  }, [isAuthenticated, accessTokenRefreshInterval]);
+
+    const authCallback = (status: boolean) => {
+      setIsAuthenticated(status);
+      setIsChecking(false);
+    };
+
+    const timeout = rotateTokens(authCallback);
+    return () => clearTimeout(timeout);
+  }, [isAuthenticated]);
 
   return {
     isAuthenticated,
     isChecking,
     user,
-    login: async (username: string, password: string) => {
-      const result = await makeCommand("/login", {
-        username: username,
-        password,
+    login: (username: string, password: string) => {
+      login(username, password, () => {
+        setIsAuthenticated(true);
       });
-
-      if (result.status) {
-        window.location.reload();
-      }
     },
-    logout: async () => {
-      const result = await makeCommand("/logout");
-
-      if (result.status) {
-        window.location.reload();
-      }
-    },
-    signup: async (username: string, password: string) => {
-      const result = await makeCommand("/signup", {
-        username: username,
-        password,
+    logout: () => {
+      logout(() => {
+        setIsAuthenticated(false);
+        setUser(null);
       });
-
-      if (result.status) {
-        window.location.reload();
-      }
+    },
+    signup: (username: string, password: string) => {
+      signup(username, password, () => {
+        setIsAuthenticated(true);
+      });
     },
   };
 };
