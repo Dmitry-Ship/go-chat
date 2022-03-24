@@ -54,7 +54,13 @@ func HandleLogin(authService application.AuthService) http.HandlerFunc {
 			SameSite: http.SameSiteNoneMode,
 		})
 
-		json.NewEncoder(w).Encode("OK")
+		expiration := struct {
+			AccessTokenExpiration time.Duration `json:"access_token_expiration"`
+		}{
+			AccessTokenExpiration: application.AccessTokenExpiration,
+		}
+
+		json.NewEncoder(w).Encode(expiration)
 	}
 }
 
@@ -127,7 +133,13 @@ func HandleSignUp(authService application.AuthService) http.HandlerFunc {
 			SameSite: http.SameSiteNoneMode,
 		})
 
-		json.NewEncoder(w).Encode("OK")
+		expiration := struct {
+			AccessTokenExpiration time.Duration `json:"access_token_expiration"`
+		}{
+			AccessTokenExpiration: application.AccessTokenExpiration,
+		}
+
+		json.NewEncoder(w).Encode(expiration)
 	}
 }
 
@@ -147,7 +159,7 @@ func HandleRefreshToken(authService application.AuthService) http.HandlerFunc {
 		newAccessToken, err := authService.RefreshAccessToken(refreshToken.Value)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
@@ -161,7 +173,13 @@ func HandleRefreshToken(authService application.AuthService) http.HandlerFunc {
 			SameSite: http.SameSiteNoneMode,
 		})
 
-		json.NewEncoder(w).Encode("OK")
+		expiration := struct {
+			AccessTokenExpiration time.Duration `json:"access_token_expiration"`
+		}{
+			AccessTokenExpiration: application.AccessTokenExpiration,
+		}
+
+		json.NewEncoder(w).Encode(expiration)
 	}
 }
 

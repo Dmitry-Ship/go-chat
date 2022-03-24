@@ -2,9 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { makeCommand, makeQuery } from "../api/fetch";
 import { User } from "../types/coreTypes";
 
-const ACCESS_TOKEN_LIFETIME = 1000 * 60 * 10;
-const ACCESS_TOKEN_REFETCH_TIME = ACCESS_TOKEN_LIFETIME / 2;
-
 type auth = {
   user: null | User;
   isAuthenticated: boolean;
@@ -17,37 +14,39 @@ type auth = {
 export const useProvideAuth = (): auth => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isChecking, setIsChecking] = useState<boolean>(true);
+  const [accessTokenRefreshInterval, setAccessTokenRefreshInterval] =
+    useState<Number>(0);
   const [user, setUser] = useState<User | null>(null);
 
   const refreshToken = async () => {
     const result = await makeCommand("/refreshToken");
 
-    if (!result.status) {
-      setIsAuthenticated(false);
-    } else {
-      setIsAuthenticated(true);
+    const accessTokenRefreshInterval =
+      result.data?.access_token_expiration / 1000000 / 2;
+
+    setAccessTokenRefreshInterval(accessTokenRefreshInterval);
+    setIsAuthenticated(Boolean(result.status));
+  };
+
+  useEffect(async () => {
+    if (!isAuthenticated) {
+      await refreshToken();
     }
+
     setIsChecking(false);
-  };
-
-  const fetchUser = async () => {
-    const result = await makeQuery("/getUser");
-
-    if (result.status) {
-      setUser(result.data);
-    }
-  };
-
-  useEffect(() => {
-    refreshToken();
 
     if (isAuthenticated) {
-      fetchUser();
-      const interval = setInterval(refreshToken, ACCESS_TOKEN_REFETCH_TIME);
+      const getUserResult = await makeQuery("/getUser");
+
+      if (getUserResult.status) {
+        setUser(getUserResult.data);
+      }
+
+      const interval = setInterval(refreshToken, accessTokenRefreshInterval);
 
       return () => clearInterval(interval);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, accessTokenRefreshInterval]);
 
   return {
     isAuthenticated,
