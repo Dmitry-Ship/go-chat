@@ -1,7 +1,6 @@
 import React, { FormEvent, useState } from "react";
 import styles from "./ChatForm.module.css";
 import Loader from "../common/Loader";
-import { useAuth } from "../../contexts/authContext";
 import { useWS } from "../../contexts/WSContext";
 import { makeCommand } from "../../api/fetch";
 
@@ -13,7 +12,6 @@ const ChatForm: React.FC<{
 }> = ({ loading, joined, onJoin, roomId }) => {
   const [message, setMessage] = useState<string>("");
 
-  const auth = useAuth();
   const { sendNotification } = useWS();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -22,7 +20,6 @@ const ChatForm: React.FC<{
     sendNotification("message", {
       content: message,
       room_id: roomId,
-      user_id: auth.user?.id || "",
     });
 
     setMessage("");

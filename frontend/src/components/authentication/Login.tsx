@@ -8,7 +8,7 @@ function Login() {
   const [password, setPassword] = React.useState("");
   const { login } = useAuth();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     login(username, password);
   };

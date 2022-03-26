@@ -102,7 +102,12 @@ func (s *roomCommandService) DeleteRoom(id uuid.UUID) error {
 		RoomId: id,
 	}
 
-	err := s.notifyAllParticipants(id, "room_deleted", message)
+	notification := ws.OutgoingNotification{
+		Type:    "room_deleted",
+		Payload: message,
+	}
+
+	err := s.notifyAllParticipants(id, notification)
 
 	if err != nil {
 		return err
@@ -117,7 +122,7 @@ func (s *roomCommandService) DeleteRoom(id uuid.UUID) error {
 	return nil
 }
 
-func (s *roomCommandService) notifyAllParticipants(roomID uuid.UUID, messageType string, message interface{}) error {
+func (s *roomCommandService) notifyAllParticipants(roomID uuid.UUID, notification ws.OutgoingNotification) error {
 	participants, err := s.participants.FindAllByRoomID(roomID)
 
 	if err != nil {
@@ -125,7 +130,15 @@ func (s *roomCommandService) notifyAllParticipants(roomID uuid.UUID, messageType
 	}
 
 	for _, participant := range participants {
-		s.hub.BroadcastNotification(messageType, message, participant.UserId)
+		if notification.Type == "message" {
+			message := notification.Payload.(MessageFull)
+			message.IsInbound = participant.UserID != message.User.ID
+			notification.Payload = message
+
+		}
+
+		notification.UserID = participant.UserID
+		s.hub.BroadcastNotification(notification)
 	}
 
 	return nil
@@ -140,7 +153,7 @@ func (s *roomCommandService) SendMessage(messageText string, messageType string,
 		return err
 	}
 
-	user, err := s.users.FindByID(message.UserId)
+	user, err := s.users.FindByID(message.UserID)
 
 	if err != nil {
 		return err
@@ -151,7 +164,12 @@ func (s *roomCommandService) SendMessage(messageText string, messageType string,
 		ChatMessage: message,
 	}
 
-	err = s.notifyAllParticipants(roomId, "message", fullMessage)
+	notification := ws.OutgoingNotification{
+		Type:    "message",
+		Payload: fullMessage,
+	}
+
+	err = s.notifyAllParticipants(roomId, notification)
 
 	if err != nil {
 		return err

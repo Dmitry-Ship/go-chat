@@ -88,7 +88,7 @@ func (s *roomQueryService) GetRoomMessages(roomId uuid.UUID, userID uuid.UUID) (
 }
 
 func (s *roomQueryService) makeMessageFull(message *domain.ChatMessage, userID uuid.UUID) (MessageFull, error) {
-	user, err := s.users.FindByID(message.UserId)
+	user, err := s.users.FindByID(message.UserID)
 
 	if err != nil {
 		return MessageFull{}, err

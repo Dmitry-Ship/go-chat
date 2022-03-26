@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"GitHub/go-chat/backend/pkg/application"
+	ws "GitHub/go-chat/backend/pkg/websocket"
 	"encoding/json"
 	"log"
 
@@ -10,7 +11,7 @@ import (
 
 type wsMessageHandler struct {
 	roomCommandService application.RoomCommandService
-	MessageChannel     chan json.RawMessage
+	MessageChannel     chan ws.IncomingNotification
 }
 
 type incomingNotification struct {
@@ -23,7 +24,7 @@ func NewWSMessageHandler(
 ) *wsMessageHandler {
 	return &wsMessageHandler{
 		roomCommandService: roomCommandService,
-		MessageChannel:     make(chan json.RawMessage, 100),
+		MessageChannel:     make(chan ws.IncomingNotification, 100),
 	}
 }
 
@@ -35,7 +36,7 @@ func (h *wsMessageHandler) Run() {
 			Data: &data,
 		}
 
-		if err := json.Unmarshal(message, &notification); err != nil {
+		if err := json.Unmarshal(message.Data, &notification); err != nil {
 			log.Println(err)
 			continue
 		}
@@ -45,7 +46,6 @@ func (h *wsMessageHandler) Run() {
 			request := struct {
 				Content string    `json:"content"`
 				RoomId  uuid.UUID `json:"room_id"`
-				UserId  uuid.UUID `json:"user_id"`
 			}{}
 
 			if err := json.Unmarshal([]byte(data), &request); err != nil {
@@ -53,7 +53,7 @@ func (h *wsMessageHandler) Run() {
 				continue
 			}
 
-			err := h.roomCommandService.SendMessage(request.Content, "user", request.RoomId, request.UserId)
+			err := h.roomCommandService.SendMessage(request.Content, "user", request.RoomId, message.UserID)
 
 			if err != nil {
 				log.Println(err)

@@ -23,7 +23,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func HandleWS(
-	incomingMessageChannel chan<- json.RawMessage,
+	incomingNotificationChannel chan<- ws.IncomingNotification,
 	registerClientChan chan<- *ws.Client,
 	unregisterClientChan chan<- *ws.Client,
 ) http.HandlerFunc {
@@ -36,7 +36,7 @@ func HandleWS(
 			return
 		}
 
-		client := ws.NewClient(conn, unregisterClientChan, incomingMessageChannel, userID)
+		client := ws.NewClient(conn, unregisterClientChan, incomingNotificationChannel, userID)
 
 		registerClientChan <- client
 

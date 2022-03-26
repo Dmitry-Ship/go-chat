@@ -12,7 +12,7 @@ import (
 )
 
 type tokenClaims struct {
-	UserId uuid.UUID
+	UserID uuid.UUID
 	jwt.StandardClaims
 }
 
@@ -106,7 +106,7 @@ func (a *authService) createAccessToken(userid uuid.UUID) (string, error) {
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(a.accessTokenExpiration).Unix(),
 		},
-		UserId: userid,
+		UserID: userid,
 	}
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -125,7 +125,7 @@ func (a *authService) createRefreshToken(userid uuid.UUID) (string, error) {
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(a.refreshTokenExpiration).Unix(),
 		},
-		UserId: userid,
+		UserID: userid,
 	}
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -172,7 +172,7 @@ func (a *authService) ParseAccessToken(tokenString string) (uuid.UUID, error) {
 	})
 
 	if token.Valid {
-		return token.Claims.(*tokenClaims).UserId, nil
+		return token.Claims.(*tokenClaims).UserID, nil
 	}
 
 	if ve, ok := err.(*jwt.ValidationError); ok {
@@ -214,8 +214,8 @@ func (a *authService) parseRefreshToken(tokenString string) (uuid.UUID, error) {
 	}
 
 	if token.Valid {
-		userId := token.Claims.(*tokenClaims).UserId
-		refreshToken, err := a.users.GetRefreshTokenByUserId(userId)
+		userId := token.Claims.(*tokenClaims).UserID
+		refreshToken, err := a.users.GetRefreshTokenByUserID(userId)
 
 		if err != nil {
 			return uuid.Nil, err

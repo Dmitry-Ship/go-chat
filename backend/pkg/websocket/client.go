@@ -21,28 +21,34 @@ const (
 	maxMessageSize = 512
 )
 
-type outgoingNotification struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
+type IncomingNotification struct {
+	UserID uuid.UUID
+	Data   json.RawMessage
+}
+
+type OutgoingNotification struct {
+	Type    string      `json:"type"`
+	Payload interface{} `json:"data"`
+	UserID  uuid.UUID   `json:"user_id"`
 }
 
 type Client struct {
-	Id                     uuid.UUID
-	incomingMessageChannel chan<- json.RawMessage
-	unregisterClientChan   chan<- *Client
-	Conn                   *websocket.Conn
-	send                   chan outgoingNotification
-	userID                 uuid.UUID
+	Id                          uuid.UUID
+	incomingNotificationChannel chan<- IncomingNotification
+	unregisterClientChan        chan<- *Client
+	Conn                        *websocket.Conn
+	send                        chan *OutgoingNotification
+	userID                      uuid.UUID
 }
 
-func NewClient(conn *websocket.Conn, unregisterClientChan chan<- *Client, incomingMessageChannel chan<- json.RawMessage, userID uuid.UUID) *Client {
+func NewClient(conn *websocket.Conn, unregisterClientChan chan<- *Client, incomingNotificationChannel chan<- IncomingNotification, userID uuid.UUID) *Client {
 	return &Client{
-		Id:                     uuid.New(),
-		incomingMessageChannel: incomingMessageChannel,
-		Conn:                   conn,
-		unregisterClientChan:   unregisterClientChan,
-		send:                   make(chan outgoingNotification, 1024),
-		userID:                 userID,
+		Id:                          uuid.New(),
+		incomingNotificationChannel: incomingNotificationChannel,
+		Conn:                        conn,
+		unregisterClientChan:        unregisterClientChan,
+		send:                        make(chan *OutgoingNotification, 1024),
+		userID:                      userID,
 	}
 }
 
@@ -66,8 +72,12 @@ func (c *Client) ReceiveMessages() {
 			break
 		}
 
-		c.incomingMessageChannel <- message
+		incomingNotification := IncomingNotification{
+			UserID: c.userID,
+			Data:   message,
+		}
 
+		c.incomingNotificationChannel <- incomingNotification
 	}
 }
 
@@ -89,6 +99,7 @@ func (c *Client) SendNotifications() {
 			}
 
 			if err := c.Conn.WriteJSON(notification); err != nil {
+
 				return
 			}
 
@@ -101,9 +112,6 @@ func (c *Client) SendNotifications() {
 	}
 }
 
-func (c *Client) SendNotification(notificationType string, data interface{}) {
-	c.send <- outgoingNotification{
-		Type: notificationType,
-		Data: data,
-	}
+func (c *Client) SendNotification(notification *OutgoingNotification) {
+	c.send <- notification
 }

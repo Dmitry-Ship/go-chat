@@ -45,7 +45,7 @@ func (r *userRepository) StoreRefreshToken(userID uuid.UUID, refreshToken string
 	return err
 }
 
-func (r *userRepository) GetRefreshTokenByUserId(userID uuid.UUID) (string, error) {
+func (r *userRepository) GetRefreshTokenByUserID(userID uuid.UUID) (string, error) {
 	user := domain.User{}
 	err := r.users.Where("id = ?", userID).First(&user).Error
 

@@ -12,7 +12,7 @@ func TestNewParticipant(t *testing.T) {
 	userID := uuid.New()
 	participant := NewParticipant(roomID, userID)
 	assert.Equal(t, roomID, participant.RoomId)
-	assert.Equal(t, userID, participant.UserId)
+	assert.Equal(t, userID, participant.UserID)
 	assert.NotNil(t, participant.CreatedAt)
 	assert.NotNil(t, participant.ID)
 }

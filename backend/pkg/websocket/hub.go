@@ -4,18 +4,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type notification struct {
-	Type    string      `json:"type"`
-	Payload interface{} `json:"payload"`
-	UserId  uuid.UUID   `json:"userId"`
-}
-
 type HubBroadcaster interface {
-	BroadcastNotification(notificationType string, payload interface{}, userID uuid.UUID)
+	BroadcastNotification(notification OutgoingNotification)
 }
 
 type hub struct {
-	broadcast  chan *notification
+	broadcast  chan *OutgoingNotification
 	Register   chan *Client
 	Unregister chan *Client
 	clients    map[uuid.UUID]map[uuid.UUID]*Client
@@ -23,7 +17,7 @@ type hub struct {
 
 func NewHub() *hub {
 	return &hub{
-		broadcast:  make(chan *notification, 1024),
+		broadcast:  make(chan *OutgoingNotification, 1024),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		clients:    make(map[uuid.UUID]map[uuid.UUID]*Client),
@@ -33,15 +27,16 @@ func NewHub() *hub {
 func (s *hub) Run() {
 	for {
 		select {
-		case message := <-s.broadcast:
-			clients := s.clients[message.UserId]
+		case notification := <-s.broadcast:
+			clients := s.clients[notification.UserID]
 
 			for _, client := range clients {
-				client.SendNotification(message.Type, message.Payload)
+				client.SendNotification(notification)
 			}
 
 		case client := <-s.Register:
 			userClients := s.clients[client.userID]
+
 			if userClients == nil {
 				userClients = make(map[uuid.UUID]*Client)
 				s.clients[client.userID] = userClients
@@ -58,10 +53,6 @@ func (s *hub) Run() {
 	}
 }
 
-func (s *hub) BroadcastNotification(notificationType string, payload interface{}, userID uuid.UUID) {
-	s.broadcast <- &notification{
-		Type:    notificationType,
-		Payload: payload,
-		UserId:  userID,
-	}
+func (s *hub) BroadcastNotification(notification OutgoingNotification) {
+	s.broadcast <- &notification
 }

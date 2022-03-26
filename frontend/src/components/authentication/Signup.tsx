@@ -8,7 +8,7 @@ function SignUp() {
   const [password, setPassword] = React.useState("");
   const { signup } = useAuth();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     signup(username, password);
   };
