@@ -2,21 +2,18 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/domain"
-	"errors"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type userRepository struct {
-	users         *gorm.DB
-	refreshTokens map[uuid.UUID]string
+	users *gorm.DB
 }
 
 func NewUserRepository(db *gorm.DB) *userRepository {
 	return &userRepository{
-		users:         db,
-		refreshTokens: make(map[uuid.UUID]string),
+		users: db,
 	}
 }
 
@@ -42,20 +39,23 @@ func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
 }
 
 func (r *userRepository) StoreRefreshToken(userID uuid.UUID, refreshToken string) error {
-	r.refreshTokens[userID] = refreshToken
-	return nil
+	user := domain.User{}
+	err := r.users.Where("id = ?", userID).First(&user).Update("refresh_token", refreshToken).Error
+
+	return err
 }
 
 func (r *userRepository) GetRefreshTokenByUserId(userID uuid.UUID) (string, error) {
-	refreshToken, ok := r.refreshTokens[userID]
-	if !ok {
-		return "", errors.New("refresh token not found")
-	}
-	return refreshToken, nil
+	user := domain.User{}
+	err := r.users.Where("id = ?", userID).First(&user).Error
+
+	return user.RefreshToken, err
 }
 
 func (r *userRepository) DeleteRefreshToken(userID uuid.UUID) error {
-	delete(r.refreshTokens, userID)
+	user := domain.User{}
+	err := r.users.Where("id = ?", userID).First(&user).Update("refresh_token", nil).Error
 
-	return nil
+	return err
+
 }

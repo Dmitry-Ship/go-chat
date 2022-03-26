@@ -5,6 +5,7 @@ import (
 	"GitHub/go-chat/backend/pkg/database"
 	"GitHub/go-chat/backend/pkg/interfaces"
 	"GitHub/go-chat/backend/pkg/postgres"
+	"time"
 
 	ws "GitHub/go-chat/backend/pkg/websocket"
 
@@ -21,9 +22,13 @@ func main() {
 	roomsRepository := postgres.NewRoomRepository(db)
 	participantRepository := postgres.NewParticipantRepository(db)
 
+	const RefreshTokenExpiration = 24 * 90 * time.Hour
+	const AccessTokenExpiration = 10 * time.Minute
+
+	authService := application.NewAuthService(usersRepository, RefreshTokenExpiration, AccessTokenExpiration)
+
 	hub := ws.NewHub()
 
-	authService := application.NewAuthService(usersRepository)
 	roomCommandService := application.NewRoomCommandService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)
 	roomQueryService := application.NewRoomQueryService(roomsRepository, participantRepository, usersRepository, messagesRepository)
 
@@ -31,12 +36,13 @@ func main() {
 
 	ensureAuth := interfaces.MakeEnsureAuth(authService)
 
-	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(wsHandler.MessageChannel, hub.Register, hub.Unregister)))
 	http.HandleFunc("/signup", interfaces.AddDefaultHeaders(interfaces.HandleSignUp(authService)))
 	http.HandleFunc("/login", interfaces.AddDefaultHeaders(interfaces.HandleLogin(authService)))
 	http.HandleFunc("/logout", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleLogout(authService))))
 	http.HandleFunc("/refreshToken", interfaces.AddDefaultHeaders((interfaces.HandleRefreshToken(authService))))
 	http.HandleFunc("/getUser", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetUser(authService))))
+
+	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(wsHandler.MessageChannel, hub.Register, hub.Unregister)))
 	http.HandleFunc("/getRooms", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetRooms(roomQueryService))))
 	http.HandleFunc("/getRoom", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetRoom(roomQueryService))))
 	http.HandleFunc("/getRoomsMessages", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetRoomsMessages(roomQueryService))))

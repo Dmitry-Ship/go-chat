@@ -11,16 +11,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const RefreshTokenExpiration = 24 * 7 * time.Hour
-const AccessTokenExpiration = 10 * time.Minute
-
 type tokenClaims struct {
 	UserId uuid.UUID
 	jwt.StandardClaims
 }
 
 type authService struct {
-	users domain.UserRepository
+	users                  domain.UserRepository
+	refreshTokenExpiration time.Duration
+	accessTokenExpiration  time.Duration
 }
 
 type Tokens struct {
@@ -32,13 +31,17 @@ type AuthService interface {
 	Login(username string, password string) (Tokens, error)
 	Logout(userId uuid.UUID) error
 	SignUp(username string, password string) (Tokens, error)
-	RefreshAccessToken(refreshTokenString string) (string, error)
+	RotateTokens(refreshTokenString string) (Tokens, error)
 	GetUser(userId uuid.UUID) (*domain.User, error)
+	GetAccessTokenExpiration() time.Duration
+	GetRefreshTokenExpiration() time.Duration
 }
 
-func NewAuthService(users domain.UserRepository) *authService {
+func NewAuthService(users domain.UserRepository, refreshTokenExpiration time.Duration, accessTokenExpiration time.Duration) *authService {
 	return &authService{
-		users: users,
+		users:                  users,
+		refreshTokenExpiration: refreshTokenExpiration,
+		accessTokenExpiration:  accessTokenExpiration,
 	}
 }
 
@@ -67,15 +70,7 @@ func (a *authService) Login(username string, password string) (Tokens, error) {
 		return Tokens{}, errors.New("password is incorrect")
 	}
 
-	newTokens, err := a.createTokens(user.ID)
-
-	if err != nil {
-		return newTokens, err
-	}
-
-	a.users.StoreRefreshToken(user.ID, newTokens.RefreshToken)
-
-	return newTokens, nil
+	return a.createTokens(user.ID)
 }
 
 func (a *authService) Logout(userId uuid.UUID) error {
@@ -103,25 +98,13 @@ func (a *authService) SignUp(username string, password string) (Tokens, error) {
 		return Tokens{}, err
 	}
 
-	newTokens, err := a.createTokens(user.ID)
-
-	if err != nil {
-		return newTokens, err
-	}
-
-	err = a.users.StoreRefreshToken(user.ID, newTokens.RefreshToken)
-
-	if err != nil {
-		return newTokens, err
-	}
-
-	return newTokens, nil
+	return a.createTokens(user.ID)
 }
 
 func (a *authService) createAccessToken(userid uuid.UUID) (string, error) {
 	claims := tokenClaims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(AccessTokenExpiration).Unix(),
+			ExpiresAt: time.Now().Add(a.accessTokenExpiration).Unix(),
 		},
 		UserId: userid,
 	}
@@ -140,7 +123,7 @@ func (a *authService) createAccessToken(userid uuid.UUID) (string, error) {
 func (a *authService) createRefreshToken(userid uuid.UUID) (string, error) {
 	claims := tokenClaims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(RefreshTokenExpiration).Unix(),
+			ExpiresAt: time.Now().Add(a.refreshTokenExpiration).Unix(),
 		},
 		UserId: userid,
 	}
@@ -166,6 +149,12 @@ func (a *authService) createTokens(userid uuid.UUID) (Tokens, error) {
 	}
 
 	refreshToken, err := a.createRefreshToken(userid)
+
+	if err != nil {
+		return tokens, err
+	}
+
+	err = a.users.StoreRefreshToken(userid, refreshToken)
 
 	if err != nil {
 		return tokens, err
@@ -242,12 +231,22 @@ func (a *authService) parseRefreshToken(tokenString string) (uuid.UUID, error) {
 	return uuid.Nil, err
 }
 
-func (a *authService) RefreshAccessToken(refreshTokenString string) (string, error) {
+func (a *authService) RotateTokens(refreshTokenString string) (Tokens, error) {
 	userId, err := a.parseRefreshToken(refreshTokenString)
 
+	var tokens Tokens
+
 	if err != nil {
-		return "", err
+		return tokens, err
 	}
 
-	return a.createAccessToken(userId)
+	return a.createTokens(userId)
+}
+
+func (a *authService) GetAccessTokenExpiration() time.Duration {
+	return a.accessTokenExpiration
+}
+
+func (a *authService) GetRefreshTokenExpiration() time.Duration {
+	return a.refreshTokenExpiration
 }

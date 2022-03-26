@@ -1,68 +1,89 @@
 import { makeCommand, makeQuery } from "../api/fetch";
+import { User } from "../types/coreTypes";
 
-export const rotateTokens = (cb: (isAuthenticated: boolean) => void) => {
-  const refresh = async () => {
-    const result = await makeCommand("/refreshToken");
+export interface IAuthenticationService {
+  login(username: string, password: string): Promise<void>;
+  signup(username: string, password: string): Promise<void>;
+  logout(): Promise<void>;
+  onLogin(callback: () => void): void;
+  onLogout(callback: () => void): void;
+  fetchUser(): Promise<User>;
+  rotateTokens(): NodeJS.Timeout;
+}
+export class AuthenticationService implements IAuthenticationService {
+  private onLoginCallback: () => void;
+  private onLogoutCallback: () => void;
 
-    const accessTokenRefreshInterval =
-      result.data?.access_token_expiration / 1000000 / 2;
+  constructor() {
+    this.onLoginCallback = () => {};
+    this.onLogoutCallback = () => {};
+  }
 
-    if (result.status) {
-      setTimeout(refresh, accessTokenRefreshInterval);
-    }
-
-    cb(result.status);
+  onLogin = (callback: () => void) => {
+    this.onLoginCallback = callback;
   };
 
-  const timeoutId = setTimeout(refresh, 0);
+  onLogout = (callback: () => void) => {
+    this.onLogoutCallback = callback;
+  };
 
-  return timeoutId;
-};
+  logout = async () => {
+    const result = await makeCommand("/logout");
 
-export const fetchUser = async () => {
-  const getUserResult = await makeQuery("/getUser");
+    if (result.status) {
+      this.onLogoutCallback();
+    }
+  };
 
-  if (getUserResult.status) {
-    return getUserResult.data;
-  }
+  login = async (username: string, password: string) => {
+    const result = await makeCommand("/login", {
+      username,
+      password,
+    });
 
-  return null;
-};
+    if (result.status) {
+      this.onLoginCallback();
+    }
+  };
 
-export const login = async (
-  username: string,
-  password: string,
-  cb: () => void
-) => {
-  const result = await makeCommand("/login", {
-    username,
-    password,
-  });
+  signup = async (username: string, password: string) => {
+    const result = await makeCommand("/signup", {
+      username,
+      password,
+    });
 
-  if (result.status) {
-    cb();
-  }
-};
+    if (result.status) {
+      this.onLoginCallback();
+    }
+  };
 
-export const logout = async (cb: () => void) => {
-  const result = await makeCommand("/logout");
+  rotateTokens = () => {
+    const refresh = async () => {
+      const result = await makeCommand("/refreshToken");
 
-  if (result.status) {
-    cb();
-  }
-};
+      const accessTokenRefreshInterval =
+        result.data?.access_token_expiration / 1000000 / 2;
 
-export const signup = async (
-  username: string,
-  password: string,
-  cb: () => void
-) => {
-  const result = await makeCommand("/signup", {
-    username,
-    password,
-  });
+      if (result.status) {
+        this.onLoginCallback();
+        setTimeout(refresh, accessTokenRefreshInterval);
+      } else {
+        this.onLogoutCallback();
+      }
+    };
 
-  if (result.status) {
-    cb();
-  }
-};
+    const timeoutId = setTimeout(refresh, 0);
+
+    return timeoutId;
+  };
+
+  fetchUser = async () => {
+    const getUserResult = await makeQuery("/getUser");
+
+    if (getUserResult.status) {
+      return getUserResult.data;
+    }
+
+    return null;
+  };
+}
