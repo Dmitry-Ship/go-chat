@@ -5,13 +5,11 @@ import ChatForm from "./ChatForm";
 import ChatLog from "./ChatLog";
 import { useQuery } from "../../api/hooks";
 import EditRoomBtn from "./EditRoomBtn";
-import { useAuth } from "../../contexts/authContext";
 import { useWS } from "../../contexts/WSContext";
 import { useRouter } from "next/router";
 import Link from "next/link";
 
 const ChatRoom: React.FC = () => {
-  const { user } = useAuth();
   const router = useRouter();
   const roomId = router.query.roomId as string;
   const [room, setRoom] = useState<Room>();
@@ -30,7 +28,7 @@ const ChatRoom: React.FC = () => {
   const roomQuery = useQuery<{
     room: Room;
     joined: boolean;
-  }>(`/getRoom?room_id=${roomId}&user_id=${user?.id}`);
+  }>(`/getRoom?room_id=${roomId}`);
 
   useEffect(() => {
     if (roomQuery.status === "done" && roomQuery.data) {

@@ -7,16 +7,16 @@ import Loader from "./Loader";
 const LoggedInLayout: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const auth = useAuth();
+  const { isAuthenticated, isChecking } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!auth.isAuthenticated && !auth.isChecking) {
+    if (!isAuthenticated && !isChecking) {
       router.push("/login");
     }
-  }, [auth.isAuthenticated, auth.isChecking, router]);
+  }, [isAuthenticated, isChecking, router]);
 
-  if (auth.isChecking) {
+  if (isChecking) {
     return <Loader />;
   }
 

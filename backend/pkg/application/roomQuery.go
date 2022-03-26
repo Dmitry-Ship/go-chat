@@ -14,12 +14,13 @@ type roomData struct {
 type MessageFull struct {
 	User *domain.User `json:"user"`
 	*domain.ChatMessage
+	IsInbound bool `json:"is_inbound"`
 }
 
 type RoomQueryService interface {
 	GetRoom(roomId uuid.UUID, userId uuid.UUID) (roomData, error)
 	GetRooms() ([]*domain.Room, error)
-	GetRoomMessages(roomId uuid.UUID) ([]MessageFull, error)
+	GetRoomMessages(roomId uuid.UUID, userId uuid.UUID) ([]MessageFull, error)
 }
 
 type roomQueryService struct {
@@ -64,7 +65,7 @@ func (s *roomQueryService) hasJoined(roomID uuid.UUID, userId uuid.UUID) bool {
 	return err == nil
 }
 
-func (s *roomQueryService) GetRoomMessages(roomId uuid.UUID) ([]MessageFull, error) {
+func (s *roomQueryService) GetRoomMessages(roomId uuid.UUID, userID uuid.UUID) ([]MessageFull, error) {
 	messages, err := s.messages.FindAllByRoomID(roomId)
 
 	if err != nil {
@@ -74,7 +75,7 @@ func (s *roomQueryService) GetRoomMessages(roomId uuid.UUID) ([]MessageFull, err
 	var messagesFull []MessageFull
 
 	for _, message := range messages {
-		messageFull, err := s.makeMessageFull(message)
+		messageFull, err := s.makeMessageFull(message, userID)
 
 		if err != nil {
 			return nil, err
@@ -86,7 +87,7 @@ func (s *roomQueryService) GetRoomMessages(roomId uuid.UUID) ([]MessageFull, err
 	return messagesFull, nil
 }
 
-func (s *roomQueryService) makeMessageFull(message *domain.ChatMessage) (MessageFull, error) {
+func (s *roomQueryService) makeMessageFull(message *domain.ChatMessage, userID uuid.UUID) (MessageFull, error) {
 	user, err := s.users.FindByID(message.UserId)
 
 	if err != nil {
@@ -96,6 +97,7 @@ func (s *roomQueryService) makeMessageFull(message *domain.ChatMessage) (Message
 	m := MessageFull{
 		User:        user,
 		ChatMessage: message,
+		IsInbound:   user.ID != userID,
 	}
 
 	return m, nil

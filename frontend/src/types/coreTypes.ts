@@ -8,6 +8,7 @@ export type Message = {
     avatar: string;
     name: string;
   };
+  is_inbound: boolean;
   createdAt: number;
 };
 

@@ -1,7 +1,6 @@
 import React from "react";
 import styles from "./MessageComponent.module.css";
 import { Message } from "../../types/coreTypes";
-import { useAuth } from "../../contexts/authContext";
 import Avatar from "../common/Avatar";
 
 const MessageComponent: React.FC<{
@@ -12,9 +11,6 @@ const MessageComponent: React.FC<{
   const date = new Date(message.createdAt * 1000);
   const time = `${date.getHours()}:${date.getMinutes()}`;
 
-  const { user } = useAuth();
-
-  const isOutbound = message.user.id === user?.id;
   const isSystem = message.type === "system";
 
   return (
@@ -29,7 +25,9 @@ const MessageComponent: React.FC<{
 
           <div
             className={`${
-              isOutbound ? styles.outboundMessage : styles.inboundMessage
+              message.is_inbound
+                ? styles.inboundMessage
+                : styles.outboundMessage
             } ${styles.messageBubble}`}
           >
             {isFistInAGroup && (

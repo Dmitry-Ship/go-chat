@@ -70,7 +70,9 @@ func HandleGetRoomsMessages(roomService application.RoomQueryService) http.Handl
 			return
 		}
 
-		messages, err := roomService.GetRoomMessages(roomId)
+		userID, _ := r.Context().Value("userId").(uuid.UUID)
+
+		messages, err := roomService.GetRoomMessages(roomId, userID)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

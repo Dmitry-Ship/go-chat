@@ -29,7 +29,7 @@ const ChatForm: React.FC<{
   };
 
   const handleJoin = async () => {
-    await makeCommand("/joinRoom", { room_id: roomId, user_id: auth.user?.id });
+    await makeCommand("/joinRoom", { room_id: roomId });
     onJoin();
   };
 

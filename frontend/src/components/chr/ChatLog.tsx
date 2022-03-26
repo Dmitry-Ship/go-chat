@@ -4,12 +4,10 @@ import { Message, MessageRaw } from "../../types/coreTypes";
 import MessageComponent from "./MessageComponent";
 import Loader from "../common/Loader";
 import { useQuery } from "../../api/hooks";
-import { useAuth } from "../../contexts/authContext";
 import { parseMessage } from "../../messages";
 import { useWS } from "../../contexts/WSContext";
 
 const ChatLog: React.FC<{ roomId: string }> = ({ roomId }) => {
-  const { user } = useAuth();
   const { subscribe } = useWS();
 
   const [logs, setLogs] = useState<Message[]>([]);
@@ -20,7 +18,7 @@ const ChatLog: React.FC<{ roomId: string }> = ({ roomId }) => {
 
   const messagesQuery = useQuery<{
     messages: MessageRaw[];
-  }>(`/getRoomsMessages?room_id=${roomId}&user_id=${user?.id}`);
+  }>(`/getRoomsMessages?room_id=${roomId}`);
 
   useEffect(() => {
     if (messagesQuery.status === "done" && messagesQuery.data) {

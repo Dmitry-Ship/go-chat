@@ -3,13 +3,11 @@ import { makeCommand } from "../../api/fetch";
 import styles from "./NewRoomBtn.module.css";
 import SlideIn from "../common/SlideIn";
 import { v4 as uuidv4 } from "uuid";
-import { useAuth } from "../../contexts/authContext";
 import { useRouter } from "next/router";
 
 function NewRoomBtn() {
   const [isCreating, setIsCreating] = useState(false);
   const [roomName, setRoomName] = useState("");
-  const { user } = useAuth();
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
 
@@ -26,7 +24,6 @@ function NewRoomBtn() {
 
     const result = await makeCommand("/createRoom", {
       room_name: roomName,
-      user_id: user?.id,
       room_id: roomId,
     });
 
