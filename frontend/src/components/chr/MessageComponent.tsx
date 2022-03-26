@@ -25,9 +25,7 @@ const MessageComponent: React.FC<{
 
           <div
             className={`${
-              message.is_inbound
-                ? styles.inboundMessage
-                : styles.outboundMessage
+              message.isInbound ? styles.inboundMessage : styles.outboundMessage
             } ${styles.messageBubble}`}
           >
             {isFistInAGroup && (

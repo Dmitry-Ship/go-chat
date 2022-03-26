@@ -12,5 +12,6 @@ export const parseMessage = (data: MessageRaw): Message => {
       name: data.user.name,
       avatar: data.user.avatar,
     },
+    isInbound: data.is_inbound,
   };
 };

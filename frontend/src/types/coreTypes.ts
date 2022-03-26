@@ -8,7 +8,7 @@ export type Message = {
     avatar: string;
     name: string;
   };
-  is_inbound: boolean;
+  isInbound: boolean;
   createdAt: number;
 };
 
@@ -23,6 +23,7 @@ export type MessageRaw = {
     name: string;
   };
   created_at: number;
+  is_inbound: boolean;
 };
 
 export type Room = {
