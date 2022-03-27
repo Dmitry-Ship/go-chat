@@ -16,15 +16,15 @@ type tokenClaims struct {
 	jwt.StandardClaims
 }
 
+type Tokens struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 type authService struct {
 	users                  domain.UserRepository
 	refreshTokenExpiration time.Duration
 	accessTokenExpiration  time.Duration
-}
-
-type Tokens struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
 }
 
 type AuthService interface {
@@ -37,11 +37,11 @@ type AuthService interface {
 	GetRefreshTokenExpiration() time.Duration
 }
 
-func NewAuthService(users domain.UserRepository, refreshTokenExpiration time.Duration, accessTokenExpiration time.Duration) *authService {
+func NewAuthService(users domain.UserRepository) *authService {
 	return &authService{
 		users:                  users,
-		refreshTokenExpiration: refreshTokenExpiration,
-		accessTokenExpiration:  accessTokenExpiration,
+		refreshTokenExpiration: 24 * 90 * time.Hour,
+		accessTokenExpiration:  10 * time.Minute,
 	}
 }
 

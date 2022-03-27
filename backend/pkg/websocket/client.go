@@ -9,18 +9,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const (
-	// Time allowed to write a message to the peer.
-	writeWait = 10 * time.Second
-
-	// Time allowed to read the next pong message from the peer.
-	pongWait = 60 * time.Second
-
-	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod     = (pongWait * 9) / 10
-	maxMessageSize = 512
-)
-
 type IncomingNotification struct {
 	UserID uuid.UUID
 	Data   json.RawMessage
@@ -33,20 +21,38 @@ type OutgoingNotification struct {
 }
 
 type Client struct {
-	Id     uuid.UUID
-	hub    Hub
-	Conn   *websocket.Conn
-	send   chan *OutgoingNotification
-	userID uuid.UUID
+	Id             uuid.UUID
+	hub            Hub
+	Conn           *websocket.Conn
+	send           chan *OutgoingNotification
+	userID         uuid.UUID
+	writeWait      time.Duration
+	pongWait       time.Duration
+	pingPeriod     time.Duration
+	maxMessageSize int64
 }
 
 func NewClient(conn *websocket.Conn, hub Hub, userID uuid.UUID) *Client {
+	// Time allowed to write a message to the peer.
+	writeWait := 10 * time.Second
+
+	// Time allowed to read the next pong message from the peer.
+	pongWait := 60 * time.Second
+
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod := (pongWait * 9) / 10
+	var maxMessageSize int64 = 512
+
 	return &Client{
-		Id:     uuid.New(),
-		Conn:   conn,
-		send:   make(chan *OutgoingNotification, 1024),
-		userID: userID,
-		hub:    hub,
+		Id:             uuid.New(),
+		Conn:           conn,
+		send:           make(chan *OutgoingNotification, 1024),
+		userID:         userID,
+		hub:            hub,
+		writeWait:      writeWait,
+		pongWait:       pongWait,
+		pingPeriod:     pingPeriod,
+		maxMessageSize: maxMessageSize,
 	}
 }
 
@@ -56,9 +62,9 @@ func (c *Client) ReceiveMessages() {
 		c.Conn.Close()
 	}()
 
-	c.Conn.SetReadLimit(maxMessageSize)
-	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	c.Conn.SetReadLimit(c.maxMessageSize)
+	c.Conn.SetReadDeadline(time.Now().Add(c.pongWait))
+	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(c.pongWait)); return nil })
 
 	for {
 		_, message, err := c.Conn.ReadMessage()
@@ -80,7 +86,7 @@ func (c *Client) ReceiveMessages() {
 }
 
 func (c *Client) SendNotifications() {
-	ticker := time.NewTicker(pingPeriod)
+	ticker := time.NewTicker(c.pingPeriod)
 	defer func() {
 		ticker.Stop()
 		c.Conn.Close()
@@ -89,7 +95,7 @@ func (c *Client) SendNotifications() {
 	for {
 		select {
 		case notification, ok := <-c.send:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			c.Conn.SetWriteDeadline(time.Now().Add(c.writeWait))
 			if !ok {
 				// The room closed the channel.
 				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -102,7 +108,7 @@ func (c *Client) SendNotifications() {
 			}
 
 		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			c.Conn.SetWriteDeadline(time.Now().Add(c.writeWait))
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}

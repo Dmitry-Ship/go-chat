@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func AddDefaultHeaders(next http.HandlerFunc) http.HandlerFunc {
+func AddHeaders(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		clientURL := os.Getenv("ORIGIN_URL")
 
