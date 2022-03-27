@@ -25,16 +25,14 @@ func main() {
 	const RefreshTokenExpiration = 24 * 90 * time.Hour
 	const AccessTokenExpiration = 10 * time.Minute
 
-	authService := application.NewAuthService(usersRepository, RefreshTokenExpiration, AccessTokenExpiration)
-
 	hub := ws.NewHub()
 
 	roomCommandService := application.NewRoomCommandService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)
 	roomQueryService := application.NewRoomQueryService(roomsRepository, participantRepository, usersRepository, messagesRepository)
-
-	wsHandler := interfaces.NewWSMessageHandler(roomCommandService)
-
+	authService := application.NewAuthService(usersRepository, RefreshTokenExpiration, AccessTokenExpiration)
 	ensureAuth := interfaces.MakeEnsureAuth(authService)
+
+	hub.SetWSHandler("message", interfaces.HandleWSMessage(roomCommandService))
 
 	http.HandleFunc("/signup", interfaces.AddDefaultHeaders(interfaces.HandleSignUp(authService)))
 	http.HandleFunc("/login", interfaces.AddDefaultHeaders(interfaces.HandleLogin(authService)))
@@ -42,7 +40,7 @@ func main() {
 	http.HandleFunc("/refreshToken", interfaces.AddDefaultHeaders((interfaces.HandleRefreshToken(authService))))
 	http.HandleFunc("/getUser", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetUser(authService))))
 
-	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(wsHandler.MessageChannel, hub.Register, hub.Unregister)))
+	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(hub)))
 	http.HandleFunc("/getRooms", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetRooms(roomQueryService))))
 	http.HandleFunc("/getRoom", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetRoom(roomQueryService))))
 	http.HandleFunc("/getRoomsMessages", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleGetRoomsMessages(roomQueryService))))
@@ -51,7 +49,6 @@ func main() {
 	http.HandleFunc("/joinRoom", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleJoinRoom(roomCommandService))))
 	http.HandleFunc("/leaveRoom", interfaces.AddDefaultHeaders(ensureAuth(interfaces.HandleLeaveRoom(roomCommandService))))
 
-	go wsHandler.Run()
 	go hub.Run()
 
 	port := os.Getenv("PORT")

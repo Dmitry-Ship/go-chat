@@ -3,6 +3,7 @@ package interfaces
 import (
 	"GitHub/go-chat/backend/pkg/application"
 	ws "GitHub/go-chat/backend/pkg/websocket"
+	"log"
 
 	"encoding/json"
 	"net/http"
@@ -22,11 +23,28 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func HandleWS(
-	incomingNotificationChannel chan<- ws.IncomingNotification,
-	registerClientChan chan<- *ws.Client,
-	unregisterClientChan chan<- *ws.Client,
-) http.HandlerFunc {
+func HandleWSMessage(roomService application.RoomCommandService) ws.WSHandler {
+	return func(message ws.IncomingNotification, data json.RawMessage) {
+		request := struct {
+			Content string    `json:"content"`
+			RoomId  uuid.UUID `json:"room_id"`
+		}{}
+
+		if err := json.Unmarshal([]byte(data), &request); err != nil {
+			log.Println(err)
+			return
+		}
+
+		err := roomService.SendMessage(request.Content, "user", request.RoomId, message.UserID)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}
+}
+
+func HandleWS(hub ws.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 
@@ -36,9 +54,9 @@ func HandleWS(
 			return
 		}
 
-		client := ws.NewClient(conn, unregisterClientChan, incomingNotificationChannel, userID)
+		client := ws.NewClient(conn, hub, userID)
 
-		registerClientChan <- client
+		hub.RegisterClient(client)
 
 		go client.SendNotifications()
 		go client.ReceiveMessages()

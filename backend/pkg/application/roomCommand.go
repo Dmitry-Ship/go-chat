@@ -22,10 +22,10 @@ type roomCommandService struct {
 	participants domain.ParticipantRepository
 	users        domain.UserRepository
 	messages     domain.ChatMessageRepository
-	hub          ws.HubBroadcaster
+	hub          ws.Hub
 }
 
-func NewRoomCommandService(rooms domain.RoomRepository, participants domain.ParticipantRepository, users domain.UserRepository, messages domain.ChatMessageRepository, hub ws.HubBroadcaster) *roomCommandService {
+func NewRoomCommandService(rooms domain.RoomRepository, participants domain.ParticipantRepository, users domain.UserRepository, messages domain.ChatMessageRepository, hub ws.Hub) *roomCommandService {
 	return &roomCommandService{
 		rooms:        rooms,
 		users:        users,
