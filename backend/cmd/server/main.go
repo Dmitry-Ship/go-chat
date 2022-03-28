@@ -30,6 +30,8 @@ func main() {
 	contactsQueryService := application.NewContactsQueryService(usersRepository)
 	ensureAuth := interfaces.MakeEnsureAuth(authService)
 
+	wsHandlers.SetWSHandler("message", interfaces.HandleWSMessage(roomCommandService))
+
 	http.HandleFunc("/signup", interfaces.AddHeaders(interfaces.HandleSignUp(authService)))
 	http.HandleFunc("/login", interfaces.AddHeaders(interfaces.HandleLogin(authService)))
 	http.HandleFunc("/logout", interfaces.AddHeaders(ensureAuth(interfaces.HandleLogout(authService))))
