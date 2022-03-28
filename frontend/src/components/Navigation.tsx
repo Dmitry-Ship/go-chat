@@ -8,6 +8,7 @@ const Navigation = () => {
 
   const links = [
     { href: "/", label: "💬" },
+    { href: "/contacts", label: "👥" },
     { href: "/settings", label: "⚙️" },
   ];
 

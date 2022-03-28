@@ -26,6 +26,7 @@ func main() {
 	roomCommandService := application.NewRoomCommandService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)
 	roomQueryService := application.NewRoomQueryService(roomsRepository, participantRepository, usersRepository, messagesRepository)
 	authService := application.NewAuthService(usersRepository)
+	contactsQueryService := application.NewContactsQueryService(usersRepository)
 	ensureAuth := interfaces.MakeEnsureAuth(authService)
 
 	hub.SetWSHandler("message", interfaces.HandleWSMessage(roomCommandService))
@@ -39,6 +40,7 @@ func main() {
 	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(hub)))
 
 	http.HandleFunc("/getRooms", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetRooms(roomQueryService))))
+	http.HandleFunc("/getContacts", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetContacts(contactsQueryService))))
 	http.HandleFunc("/getRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetRoom(roomQueryService))))
 	http.HandleFunc("/getRoomsMessages", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetRoomsMessages(roomQueryService))))
 	http.HandleFunc("/createRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleCreateRoom(roomCommandService))))

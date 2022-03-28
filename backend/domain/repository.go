@@ -16,6 +16,7 @@ type UserRepository interface {
 	StoreRefreshToken(userID uuid.UUID, refreshToken string) error
 	GetRefreshTokenByUserID(userID uuid.UUID) (string, error)
 	DeleteRefreshToken(userID uuid.UUID) error
+	FindAll() ([]*User, error)
 }
 
 type ChatMessageRepository interface {

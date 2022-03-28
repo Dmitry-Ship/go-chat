@@ -59,3 +59,10 @@ func (r *userRepository) DeleteRefreshToken(userID uuid.UUID) error {
 	return err
 
 }
+
+func (r *userRepository) FindAll() ([]*domain.User, error) {
+	users := []*domain.User{}
+	err := r.users.Limit(50).Find(&users).Error
+
+	return users, err
+}
