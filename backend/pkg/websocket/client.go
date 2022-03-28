@@ -23,6 +23,7 @@ type OutgoingNotification struct {
 type Client struct {
 	Id             uuid.UUID
 	hub            Hub
+	wsHandler      WSHandlers
 	Conn           *websocket.Conn
 	send           chan *OutgoingNotification
 	userID         uuid.UUID
@@ -32,7 +33,7 @@ type Client struct {
 	maxMessageSize int64
 }
 
-func NewClient(conn *websocket.Conn, hub Hub, userID uuid.UUID) *Client {
+func NewClient(conn *websocket.Conn, hub Hub, wsHandler WSHandlers, userID uuid.UUID) *Client {
 	// Time allowed to write a message to the peer.
 	writeWait := 10 * time.Second
 
@@ -49,6 +50,7 @@ func NewClient(conn *websocket.Conn, hub Hub, userID uuid.UUID) *Client {
 		send:           make(chan *OutgoingNotification, 1024),
 		userID:         userID,
 		hub:            hub,
+		wsHandler:      wsHandler,
 		writeWait:      writeWait,
 		pongWait:       pongWait,
 		pingPeriod:     pingPeriod,
@@ -81,7 +83,7 @@ func (c *Client) ReceiveMessages() {
 			Data:   message,
 		}
 
-		c.hub.SendMessage(incomingNotification)
+		c.wsHandler.SendMessage(incomingNotification)
 	}
 }
 

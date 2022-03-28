@@ -44,7 +44,7 @@ func HandleWSMessage(roomService application.RoomCommandService) ws.WSHandler {
 	}
 }
 
-func HandleWS(hub ws.Hub) http.HandlerFunc {
+func HandleWS(hub ws.Hub, wsHandlers ws.WSHandlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 
@@ -54,7 +54,7 @@ func HandleWS(hub ws.Hub) http.HandlerFunc {
 			return
 		}
 
-		client := ws.NewClient(conn, hub, userID)
+		client := ws.NewClient(conn, hub, wsHandlers, userID)
 
 		hub.RegisterClient(client)
 

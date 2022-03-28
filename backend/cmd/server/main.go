@@ -22,6 +22,7 @@ func main() {
 	participantRepository := postgres.NewParticipantRepository(db)
 
 	hub := ws.NewHub()
+	wsHandlers := ws.NewWSHandlers()
 
 	roomCommandService := application.NewRoomCommandService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)
 	roomQueryService := application.NewRoomQueryService(roomsRepository, participantRepository, usersRepository, messagesRepository)
@@ -29,15 +30,13 @@ func main() {
 	contactsQueryService := application.NewContactsQueryService(usersRepository)
 	ensureAuth := interfaces.MakeEnsureAuth(authService)
 
-	hub.SetWSHandler("message", interfaces.HandleWSMessage(roomCommandService))
-
 	http.HandleFunc("/signup", interfaces.AddHeaders(interfaces.HandleSignUp(authService)))
 	http.HandleFunc("/login", interfaces.AddHeaders(interfaces.HandleLogin(authService)))
 	http.HandleFunc("/logout", interfaces.AddHeaders(ensureAuth(interfaces.HandleLogout(authService))))
 	http.HandleFunc("/refreshToken", interfaces.AddHeaders((interfaces.HandleRefreshToken(authService))))
 	http.HandleFunc("/getUser", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetUser(authService))))
 
-	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(hub)))
+	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(hub, wsHandlers)))
 
 	http.HandleFunc("/getRooms", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetRooms(roomQueryService))))
 	http.HandleFunc("/getContacts", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetContacts(contactsQueryService))))
@@ -48,6 +47,7 @@ func main() {
 	http.HandleFunc("/joinRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleJoinRoom(roomCommandService))))
 	http.HandleFunc("/leaveRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleLeaveRoom(roomCommandService))))
 
+	go wsHandlers.Run()
 	go hub.Run()
 
 	port := os.Getenv("PORT")
