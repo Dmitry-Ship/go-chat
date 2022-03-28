@@ -49,7 +49,6 @@ func main() {
 	http.HandleFunc("/joinRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleJoinRoom(roomCommandService))))
 	http.HandleFunc("/leaveRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleLeaveRoom(roomCommandService))))
 
-	go wsHandlers.Run()
 	go hub.Run()
 
 	port := os.Getenv("PORT")

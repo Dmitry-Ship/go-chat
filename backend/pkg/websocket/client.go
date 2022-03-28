@@ -83,7 +83,7 @@ func (c *Client) ReceiveMessages() {
 			Data:   message,
 		}
 
-		c.wsHandler.SendMessage(incomingNotification)
+		go c.wsHandler.HandleNotification(incomingNotification)
 	}
 }
 
