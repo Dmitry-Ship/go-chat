@@ -46,8 +46,8 @@ func main() {
 	http.HandleFunc("/getRoomsMessages", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetRoomsMessages(roomQueryService))))
 	http.HandleFunc("/createRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleCreateRoom(roomCommandService))))
 	http.HandleFunc("/deleteRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleDeleteRoom(roomCommandService))))
-	http.HandleFunc("/joinRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleJoinRoom(roomCommandService))))
-	http.HandleFunc("/leaveRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleLeaveRoom(roomCommandService))))
+	http.HandleFunc("/joinRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleJoinPublicRoom(roomCommandService))))
+	http.HandleFunc("/leaveRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleLeavePublicRoom(roomCommandService))))
 
 	go hub.Run()
 

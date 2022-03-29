@@ -10,9 +10,9 @@ import (
 )
 
 type RoomCommandService interface {
-	CreateRoom(id uuid.UUID, name string, userId uuid.UUID) error
-	JoinRoom(roomId uuid.UUID, userId uuid.UUID) error
-	LeaveRoom(roomId uuid.UUID, userId uuid.UUID) error
+	CreatePublicRoom(id uuid.UUID, name string, userId uuid.UUID) error
+	JoinPublicRoom(roomId uuid.UUID, userId uuid.UUID) error
+	LeavePublicRoom(roomId uuid.UUID, userId uuid.UUID) error
 	DeleteRoom(id uuid.UUID) error
 	SendMessage(messageText string, messageType string, roomId uuid.UUID, userId uuid.UUID) error
 }
@@ -35,15 +35,15 @@ func NewRoomCommandService(rooms domain.RoomRepository, participants domain.Part
 	}
 }
 
-func (s *roomCommandService) CreateRoom(id uuid.UUID, name string, userId uuid.UUID) error {
-	room := domain.NewRoom(id, name)
+func (s *roomCommandService) CreatePublicRoom(id uuid.UUID, name string, userId uuid.UUID) error {
+	room := domain.NewRoom(id, name, false)
 	err := s.rooms.Store(room)
 
 	if err != nil {
 		return err
 	}
 
-	err = s.JoinRoom(room.ID, userId)
+	err = s.JoinPublicRoom(room.ID, userId)
 
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (s *roomCommandService) CreateRoom(id uuid.UUID, name string, userId uuid.U
 	return nil
 }
 
-func (s *roomCommandService) JoinRoom(roomID uuid.UUID, userId uuid.UUID) error {
+func (s *roomCommandService) JoinPublicRoom(roomID uuid.UUID, userId uuid.UUID) error {
 	err := s.participants.Store(domain.NewParticipant(roomID, userId))
 
 	if err != nil {
@@ -60,6 +60,7 @@ func (s *roomCommandService) JoinRoom(roomID uuid.UUID, userId uuid.UUID) error 
 	}
 
 	user, err := s.users.FindByID(userId)
+
 	if err != nil {
 		return err
 	}
@@ -73,7 +74,7 @@ func (s *roomCommandService) JoinRoom(roomID uuid.UUID, userId uuid.UUID) error 
 	return nil
 }
 
-func (s *roomCommandService) LeaveRoom(roomID uuid.UUID, userId uuid.UUID) error {
+func (s *roomCommandService) LeavePublicRoom(roomID uuid.UUID, userId uuid.UUID) error {
 	err := s.participants.DeleteByRoomIDAndUserID(roomID, userId)
 
 	if err != nil {
@@ -96,15 +97,13 @@ func (s *roomCommandService) LeaveRoom(roomID uuid.UUID, userId uuid.UUID) error
 }
 
 func (s *roomCommandService) DeleteRoom(id uuid.UUID) error {
-	message := struct {
-		RoomId uuid.UUID `json:"room_id"`
-	}{
-		RoomId: id,
-	}
-
 	notification := ws.OutgoingNotification{
-		Type:    "room_deleted",
-		Payload: message,
+		Type: "room_deleted",
+		Payload: struct {
+			RoomId uuid.UUID `json:"room_id"`
+		}{
+			RoomId: id,
+		},
 	}
 
 	err := s.notifyAllParticipants(id, notification)
@@ -137,8 +136,7 @@ func (s *roomCommandService) notifyAllParticipants(roomID uuid.UUID, notificatio
 
 		}
 
-		notification.UserID = participant.UserID
-		s.hub.BroadcastNotification(notification)
+		s.hub.BroadcastToClients(notification, participant.UserID)
 	}
 
 	return nil
@@ -159,14 +157,12 @@ func (s *roomCommandService) SendMessage(messageText string, messageType string,
 		return err
 	}
 
-	fullMessage := MessageFull{
-		User:        user,
-		ChatMessage: message,
-	}
-
 	notification := ws.OutgoingNotification{
-		Type:    "message",
-		Payload: fullMessage,
+		Type: "message",
+		Payload: MessageFull{
+			User:        user,
+			ChatMessage: message,
+		},
 	}
 
 	err = s.notifyAllParticipants(roomId, notification)

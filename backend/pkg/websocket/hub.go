@@ -5,49 +5,54 @@ import (
 )
 
 type Hub interface {
-	BroadcastNotification(notification OutgoingNotification)
+	BroadcastToClients(notification OutgoingNotification, recipientID uuid.UUID)
 	UnregisterClient(client *Client)
 	RegisterClient(client *Client)
 }
 
+type broadcastMessage struct {
+	notification OutgoingNotification
+	recipientID  uuid.UUID
+}
+
 type hub struct {
-	broadcast  chan *OutgoingNotification
-	register   chan *Client
-	unregister chan *Client
-	clients    map[uuid.UUID]map[uuid.UUID]*Client
+	broadcast      chan broadcastMessage
+	register       chan *Client
+	unregister     chan *Client
+	userClientsMap map[uuid.UUID]map[uuid.UUID]*Client
 }
 
 func NewHub() *hub {
 	return &hub{
-		broadcast:  make(chan *OutgoingNotification, 1024),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		clients:    make(map[uuid.UUID]map[uuid.UUID]*Client),
+		broadcast:      make(chan broadcastMessage, 1024),
+		register:       make(chan *Client),
+		unregister:     make(chan *Client),
+		userClientsMap: make(map[uuid.UUID]map[uuid.UUID]*Client),
 	}
 }
 
 func (s *hub) Run() {
 	for {
 		select {
-		case notification := <-s.broadcast:
-			clients := s.clients[notification.UserID]
+		case broadcastMessage := <-s.broadcast:
+			userClients := s.userClientsMap[broadcastMessage.recipientID]
 
-			for _, client := range clients {
-				client.SendNotification(notification)
+			for _, userClient := range userClients {
+				userClient.SendNotification(&broadcastMessage.notification)
 			}
 
 		case client := <-s.register:
-			userClients := s.clients[client.userID]
+			userClients := s.userClientsMap[client.userID]
 
 			if userClients == nil {
 				userClients = make(map[uuid.UUID]*Client)
-				s.clients[client.userID] = userClients
+				s.userClientsMap[client.userID] = userClients
 			}
 			userClients[client.Id] = client
 
 		case client := <-s.unregister:
-			if _, ok := s.clients[client.userID]; ok {
-				delete(s.clients[client.userID], client.Id)
+			if _, ok := s.userClientsMap[client.userID]; ok {
+				delete(s.userClientsMap[client.userID], client.Id)
 				close(client.send)
 			}
 		}
@@ -55,8 +60,11 @@ func (s *hub) Run() {
 	}
 }
 
-func (s *hub) BroadcastNotification(notification OutgoingNotification) {
-	s.broadcast <- &notification
+func (s *hub) BroadcastToClients(notification OutgoingNotification, recipientID uuid.UUID) {
+	s.broadcast <- broadcastMessage{
+		notification: notification,
+		recipientID:  recipientID,
+	}
 }
 
 func (s *hub) RegisterClient(client *Client) {

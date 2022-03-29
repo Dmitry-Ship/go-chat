@@ -10,7 +10,8 @@ import (
 func TestNewRoom(t *testing.T) {
 	name := "test"
 	roomId := uuid.New()
-	room := NewRoom(roomId, name)
+	room := NewRoom(roomId, name, false)
 	assert.Equal(t, room.ID, roomId)
 	assert.Equal(t, name, room.Name)
+	assert.False(t, room.IsPrivate)
 }

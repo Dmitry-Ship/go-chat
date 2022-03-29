@@ -17,7 +17,6 @@ type IncomingNotification struct {
 type OutgoingNotification struct {
 	Type    string      `json:"type"`
 	Payload interface{} `json:"data"`
-	UserID  uuid.UUID   `json:"user_id"`
 }
 
 type Client struct {

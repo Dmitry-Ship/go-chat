@@ -24,19 +24,19 @@ func NewWSHandlers() *wsHandlers {
 func (s *wsHandlers) HandleNotification(message IncomingNotification) {
 	var data json.RawMessage
 
-	notification := struct {
+	notificationPayload := struct {
 		Type string      `json:"type"`
 		Data interface{} `json:"data"`
 	}{
 		Data: &data,
 	}
 
-	if err := json.Unmarshal(message.Data, &notification); err != nil {
+	if err := json.Unmarshal(message.Data, &notificationPayload); err != nil {
 		log.Println(err)
 		return
 	}
 
-	if handler, ok := s.messageHandlers[notification.Type]; ok {
+	if handler, ok := s.messageHandlers[notificationPayload.Type]; ok {
 		handler(message, data)
 	}
 }
