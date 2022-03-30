@@ -1,6 +1,14 @@
 package ws
 
 import (
+	"context"
+	"encoding/json"
+	"log"
+
+	pubsub "GitHub/go-chat/backend/pkg/redis"
+
+	"github.com/go-redis/redis/v8"
+
 	"github.com/google/uuid"
 )
 
@@ -11,34 +19,53 @@ type Hub interface {
 }
 
 type broadcastMessage struct {
-	notification OutgoingNotification
-	recipientID  uuid.UUID
+	Notification OutgoingNotification `json:"notification"`
+	RecipientID  uuid.UUID            `json:"recipientID"`
 }
 
 type hub struct {
-	broadcast      chan broadcastMessage
 	register       chan *Client
 	unregister     chan *Client
 	userClientsMap map[uuid.UUID]map[uuid.UUID]*Client
+	redisClient    *redis.Client
 }
 
-func NewHub() *hub {
+var ctx = context.Background()
+
+func NewHub(redisClient *redis.Client) *hub {
 	return &hub{
-		broadcast:      make(chan broadcastMessage, 1024),
+		// broadcast:      make(chan broadcastMessage, 1024),
 		register:       make(chan *Client),
 		unregister:     make(chan *Client),
 		userClientsMap: make(map[uuid.UUID]map[uuid.UUID]*Client),
+		redisClient:    redisClient,
 	}
 }
 
 func (s *hub) Run() {
+	redisPubsub := s.redisClient.Subscribe(ctx, pubsub.ChatChannel)
+	ch := redisPubsub.Channel()
+	defer redisPubsub.Close()
+
 	for {
 		select {
-		case broadcastMessage := <-s.broadcast:
-			userClients := s.userClientsMap[broadcastMessage.recipientID]
+		case message := <-ch:
+			if message.Payload == "ping" {
+				s.redisClient.Publish(ctx, pubsub.ChatChannel, "pong")
+			} else {
+				var bMessage broadcastMessage
 
-			for _, userClient := range userClients {
-				userClient.SendNotification(&broadcastMessage.notification)
+				err := json.Unmarshal([]byte(message.Payload), &bMessage)
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+
+				userClients := s.userClientsMap[bMessage.RecipientID]
+
+				for _, userClient := range userClients {
+					userClient.SendNotification(&bMessage.Notification)
+				}
 			}
 
 		case client := <-s.register:
@@ -61,10 +88,17 @@ func (s *hub) Run() {
 }
 
 func (s *hub) BroadcastToClients(notification OutgoingNotification, recipientID uuid.UUID) {
-	s.broadcast <- broadcastMessage{
-		notification: notification,
-		recipientID:  recipientID,
+	message := broadcastMessage{
+		Notification: notification,
+		RecipientID:  recipientID,
 	}
+
+	json, err := json.Marshal(message)
+	if err != nil {
+		log.Println(err)
+	}
+
+	s.redisClient.Publish(ctx, pubsub.ChatChannel, []byte(json))
 }
 
 func (s *hub) RegisterClient(client *Client) {

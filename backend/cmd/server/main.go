@@ -5,6 +5,7 @@ import (
 	"GitHub/go-chat/backend/pkg/database"
 	"GitHub/go-chat/backend/pkg/interfaces"
 	"GitHub/go-chat/backend/pkg/postgres"
+	pubsub "GitHub/go-chat/backend/pkg/redis"
 
 	ws "GitHub/go-chat/backend/pkg/websocket"
 
@@ -21,8 +22,8 @@ func main() {
 	roomsRepository := postgres.NewRoomRepository(db)
 	participantRepository := postgres.NewParticipantRepository(db)
 
-	hub := ws.NewHub()
-	wsHandlers := ws.NewWSHandlers()
+	redisClient := pubsub.GetRedisClient()
+	hub := ws.NewHub(redisClient)
 
 	roomCommandService := application.NewRoomCommandService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)
 	roomQueryService := application.NewRoomQueryService(roomsRepository, participantRepository, usersRepository, messagesRepository)
@@ -30,15 +31,15 @@ func main() {
 	contactsQueryService := application.NewContactsQueryService(usersRepository)
 	ensureAuth := interfaces.MakeEnsureAuth(authService)
 
+	wsHandlers := ws.NewWSHandlers()
 	wsHandlers.SetWSHandler("message", interfaces.HandleWSMessage(roomCommandService))
+	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(hub, wsHandlers)))
 
 	http.HandleFunc("/signup", interfaces.AddHeaders(interfaces.HandleSignUp(authService)))
 	http.HandleFunc("/login", interfaces.AddHeaders(interfaces.HandleLogin(authService)))
 	http.HandleFunc("/logout", interfaces.AddHeaders(ensureAuth(interfaces.HandleLogout(authService))))
 	http.HandleFunc("/refreshToken", interfaces.AddHeaders((interfaces.HandleRefreshToken(authService))))
 	http.HandleFunc("/getUser", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetUser(authService))))
-
-	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(hub, wsHandlers)))
 
 	http.HandleFunc("/getRooms", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetRooms(roomQueryService))))
 	http.HandleFunc("/getContacts", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetContacts(contactsQueryService))))
