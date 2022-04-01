@@ -1,6 +1,15 @@
 version: "3.9"
 
 services:
+  webserver:
+    image: nginx:1.21.6-alpine
+    ports:
+      - 80:80
+    volumes:
+      - ./balancer/nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - api
+
   redis:
     container_name: composeredis
     image: redis:6.2.6-alpine
@@ -8,7 +17,7 @@ services:
     ports:
       - ${REDIS_PORT}:${REDIS_PORT}
     command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
-    volumes: 
+    volumes:
       - ./cache:/data
 
   database:
@@ -40,7 +49,7 @@ services:
       context: ./backend
       target: dev
     ports:
-      - ${API_PORT}:${API_PORT}
+      - ${API_PORT}
     volumes:
       - ./backend:/app
     depends_on:
@@ -49,7 +58,7 @@ services:
 
   frontend:
     environment:
-      - NEXT_PUBLIC_WS_DOMAIN=ws://localhost:${API_PORT}
+      - NEXT_PUBLIC_WS_DOMAIN=${WEBSOCKET_URL}
       - NEXT_PUBLIC_API_URL=${API_URL}
     restart: always
     build:
@@ -60,8 +69,6 @@ services:
       - /client/node_modules/
     ports:
       - 3000:3000
-    links:
-      - api
     depends_on:
       - api
 
