@@ -20,3 +20,16 @@ docker-compose up --build
 
 - backend: https://console.cloud.google.com/run/detail/us-central1/go-chat/metrics?project=go-playground-311723
 - frontend: https://vercel.com/dmitry-ship/go-chat
+
+## ⚙️ Architecture overview
+
+```mermaid
+graph LR
+    a(React) --> B(NGINX)
+    B --> C(Golang)
+    B --> D(Golang)
+    C --> E(Postgres)
+    D --> E
+    C --> F(Redis PubSub)
+    D --> F
+```
