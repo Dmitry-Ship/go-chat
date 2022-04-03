@@ -1,8 +1,4 @@
-tmp
-
+Dockerfile
 node_modules/*
-dist/*
-build/*
 .next/*
-
 

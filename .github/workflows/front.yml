@@ -7,6 +7,9 @@ on:
       - frontend/**
       - .github/workflows/front.yml
 
+env:
+  IMAGE_NAME: go-chat-frontend:${{ github.run_number }}
+
 jobs:
   build:
     name: Build
@@ -34,17 +37,17 @@ jobs:
         env:
           NEXT_PUBLIC_WS_DOMAIN: ${{ secrets.WS_DOMAIN }}
           NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
-        run: npm run build
+        run: docker build --target prod -t $IMAGE_NAME .
 
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v1.2
-        with:
-          publish-dir: "frontend/.next"
-          production-branch: main
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions"
-          enable-pull-request-comment: false
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        timeout-minutes: 1
+      # - name: Deploy to Netlify
+      #   uses: nwtgck/actions-netlify@v1.2
+      #   with:
+      #     publish-dir: "frontend/.next"
+      #     production-branch: main
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     deploy-message: "Deploy from GitHub Actions"
+      #     enable-pull-request-comment: false
+      #   env:
+      #     NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      #     NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      #   timeout-minutes: 1

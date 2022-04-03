@@ -10,7 +10,7 @@ import (
 
 func AddHeaders(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		clientURL := os.Getenv("ORIGIN_URL")
+		clientURL := os.Getenv("API_URL")
 
 		w.Header().Set("Access-Control-Allow-Origin", clientURL)
 		w.Header().Set("Access-Control-Allow-Credentials", "true")

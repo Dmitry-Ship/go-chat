@@ -4,11 +4,12 @@ services:
   webserver:
     image: nginx:1.21.6-alpine
     ports:
-      - 80:80
+      - 8080:80
     volumes:
       - ./balancer/nginx/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - api
+      - frontend
 
   redis:
     container_name: composeredis
@@ -36,7 +37,7 @@ services:
   api:
     environment:
       - PORT=${API_PORT}
-      - ORIGIN_URL      
+      - API_URL      
       - DB_PORT
       - DB_HOST
       - DB_NAME
@@ -48,8 +49,6 @@ services:
     build:
       context: ./backend
       target: dev
-    ports:
-      - ${API_PORT}
     volumes:
       - ./backend:/app
     depends_on:
@@ -67,8 +66,6 @@ services:
     volumes:
       - ./frontend:/client
       - /client/node_modules/
-    ports:
-      - 3000:3000
     depends_on:
       - api
 

@@ -3,6 +3,7 @@ package interfaces
 import (
 	"GitHub/go-chat/backend/pkg/application"
 	ws "GitHub/go-chat/backend/pkg/websocket"
+	"fmt"
 	"log"
 
 	"encoding/json"
@@ -17,7 +18,7 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		origin := os.Getenv("ORIGIN_URL")
+		origin := os.Getenv("API_URL")
 
 		return r.Header.Get("Origin") == origin
 	},
@@ -50,6 +51,8 @@ func HandleWS(hub ws.Hub, wsHandlers ws.WSHandlers) http.HandlerFunc {
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
+			fmt.Println("WS", err.Error())
+
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

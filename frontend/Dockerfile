@@ -1,4 +1,4 @@
-FROM node:17-alpine3.12 AS base
+FROM node:16-alpine3.14 AS base
 
 WORKDIR /client
 
@@ -12,11 +12,21 @@ FROM base as build
 
 RUN npm run build
 
-FROM alpine:latest as prod
+FROM node:16-alpine3.14 AS prod
 
-RUN apk --no-cache add ca-certificates
+WORKDIR /client
 
-COPY --from=build /client/dist .
+ENV NODE_ENV production
+
+COPY --from=build /app/next.config.js ./
+COPY --from=build /client/public ./public
+COPY --from=build /client/package.json ./package.json
+COPY --from=build --chown=nextjs:nodejs /client/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /client/.next/static ./.next/static
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
 
 FROM base as dev
 

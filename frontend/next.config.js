@@ -1,3 +1,6 @@
 module.exports = {
-  swcMinify: false,
+  swcMinify: true,
+  experimental: {
+    outputStandalone: true,
+  },
 };

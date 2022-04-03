@@ -24,7 +24,7 @@ jobs:
       - name: Run tests
         run: go test ./...
 
-      - name: Build Container
+      - name: Build Image
         run: docker build --target prod -t $IMAGE_NAME .
 
       # - name: Setup Cloud SDK
@@ -38,7 +38,7 @@ jobs:
       #   if: github.ref == 'refs/heads/main'
       #   run: gcloud auth configure-docker
 
-      # - name: Push Container
+      # - name: Push Image
       #   if: github.ref == 'refs/heads/main'
       #   run: docker push $IMAGE_NAME
 
