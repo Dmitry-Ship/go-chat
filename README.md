@@ -14,7 +14,7 @@ real time chat app
 docker-compose up --build
 ```
 
-4. open browser and go to http://localhost:3000
+4. open browser and go to http://localhost:8080
 
 ## ☁️ Hosting platforms
 
