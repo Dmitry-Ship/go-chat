@@ -3,14 +3,14 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import styles from "./Navigation.module.css";
 
+const links = [
+  { href: "/", label: "💬" },
+  { href: "/contacts", label: "👥" },
+  { href: "/settings", label: "⚙️" },
+];
+
 const Navigation = () => {
   const router = useRouter();
-
-  const links = [
-    { href: "/", label: "💬" },
-    { href: "/contacts", label: "👥" },
-    { href: "/settings", label: "⚙️" },
-  ];
 
   return (
     <div className="controls-for-scrollable">

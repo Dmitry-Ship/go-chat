@@ -14,10 +14,10 @@ const ChatRoom: React.FC = () => {
   const roomId = router.query.roomId as string;
   const [room, setRoom] = useState<Room>();
   const [isJoined, setIsJoined] = useState(false);
-  const { subscribe } = useWS();
+  const { onNotification } = useWS();
 
   useEffect(() => {
-    subscribe("room_deleted", (event) => {
+    onNotification("room_deleted", (event) => {
       if (event.data.room_id === roomId) {
         router.push("/");
       }

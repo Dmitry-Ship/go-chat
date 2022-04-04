@@ -1,65 +1,43 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { ConnectionState, connectWS } from "../api/ws";
+import { ConnectionState, IWSService, WSService } from "../api/ws";
 
 type ws = {
   status: ConnectionState;
   sendNotification: (type: string, payload: Record<string, any>) => void;
-  subscribe: (event: string, cb: (msg: any) => void) => void;
+  onNotification: (event: string, cb: (msg: any) => void) => void;
 };
 
-export const useProvideWS = ({ isEnabled }: { isEnabled: boolean }): ws => {
-  const [status, setStatus] = useState<ConnectionState>("disconnected");
+export const useProvideWS = (wsService: IWSService): ws => {
+  const [status, setStatus] = useState<ConnectionState>(wsService.getStatus());
 
-  const [events, setEvents] = useState<{ [event: string]: (msg: any) => void }>(
-    {}
-  );
-
-  const [connection, setConnection] = useState<WebSocket | null>(null);
+  wsService.setOnUpdateStatus(setStatus);
 
   useEffect(() => {
-    if (isEnabled) {
-      const conn = connectWS(setStatus);
-
-      setConnection(conn);
-    }
-  }, [isEnabled]);
-
-  if (connection !== null) {
-    connection.onmessage = (msg) => {
-      const data = JSON.parse(msg.data);
-
-      events[data.type]?.(data);
+    wsService.connect();
+    return () => {
+      wsService.close();
     };
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     status,
-    sendNotification: (type, payload) => {
-      const notificationObj = {
-        type: type,
-        data: payload,
-      };
-
-      const stringified = JSON.stringify(notificationObj);
-      connection?.send(stringified);
-    },
-    subscribe: (event, cb) => {
-      setEvents((prev) => ({ ...prev, [event]: cb }));
-    },
+    sendNotification: wsService.send,
+    onNotification: wsService.onNotification,
   };
 };
 
 const wsContext = createContext<ws>({
   status: "disconnected",
   sendNotification: () => {},
-  subscribe: () => {},
+  onNotification: () => {},
 });
 
 export const ProvideWS: React.FC<{
   children: React.ReactNode;
-  isEnabled: boolean;
-}> = ({ children, isEnabled }) => {
-  const ws = useProvideWS({ isEnabled });
+}> = ({ children }) => {
+  const wsService = new WSService();
+  const ws = useProvideWS(wsService);
   return <wsContext.Provider value={ws}>{children}</wsContext.Provider>;
 };
 

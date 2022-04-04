@@ -8,7 +8,7 @@ import { parseMessage } from "../../messages";
 import { useWS } from "../../contexts/WSContext";
 
 const ChatLog: React.FC<{ roomId: string }> = ({ roomId }) => {
-  const { subscribe } = useWS();
+  const { onNotification } = useWS();
 
   const [logs, setLogs] = useState<Message[]>([]);
 
@@ -35,7 +35,7 @@ const ChatLog: React.FC<{ roomId: string }> = ({ roomId }) => {
   }, [logs]);
 
   useEffect(() => {
-    subscribe("message", (event) => {
+    onNotification("message", (event) => {
       appendLog([parseMessage(event.data)]);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

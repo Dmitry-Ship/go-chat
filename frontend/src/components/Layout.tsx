@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import styles from "./Layout.module.css";
 import { ProvideAuth } from "../contexts/authContext";
+import AuthLayout from "./common/AuthLayout";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useEffect(() => {
@@ -14,7 +15,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <ProvideAuth>
-      <div className={styles.app}>{children}</div>
+      <AuthLayout>
+        <div className={styles.app}>{children}</div>
+      </AuthLayout>
     </ProvideAuth>
   );
 };
