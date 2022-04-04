@@ -18,7 +18,7 @@ WORKDIR /client
 
 ENV NODE_ENV production
 
-COPY --from=build /app/next.config.js ./
+COPY --from=build /client/next.config.js ./
 COPY --from=build /client/public ./public
 COPY --from=build /client/package.json ./package.json
 COPY --from=build --chown=nextjs:nodejs /client/.next/standalone ./
