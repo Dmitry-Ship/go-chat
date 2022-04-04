@@ -18,13 +18,20 @@ WORKDIR /client
 
 ENV NODE_ENV production
 
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
 COPY --from=build /client/next.config.js ./
 COPY --from=build /client/public ./public
 COPY --from=build /client/package.json ./package.json
 COPY --from=build --chown=nextjs:nodejs /client/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /client/.next/static ./.next/static
 
+USER nextjs
+
 EXPOSE 3000
+
+ENV PORT 3000
 
 CMD ["node", "server.js"]
 
