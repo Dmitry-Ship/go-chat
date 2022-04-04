@@ -14,7 +14,7 @@ real time chat app
 docker-compose up --build
 ```
 
-4. open browser and go to http://localhost:3000
+4. open browser and go to http://localhost:8080
 
 ## ☁️ Hosting platforms
 
@@ -25,9 +25,9 @@ docker-compose up --build
 
 ```mermaid
 graph LR
-    a(React) --> B(NGINX)
-    B --> C(Golang)
-    B --> D(Golang)
+    A(NGINX) --> B(NextJS)
+    A --> C(Golang)
+    A --> D(Golang)
     C --> E(Postgres)
     D --> E
     C --> F(Redis PubSub)
