@@ -8,8 +8,8 @@ import (
 
 type Participant struct {
 	ID        uuid.UUID `json:"id" gorm:"type:uuid"`
-	RoomId    uuid.UUID `json:"room_id"`
-	UserID    uuid.UUID `json:"user_id"`
+	RoomId    uuid.UUID `json:"room_id" gorm:"type:uuid"`
+	UserID    uuid.UUID `json:"user_id" gorm:"type:uuid"`
 	CreatedAt int64     `json:"created_at"`
 }
 

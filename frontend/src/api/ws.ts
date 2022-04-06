@@ -1,36 +1,50 @@
-export type ConnectionState = "disconnected" | "connecting" | "connected";
+export enum ConnectionState {
+  CONNECTING = 0,
+  OPEN = 1,
+  CLOSING = 2,
+  CLOSED = 3,
+}
 
 export type IWSService = {
   send: (type: string, payload: Record<string, any>) => void;
-  close: () => void;
   setOnUpdateStatus: (callback: (state: ConnectionState) => void) => void;
   onNotification: (event: string, callback: (data: any) => void) => void;
-  connect: () => void;
-  getStatus: () => ConnectionState;
 };
 
 export class WSService implements IWSService {
   private connection: WebSocket | null = null;
   private onUpdateStatus: (status: ConnectionState) => void = () => {};
-  private status: ConnectionState = "disconnected";
   private events: Record<string, (data: any) => void> = {};
 
-  public connect = () => {
-    if (this.connection) {
+  private static instance: IWSService;
+
+  public static getInstance(): IWSService {
+    if (!WSService.instance) {
+      WSService.instance = new WSService();
+    }
+
+    return WSService.instance;
+  }
+
+  constructor() {
+    this.connect();
+  }
+
+  private connect = () => {
+    if (this.connection?.readyState === ConnectionState.OPEN) {
       this.connection.close();
+      this.connection = null;
     }
 
     const connection = new WebSocket(process.env.NEXT_PUBLIC_WS_DOMAIN + "/ws");
 
-    this.updateStatus("connecting");
+    this.updateStatus();
 
-    connection.onopen = () => {
-      this.updateStatus("connected");
-    };
+    connection.onopen = () => this.updateStatus();
 
     connection.onerror = () => {
+      this.updateStatus();
       this.startReconnection();
-      this.updateStatus("disconnected");
     };
 
     connection.onmessage = (event) => {
@@ -42,21 +56,23 @@ export class WSService implements IWSService {
     this.connection = connection;
   };
 
-  public startReconnection = () => {
+  private startReconnection = () => {
     const intervalId = setInterval(() => {
-      if (this.getStatus() === "disconnected") {
+      if (this.connection?.readyState === ConnectionState.CLOSED) {
         this.connect();
       }
 
-      if (this.getStatus() === "connected") {
+      if (this.connection?.readyState === ConnectionState.OPEN) {
         clearInterval(intervalId);
       }
     }, 5000);
   };
 
-  private updateStatus = (status: ConnectionState) => {
-    this.status = status;
-    this.onUpdateStatus(status);
+  private updateStatus = () => {
+    this.onUpdateStatus(
+      (this.connection?.readyState ??
+        ConnectionState.CONNECTING) as ConnectionState
+    );
   };
 
   public setOnUpdateStatus = (cb: (status: ConnectionState) => void) => {
@@ -64,19 +80,8 @@ export class WSService implements IWSService {
   };
 
   public send = (type: string, payload: Record<string, any>) => {
-    const notificationObj = {
-      type: type,
-      data: payload,
-    };
-
-    const stringified = JSON.stringify(notificationObj);
-    this.connection?.send(stringified);
-  };
-
-  public getStatus = () => this.status;
-
-  public close = () => {
-    this.connection?.close();
+    const data = JSON.stringify({ type, data: payload });
+    this.connection?.send(data);
   };
 
   public onNotification = (event: string, callback: (data: any) => void) => {

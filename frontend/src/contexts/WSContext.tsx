@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { ConnectionState, IWSService, WSService } from "../api/ws";
 
 type ws = {
@@ -8,17 +8,11 @@ type ws = {
 };
 
 export const useProvideWS = (wsService: IWSService): ws => {
-  const [status, setStatus] = useState<ConnectionState>(wsService.getStatus());
+  const [status, setStatus] = useState<ConnectionState>(
+    ConnectionState.CONNECTING
+  );
 
   wsService.setOnUpdateStatus(setStatus);
-
-  useEffect(() => {
-    wsService.connect();
-    return () => {
-      wsService.close();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return {
     status,
@@ -28,15 +22,14 @@ export const useProvideWS = (wsService: IWSService): ws => {
 };
 
 const wsContext = createContext<ws>({
-  status: "disconnected",
+  status: 0,
   sendNotification: () => {},
   onNotification: () => {},
 });
 
-export const ProvideWS: React.FC<{
-  children: React.ReactNode;
-}> = ({ children }) => {
-  const wsService = new WSService();
+export const ProvideWS: React.FC = ({ children }) => {
+  const wsService = WSService.getInstance();
+
   const ws = useProvideWS(wsService);
   return <wsContext.Provider value={ws}>{children}</wsContext.Provider>;
 };

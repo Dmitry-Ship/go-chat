@@ -8,11 +8,11 @@ import (
 
 type ChatMessage struct {
 	ID        uuid.UUID `gorm:"type:uuid" json:"id"`
-	RoomId    uuid.UUID `json:"room_id"`
+	RoomId    uuid.UUID `json:"room_id" gorm:"type:uuid"`
 	Content   string    `json:"content"`
 	CreatedAt int32     `json:"created_at"`
 	Type      string    `json:"type"`
-	UserID    uuid.UUID `json:"user_id"`
+	UserID    uuid.UUID `json:"user_id" gorm:"type:uuid"`
 }
 
 func NewChatMessage(content string, messageType string, roomId uuid.UUID, userId uuid.UUID) *ChatMessage {
