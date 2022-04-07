@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import styles from "./EditRoomBtn.module.css";
+import styles from "./EditConversationBtn.module.css";
 import SlideIn from "../common/SlideIn";
 import { makeCommand } from "../../api/fetch";
 import { useRouter } from "next/router";
 
-const EditRoomBtn: React.FC<{
+const EditConversationBtn: React.FC<{
   joined: boolean;
   onLeave: () => void;
-  roomId: string;
-}> = ({ joined, onLeave, roomId }) => {
+  conversationId: string;
+}> = ({ joined, onLeave, conversationId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
 
@@ -17,8 +17,8 @@ const EditRoomBtn: React.FC<{
   };
 
   const handleLeave = async () => {
-    await makeCommand("/leaveRoom", {
-      room_id: roomId,
+    await makeCommand("/leaveConversation", {
+      conversation_id: conversationId,
     });
     onLeave();
     router.push("/");
@@ -26,8 +26,8 @@ const EditRoomBtn: React.FC<{
   };
 
   const handleDelete = async () => {
-    const result = await makeCommand("/deleteRoom", {
-      room_id: roomId,
+    const result = await makeCommand("/deleteConversation", {
+      conversation_id: conversationId,
     });
 
     if (result.status) {
@@ -57,4 +57,4 @@ const EditRoomBtn: React.FC<{
   );
 };
 
-export default EditRoomBtn;
+export default EditConversationBtn;

@@ -24,11 +24,11 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func HandleWSMessage(roomService application.RoomCommandService) ws.WSHandler {
+func HandleWSMessage(conversationService application.ConversationCommandService) ws.WSHandler {
 	return func(message ws.IncomingNotification, data json.RawMessage) {
 		request := struct {
-			Content string    `json:"content"`
-			RoomId  uuid.UUID `json:"room_id"`
+			Content        string    `json:"content"`
+			ConversationId uuid.UUID `json:"conversation_id"`
 		}{}
 
 		if err := json.Unmarshal([]byte(data), &request); err != nil {
@@ -36,7 +36,7 @@ func HandleWSMessage(roomService application.RoomCommandService) ws.WSHandler {
 			return
 		}
 
-		err := roomService.SendMessage(request.Content, "user", request.RoomId, message.UserID)
+		err := conversationService.SendMessage(request.Content, "user", request.ConversationId, message.UserID)
 
 		if err != nil {
 			log.Println(err)
@@ -66,25 +66,25 @@ func HandleWS(hub ws.Hub, wsHandlers ws.WSHandlers) http.HandlerFunc {
 	}
 }
 
-func HandleGetRooms(roomService application.RoomQueryService) http.HandlerFunc {
+func HandleGetConversations(conversationService application.ConversationQueryService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rooms, err := roomService.GetRooms()
+		conversations, err := conversationService.GetConversations()
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		json.NewEncoder(w).Encode(rooms)
+		json.NewEncoder(w).Encode(conversations)
 	}
 }
 
-func HandleGetRoomsMessages(roomService application.RoomQueryService) http.HandlerFunc {
+func HandleGetConversationsMessages(conversationService application.ConversationQueryService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
-		roomIdQuery := query.Get("room_id")
-		roomId, err := uuid.Parse(roomIdQuery)
+		conversationIdQuery := query.Get("conversation_id")
+		conversationId, err := uuid.Parse(conversationIdQuery)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -93,7 +93,7 @@ func HandleGetRoomsMessages(roomService application.RoomQueryService) http.Handl
 
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 
-		messages, err := roomService.GetRoomMessages(roomId, userID)
+		messages, err := conversationService.GetConversationMessages(conversationId, userID)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -110,35 +110,35 @@ func HandleGetRoomsMessages(roomService application.RoomQueryService) http.Handl
 	}
 }
 
-func HandleGetRoom(roomService application.RoomQueryService) http.HandlerFunc {
+func HandleGetConversation(conversationService application.ConversationQueryService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		query := r.URL.Query()
 
-		roomIdQuery := query.Get("room_id")
-		roomId, err := uuid.Parse(roomIdQuery)
+		conversationIdQuery := query.Get("conversation_id")
+		conversationId, err := uuid.Parse(conversationIdQuery)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		room, err := roomService.GetRoom(roomId, userID)
+		conversation, err := conversationService.GetConversation(conversationId, userID)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 
-		json.NewEncoder(w).Encode(room)
+		json.NewEncoder(w).Encode(conversation)
 	}
 }
 
-func HandleCreateRoom(roomService application.RoomCommandService) http.HandlerFunc {
+func HandleCreateConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
-			RoomName string    `json:"room_name"`
-			RoomId   uuid.UUID `json:"room_id"`
+			ConversationName string    `json:"conversation_name"`
+			ConversationId   uuid.UUID `json:"conversation_id"`
 		}{}
 
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -150,7 +150,7 @@ func HandleCreateRoom(roomService application.RoomCommandService) http.HandlerFu
 
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 
-		err = roomService.CreatePublicRoom(request.RoomId, request.RoomName, userID)
+		err = conversationService.CreatePublicConversation(request.ConversationId, request.ConversationName, userID)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -161,10 +161,10 @@ func HandleCreateRoom(roomService application.RoomCommandService) http.HandlerFu
 	}
 }
 
-func HandleDeleteRoom(roomService application.RoomCommandService) http.HandlerFunc {
+func HandleDeleteConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
-			RoomId uuid.UUID `json:"room_id"`
+			ConversationId uuid.UUID `json:"conversation_id"`
 		}{}
 
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -174,7 +174,7 @@ func HandleDeleteRoom(roomService application.RoomCommandService) http.HandlerFu
 			return
 		}
 
-		err = roomService.DeleteRoom(request.RoomId)
+		err = conversationService.DeleteConversation(request.ConversationId)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -185,10 +185,10 @@ func HandleDeleteRoom(roomService application.RoomCommandService) http.HandlerFu
 	}
 }
 
-func HandleJoinPublicRoom(roomService application.RoomCommandService) http.HandlerFunc {
+func HandleJoinPublicConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
-			RoomId uuid.UUID `json:"room_id"`
+			ConversationId uuid.UUID `json:"conversation_id"`
 		}{}
 
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -200,7 +200,7 @@ func HandleJoinPublicRoom(roomService application.RoomCommandService) http.Handl
 
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 
-		err = roomService.JoinPublicRoom(request.RoomId, userID)
+		err = conversationService.JoinPublicConversation(request.ConversationId, userID)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -211,11 +211,11 @@ func HandleJoinPublicRoom(roomService application.RoomCommandService) http.Handl
 	}
 }
 
-func HandleLeavePublicRoom(roomService application.RoomCommandService) http.HandlerFunc {
+func HandleLeavePublicConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		request := struct {
-			RoomId uuid.UUID `json:"room_id"`
+			ConversationId uuid.UUID `json:"conversation_id"`
 		}{}
 
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -225,7 +225,7 @@ func HandleLeavePublicRoom(roomService application.RoomCommandService) http.Hand
 			return
 		}
 
-		err = roomService.LeavePublicRoom(request.RoomId, userID)
+		err = conversationService.LeavePublicConversation(request.ConversationId, userID)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

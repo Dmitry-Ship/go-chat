@@ -5,11 +5,11 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `json:"id" gorm:"type:uuid"`
+	ID           uuid.UUID `gorm:"type:uuid" json:"id"`
 	Avatar       string    `json:"avatar"`
 	Name         string    `json:"name"`
 	Password     string    `json:"-"`
-	RefreshToken string    `json:"-" gorm:"column:refresh_token" `
+	RefreshToken string    `gorm:"column:refresh_token" json:"-"`
 }
 
 func NewUser(username string, password string) *User {

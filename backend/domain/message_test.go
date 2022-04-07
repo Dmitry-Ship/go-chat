@@ -7,15 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewChatMessage(t *testing.T) {
-	roomID := uuid.New()
+func TestNewMessage(t *testing.T) {
+	conversationID := uuid.New()
 	userID := uuid.New()
-	message := NewChatMessage("content", "message", roomID, userID)
+	message := NewMessage("content", "message", conversationID, userID)
 
 	assert.Equal(t, "content", message.Content)
 	assert.Equal(t, "message", message.Type)
-	assert.Equal(t, roomID, message.RoomId)
+	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
-	assert.NotNil(t, message.CreatedAt)
 	assert.NotNil(t, message.ID)
 }

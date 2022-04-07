@@ -1,11 +1,11 @@
 import React from "react";
 import Navigation from "../components/Navigation";
-import Rooms from "../components/rooms/Rooms";
+import Conversations from "../components/conversations/Conversations";
 
 function Index() {
   return (
     <>
-      <Rooms />
+      <Conversations />
       <Navigation />
     </>
   );

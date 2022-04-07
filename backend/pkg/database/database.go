@@ -26,8 +26,8 @@ func GetDatabaseConnection() *gorm.DB {
 
 	// Migrate the schema
 
-	db.AutoMigrate(domain.ChatMessage{})
-	db.AutoMigrate(domain.Room{})
+	db.AutoMigrate(domain.Message{})
+	db.AutoMigrate(domain.Conversation{})
 	db.AutoMigrate(domain.User{})
 	db.AutoMigrate(domain.Participant{})
 

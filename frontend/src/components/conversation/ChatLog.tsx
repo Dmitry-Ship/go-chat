@@ -7,7 +7,7 @@ import { useQuery } from "../../api/hooks";
 import { parseMessage } from "../../messages";
 import { useWS } from "../../contexts/WSContext";
 
-const ChatLog: React.FC<{ roomId: string }> = ({ roomId }) => {
+const ChatLog: React.FC<{ conversationId: string }> = ({ conversationId }) => {
   const { onNotification } = useWS();
 
   const [logs, setLogs] = useState<Message[]>([]);
@@ -18,7 +18,7 @@ const ChatLog: React.FC<{ roomId: string }> = ({ roomId }) => {
 
   const messagesQuery = useQuery<{
     messages: MessageRaw[];
-  }>(`/getRoomsMessages?room_id=${roomId}`);
+  }>(`/getConversationsMessages?conversation_id=${conversationId}`);
 
   useEffect(() => {
     if (messagesQuery.status === "done" && messagesQuery.data) {

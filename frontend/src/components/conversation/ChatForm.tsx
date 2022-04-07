@@ -7,9 +7,9 @@ import { makeCommand } from "../../api/fetch";
 const ChatForm: React.FC<{
   loading: boolean;
   joined: boolean;
-  roomId: string;
+  conversationId: string;
   onJoin: () => void;
-}> = ({ loading, joined, onJoin, roomId }) => {
+}> = ({ loading, joined, onJoin, conversationId }) => {
   const [message, setMessage] = useState<string>("");
 
   const { sendNotification } = useWS();
@@ -19,14 +19,14 @@ const ChatForm: React.FC<{
 
     sendNotification("message", {
       content: message,
-      room_id: roomId,
+      conversation_id: conversationId,
     });
 
     setMessage("");
   };
 
   const handleJoin = async () => {
-    await makeCommand("/joinRoom", { room_id: roomId });
+    await makeCommand("/joinConversation", { conversation_id: conversationId });
     onJoin();
   };
 

@@ -19,20 +19,20 @@ func main() {
 
 	messagesRepository := postgres.NewChatMessageRepository(db)
 	usersRepository := postgres.NewUserRepository(db)
-	roomsRepository := postgres.NewRoomRepository(db)
+	conversationsRepository := postgres.NewConversationRepository(db)
 	participantRepository := postgres.NewParticipantRepository(db)
 
 	redisClient := pubsub.GetRedisClient()
 	hub := ws.NewHub(redisClient)
 
-	roomCommandService := application.NewRoomCommandService(roomsRepository, participantRepository, usersRepository, messagesRepository, hub)
-	roomQueryService := application.NewRoomQueryService(roomsRepository, participantRepository, usersRepository, messagesRepository)
+	conversationCommandService := application.NewConversationCommandService(conversationsRepository, participantRepository, usersRepository, messagesRepository, hub)
+	conversationQueryService := application.NewConversationQueryService(conversationsRepository, participantRepository, usersRepository, messagesRepository)
 	authService := application.NewAuthService(usersRepository)
 	contactsQueryService := application.NewContactsQueryService(usersRepository)
 	ensureAuth := interfaces.MakeEnsureAuth(authService)
 
 	wsHandlers := ws.NewWSHandlers()
-	wsHandlers.SetWSHandler("message", interfaces.HandleWSMessage(roomCommandService))
+	wsHandlers.SetWSHandler("message", interfaces.HandleWSMessage(conversationCommandService))
 	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(hub, wsHandlers)))
 
 	http.HandleFunc("/signup", interfaces.AddHeaders(interfaces.HandleSignUp(authService)))
@@ -41,14 +41,14 @@ func main() {
 	http.HandleFunc("/refreshToken", interfaces.AddHeaders((interfaces.HandleRefreshToken(authService))))
 	http.HandleFunc("/getUser", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetUser(authService))))
 
-	http.HandleFunc("/getRooms", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetRooms(roomQueryService))))
+	http.HandleFunc("/getConversations", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetConversations(conversationQueryService))))
 	http.HandleFunc("/getContacts", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetContacts(contactsQueryService))))
-	http.HandleFunc("/getRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetRoom(roomQueryService))))
-	http.HandleFunc("/getRoomsMessages", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetRoomsMessages(roomQueryService))))
-	http.HandleFunc("/createRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleCreateRoom(roomCommandService))))
-	http.HandleFunc("/deleteRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleDeleteRoom(roomCommandService))))
-	http.HandleFunc("/joinRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleJoinPublicRoom(roomCommandService))))
-	http.HandleFunc("/leaveRoom", interfaces.AddHeaders(ensureAuth(interfaces.HandleLeavePublicRoom(roomCommandService))))
+	http.HandleFunc("/getConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetConversation(conversationQueryService))))
+	http.HandleFunc("/getConversationsMessages", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetConversationsMessages(conversationQueryService))))
+	http.HandleFunc("/createConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleCreateConversation(conversationCommandService))))
+	http.HandleFunc("/deleteConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleDeleteConversation(conversationCommandService))))
+	http.HandleFunc("/joinConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleJoinPublicConversation(conversationCommandService))))
+	http.HandleFunc("/leaveConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleLeavePublicConversation(conversationCommandService))))
 
 	go hub.Run()
 

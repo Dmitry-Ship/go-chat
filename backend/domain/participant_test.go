@@ -8,11 +8,10 @@ import (
 )
 
 func TestNewParticipant(t *testing.T) {
-	roomID := uuid.New()
+	conversationID := uuid.New()
 	userID := uuid.New()
-	participant := NewParticipant(roomID, userID)
-	assert.Equal(t, roomID, participant.RoomId)
+	participant := NewParticipant(conversationID, userID)
+	assert.Equal(t, conversationID, participant.ConversationID)
 	assert.Equal(t, userID, participant.UserID)
-	assert.NotNil(t, participant.CreatedAt)
 	assert.NotNil(t, participant.ID)
 }

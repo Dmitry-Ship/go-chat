@@ -23,25 +23,25 @@ func (r *participantRepository) Store(participant *domain.Participant) error {
 	return err
 }
 
-func (r *participantRepository) FindAllByRoomID(roomID uuid.UUID) ([]*domain.Participant, error) {
+func (r *participantRepository) FindAllByConversationID(conversationID uuid.UUID) ([]*domain.Participant, error) {
 	participants := []*domain.Participant{}
 
-	err := r.participants.Limit(50).Where("room_id = ?", roomID).Find(&participants).Error
+	err := r.participants.Limit(50).Where("conversation_id = ?", conversationID).Find(&participants).Error
 
 	return participants, err
 }
 
-func (r *participantRepository) FindByRoomIDAndUserID(roomID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
+func (r *participantRepository) FindByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
 	participant := domain.Participant{}
-	err := r.participants.Where("room_id = ?", roomID).Where("user_id = ?", userID).First(&participant).Error
+	err := r.participants.Where("conversation_id = ?", conversationID).Where("user_id = ?", userID).First(&participant).Error
 
 	return &participant, err
 }
 
-func (r *participantRepository) DeleteByRoomIDAndUserID(roomID uuid.UUID, userID uuid.UUID) error {
+func (r *participantRepository) DeleteByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) error {
 	participant := domain.Participant{}
 
-	err := r.participants.Where("room_id = ?", roomID).Where("user_id = ?", userID).Delete(participant).Error
+	err := r.participants.Where("conversation_id = ?", conversationID).Where("user_id = ?", userID).Delete(participant).Error
 
 	return err
 }

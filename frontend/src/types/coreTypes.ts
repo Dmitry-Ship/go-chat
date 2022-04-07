@@ -2,7 +2,7 @@ export type Message = {
   id: number;
   text: string;
   type: "user" | "system";
-  roomId: number;
+  conversationId: number;
   user: {
     id: string;
     avatar: string;
@@ -16,7 +16,7 @@ export type MessageRaw = {
   id: number;
   content: string;
   type: "user" | "system";
-  room_id: number;
+  conversation_id: number;
   user: {
     id: string;
     avatar: string;
@@ -26,7 +26,7 @@ export type MessageRaw = {
   is_inbound: boolean;
 };
 
-export type Room = {
+export type Conversation = {
   name: string;
   id: number;
 };

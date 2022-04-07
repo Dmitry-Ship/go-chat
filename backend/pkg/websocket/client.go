@@ -98,7 +98,7 @@ func (c *Client) SendNotifications() {
 		case notification, ok := <-c.send:
 			c.Conn.SetWriteDeadline(time.Now().Add(c.writeWait))
 			if !ok {
-				// The room closed the channel.
+				// The conversation closed the channel.
 				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}

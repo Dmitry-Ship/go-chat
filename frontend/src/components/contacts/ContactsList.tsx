@@ -1,9 +1,8 @@
-import Link from "next/link";
 import React from "react";
 import { useQuery } from "../../api/hooks";
 import { User } from "../../types/coreTypes";
-import Avatar from "../common/Avatar";
 import Loader from "../common/Loader";
+import ConversationItem from "../conversations/ConversationItem";
 import styles from "./ContactsList.module.css";
 
 function ContactsList() {
@@ -11,19 +10,17 @@ function ContactsList() {
 
   return (
     <main className={`${styles.list} scrollable-content`}>
-      {" "}
       {(() => {
         switch (response.status) {
           case "fetching":
             return <Loader />;
           case "done":
             return response.data?.map((user, i) => (
-              <Link key={i} href={"rooms/" + user.id}>
-                <a className={`${styles.contact} rounded`}>
-                  <Avatar size={50} src={user.avatar} />
-                  <h3>{user.name}</h3>
-                </a>
-              </Link>
+              <ConversationItem
+                key={i}
+                href={"conversations/" + user.id}
+                name={user.name}
+              />
             ));
           default:
             return null;

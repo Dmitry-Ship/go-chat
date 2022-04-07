@@ -1,0 +1,18 @@
+.conversation {
+  margin-bottom: 20px;
+  /* background-color: var(--warn); */
+  border-bottom: 1px solid var(--warn);
+  height: 80px;
+  display: flex;
+  padding: 20px;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+}
+
+.conversationName {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-left: 10px;
+}
+

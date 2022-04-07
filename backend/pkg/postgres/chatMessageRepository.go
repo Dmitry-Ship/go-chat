@@ -17,16 +17,16 @@ func NewChatMessageRepository(db *gorm.DB) *chatMessageRepository {
 	}
 }
 
-func (r *chatMessageRepository) Store(chatMessage *domain.ChatMessage) error {
+func (r *chatMessageRepository) Store(chatMessage *domain.Message) error {
 	err := r.chatMessages.Create(&chatMessage).Error
 
 	return err
 }
 
-func (r *chatMessageRepository) FindAllByRoomID(roomID uuid.UUID) ([]*domain.ChatMessage, error) {
-	messages := []*domain.ChatMessage{}
+func (r *chatMessageRepository) FindAllByConversationID(conversationID uuid.UUID) ([]*domain.Message, error) {
+	messages := []*domain.Message{}
 
-	err := r.chatMessages.Limit(50).Where("room_id = ?", roomID).Find(&messages).Error
+	err := r.chatMessages.Limit(50).Where("conversation_id = ?", conversationID).Find(&messages).Error
 
 	return messages, err
 }

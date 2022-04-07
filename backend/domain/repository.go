@@ -2,11 +2,11 @@ package domain
 
 import "github.com/google/uuid"
 
-type RoomRepository interface {
-	Store(room *Room) error
+type ConversationRepository interface {
+	Store(conversation *Conversation) error
 	Delete(id uuid.UUID) error
-	FindByID(id uuid.UUID) (*Room, error)
-	FindAll() ([]*Room, error)
+	FindByID(id uuid.UUID) (*Conversation, error)
+	FindAll() ([]*Conversation, error)
 }
 
 type UserRepository interface {
@@ -20,13 +20,13 @@ type UserRepository interface {
 }
 
 type ChatMessageRepository interface {
-	Store(message *ChatMessage) error
-	FindAllByRoomID(roomId uuid.UUID) ([]*ChatMessage, error)
+	Store(message *Message) error
+	FindAllByConversationID(conversationId uuid.UUID) ([]*Message, error)
 }
 
 type ParticipantRepository interface {
 	Store(participant *Participant) error
-	DeleteByRoomIDAndUserID(roomId uuid.UUID, userId uuid.UUID) error
-	FindAllByRoomID(roomId uuid.UUID) ([]*Participant, error)
-	FindByRoomIDAndUserID(roomId uuid.UUID, userId uuid.UUID) (*Participant, error)
+	DeleteByConversationIDAndUserID(conversationId uuid.UUID, userId uuid.UUID) error
+	FindAllByConversationID(conversationId uuid.UUID) ([]*Participant, error)
+	FindByConversationIDAndUserID(conversationId uuid.UUID, userId uuid.UUID) (*Participant, error)
 }
