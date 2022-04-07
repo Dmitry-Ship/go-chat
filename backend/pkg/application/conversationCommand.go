@@ -66,7 +66,7 @@ func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.
 		return err
 	}
 
-	err = s.SendSystemMessage(fmt.Sprintf(" %s joined", user.Name), conversationID)
+	err = s.SendSystemMessage(fmt.Sprintf("%s joined", user.Name), conversationID)
 
 	if err != nil {
 		return err

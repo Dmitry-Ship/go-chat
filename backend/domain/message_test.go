@@ -15,7 +15,7 @@ func TestNewUserMessage(t *testing.T) {
 	assert.Equal(t, "content", message.Text)
 	assert.Equal(t, 0, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
-	assert.Equal(t, userID, message.UserID)
+	assert.Equal(t, userID, *message.UserID)
 	assert.NotNil(t, message.ID)
 }
 
