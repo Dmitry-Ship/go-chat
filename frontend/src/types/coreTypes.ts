@@ -14,7 +14,7 @@ export type Message = {
 
 export type MessageRaw = {
   id: number;
-  content: string;
+  text: string;
   type: "user" | "system";
   conversation_id: number;
   user: {

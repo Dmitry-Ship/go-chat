@@ -12,7 +12,6 @@ import Link from "next/link";
 const Conversation: React.FC = () => {
   const router = useRouter();
   const conversationId = router.query.conversationId as string;
-  console.log(router.query);
   const [conversation, setConversation] = useState<Conversation>();
   const [isJoined, setIsJoined] = useState(false);
   const { onNotification } = useWS();
