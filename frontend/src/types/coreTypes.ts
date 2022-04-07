@@ -1,30 +1,50 @@
-export type Message = {
-  id: number;
+type SystemMessage = {
+  id: string;
+  type: 1;
   text: string;
-  type: "user" | "system";
-  conversationId: number;
+  conversationId: string;
+  createdAt: string;
+};
+
+type UserMessage = {
+  id: string;
+  text: string;
+  type: 0;
+  conversationId: string;
   user: {
     id: string;
     avatar: string;
     name: string;
   };
   isInbound: boolean;
-  createdAt: number;
+  createdAt: string;
 };
 
-export type MessageRaw = {
-  id: number;
+type SystemMessageRaw = {
+  id: string;
   text: string;
-  type: "user" | "system";
-  conversation_id: number;
+  type: 1;
+  conversation_id: string;
+  created_at: string;
+};
+
+type UserMessageRaw = {
+  id: string;
+  text: string;
+  type: 0;
+  conversation_id: string;
   user: {
     id: string;
     avatar: string;
     name: string;
   };
-  created_at: number;
+  created_at: string;
   is_inbound: boolean;
 };
+
+export type Message = SystemMessage | UserMessage;
+
+export type MessageRaw = SystemMessageRaw | UserMessageRaw;
 
 export type Conversation = {
   name: string;

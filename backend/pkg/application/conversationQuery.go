@@ -12,9 +12,9 @@ type conversationData struct {
 }
 
 type MessageFull struct {
-	User *domain.User `json:"user"`
+	User *domain.User `json:"user,omitempty"`
 	*domain.Message
-	IsInbound bool `json:"is_inbound"`
+	IsInbound bool `json:"is_inbound,omitempty"`
 }
 
 type ConversationQueryService interface {
@@ -88,7 +88,13 @@ func (s *conversationQueryService) GetConversationMessages(conversationId uuid.U
 }
 
 func (s *conversationQueryService) makeMessageFull(message *domain.Message, userID uuid.UUID) (MessageFull, error) {
-	user, err := s.users.FindByID(message.UserID)
+	if message.UserID == nil {
+		return MessageFull{
+			Message: message,
+		}, nil
+	}
+
+	user, err := s.users.FindByID(*message.UserID)
 
 	if err != nil {
 		return MessageFull{}, err

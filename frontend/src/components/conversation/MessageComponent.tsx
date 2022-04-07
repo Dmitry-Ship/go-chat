@@ -11,7 +11,7 @@ const MessageComponent: React.FC<{
   const date = new Date(message.createdAt);
   const time = `${date.getHours()}:${date.getMinutes()}`;
 
-  const isSystem = message.type === "system";
+  const isSystem = message.type === 1;
 
   return (
     <div className={styles.message}>

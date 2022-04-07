@@ -36,7 +36,7 @@ func HandleWSMessage(conversationService application.ConversationCommandService)
 			return
 		}
 
-		err := conversationService.SendMessage(request.Content, "user", request.ConversationId, message.UserID)
+		err := conversationService.SendUserMessage(request.Content, request.ConversationId, message.UserID)
 
 		if err != nil {
 			log.Println(err)

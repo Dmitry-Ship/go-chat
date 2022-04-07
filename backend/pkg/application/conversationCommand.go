@@ -14,7 +14,8 @@ type ConversationCommandService interface {
 	JoinPublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	LeavePublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	DeleteConversation(id uuid.UUID) error
-	SendMessage(messageText string, messageType string, conversationId uuid.UUID, userId uuid.UUID) error
+	SendUserMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
+	SendSystemMessage(messageText string, conversationId uuid.UUID) error
 }
 
 type conversationCommandService struct {
@@ -65,7 +66,7 @@ func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.
 		return err
 	}
 
-	err = s.SendMessage(fmt.Sprintf(" %s joined", user.Name), "system", conversationID, user.ID)
+	err = s.SendSystemMessage(fmt.Sprintf(" %s joined", user.Name), conversationID)
 
 	if err != nil {
 		return err
@@ -87,7 +88,7 @@ func (s *conversationCommandService) LeavePublicConversation(conversationID uuid
 		return err
 	}
 
-	err = s.SendMessage(fmt.Sprintf("%s left", user.Name), "system", conversationID, user.ID)
+	err = s.SendSystemMessage(fmt.Sprintf("%s left", user.Name), conversationID)
 
 	if err != nil {
 		return err
@@ -133,7 +134,6 @@ func (s *conversationCommandService) notifyAllParticipants(conversationID uuid.U
 			message := notification.Payload.(MessageFull)
 			message.IsInbound = participant.UserID != message.User.ID
 			notification.Payload = message
-
 		}
 
 		s.hub.BroadcastToClients(notification, participant.UserID)
@@ -142,8 +142,8 @@ func (s *conversationCommandService) notifyAllParticipants(conversationID uuid.U
 	return nil
 }
 
-func (s *conversationCommandService) SendMessage(messageText string, messageType string, conversationId uuid.UUID, userId uuid.UUID) error {
-	message := domain.NewMessage(messageText, messageType, conversationId, userId)
+func (s *conversationCommandService) SendUserMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
+	message := domain.NewUserMessage(messageText, conversationId, userId)
 
 	err := s.messages.Store(message)
 
@@ -151,7 +151,7 @@ func (s *conversationCommandService) SendMessage(messageText string, messageType
 		return err
 	}
 
-	user, err := s.users.FindByID(message.UserID)
+	user, err := s.users.FindByID(userId)
 
 	if err != nil {
 		return err
@@ -161,6 +161,31 @@ func (s *conversationCommandService) SendMessage(messageText string, messageType
 		Type: "message",
 		Payload: MessageFull{
 			User:    user,
+			Message: message,
+		},
+	}
+
+	err = s.notifyAllParticipants(conversationId, notification)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *conversationCommandService) SendSystemMessage(messageText string, conversationId uuid.UUID) error {
+	message := domain.NewSystemMessage(messageText, conversationId)
+
+	err := s.messages.Store(message)
+
+	if err != nil {
+		return err
+	}
+
+	notification := ws.OutgoingNotification{
+		Type: "message",
+		Payload: MessageFull{
 			Message: message,
 		},
 	}
