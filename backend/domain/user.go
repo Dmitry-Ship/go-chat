@@ -11,7 +11,7 @@ type User struct {
 	Avatar       string    `json:"avatar"`
 	Name         string    `json:"name"`
 	Password     string    `json:"-"`
-	CreatedAt    time.Time `json:"_"`
+	CreatedAt    time.Time `json:"-"`
 	RefreshToken string    `gorm:"column:refresh_token" json:"-"`
 }
 
