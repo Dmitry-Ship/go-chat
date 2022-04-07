@@ -12,7 +12,7 @@ function Conversations() {
   return (
     <>
       <header className={`header header-for-scrollable`}>
-        <h2>Conversations</h2>
+        <h2>Chats</h2>
         <NewConversationBtn />
       </header>
       <section className="wrap">

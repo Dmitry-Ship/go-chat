@@ -8,7 +8,7 @@ const MessageComponent: React.FC<{
   isFistInAGroup: boolean;
   isLastInAGroup: boolean;
 }> = ({ message, isFistInAGroup, isLastInAGroup }) => {
-  const date = new Date(message.createdAt * 1000);
+  const date = new Date(message.createdAt);
   const time = `${date.getHours()}:${date.getMinutes()}`;
 
   const isSystem = message.type === "system";

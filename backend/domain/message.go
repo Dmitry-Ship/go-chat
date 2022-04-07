@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -8,6 +10,7 @@ type Message struct {
 	ID             uuid.UUID `gorm:"type:uuid" json:"id"`
 	ConversationID uuid.UUID `gorm:"type:uuid" json:"conversation_id"`
 	UserID         uuid.UUID `gorm:"type:uuid" json:"-"`
+	CreatedAt      time.Time `json:"created_at"`
 	Content        string    `json:"content"`
 	Type           string    `json:"type"`
 }
@@ -16,6 +19,7 @@ func NewMessage(content string, messageType string, conversationId uuid.UUID, us
 	return &Message{
 		ID:             uuid.New(),
 		ConversationID: conversationId,
+		CreatedAt:      time.Now(),
 		Content:        content,
 		Type:           messageType,
 		UserID:         userID,

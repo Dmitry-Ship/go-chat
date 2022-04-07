@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -9,6 +11,7 @@ type Conversation struct {
 	Name      string    `json:"name"`
 	Avatar    string    `json:"avatar"`
 	IsPrivate bool      `json:"is_private"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func NewConversation(id uuid.UUID, name string, isPrivate bool) *Conversation {
@@ -17,5 +20,6 @@ func NewConversation(id uuid.UUID, name string, isPrivate bool) *Conversation {
 		Name:      name,
 		Avatar:    string(name[0]),
 		IsPrivate: isPrivate,
+		CreatedAt: time.Now(),
 	}
 }
