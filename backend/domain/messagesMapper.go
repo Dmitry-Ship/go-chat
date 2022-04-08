@@ -7,10 +7,11 @@ import (
 )
 
 type MessageDTO struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	Text      string    `json:"text"`
-	Type      string    `json:"type"`
+	ID        uuid.UUID  `json:"id"`
+	CreatedAt time.Time  `json:"created_at"`
+	UserId    *uuid.UUID `json:"user_id"`
+	Text      string     `json:"text"`
+	Type      string     `json:"type"`
 }
 
 type MessagePersistence struct {
@@ -38,13 +39,14 @@ func ToMessageDTO(message *MessagePersistence) *MessageDTO {
 
 	return &MessageDTO{
 		ID:        message.ID,
+		UserId:    message.UserID,
 		CreatedAt: message.CreatedAt,
 		Text:      message.Text,
 		Type:      messageType,
 	}
 }
 
-func ToMessageDTOFromDOmain(message *Message) *MessageDTO {
+func ToMessageDTOFromDomain(message *Message) *MessageDTO {
 	return &MessageDTO{
 		ID:        message.ID,
 		CreatedAt: message.CreatedAt,

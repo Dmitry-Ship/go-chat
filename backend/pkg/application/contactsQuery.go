@@ -9,10 +9,10 @@ type ContactsQueryService interface {
 }
 
 type contactsQueryService struct {
-	users domain.UserRepository
+	users domain.UserQueryRepository
 }
 
-func NewContactsQueryService(users domain.UserRepository) *contactsQueryService {
+func NewContactsQueryService(users domain.UserQueryRepository) *contactsQueryService {
 	return &contactsQueryService{
 		users: users,
 	}

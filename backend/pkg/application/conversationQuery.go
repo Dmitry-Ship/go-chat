@@ -24,13 +24,18 @@ type ConversationQueryService interface {
 }
 
 type conversationQueryService struct {
-	conversations domain.ConversationRepository
-	participants  domain.ParticipantRepository
-	users         domain.UserRepository
-	messages      domain.MessageRepository
+	conversations domain.ConversationQueryRepository
+	participants  domain.ParticipantCommandRepository
+	users         domain.UserCommandRepository
+	messages      domain.MessageQueryRepository
 }
 
-func NewConversationQueryService(conversations domain.ConversationRepository, participants domain.ParticipantRepository, users domain.UserRepository, messages domain.MessageRepository) *conversationQueryService {
+func NewConversationQueryService(
+	conversations domain.ConversationQueryRepository,
+	participants domain.ParticipantCommandRepository,
+	users domain.UserCommandRepository,
+	messages domain.MessageQueryRepository,
+) *conversationQueryService {
 	return &conversationQueryService{
 		conversations: conversations,
 		users:         users,
@@ -75,36 +80,24 @@ func (s *conversationQueryService) GetConversationMessages(conversationId uuid.U
 	messagesFull := []MessageFullDTO{}
 
 	for _, message := range messages {
-		messageFull, err := s.makeMessageFullDTO(message, userID)
 
-		if err != nil {
-			return nil, err
+		var messageFull MessageFullDTO
+
+		messageFull.MessageDTO = message
+
+		if message.Type == "user" {
+			user, err := s.users.FindByID(*message.UserId)
+
+			if err != nil {
+				return nil, err
+			}
+
+			messageFull.User = user
+			messageFull.IsInbound = *message.UserId != userID
 		}
 
 		messagesFull = append(messagesFull, messageFull)
 	}
 
 	return messagesFull, nil
-}
-
-func (s *conversationQueryService) makeMessageFullDTO(message *domain.MessageDTO, userID uuid.UUID) (MessageFullDTO, error) {
-	if message.Type == "system" {
-		return MessageFullDTO{
-			MessageDTO: message,
-		}, nil
-	}
-
-	user, err := s.users.FindByID(userID)
-
-	if err != nil {
-		return MessageFullDTO{}, err
-	}
-
-	m := MessageFullDTO{
-		MessageDTO: message,
-		User:       user,
-		IsInbound:  user.ID != userID,
-	}
-
-	return m, nil
 }

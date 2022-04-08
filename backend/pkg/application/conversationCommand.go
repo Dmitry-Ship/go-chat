@@ -19,14 +19,20 @@ type ConversationCommandService interface {
 }
 
 type conversationCommandService struct {
-	conversations domain.ConversationRepository
-	participants  domain.ParticipantRepository
-	users         domain.UserRepository
-	messages      domain.MessageRepository
+	conversations domain.ConversationCommandRepository
+	participants  domain.ParticipantCommandRepository
+	users         domain.UserCommandRepository
+	messages      domain.MessageCommandRepository
 	hub           ws.Hub
 }
 
-func NewConversationCommandService(conversations domain.ConversationRepository, participants domain.ParticipantRepository, users domain.UserRepository, messages domain.MessageRepository, hub ws.Hub) *conversationCommandService {
+func NewConversationCommandService(
+	conversations domain.ConversationCommandRepository,
+	participants domain.ParticipantCommandRepository,
+	users domain.UserCommandRepository,
+	messages domain.MessageCommandRepository,
+	hub ws.Hub,
+) *conversationCommandService {
 	return &conversationCommandService{
 		conversations: conversations,
 		users:         users,
@@ -165,7 +171,7 @@ func (s *conversationCommandService) SendUserMessage(messageText string, convers
 		Type: "message",
 		Payload: MessageFullDTO{
 			User:       user,
-			MessageDTO: domain.ToMessageDTOFromDOmain(message),
+			MessageDTO: domain.ToMessageDTOFromDomain(message),
 		},
 	}
 
@@ -190,7 +196,7 @@ func (s *conversationCommandService) SendSystemMessage(messageText string, conve
 	notification := ws.OutgoingNotification{
 		Type: "message",
 		Payload: MessageFullDTO{
-			MessageDTO: domain.ToMessageDTOFromDOmain(message),
+			MessageDTO: domain.ToMessageDTOFromDomain(message),
 		},
 	}
 
