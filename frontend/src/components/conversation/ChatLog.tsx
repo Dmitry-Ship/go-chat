@@ -51,15 +51,15 @@ const ChatLog: React.FC<{ conversationId: string }> = ({ conversationId }) => {
             const previous = logs[i - 1];
             const isFistInAGroup =
               !previous ||
-              previous?.type === 1 ||
-              (item.type === 0 && item?.user?.id !== previous?.user.id);
+              previous?.type === "system" ||
+              (item.type === "user" && item?.user?.id !== previous?.user.id);
 
             const next = logs[i + 1];
 
             const isLastInAGroup =
               !next ||
-              next?.type === 1 ||
-              (item.type === 0 && item.user.id !== next?.user.id);
+              next?.type === "system" ||
+              (item.type === "user" && item.user.id !== next?.user.id);
 
             return (
               <MessageComponent

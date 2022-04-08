@@ -1,6 +1,6 @@
 type SystemMessage = {
   id: string;
-  type: 1;
+  type: "system";
   text: string;
   conversationId: string;
   createdAt: string;
@@ -9,7 +9,7 @@ type SystemMessage = {
 type UserMessage = {
   id: string;
   text: string;
-  type: 0;
+  type: "user";
   conversationId: string;
   user: {
     id: string;
@@ -23,7 +23,7 @@ type UserMessage = {
 type SystemMessageRaw = {
   id: string;
   text: string;
-  type: 1;
+  type: "system";
   conversation_id: string;
   created_at: string;
 };
@@ -31,7 +31,7 @@ type SystemMessageRaw = {
 type UserMessageRaw = {
   id: string;
   text: string;
-  type: 0;
+  type: "user";
   conversation_id: string;
   user: {
     id: string;

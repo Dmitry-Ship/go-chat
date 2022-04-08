@@ -133,8 +133,12 @@ func (s *conversationCommandService) notifyAllParticipants(conversationID uuid.U
 	for _, participant := range participants {
 		if notification.Type == "message" {
 			message := notification.Payload.(MessageFullDTO)
-			message.IsInbound = participant.UserID != message.User.ID
-			notification.Payload = message
+
+			if message.Type != "system" {
+				message.IsInbound = participant.UserID != message.User.ID
+				notification.Payload = message
+			}
+
 		}
 
 		s.hub.BroadcastToClients(notification, participant.UserID)

@@ -1,5 +1,4 @@
 import React from "react";
-import styles from "./Conversations.module.css";
 import { Conversation } from "../../types/coreTypes";
 import { useQuery } from "../../api/hooks";
 import NewConversationBtn from "./NewConversationBtn";
@@ -16,7 +15,7 @@ function Conversations() {
         <NewConversationBtn />
       </header>
       <section className="wrap">
-        <div className={`${styles.wrapper} scrollable-content`}>
+        <div className={`scrollable-content`}>
           {(() => {
             switch (response.status) {
               case "fetching":
