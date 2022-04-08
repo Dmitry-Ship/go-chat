@@ -2,6 +2,7 @@ package application
 
 import (
 	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/mappers"
 	ws "GitHub/go-chat/backend/pkg/websocket"
 
 	"fmt"
@@ -131,7 +132,7 @@ func (s *conversationCommandService) notifyAllParticipants(conversationID uuid.U
 
 	for _, participant := range participants {
 		if notification.Type == "message" {
-			message := notification.Payload.(MessageFull)
+			message := notification.Payload.(MessageFullDTO)
 			message.IsInbound = participant.UserID != message.User.ID
 			notification.Payload = message
 		}
@@ -159,9 +160,9 @@ func (s *conversationCommandService) SendUserMessage(messageText string, convers
 
 	notification := ws.OutgoingNotification{
 		Type: "message",
-		Payload: MessageFull{
-			User:    user,
-			Message: message,
+		Payload: MessageFullDTO{
+			User:       mappers.ToUserDTO(user),
+			MessageDTO: mappers.ToMessageDTO(message),
 		},
 	}
 
@@ -185,8 +186,8 @@ func (s *conversationCommandService) SendSystemMessage(messageText string, conve
 
 	notification := ws.OutgoingNotification{
 		Type: "message",
-		Payload: MessageFull{
-			Message: message,
+		Payload: MessageFullDTO{
+			MessageDTO: mappers.ToMessageDTO(message),
 		},
 	}
 

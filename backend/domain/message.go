@@ -7,12 +7,12 @@ import (
 )
 
 type Message struct {
-	ID             uuid.UUID  `gorm:"type:uuid" json:"id"`
-	ConversationID uuid.UUID  `gorm:"type:uuid" json:"conversation_id"`
-	UserID         *uuid.UUID `gorm:"type:uuid" json:"-"`
-	CreatedAt      time.Time  `json:"created_at"`
-	Text           string     `json:"text"`
-	Type           int        `json:"type"`
+	ID             uuid.UUID
+	ConversationID uuid.UUID
+	UserID         *uuid.UUID
+	CreatedAt      time.Time
+	Text           string
+	Type           string
 }
 
 func NewUserMessage(text string, conversationId uuid.UUID, userID uuid.UUID) *Message {
@@ -21,7 +21,7 @@ func NewUserMessage(text string, conversationId uuid.UUID, userID uuid.UUID) *Me
 		ConversationID: conversationId,
 		CreatedAt:      time.Now(),
 		Text:           text,
-		Type:           0,
+		Type:           "user",
 		UserID:         &userID,
 	}
 }
@@ -32,6 +32,6 @@ func NewSystemMessage(text string, conversationId uuid.UUID) *Message {
 		ConversationID: conversationId,
 		CreatedAt:      time.Now(),
 		Text:           text,
-		Type:           1,
+		Type:           "system",
 	}
 }

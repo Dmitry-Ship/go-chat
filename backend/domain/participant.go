@@ -7,10 +7,10 @@ import (
 )
 
 type Participant struct {
-	ID             uuid.UUID `gorm:"type:uuid" json:"id"`
-	ConversationID uuid.UUID `gorm:"type:uuid" json:"conversation_id"`
-	UserID         uuid.UUID `gorm:"type:uuid" json:"user_id"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID             uuid.UUID
+	ConversationID uuid.UUID
+	UserID         uuid.UUID
+	CreatedAt      time.Time
 }
 
 func NewParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {

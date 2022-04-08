@@ -52,8 +52,8 @@ services:
     volumes:
       - ./backend:/app
     depends_on:
-      - composepostgres
-      - composeredis
+      - database
+      - redis
 
   frontend:
     environment:

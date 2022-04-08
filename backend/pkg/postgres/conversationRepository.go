@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/mappers"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -19,30 +20,38 @@ func NewConversationRepository(db *gorm.DB) *conversationRepository {
 }
 
 func (r *conversationRepository) Store(conversation *domain.Conversation) error {
-	err := r.conversations.Create(&conversation).Error
+
+	err := r.conversations.Create(mappers.ToConversationPersistence(conversation)).Error
 
 	return err
 }
 
 func (r *conversationRepository) FindByID(id uuid.UUID) (*domain.Conversation, error) {
-	conversation := domain.Conversation{}
+	conversation := mappers.ConversationPersistence{}
+
 	err := r.conversations.Where("id = ?", id).First(&conversation).Error
 
-	return &conversation, err
+	return mappers.ToConversationDomain(&conversation), err
 }
 
 func (r *conversationRepository) FindAll() ([]*domain.Conversation, error) {
-	conversations := []*domain.Conversation{}
+	conversations := []*mappers.ConversationPersistence{}
 
 	err := r.conversations.Limit(50).Find(&conversations).Error
 
-	return conversations, err
+	domainConversations := make([]*domain.Conversation, len(conversations))
+
+	for i, conversation := range conversations {
+		domainConversations[i] = mappers.ToConversationDomain(conversation)
+	}
+
+	return domainConversations, err
 }
 
 func (r *conversationRepository) Delete(id uuid.UUID) error {
-	participant := domain.Participant{}
+	conversation := mappers.ConversationPersistence{}
 
-	err := r.conversations.Where("id = ?", id).Delete(participant).Error
+	err := r.conversations.Where("id = ?", id).Delete(conversation).Error
 
 	return err
 }

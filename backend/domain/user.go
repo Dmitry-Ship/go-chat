@@ -7,12 +7,12 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `gorm:"type:uuid" json:"id"`
-	Avatar       string    `json:"avatar"`
-	Name         string    `json:"name"`
-	Password     string    `json:"-"`
-	CreatedAt    time.Time `json:"-"`
-	RefreshToken string    `gorm:"column:refresh_token" json:"-"`
+	ID           uuid.UUID
+	Avatar       string
+	Name         string
+	Password     string
+	CreatedAt    time.Time
+	RefreshToken string
 }
 
 func NewUser(username string, password string) *User {

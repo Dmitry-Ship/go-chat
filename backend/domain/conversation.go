@@ -7,11 +7,11 @@ import (
 )
 
 type Conversation struct {
-	ID        uuid.UUID `gorm:"type:uuid" json:"id"`
-	Name      string    `json:"name"`
-	Avatar    string    `json:"avatar"`
-	IsPrivate bool      `json:"is_private"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        uuid.UUID
+	Name      string
+	Avatar    string
+	IsPrivate bool
+	CreatedAt time.Time
 }
 
 func NewConversation(id uuid.UUID, name string, isPrivate bool) *Conversation {

@@ -17,7 +17,7 @@ import (
 func main() {
 	db := database.GetDatabaseConnection()
 
-	messagesRepository := postgres.NewChatMessageRepository(db)
+	messagesRepository := postgres.NewMessageRepository(db)
 	usersRepository := postgres.NewUserRepository(db)
 	conversationsRepository := postgres.NewConversationRepository(db)
 	participantRepository := postgres.NewParticipantRepository(db)

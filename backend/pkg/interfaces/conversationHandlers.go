@@ -101,7 +101,7 @@ func HandleGetConversationsMessages(conversationService application.Conversation
 		}
 
 		data := struct {
-			Messages []application.MessageFull `json:"messages"`
+			Messages []application.MessageFullDTO `json:"messages"`
 		}{
 			Messages: messages,
 		}
