@@ -1,7 +1,6 @@
-package mappers
+package domain
 
 import (
-	"GitHub/go-chat/backend/domain"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,7 +26,25 @@ func (MessagePersistence) TableName() string {
 	return "messages"
 }
 
-func ToMessageDTO(message *domain.Message) *MessageDTO {
+func ToMessageDTO(message *MessagePersistence) *MessageDTO {
+	var messageType string
+
+	switch message.Type {
+	case 0:
+		messageType = "user"
+	case 1:
+		messageType = "system"
+	}
+
+	return &MessageDTO{
+		ID:        message.ID,
+		CreatedAt: message.CreatedAt,
+		Text:      message.Text,
+		Type:      messageType,
+	}
+}
+
+func ToMessageDTOFromDOmain(message *Message) *MessageDTO {
 	return &MessageDTO{
 		ID:        message.ID,
 		CreatedAt: message.CreatedAt,
@@ -36,7 +53,7 @@ func ToMessageDTO(message *domain.Message) *MessageDTO {
 	}
 }
 
-func ToMessagePersistence(message *domain.Message) *MessagePersistence {
+func ToMessagePersistence(message *Message) *MessagePersistence {
 	var messageType uint8
 
 	switch message.Type {
@@ -47,26 +64,6 @@ func ToMessagePersistence(message *domain.Message) *MessagePersistence {
 	}
 
 	return &MessagePersistence{
-		ID:             message.ID,
-		ConversationID: message.ConversationID,
-		UserID:         message.UserID,
-		CreatedAt:      message.CreatedAt,
-		Text:           message.Text,
-		Type:           messageType,
-	}
-}
-
-func ToMessageDomain(message *MessagePersistence) *domain.Message {
-	var messageType string
-
-	switch message.Type {
-	case 0:
-		messageType = "user"
-	case 1:
-		messageType = "system"
-	}
-
-	return &domain.Message{
 		ID:             message.ID,
 		ConversationID: message.ConversationID,
 		UserID:         message.UserID,

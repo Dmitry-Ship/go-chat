@@ -2,11 +2,10 @@ package application
 
 import (
 	"GitHub/go-chat/backend/domain"
-	"GitHub/go-chat/backend/pkg/mappers"
 )
 
 type ContactsQueryService interface {
-	GetContacts() ([]*mappers.UserDTO, error)
+	GetContacts() ([]*domain.UserDTO, error)
 }
 
 type contactsQueryService struct {
@@ -19,18 +18,6 @@ func NewContactsQueryService(users domain.UserRepository) *contactsQueryService 
 	}
 }
 
-func (s *contactsQueryService) GetContacts() ([]*mappers.UserDTO, error) {
-	users, err := s.users.FindAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	var result []*mappers.UserDTO
-
-	for _, user := range users {
-		result = append(result, mappers.ToUserDTO(user))
-	}
-
-	return result, nil
+func (s *contactsQueryService) GetContacts() ([]*domain.UserDTO, error) {
+	return s.users.FindAll()
 }

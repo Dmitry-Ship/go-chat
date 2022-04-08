@@ -2,25 +2,24 @@ package application
 
 import (
 	"GitHub/go-chat/backend/domain"
-	"GitHub/go-chat/backend/pkg/mappers"
 
 	"github.com/google/uuid"
 )
 
 type conversationDataDTO struct {
-	Conversation mappers.ConversationDTO `json:"conversation"`
-	Joined       bool                    `json:"joined"`
+	Conversation domain.ConversationDTO `json:"conversation"`
+	Joined       bool                   `json:"joined"`
 }
 
 type MessageFullDTO struct {
-	*mappers.MessageDTO
-	User      *mappers.UserDTO `json:"user,omitempty"`
-	IsInbound bool             `json:"is_inbound,omitempty"`
+	*domain.MessageDTO
+	User      *domain.UserDTO `json:"user,omitempty"`
+	IsInbound bool            `json:"is_inbound,omitempty"`
 }
 
 type ConversationQueryService interface {
 	GetConversation(conversationId uuid.UUID, userId uuid.UUID) (conversationDataDTO, error)
-	GetConversations() ([]*mappers.ConversationDTO, error)
+	GetConversations() ([]*domain.ConversationDTO, error)
 	GetConversationMessages(conversationId uuid.UUID, userId uuid.UUID) ([]MessageFullDTO, error)
 }
 
@@ -28,10 +27,10 @@ type conversationQueryService struct {
 	conversations domain.ConversationRepository
 	participants  domain.ParticipantRepository
 	users         domain.UserRepository
-	messages      domain.ChatMessageRepository
+	messages      domain.MessageRepository
 }
 
-func NewConversationQueryService(conversations domain.ConversationRepository, participants domain.ParticipantRepository, users domain.UserRepository, messages domain.ChatMessageRepository) *conversationQueryService {
+func NewConversationQueryService(conversations domain.ConversationRepository, participants domain.ParticipantRepository, users domain.UserRepository, messages domain.MessageRepository) *conversationQueryService {
 	return &conversationQueryService{
 		conversations: conversations,
 		users:         users,
@@ -41,7 +40,6 @@ func NewConversationQueryService(conversations domain.ConversationRepository, pa
 }
 
 func (s *conversationQueryService) GetConversation(conversationId uuid.UUID, userId uuid.UUID) (conversationDataDTO, error) {
-
 	conversation, err := s.conversations.FindByID(conversationId)
 
 	if err != nil {
@@ -49,28 +47,16 @@ func (s *conversationQueryService) GetConversation(conversationId uuid.UUID, use
 	}
 
 	data := conversationDataDTO{
-		Conversation: *mappers.ToConversationDTO(conversation),
+		Conversation: *conversation,
 		Joined:       s.hasJoined(conversationId, userId),
 	}
 
 	return data, nil
 }
 
-func (s *conversationQueryService) GetConversations() ([]*mappers.ConversationDTO, error) {
+func (s *conversationQueryService) GetConversations() ([]*domain.ConversationDTO, error) {
+	return s.conversations.FindAll()
 
-	conversations, err := s.conversations.FindAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	var result []*mappers.ConversationDTO
-
-	for _, conversation := range conversations {
-		result = append(result, mappers.ToConversationDTO(conversation))
-	}
-
-	return result, nil
 }
 
 func (s *conversationQueryService) hasJoined(conversationID uuid.UUID, userId uuid.UUID) bool {
@@ -101,22 +87,22 @@ func (s *conversationQueryService) GetConversationMessages(conversationId uuid.U
 	return messagesFull, nil
 }
 
-func (s *conversationQueryService) makeMessageFullDTO(message *domain.Message, userID uuid.UUID) (MessageFullDTO, error) {
-	if message.UserID == nil {
+func (s *conversationQueryService) makeMessageFullDTO(message *domain.MessageDTO, userID uuid.UUID) (MessageFullDTO, error) {
+	if message.Type == "system" {
 		return MessageFullDTO{
-			MessageDTO: mappers.ToMessageDTO(message),
+			MessageDTO: message,
 		}, nil
 	}
 
-	user, err := s.users.FindByID(*message.UserID)
+	user, err := s.users.FindByID(userID)
 
 	if err != nil {
 		return MessageFullDTO{}, err
 	}
 
 	m := MessageFullDTO{
-		MessageDTO: mappers.ToMessageDTO(message),
-		User:       mappers.ToUserDTO(user),
+		MessageDTO: message,
+		User:       user,
 		IsInbound:  user.ID != userID,
 	}
 

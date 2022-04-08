@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/domain"
-	"GitHub/go-chat/backend/pkg/mappers"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -20,21 +19,21 @@ func NewMessageRepository(db *gorm.DB) *messageRepository {
 
 func (r *messageRepository) Store(chatMessage *domain.Message) error {
 
-	err := r.chatMessages.Create(mappers.ToMessagePersistence(chatMessage)).Error
+	err := r.chatMessages.Create(domain.ToMessagePersistence(chatMessage)).Error
 
 	return err
 }
 
-func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID) ([]*domain.Message, error) {
-	messages := []*mappers.MessagePersistence{}
+func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID) ([]*domain.MessageDTO, error) {
+	messages := []*domain.MessagePersistence{}
 
 	err := r.chatMessages.Limit(50).Where("conversation_id = ?", conversationID).Find(&messages).Error
 
-	domainMessages := make([]*domain.Message, len(messages))
+	dtoMessages := make([]*domain.MessageDTO, len(messages))
 
 	for i, message := range messages {
-		domainMessages[i] = mappers.ToMessageDomain(message)
+		dtoMessages[i] = domain.ToMessageDTO(message)
 	}
 
-	return domainMessages, err
+	return dtoMessages, err
 }

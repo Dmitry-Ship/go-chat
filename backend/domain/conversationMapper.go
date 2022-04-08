@@ -1,7 +1,6 @@
-package mappers
+package domain
 
 import (
-	"GitHub/go-chat/backend/domain"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,7 +26,7 @@ func (ConversationPersistence) TableName() string {
 	return "conversations"
 }
 
-func ToConversationDTO(conversation *domain.Conversation) *ConversationDTO {
+func ToConversationDTO(conversation *ConversationPersistence) *ConversationDTO {
 	return &ConversationDTO{
 		ID:        conversation.ID,
 		Name:      conversation.Name,
@@ -37,18 +36,8 @@ func ToConversationDTO(conversation *domain.Conversation) *ConversationDTO {
 	}
 }
 
-func ToConversationPersistence(conversation *domain.Conversation) *ConversationPersistence {
+func ToConversationPersistence(conversation *Conversation) *ConversationPersistence {
 	return &ConversationPersistence{
-		ID:        conversation.ID,
-		Name:      conversation.Name,
-		Avatar:    conversation.Avatar,
-		IsPrivate: conversation.IsPrivate,
-		CreatedAt: conversation.CreatedAt,
-	}
-}
-
-func ToConversationDomain(conversation *ConversationPersistence) *domain.Conversation {
-	return &domain.Conversation{
 		ID:        conversation.ID,
 		Name:      conversation.Name,
 		Avatar:    conversation.Avatar,

@@ -2,7 +2,6 @@ package application
 
 import (
 	"GitHub/go-chat/backend/domain"
-	"GitHub/go-chat/backend/pkg/mappers"
 	ws "GitHub/go-chat/backend/pkg/websocket"
 
 	"fmt"
@@ -23,11 +22,11 @@ type conversationCommandService struct {
 	conversations domain.ConversationRepository
 	participants  domain.ParticipantRepository
 	users         domain.UserRepository
-	messages      domain.ChatMessageRepository
+	messages      domain.MessageRepository
 	hub           ws.Hub
 }
 
-func NewConversationCommandService(conversations domain.ConversationRepository, participants domain.ParticipantRepository, users domain.UserRepository, messages domain.ChatMessageRepository, hub ws.Hub) *conversationCommandService {
+func NewConversationCommandService(conversations domain.ConversationRepository, participants domain.ParticipantRepository, users domain.UserRepository, messages domain.MessageRepository, hub ws.Hub) *conversationCommandService {
 	return &conversationCommandService{
 		conversations: conversations,
 		users:         users,
@@ -165,8 +164,8 @@ func (s *conversationCommandService) SendUserMessage(messageText string, convers
 	notification := ws.OutgoingNotification{
 		Type: "message",
 		Payload: MessageFullDTO{
-			User:       mappers.ToUserDTO(user),
-			MessageDTO: mappers.ToMessageDTO(message),
+			User:       user,
+			MessageDTO: domain.ToMessageDTOFromDOmain(message),
 		},
 	}
 
@@ -191,7 +190,7 @@ func (s *conversationCommandService) SendSystemMessage(messageText string, conve
 	notification := ws.OutgoingNotification{
 		Type: "message",
 		Payload: MessageFullDTO{
-			MessageDTO: mappers.ToMessageDTO(message),
+			MessageDTO: domain.ToMessageDTOFromDOmain(message),
 		},
 	}
 

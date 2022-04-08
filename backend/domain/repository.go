@@ -1,27 +1,29 @@
 package domain
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type ConversationRepository interface {
 	Store(conversation *Conversation) error
 	Delete(id uuid.UUID) error
-	FindByID(id uuid.UUID) (*Conversation, error)
-	FindAll() ([]*Conversation, error)
+	FindByID(id uuid.UUID) (*ConversationDTO, error)
+	FindAll() ([]*ConversationDTO, error)
 }
 
 type UserRepository interface {
 	Store(user *User) error
-	FindByID(id uuid.UUID) (*User, error)
+	FindByID(id uuid.UUID) (*UserDTO, error)
 	FindByUsername(username string) (*User, error)
 	StoreRefreshToken(userID uuid.UUID, refreshToken string) error
 	GetRefreshTokenByUserID(userID uuid.UUID) (string, error)
 	DeleteRefreshToken(userID uuid.UUID) error
-	FindAll() ([]*User, error)
+	FindAll() ([]*UserDTO, error)
 }
 
-type ChatMessageRepository interface {
+type MessageRepository interface {
 	Store(message *Message) error
-	FindAllByConversationID(conversationId uuid.UUID) ([]*Message, error)
+	FindAllByConversationID(conversationId uuid.UUID) ([]*MessageDTO, error)
 }
 
 type ParticipantRepository interface {

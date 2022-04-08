@@ -1,7 +1,7 @@
 package database
 
 import (
-	"GitHub/go-chat/backend/pkg/mappers"
+	"GitHub/go-chat/backend/domain"
 	"fmt"
 	"os"
 
@@ -26,10 +26,10 @@ func GetDatabaseConnection() *gorm.DB {
 
 	// Migrate the schema
 
-	db.AutoMigrate(mappers.MessagePersistence{})
-	db.AutoMigrate(mappers.ConversationPersistence{})
-	db.AutoMigrate(mappers.UserPersistence{})
-	db.AutoMigrate(mappers.ParticipantPersistence{})
+	db.AutoMigrate(domain.MessagePersistence{})
+	db.AutoMigrate(domain.ConversationPersistence{})
+	db.AutoMigrate(domain.UserPersistence{})
+	db.AutoMigrate(domain.ParticipantPersistence{})
 
 	return db
 }

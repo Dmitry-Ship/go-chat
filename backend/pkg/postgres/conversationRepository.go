@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/domain"
-	"GitHub/go-chat/backend/pkg/mappers"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -21,35 +20,35 @@ func NewConversationRepository(db *gorm.DB) *conversationRepository {
 
 func (r *conversationRepository) Store(conversation *domain.Conversation) error {
 
-	err := r.conversations.Create(mappers.ToConversationPersistence(conversation)).Error
+	err := r.conversations.Create(domain.ToConversationPersistence(conversation)).Error
 
 	return err
 }
 
-func (r *conversationRepository) FindByID(id uuid.UUID) (*domain.Conversation, error) {
-	conversation := mappers.ConversationPersistence{}
+func (r *conversationRepository) FindByID(id uuid.UUID) (*domain.ConversationDTO, error) {
+	conversation := domain.ConversationPersistence{}
 
 	err := r.conversations.Where("id = ?", id).First(&conversation).Error
 
-	return mappers.ToConversationDomain(&conversation), err
+	return domain.ToConversationDTO(&conversation), err
 }
 
-func (r *conversationRepository) FindAll() ([]*domain.Conversation, error) {
-	conversations := []*mappers.ConversationPersistence{}
+func (r *conversationRepository) FindAll() ([]*domain.ConversationDTO, error) {
+	conversations := []*domain.ConversationPersistence{}
 
 	err := r.conversations.Limit(50).Find(&conversations).Error
 
-	domainConversations := make([]*domain.Conversation, len(conversations))
+	dtoConversations := make([]*domain.ConversationDTO, len(conversations))
 
 	for i, conversation := range conversations {
-		domainConversations[i] = mappers.ToConversationDomain(conversation)
+		dtoConversations[i] = domain.ToConversationDTO(conversation)
 	}
 
-	return domainConversations, err
+	return dtoConversations, err
 }
 
 func (r *conversationRepository) Delete(id uuid.UUID) error {
-	conversation := mappers.ConversationPersistence{}
+	conversation := domain.ConversationPersistence{}
 
 	err := r.conversations.Where("id = ?", id).Delete(conversation).Error
 

@@ -2,7 +2,6 @@ package application
 
 import (
 	"GitHub/go-chat/backend/domain"
-	"GitHub/go-chat/backend/pkg/mappers"
 	"errors"
 	"os"
 	"time"
@@ -33,7 +32,7 @@ type AuthService interface {
 	Logout(userId uuid.UUID) error
 	SignUp(username string, password string) (Tokens, error)
 	RotateTokens(refreshTokenString string) (Tokens, error)
-	GetUser(userId uuid.UUID) (*mappers.UserDTO, error)
+	GetUser(userId uuid.UUID) (*domain.UserDTO, error)
 	GetAccessTokenExpiration() time.Duration
 	GetRefreshTokenExpiration() time.Duration
 }
@@ -46,14 +45,14 @@ func NewAuthService(users domain.UserRepository) *authService {
 	}
 }
 
-func (s *authService) GetUser(userId uuid.UUID) (*mappers.UserDTO, error) {
+func (s *authService) GetUser(userId uuid.UUID) (*domain.UserDTO, error) {
 	user, err := s.users.FindByID(userId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return mappers.ToUserDTO(user), nil
+	return user, nil
 }
 
 func (a *authService) hashPassword(password string) (string, error) {
