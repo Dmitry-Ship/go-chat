@@ -129,15 +129,13 @@ func (s *conversationCommandService) DeleteConversation(id uuid.UUID) error {
 }
 
 func (s *conversationCommandService) notifyParticipants(conversationID uuid.UUID, notification ws.OutgoingNotification) error {
-	participants, err := s.participants.FindAllByConversationID(conversationID)
+	ids, err := s.participants.GetUserIdsByConversationID(conversationID)
 
 	if err != nil {
 		return err
 	}
 
-	for _, participant := range participants {
-		s.hub.BroadcastToClients(notification, participant.UserID)
-	}
+	s.hub.BroadcastToClients(notification, ids)
 
 	return nil
 }

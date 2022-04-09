@@ -39,5 +39,5 @@ type MessageQueryRepository interface {
 type ParticipantCommandRepository interface {
 	Store(participant *Participant) error
 	DeleteByConversationIDAndUserID(conversationId uuid.UUID, userId uuid.UUID) error
-	FindAllByConversationID(conversationId uuid.UUID) ([]*Participant, error)
+	GetUserIdsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error)
 }

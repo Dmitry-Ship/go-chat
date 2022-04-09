@@ -13,7 +13,7 @@ import (
 )
 
 type Hub interface {
-	BroadcastToClients(notification OutgoingNotification, recipientID uuid.UUID)
+	BroadcastToClients(notification OutgoingNotification, recipientIDs []uuid.UUID)
 	UnregisterClient(client *Client)
 	RegisterClient(client *Client)
 }
@@ -87,18 +87,20 @@ func (s *hub) Run() {
 	}
 }
 
-func (s *hub) BroadcastToClients(notification OutgoingNotification, recipientID uuid.UUID) {
-	message := broadcastMessage{
-		Notification: notification,
-		RecipientID:  recipientID,
-	}
+func (s *hub) BroadcastToClients(notification OutgoingNotification, recipientIDs []uuid.UUID) {
+	for _, recipientID := range recipientIDs {
+		message := broadcastMessage{
+			Notification: notification,
+			RecipientID:  recipientID,
+		}
 
-	json, err := json.Marshal(message)
-	if err != nil {
-		log.Println(err)
-	}
+		json, err := json.Marshal(message)
+		if err != nil {
+			log.Println(err)
+		}
 
-	s.redisClient.Publish(ctx, pubsub.ChatChannel, []byte(json))
+		s.redisClient.Publish(ctx, pubsub.ChatChannel, []byte(json))
+	}
 }
 
 func (s *hub) RegisterClient(client *Client) {

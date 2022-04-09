@@ -63,9 +63,7 @@ func (r *conversationRepository) FindAll() ([]*domain.ConversationDTO, error) {
 }
 
 func (r *conversationRepository) Delete(id uuid.UUID) error {
-	conversation := domain.ConversationPersistence{}
-
-	err := r.db.Where("id = ?", id).Delete(conversation).Error
+	err := r.db.Where("id = ?", id).Delete(domain.ConversationPersistence{}).Error
 
 	return err
 }

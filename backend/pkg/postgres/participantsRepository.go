@@ -23,18 +23,12 @@ func (r *participantRepository) Store(participant *domain.Participant) error {
 	return err
 }
 
-func (r *participantRepository) FindAllByConversationID(conversationID uuid.UUID) ([]*domain.Participant, error) {
-	participants := []*domain.ParticipantPersistence{}
+func (r *participantRepository) GetUserIdsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
 
-	err := r.db.Limit(50).Where("conversation_id = ?", conversationID).Find(&participants).Error
+	err := r.db.Model(&domain.ParticipantPersistence{}).Where("conversation_id = ?", conversationID).Select("user_id").Find(&ids).Error
 
-	domainParticipants := make([]*domain.Participant, len(participants))
-
-	for i, participant := range participants {
-		domainParticipants[i] = domain.ToParticipantDomain(participant)
-	}
-
-	return domainParticipants, err
+	return ids, err
 }
 
 func (r *participantRepository) DeleteByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) error {

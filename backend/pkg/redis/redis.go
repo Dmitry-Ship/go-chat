@@ -16,7 +16,6 @@ func GetRedisClient() *redis.Client {
 	password := os.Getenv("REDIS_PASSWORD")
 
 	options := fmt.Sprintf("%s:%s", host, port)
-	fmt.Println(options)
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     options,
@@ -28,7 +27,7 @@ func GetRedisClient() *redis.Client {
 		panic(err)
 	}
 
-	fmt.Println(fmt.Sprintf("Connected to redis %s", options))
+	fmt.Println(fmt.Sprintf("📢 Connected to redis %s", options))
 
 	return client
 }

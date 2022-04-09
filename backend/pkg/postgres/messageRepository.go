@@ -51,7 +51,7 @@ func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, re
 func (r *messageRepository) FindByID(messageID uuid.UUID, requestUserID uuid.UUID) (*domain.MessageDTO, error) {
 	message := domain.MessagePersistence{}
 
-	err := r.db.Where("id = ?", messageID).Find(message).Error
+	err := r.db.Where("id = ?", messageID).Find(&message).Error
 
 	user := domain.UserPersistence{}
 

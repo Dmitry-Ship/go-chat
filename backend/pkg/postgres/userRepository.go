@@ -18,7 +18,6 @@ func NewUserRepository(db *gorm.DB) *userRepository {
 }
 
 func (r *userRepository) Store(user *domain.User) error {
-
 	err := r.db.Create(domain.ToUserPersistence(user)).Error
 
 	return err
@@ -40,8 +39,7 @@ func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
 }
 
 func (r *userRepository) StoreRefreshToken(userID uuid.UUID, refreshToken string) error {
-	user := domain.UserPersistence{}
-	err := r.db.Where("id = ?", userID).First(&user).Update("refresh_token", refreshToken).Error
+	err := r.db.Where("id = ?", userID).First(&domain.UserPersistence{}).Update("refresh_token", refreshToken).Error
 
 	return err
 }
@@ -58,7 +56,6 @@ func (r *userRepository) DeleteRefreshToken(userID uuid.UUID) error {
 	err := r.db.Where("id = ?", userID).First(&user).Update("refresh_token", nil).Error
 
 	return err
-
 }
 
 func (r *userRepository) FindAll() ([]*domain.UserDTO, error) {

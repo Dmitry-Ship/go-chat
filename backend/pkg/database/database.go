@@ -20,9 +20,9 @@ func GetDatabaseConnection() *gorm.DB {
 
 	db, err := gorm.Open(postgres.Open(options), &gorm.Config{})
 	if err != nil {
-		panic("Could not connect to database")
+		panic("⛔️ Could not connect to database")
 	}
-	fmt.Printf("Connected to database %s", dbname)
+	fmt.Println(fmt.Sprintf("💿 Connected to database %s", dbname))
 
 	// Migrate the schema
 
