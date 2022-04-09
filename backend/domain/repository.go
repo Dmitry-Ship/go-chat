@@ -10,7 +10,7 @@ type ConversationCommandRepository interface {
 }
 
 type ConversationQueryRepository interface {
-	FindByID(id uuid.UUID) (*ConversationDTO, error)
+	FindByID(id uuid.UUID, userId uuid.UUID) (*ConversationDTOFull, error)
 	FindAll() ([]*ConversationDTO, error)
 }
 
@@ -29,15 +29,15 @@ type UserQueryRepository interface {
 
 type MessageCommandRepository interface {
 	Store(message *Message) error
+	FindByID(messageID uuid.UUID, requestUserID uuid.UUID) (*MessageDTO, error)
 }
 
 type MessageQueryRepository interface {
-	FindAllByConversationID(conversationId uuid.UUID) ([]*MessageDTO, error)
+	FindAllByConversationID(conversationId uuid.UUID, requestUserId uuid.UUID) ([]*MessageDTO, error)
 }
 
 type ParticipantCommandRepository interface {
 	Store(participant *Participant) error
 	DeleteByConversationIDAndUserID(conversationId uuid.UUID, userId uuid.UUID) error
 	FindAllByConversationID(conversationId uuid.UUID) ([]*Participant, error)
-	FindByConversationIDAndUserID(conversationId uuid.UUID, userId uuid.UUID) (*Participant, error)
 }

@@ -8,17 +8,17 @@ import (
 )
 
 type participantRepository struct {
-	participants *gorm.DB
+	db *gorm.DB
 }
 
 func NewParticipantRepository(db *gorm.DB) *participantRepository {
 	return &participantRepository{
-		participants: db,
+		db: db,
 	}
 }
 
 func (r *participantRepository) Store(participant *domain.Participant) error {
-	err := r.participants.Create(domain.ToParticipantPersistence(participant)).Error
+	err := r.db.Create(domain.ToParticipantPersistence(participant)).Error
 
 	return err
 }
@@ -26,7 +26,7 @@ func (r *participantRepository) Store(participant *domain.Participant) error {
 func (r *participantRepository) FindAllByConversationID(conversationID uuid.UUID) ([]*domain.Participant, error) {
 	participants := []*domain.ParticipantPersistence{}
 
-	err := r.participants.Limit(50).Where("conversation_id = ?", conversationID).Find(&participants).Error
+	err := r.db.Limit(50).Where("conversation_id = ?", conversationID).Find(&participants).Error
 
 	domainParticipants := make([]*domain.Participant, len(participants))
 
@@ -37,18 +37,10 @@ func (r *participantRepository) FindAllByConversationID(conversationID uuid.UUID
 	return domainParticipants, err
 }
 
-func (r *participantRepository) FindByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
-	participant := domain.ParticipantPersistence{}
-
-	err := r.participants.Where("conversation_id = ?", conversationID).Where("user_id = ?", userID).First(&participant).Error
-
-	return domain.ToParticipantDomain(&participant), err
-}
-
 func (r *participantRepository) DeleteByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) error {
 	participant := domain.ParticipantPersistence{}
 
-	err := r.participants.Where("conversation_id = ?", conversationID).Where("user_id = ?", userID).Delete(participant).Error
+	err := r.db.Where("conversation_id = ?", conversationID).Where("user_id = ?", userID).Delete(participant).Error
 
 	return err
 }

@@ -26,7 +26,7 @@ func main() {
 	hub := ws.NewHub(redisClient)
 
 	conversationCommandService := application.NewConversationCommandService(conversationsRepository, participantRepository, usersRepository, messagesRepository, hub)
-	conversationQueryService := application.NewConversationQueryService(conversationsRepository, participantRepository, usersRepository, messagesRepository)
+	conversationQueryService := application.NewConversationQueryService(conversationsRepository, messagesRepository)
 	authService := application.NewAuthService(usersRepository)
 	contactsQueryService := application.NewContactsQueryService(usersRepository)
 	ensureAuth := interfaces.MakeEnsureAuth(authService)

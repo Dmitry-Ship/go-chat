@@ -113,7 +113,7 @@ func (s *conversationCommandService) DeleteConversation(id uuid.UUID) error {
 		},
 	}
 
-	err := s.notifyAllParticipants(id, notification)
+	err := s.notifyParticipants(id, notification)
 
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func (s *conversationCommandService) DeleteConversation(id uuid.UUID) error {
 	return nil
 }
 
-func (s *conversationCommandService) notifyAllParticipants(conversationID uuid.UUID, notification ws.OutgoingNotification) error {
+func (s *conversationCommandService) notifyParticipants(conversationID uuid.UUID, notification ws.OutgoingNotification) error {
 	participants, err := s.participants.FindAllByConversationID(conversationID)
 
 	if err != nil {
@@ -136,16 +136,6 @@ func (s *conversationCommandService) notifyAllParticipants(conversationID uuid.U
 	}
 
 	for _, participant := range participants {
-		if notification.Type == "message" {
-			message := notification.Payload.(MessageFullDTO)
-
-			if message.Type != "system" {
-				message.IsInbound = participant.UserID != message.User.ID
-				notification.Payload = message
-			}
-
-		}
-
 		s.hub.BroadcastToClients(notification, participant.UserID)
 	}
 
@@ -161,21 +151,18 @@ func (s *conversationCommandService) SendUserMessage(messageText string, convers
 		return err
 	}
 
-	user, err := s.users.FindByID(userId)
+	messageDTO, err := s.messages.FindByID(message.ID, userId)
 
 	if err != nil {
 		return err
 	}
 
 	notification := ws.OutgoingNotification{
-		Type: "message",
-		Payload: MessageFullDTO{
-			User:       user,
-			MessageDTO: domain.ToMessageDTOFromDomain(message),
-		},
+		Type:    "message",
+		Payload: messageDTO,
 	}
 
-	err = s.notifyAllParticipants(conversationId, notification)
+	err = s.notifyParticipants(conversationId, notification)
 
 	if err != nil {
 		return err
@@ -193,14 +180,18 @@ func (s *conversationCommandService) SendSystemMessage(messageText string, conve
 		return err
 	}
 
-	notification := ws.OutgoingNotification{
-		Type: "message",
-		Payload: MessageFullDTO{
-			MessageDTO: domain.ToMessageDTOFromDomain(message),
-		},
+	messageDTO, err := s.messages.FindByID(message.ID, uuid.Nil)
+
+	if err != nil {
+		return err
 	}
 
-	err = s.notifyAllParticipants(conversationId, notification)
+	notification := ws.OutgoingNotification{
+		Type:    "message",
+		Payload: messageDTO,
+	}
+
+	err = s.notifyParticipants(conversationId, notification)
 
 	if err != nil {
 		return err

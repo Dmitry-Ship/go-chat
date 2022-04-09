@@ -12,6 +12,8 @@ type MessageDTO struct {
 	UserId    *uuid.UUID `json:"user_id"`
 	Text      string     `json:"text"`
 	Type      string     `json:"type"`
+	User      *UserDTO   `json:"user,omitempty"`
+	IsInbound bool       `json:"is_inbound,omitempty"`
 }
 
 type MessagePersistence struct {
@@ -27,23 +29,22 @@ func (MessagePersistence) TableName() string {
 	return "messages"
 }
 
-func ToMessageDTO(message *MessagePersistence) *MessageDTO {
-	var messageType string
-
-	switch message.Type {
-	case 0:
-		messageType = "user"
-	case 1:
-		messageType = "system"
-	}
-
-	return &MessageDTO{
+func ToMessageDTO(message *MessagePersistence, user *UserPersistence, requestUserID uuid.UUID) *MessageDTO {
+	messageDTO := MessageDTO{
 		ID:        message.ID,
-		UserId:    message.UserID,
 		CreatedAt: message.CreatedAt,
 		Text:      message.Text,
-		Type:      messageType,
+		Type:      "system",
 	}
+
+	if message.Type == 0 {
+		messageDTO.User = ToUserDTO(user)
+		messageDTO.UserId = message.UserID
+		messageDTO.IsInbound = *message.UserID != requestUserID
+		messageDTO.Type = "user"
+	}
+
+	return &messageDTO
 }
 
 func ToMessageDTOFromDomain(message *Message) *MessageDTO {

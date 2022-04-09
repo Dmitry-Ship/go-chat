@@ -1,6 +1,7 @@
 package interfaces
 
 import (
+	"GitHub/go-chat/backend/domain"
 	"GitHub/go-chat/backend/pkg/application"
 	ws "GitHub/go-chat/backend/pkg/websocket"
 	"fmt"
@@ -25,7 +26,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func HandleWSMessage(conversationService application.ConversationCommandService) ws.WSHandler {
-	return func(message ws.IncomingNotification, data json.RawMessage) {
+	return func(incomingNotification ws.IncomingNotification, data json.RawMessage) {
 		request := struct {
 			Content        string    `json:"content"`
 			ConversationId uuid.UUID `json:"conversation_id"`
@@ -36,7 +37,7 @@ func HandleWSMessage(conversationService application.ConversationCommandService)
 			return
 		}
 
-		err := conversationService.SendUserMessage(request.Content, request.ConversationId, message.UserID)
+		err := conversationService.SendUserMessage(request.Content, request.ConversationId, incomingNotification.UserID)
 
 		if err != nil {
 			log.Println(err)
@@ -101,7 +102,7 @@ func HandleGetConversationsMessages(conversationService application.Conversation
 		}
 
 		data := struct {
-			Messages []application.MessageFullDTO `json:"messages"`
+			Messages []*domain.MessageDTO `json:"messages"`
 		}{
 			Messages: messages,
 		}

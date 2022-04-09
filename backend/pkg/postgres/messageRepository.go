@@ -8,32 +8,62 @@ import (
 )
 
 type messageRepository struct {
-	chatMessages *gorm.DB
+	db *gorm.DB
 }
 
 func NewMessageRepository(db *gorm.DB) *messageRepository {
 	return &messageRepository{
-		chatMessages: db,
+		db: db,
 	}
 }
 
 func (r *messageRepository) Store(chatMessage *domain.Message) error {
 
-	err := r.chatMessages.Create(domain.ToMessagePersistence(chatMessage)).Error
+	err := r.db.Create(domain.ToMessagePersistence(chatMessage)).Error
 
 	return err
 }
 
-func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID) ([]*domain.MessageDTO, error) {
+func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, requestUserID uuid.UUID) ([]*domain.MessageDTO, error) {
 	messages := []*domain.MessagePersistence{}
 
-	err := r.chatMessages.Limit(50).Where("conversation_id = ?", conversationID).Find(&messages).Error
+	err := r.db.Limit(50).Where("conversation_id = ?", conversationID).Find(&messages).Error
 
 	dtoMessages := make([]*domain.MessageDTO, len(messages))
 
 	for i, message := range messages {
-		dtoMessages[i] = domain.ToMessageDTO(message)
+		user := domain.UserPersistence{}
+
+		if message.Type == 0 {
+			err := r.db.Where("id = ?", message.UserID).First(&user).Error
+
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		dtoMessages[i] = domain.ToMessageDTO(message, &user, requestUserID)
 	}
 
 	return dtoMessages, err
+}
+
+func (r *messageRepository) FindByID(messageID uuid.UUID, requestUserID uuid.UUID) (*domain.MessageDTO, error) {
+	message := domain.MessagePersistence{}
+
+	err := r.db.Where("id = ?", messageID).Find(message).Error
+
+	user := domain.UserPersistence{}
+
+	if message.Type == 0 {
+		err := r.db.Where("id = ?", message.UserID).Find(&user).Error
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	dtoMessage := domain.ToMessageDTO(&message, &user, requestUserID)
+
+	return dtoMessage, err
 }

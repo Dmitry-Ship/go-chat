@@ -14,6 +14,11 @@ type ConversationDTO struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type ConversationDTOFull struct {
+	Conversation ConversationDTO `json:"conversation"`
+	HasJoined    bool            `json:"joined"`
+}
+
 type ConversationPersistence struct {
 	ID        uuid.UUID `gorm:"type:uuid"`
 	Name      string
@@ -24,6 +29,13 @@ type ConversationPersistence struct {
 
 func (ConversationPersistence) TableName() string {
 	return "conversations"
+}
+
+func ToConversationDTOFull(conversation *ConversationPersistence, hasJoined bool) *ConversationDTOFull {
+	return &ConversationDTOFull{
+		Conversation: *ToConversationDTO(conversation),
+		HasJoined:    hasJoined,
+	}
 }
 
 func ToConversationDTO(conversation *ConversationPersistence) *ConversationDTO {
