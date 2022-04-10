@@ -26,10 +26,10 @@ func GetDatabaseConnection() *gorm.DB {
 
 	// Migrate the schema
 
-	db.AutoMigrate(domain.MessagePersistence{})
-	db.AutoMigrate(domain.ConversationPersistence{})
-	db.AutoMigrate(domain.UserPersistence{})
-	db.AutoMigrate(domain.ParticipantPersistence{})
+	db.AutoMigrate(domain.MessageDAO{})
+	db.AutoMigrate(domain.ConversationDAO{})
+	db.AutoMigrate(domain.UserDAO{})
+	db.AutoMigrate(domain.ParticipantDAO{})
 
 	return db
 }

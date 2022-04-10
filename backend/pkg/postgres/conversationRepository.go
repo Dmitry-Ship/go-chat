@@ -20,13 +20,13 @@ func NewConversationRepository(db *gorm.DB) *conversationRepository {
 }
 
 func (r *conversationRepository) Store(conversation *domain.Conversation) error {
-	err := r.db.Create(domain.ToConversationPersistence(conversation)).Error
+	err := r.db.Create(domain.ToConversationDAO(conversation)).Error
 
 	return err
 }
 
-func (r *conversationRepository) FindByID(id uuid.UUID, userId uuid.UUID) (*domain.ConversationDTOFull, error) {
-	conversation := domain.ConversationPersistence{}
+func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.UUID) (*domain.ConversationDTOFull, error) {
+	conversation := domain.ConversationDAO{}
 
 	err := r.db.Where("id = ?", id).First(&conversation).Error
 
@@ -36,7 +36,7 @@ func (r *conversationRepository) FindByID(id uuid.UUID, userId uuid.UUID) (*doma
 
 	hasUserJoined := true
 
-	participant := domain.ParticipantPersistence{}
+	participant := domain.ParticipantDAO{}
 	if err := r.db.Where("conversation_id = ?", id).Where("user_id = ?", userId).First(&participant).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			hasUserJoined = false
@@ -49,7 +49,7 @@ func (r *conversationRepository) FindByID(id uuid.UUID, userId uuid.UUID) (*doma
 }
 
 func (r *conversationRepository) FindAll() ([]*domain.ConversationDTO, error) {
-	conversations := []*domain.ConversationPersistence{}
+	conversations := []*domain.ConversationDAO{}
 
 	err := r.db.Limit(50).Find(&conversations).Error
 
@@ -63,7 +63,7 @@ func (r *conversationRepository) FindAll() ([]*domain.ConversationDTO, error) {
 }
 
 func (r *conversationRepository) Delete(id uuid.UUID) error {
-	err := r.db.Where("id = ?", id).Delete(domain.ConversationPersistence{}).Error
+	err := r.db.Where("id = ?", id).Delete(domain.ConversationDAO{}).Error
 
 	return err
 }

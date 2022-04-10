@@ -2,8 +2,6 @@ package application
 
 import (
 	"GitHub/go-chat/backend/domain"
-	ws "GitHub/go-chat/backend/pkg/websocket"
-
 	"fmt"
 
 	"github.com/google/uuid"
@@ -19,11 +17,11 @@ type ConversationCommandService interface {
 }
 
 type conversationCommandService struct {
-	conversations domain.ConversationCommandRepository
-	participants  domain.ParticipantCommandRepository
-	users         domain.UserCommandRepository
-	messages      domain.MessageCommandRepository
-	hub           ws.Hub
+	conversations          domain.ConversationCommandRepository
+	participants           domain.ParticipantCommandRepository
+	users                  domain.UserCommandRepository
+	messages               domain.MessageCommandRepository
+	conversationWSResolver ConversationWSResolver
 }
 
 func NewConversationCommandService(
@@ -31,14 +29,14 @@ func NewConversationCommandService(
 	participants domain.ParticipantCommandRepository,
 	users domain.UserCommandRepository,
 	messages domain.MessageCommandRepository,
-	hub ws.Hub,
+	conversationWSResolver ConversationWSResolver,
 ) *conversationCommandService {
 	return &conversationCommandService{
-		conversations: conversations,
-		users:         users,
-		participants:  participants,
-		messages:      messages,
-		hub:           hub,
+		conversations:          conversations,
+		users:                  users,
+		participants:           participants,
+		messages:               messages,
+		conversationWSResolver: conversationWSResolver,
 	}
 }
 
@@ -66,7 +64,7 @@ func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.
 		return err
 	}
 
-	user, err := s.users.FindByID(userId)
+	user, err := s.users.GetUserByID(userId)
 
 	if err != nil {
 		return err
@@ -88,7 +86,7 @@ func (s *conversationCommandService) LeavePublicConversation(conversationID uuid
 		return err
 	}
 
-	user, err := s.users.FindByID(userId)
+	user, err := s.users.GetUserByID(userId)
 
 	if err != nil {
 		return err
@@ -104,38 +102,13 @@ func (s *conversationCommandService) LeavePublicConversation(conversationID uuid
 }
 
 func (s *conversationCommandService) DeleteConversation(id uuid.UUID) error {
-	notification := ws.OutgoingNotification{
-		Type: "conversation_deleted",
-		Payload: struct {
-			ConversationId uuid.UUID `json:"conversation_id"`
-		}{
-			ConversationId: id,
-		},
-	}
+	s.conversationWSResolver.DispatchConversationDeleted(id)
 
-	err := s.notifyParticipants(id, notification)
+	err := s.conversations.Delete(id)
 
 	if err != nil {
 		return err
 	}
-
-	err = s.conversations.Delete(id)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *conversationCommandService) notifyParticipants(conversationID uuid.UUID, notification ws.OutgoingNotification) error {
-	ids, err := s.participants.GetUserIdsByConversationID(conversationID)
-
-	if err != nil {
-		return err
-	}
-
-	s.hub.BroadcastToClients(notification, ids)
 
 	return nil
 }
@@ -149,22 +122,7 @@ func (s *conversationCommandService) SendUserMessage(messageText string, convers
 		return err
 	}
 
-	messageDTO, err := s.messages.FindByID(message.ID, userId)
-
-	if err != nil {
-		return err
-	}
-
-	notification := ws.OutgoingNotification{
-		Type:    "message",
-		Payload: messageDTO,
-	}
-
-	err = s.notifyParticipants(conversationId, notification)
-
-	if err != nil {
-		return err
-	}
+	s.conversationWSResolver.DispatchUserMessage(message.ID, conversationId, userId)
 
 	return nil
 }
@@ -178,22 +136,7 @@ func (s *conversationCommandService) SendSystemMessage(messageText string, conve
 		return err
 	}
 
-	messageDTO, err := s.messages.FindByID(message.ID, uuid.Nil)
-
-	if err != nil {
-		return err
-	}
-
-	notification := ws.OutgoingNotification{
-		Type:    "message",
-		Payload: messageDTO,
-	}
-
-	err = s.notifyParticipants(conversationId, notification)
-
-	if err != nil {
-		return err
-	}
+	s.conversationWSResolver.DispatchSystemMessage(message.ID, conversationId)
 
 	return nil
 }

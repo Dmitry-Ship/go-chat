@@ -6,19 +6,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type ParticipantPersistence struct {
+type ParticipantDAO struct {
 	ID             uuid.UUID `gorm:"type:uuid"`
 	ConversationID uuid.UUID `gorm:"type:uuid"`
 	UserID         uuid.UUID `gorm:"type:uuid"`
 	CreatedAt      time.Time
 }
 
-func (ParticipantPersistence) TableName() string {
+func (ParticipantDAO) TableName() string {
 	return "participants"
 }
 
-func ToParticipantPersistence(participant *Participant) *ParticipantPersistence {
-	return &ParticipantPersistence{
+func ToParticipantDAO(participant *Participant) *ParticipantDAO {
+	return &ParticipantDAO{
 		ID:             participant.ID,
 		ConversationID: participant.ConversationID,
 		UserID:         participant.UserID,

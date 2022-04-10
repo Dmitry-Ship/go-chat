@@ -19,20 +19,20 @@ func NewMessageRepository(db *gorm.DB) *messageRepository {
 
 func (r *messageRepository) Store(chatMessage *domain.Message) error {
 
-	err := r.db.Create(domain.ToMessagePersistence(chatMessage)).Error
+	err := r.db.Create(domain.ToMessageDAO(chatMessage)).Error
 
 	return err
 }
 
 func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, requestUserID uuid.UUID) ([]*domain.MessageDTO, error) {
-	messages := []*domain.MessagePersistence{}
+	messages := []*domain.MessageDAO{}
 
 	err := r.db.Limit(50).Where("conversation_id = ?", conversationID).Find(&messages).Error
 
 	dtoMessages := make([]*domain.MessageDTO, len(messages))
 
 	for i, message := range messages {
-		user := domain.UserPersistence{}
+		user := domain.UserDAO{}
 
 		if message.Type == 0 {
 			err := r.db.Where("id = ?", message.UserID).First(&user).Error
@@ -48,15 +48,19 @@ func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, re
 	return dtoMessages, err
 }
 
-func (r *messageRepository) FindByID(messageID uuid.UUID, requestUserID uuid.UUID) (*domain.MessageDTO, error) {
-	message := domain.MessagePersistence{}
+func (r *messageRepository) GetMessageByID(messageID uuid.UUID, requestUserID uuid.UUID) (*domain.MessageDTO, error) {
+	message := domain.MessageDAO{}
 
-	err := r.db.Where("id = ?", messageID).Find(&message).Error
+	err := r.db.Where("id = ?", messageID).First(&message).Error
 
-	user := domain.UserPersistence{}
+	if err != nil {
+		return nil, err
+	}
+
+	user := domain.UserDAO{}
 
 	if message.Type == 0 {
-		err := r.db.Where("id = ?", message.UserID).Find(&user).Error
+		err = r.db.Where("id = ?", message.UserID).First(&user).Error
 
 		if err != nil {
 			return nil, err

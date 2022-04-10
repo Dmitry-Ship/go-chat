@@ -25,7 +25,7 @@ func NewConversationQueryService(conversations domain.ConversationQueryRepositor
 }
 
 func (s *conversationQueryService) GetConversation(conversationId uuid.UUID, userId uuid.UUID) (*domain.ConversationDTOFull, error) {
-	return s.conversations.FindByID(conversationId, userId)
+	return s.conversations.GetConversationByID(conversationId, userId)
 }
 
 func (s *conversationQueryService) GetConversations() ([]*domain.ConversationDTO, error) {

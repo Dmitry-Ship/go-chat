@@ -12,7 +12,7 @@ type UserDTO struct {
 	Name   string    `json:"name"`
 }
 
-type UserPersistence struct {
+type UserDAO struct {
 	ID           uuid.UUID `gorm:"type:uuid"`
 	Avatar       string
 	Name         string
@@ -21,11 +21,11 @@ type UserPersistence struct {
 	RefreshToken string `gorm:"column:refresh_token"`
 }
 
-func (UserPersistence) TableName() string {
+func (UserDAO) TableName() string {
 	return "users"
 }
 
-func ToUserDTO(user *UserPersistence) *UserDTO {
+func ToUserDTO(user *UserDAO) *UserDTO {
 	return &UserDTO{
 		ID:     user.ID,
 		Avatar: user.Avatar,
@@ -33,8 +33,8 @@ func ToUserDTO(user *UserPersistence) *UserDTO {
 	}
 }
 
-func ToUserPersistence(user *User) *UserPersistence {
-	return &UserPersistence{
+func ToUserDAO(user *User) *UserDAO {
+	return &UserDAO{
 		ID:           user.ID,
 		Avatar:       user.Avatar,
 		Name:         user.Name,
@@ -44,7 +44,7 @@ func ToUserPersistence(user *User) *UserPersistence {
 	}
 }
 
-func ToUserDomain(user *UserPersistence) *User {
+func ToUserDomain(user *UserDAO) *User {
 	return &User{
 		ID:           user.ID,
 		Avatar:       user.Avatar,

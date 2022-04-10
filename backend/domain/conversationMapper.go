@@ -19,7 +19,7 @@ type ConversationDTOFull struct {
 	HasJoined    bool            `json:"joined"`
 }
 
-type ConversationPersistence struct {
+type ConversationDAO struct {
 	ID        uuid.UUID `gorm:"type:uuid"`
 	Name      string
 	Avatar    string
@@ -27,18 +27,18 @@ type ConversationPersistence struct {
 	CreatedAt time.Time
 }
 
-func (ConversationPersistence) TableName() string {
+func (ConversationDAO) TableName() string {
 	return "conversations"
 }
 
-func ToConversationDTOFull(conversation *ConversationPersistence, hasJoined bool) *ConversationDTOFull {
+func ToConversationDTOFull(conversation *ConversationDAO, hasJoined bool) *ConversationDTOFull {
 	return &ConversationDTOFull{
 		Conversation: *ToConversationDTO(conversation),
 		HasJoined:    hasJoined,
 	}
 }
 
-func ToConversationDTO(conversation *ConversationPersistence) *ConversationDTO {
+func ToConversationDTO(conversation *ConversationDAO) *ConversationDTO {
 	return &ConversationDTO{
 		ID:        conversation.ID,
 		Name:      conversation.Name,
@@ -48,8 +48,8 @@ func ToConversationDTO(conversation *ConversationPersistence) *ConversationDTO {
 	}
 }
 
-func ToConversationPersistence(conversation *Conversation) *ConversationPersistence {
-	return &ConversationPersistence{
+func ToConversationDAO(conversation *Conversation) *ConversationDAO {
+	return &ConversationDAO{
 		ID:        conversation.ID,
 		Name:      conversation.Name,
 		Avatar:    conversation.Avatar,

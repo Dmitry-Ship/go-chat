@@ -7,16 +7,15 @@ import (
 )
 
 type MessageDTO struct {
-	ID        uuid.UUID  `json:"id"`
-	CreatedAt time.Time  `json:"created_at"`
-	UserId    *uuid.UUID `json:"user_id"`
-	Text      string     `json:"text"`
-	Type      string     `json:"type"`
-	User      *UserDTO   `json:"user,omitempty"`
-	IsInbound bool       `json:"is_inbound,omitempty"`
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	Text      string    `json:"text"`
+	Type      string    `json:"type"`
+	User      *UserDTO  `json:"user,omitempty"`
+	IsInbound bool      `json:"is_inbound,omitempty"`
 }
 
-type MessagePersistence struct {
+type MessageDAO struct {
 	ID             uuid.UUID  `gorm:"type:uuid"`
 	ConversationID uuid.UUID  `gorm:"type:uuid"`
 	UserID         *uuid.UUID `gorm:"type:uuid"`
@@ -25,11 +24,11 @@ type MessagePersistence struct {
 	Type           uint8
 }
 
-func (MessagePersistence) TableName() string {
+func (MessageDAO) TableName() string {
 	return "messages"
 }
 
-func ToMessageDTO(message *MessagePersistence, user *UserPersistence, requestUserID uuid.UUID) *MessageDTO {
+func ToMessageDTO(message *MessageDAO, user *UserDAO, requestUserID uuid.UUID) *MessageDTO {
 	messageDTO := MessageDTO{
 		ID:        message.ID,
 		CreatedAt: message.CreatedAt,
@@ -39,8 +38,7 @@ func ToMessageDTO(message *MessagePersistence, user *UserPersistence, requestUse
 
 	if message.Type == 0 {
 		messageDTO.User = ToUserDTO(user)
-		messageDTO.UserId = message.UserID
-		messageDTO.IsInbound = *message.UserID != requestUserID
+		messageDTO.IsInbound = user.ID != requestUserID
 		messageDTO.Type = "user"
 	}
 
@@ -56,7 +54,7 @@ func ToMessageDTOFromDomain(message *Message) *MessageDTO {
 	}
 }
 
-func ToMessagePersistence(message *Message) *MessagePersistence {
+func ToMessageDAO(message *Message) *MessageDAO {
 	var messageType uint8
 
 	switch message.Type {
@@ -66,7 +64,7 @@ func ToMessagePersistence(message *Message) *MessagePersistence {
 		messageType = 1
 	}
 
-	return &MessagePersistence{
+	return &MessageDAO{
 		ID:             message.ID,
 		ConversationID: message.ConversationID,
 		UserID:         message.UserID,

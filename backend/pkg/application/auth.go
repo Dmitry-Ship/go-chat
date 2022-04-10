@@ -46,7 +46,7 @@ func NewAuthService(users domain.UserCommandRepository) *authService {
 }
 
 func (s *authService) GetUser(userId uuid.UUID) (*domain.UserDTO, error) {
-	user, err := s.users.FindByID(userId)
+	user, err := s.users.GetUserByID(userId)
 
 	if err != nil {
 		return nil, err

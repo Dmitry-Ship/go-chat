@@ -24,8 +24,9 @@ func main() {
 
 	redisClient := pubsub.GetRedisClient()
 	hub := ws.NewHub(redisClient)
+	conversationWSResolver := application.NewConversationWSResolver(participantRepository, messagesRepository, hub)
 
-	conversationCommandService := application.NewConversationCommandService(conversationsRepository, participantRepository, usersRepository, messagesRepository, hub)
+	conversationCommandService := application.NewConversationCommandService(conversationsRepository, participantRepository, usersRepository, messagesRepository, conversationWSResolver)
 	conversationQueryService := application.NewConversationQueryService(conversationsRepository, messagesRepository)
 	authService := application.NewAuthService(usersRepository)
 	contactsQueryService := application.NewContactsQueryService(usersRepository)
@@ -51,6 +52,7 @@ func main() {
 	http.HandleFunc("/leaveConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleLeavePublicConversation(conversationCommandService))))
 
 	go hub.Run()
+	go conversationWSResolver.Run()
 
 	port := os.Getenv("PORT")
 
