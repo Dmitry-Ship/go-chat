@@ -12,6 +12,7 @@ type ConversationWSResolver interface {
 	DispatchUserMessage(messageID uuid.UUID, conversationId uuid.UUID, userId uuid.UUID)
 	DispatchConversationDeleted(conversationId uuid.UUID)
 	DispatchSystemMessage(messageID uuid.UUID, conversationId uuid.UUID)
+	DispatchConversationRenamed(conversationId uuid.UUID, newName string)
 }
 
 type userMessageChannelItem struct {
@@ -25,6 +26,11 @@ type systemMessageChannelItem struct {
 	conversationID uuid.UUID
 }
 
+type conversationRenamedItem struct {
+	conversationID uuid.UUID
+	newName        string
+}
+
 type conversationWSResolver struct {
 	participants               domain.ParticipantQueryRepository
 	messages                   domain.MessageQueryRepository
@@ -32,6 +38,7 @@ type conversationWSResolver struct {
 	userMessageChannel         chan userMessageChannelItem
 	systemMessageChannel       chan systemMessageChannelItem
 	conversationDeletedChannel chan uuid.UUID
+	conversationRenamedChannel chan conversationRenamedItem
 }
 
 func NewConversationWSResolver(
@@ -46,6 +53,7 @@ func NewConversationWSResolver(
 		userMessageChannel:         make(chan userMessageChannelItem, 1000),
 		systemMessageChannel:       make(chan systemMessageChannelItem, 1000),
 		conversationDeletedChannel: make(chan uuid.UUID, 1000),
+		conversationRenamedChannel: make(chan conversationRenamedItem, 1000),
 	}
 }
 
@@ -70,6 +78,13 @@ func (s *conversationWSResolver) Run() {
 			if err != nil {
 				fmt.Println(err)
 			}
+		case message := <-s.conversationRenamedChannel:
+			err := s.notifyAboutConversationRenamed(message)
+
+			if err != nil {
+				fmt.Println(err)
+			}
+
 		}
 	}
 
@@ -90,6 +105,13 @@ func (s *conversationWSResolver) DispatchConversationDeleted(conversationId uuid
 func (s *conversationWSResolver) DispatchSystemMessage(messageID uuid.UUID, conversationId uuid.UUID) {
 	s.systemMessageChannel <- systemMessageChannelItem{
 		messageID:      messageID,
+		conversationID: conversationId,
+	}
+}
+
+func (s *conversationWSResolver) DispatchConversationRenamed(conversationId uuid.UUID, newName string) {
+	s.conversationRenamedChannel <- conversationRenamedItem{
+		newName:        newName,
 		conversationID: conversationId,
 	}
 }
@@ -159,6 +181,27 @@ func (s *conversationWSResolver) notifyAboutConversationDeletion(id uuid.UUID) e
 	}
 
 	err := s.notifyParticipants(id, notification)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *conversationWSResolver) notifyAboutConversationRenamed(item conversationRenamedItem) error {
+	notification := ws.OutgoingNotification{
+		Type: "conversation_renamed",
+		Payload: struct {
+			ConversationId uuid.UUID `json:"conversation_id"`
+			NewName        string    `json:"new_name"`
+		}{
+			ConversationId: item.conversationID,
+			NewName:        item.newName,
+		},
+	}
+
+	err := s.notifyParticipants(item.conversationID, notification)
 
 	if err != nil {
 		return err

@@ -236,3 +236,28 @@ func HandleLeavePublicConversation(conversationService application.ConversationC
 		json.NewEncoder(w).Encode("OK")
 	}
 }
+
+func HandleRenamePublicConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		request := struct {
+			ConversationId   uuid.UUID `json:"conversation_id"`
+			ConversationName string    `json:"new_name"`
+		}{}
+
+		err := json.NewDecoder(r.Body).Decode(&request)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = conversationService.RenamePublicConversation(request.ConversationId, request.ConversationName)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode("OK")
+	}
+}

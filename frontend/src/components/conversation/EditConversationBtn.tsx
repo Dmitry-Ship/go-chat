@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { FormEvent, useEffect, useState } from "react";
 import styles from "./EditConversationBtn.module.css";
 import SlideIn from "../common/SlideIn";
 import { makeCommand } from "../../api/fetch";
@@ -10,6 +10,7 @@ const EditConversationBtn: React.FC<{
   conversationId: string;
 }> = ({ joined, onLeave, conversationId }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [newName, setNewName] = useState("");
   const router = useRouter();
 
   const handleClose = () => {
@@ -36,6 +37,26 @@ const EditConversationBtn: React.FC<{
     }
   };
 
+  const handleRename = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const result = await makeCommand("/renameConversation", {
+      conversation_id: conversationId,
+      new_name: newName,
+    });
+
+    if (result.status) {
+      setIsEditing(false);
+    }
+
+    setNewName("");
+  };
+
+  useEffect(() => {
+    if (!isEditing) {
+      setNewName("");
+    }
+  }, [isEditing]);
+
   return (
     <>
       <button onClick={() => setIsEditing(true)} className={styles.editButton}>
@@ -43,6 +64,19 @@ const EditConversationBtn: React.FC<{
       </button>
       <SlideIn onClose={handleClose} isOpen={isEditing}>
         <>
+          <form className={styles.menuItem} onSubmit={handleRename}>
+            <input
+              type="text"
+              placeholder="New name"
+              size={32}
+              className={`${styles.menuItem} input`}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <button type="submit" disabled={!newName} className={`btn`}>
+              Rename
+            </button>
+          </form>
           <button onClick={handleDelete} className={`btn ${styles.menuItem}`}>
             🗑 Delete
           </button>

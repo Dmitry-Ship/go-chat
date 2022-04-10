@@ -46,10 +46,12 @@ func main() {
 	http.HandleFunc("/getContacts", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetContacts(contactsQueryService))))
 	http.HandleFunc("/getConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetConversation(conversationQueryService))))
 	http.HandleFunc("/getConversationsMessages", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetConversationsMessages(conversationQueryService))))
+
 	http.HandleFunc("/createConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleCreateConversation(conversationCommandService))))
 	http.HandleFunc("/deleteConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleDeleteConversation(conversationCommandService))))
 	http.HandleFunc("/joinConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleJoinPublicConversation(conversationCommandService))))
 	http.HandleFunc("/leaveConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleLeavePublicConversation(conversationCommandService))))
+	http.HandleFunc("/renameConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleRenamePublicConversation(conversationCommandService))))
 
 	go hub.Run()
 	go conversationWSResolver.Run()

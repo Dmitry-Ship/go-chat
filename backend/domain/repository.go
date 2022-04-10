@@ -6,6 +6,7 @@ import (
 
 type ConversationCommandRepository interface {
 	Store(conversation *Conversation) error
+	RenameConversation(conversationId uuid.UUID, name string) error
 	Delete(id uuid.UUID) error
 }
 

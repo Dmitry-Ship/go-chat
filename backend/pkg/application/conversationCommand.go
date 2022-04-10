@@ -14,6 +14,7 @@ type ConversationCommandService interface {
 	DeleteConversation(id uuid.UUID) error
 	SendUserMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
 	SendSystemMessage(messageText string, conversationId uuid.UUID) error
+	RenamePublicConversation(conversationId uuid.UUID, name string) error
 }
 
 type conversationCommandService struct {
@@ -75,6 +76,24 @@ func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (s *conversationCommandService) RenamePublicConversation(conversationID uuid.UUID, name string) error {
+	err := s.conversations.RenameConversation(conversationID, name)
+
+	if err != nil {
+		return err
+	}
+
+	err = s.SendSystemMessage(fmt.Sprintf("chat has been renamed to %s", name), conversationID)
+
+	if err != nil {
+		return err
+	}
+
+	s.conversationWSResolver.DispatchConversationRenamed(conversationID, name)
 
 	return nil
 }

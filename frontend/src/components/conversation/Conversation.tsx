@@ -37,6 +37,15 @@ const Conversation: React.FC = () => {
     }
   }, [conversationQuery]);
 
+  useEffect(() => {
+    onNotification("conversation_renamed", (event) => {
+      if (conversation && event.data.conversation_id === conversation?.id) {
+        setConversation({ ...conversation, name: event.data.new_name });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation]);
+
   return (
     <>
       <header className={`header header-for-scrollable`}>

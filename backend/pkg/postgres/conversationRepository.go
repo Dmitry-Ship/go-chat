@@ -25,6 +25,12 @@ func (r *conversationRepository) Store(conversation *domain.Conversation) error 
 	return err
 }
 
+func (r *conversationRepository) RenameConversation(id uuid.UUID, name string) error {
+	err := r.db.Model(domain.ConversationDAO{}).Where("id = ?", id).Update("name", name).Error
+
+	return err
+}
+
 func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.UUID) (*domain.ConversationDTOFull, error) {
 	conversation := domain.ConversationDAO{}
 
