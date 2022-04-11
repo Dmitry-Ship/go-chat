@@ -1,7 +1,7 @@
 package application
 
 import (
-	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/readModel"
 	ws "GitHub/go-chat/backend/pkg/websocket"
 	"fmt"
 
@@ -32,8 +32,8 @@ type conversationRenamedItem struct {
 }
 
 type conversationWSResolver struct {
-	participants               domain.ParticipantQueryRepository
-	messages                   domain.MessageQueryRepository
+	participants               readModel.ParticipantQueryRepository
+	messages                   readModel.MessageQueryRepository
 	hub                        ws.Hub
 	userMessageChannel         chan userMessageChannelItem
 	systemMessageChannel       chan systemMessageChannelItem
@@ -42,8 +42,8 @@ type conversationWSResolver struct {
 }
 
 func NewConversationWSResolver(
-	participants domain.ParticipantQueryRepository,
-	messages domain.MessageQueryRepository,
+	participants readModel.ParticipantQueryRepository,
+	messages readModel.MessageQueryRepository,
 	hub ws.Hub,
 ) *conversationWSResolver {
 	return &conversationWSResolver{

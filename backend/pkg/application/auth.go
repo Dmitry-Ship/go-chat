@@ -2,6 +2,7 @@ package application
 
 import (
 	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/readModel"
 	"errors"
 	"os"
 	"time"
@@ -23,6 +24,7 @@ type Tokens struct {
 
 type authService struct {
 	users                  domain.UserCommandRepository
+	usersQuery             readModel.UserQueryRepository
 	refreshTokenExpiration time.Duration
 	accessTokenExpiration  time.Duration
 }
@@ -32,21 +34,22 @@ type AuthService interface {
 	Logout(userId uuid.UUID) error
 	SignUp(username string, password string) (Tokens, error)
 	RotateTokens(refreshTokenString string) (Tokens, error)
-	GetUser(userId uuid.UUID) (*domain.UserDTO, error)
+	GetUser(userId uuid.UUID) (*readModel.UserDTO, error)
 	GetAccessTokenExpiration() time.Duration
 	GetRefreshTokenExpiration() time.Duration
 }
 
-func NewAuthService(users domain.UserCommandRepository) *authService {
+func NewAuthService(users domain.UserCommandRepository, usersQuery readModel.UserQueryRepository) *authService {
 	return &authService{
 		users:                  users,
+		usersQuery:             usersQuery,
 		refreshTokenExpiration: 24 * 90 * time.Hour,
 		accessTokenExpiration:  10 * time.Minute,
 	}
 }
 
-func (s *authService) GetUser(userId uuid.UUID) (*domain.UserDTO, error) {
-	user, err := s.users.GetUserByID(userId)
+func (s *authService) GetUser(userId uuid.UUID) (*readModel.UserDTO, error) {
+	user, err := s.usersQuery.GetUserByID(userId)
 
 	if err != nil {
 		return nil, err

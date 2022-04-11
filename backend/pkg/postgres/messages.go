@@ -1,21 +1,14 @@
-package domain
+package postgres
 
 import (
+	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/readModel"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-type MessageDTO struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	Text      string    `json:"text"`
-	Type      string    `json:"type"`
-	User      *UserDTO  `json:"user,omitempty"`
-	IsInbound bool      `json:"is_inbound,omitempty"`
-}
-
-type MessageDAO struct {
+type Message struct {
 	ID             uuid.UUID  `gorm:"type:uuid"`
 	ConversationID uuid.UUID  `gorm:"type:uuid"`
 	UserID         *uuid.UUID `gorm:"type:uuid"`
@@ -24,12 +17,30 @@ type MessageDAO struct {
 	Type           uint8
 }
 
-func (MessageDAO) TableName() string {
-	return "messages"
+type TextMessage struct {
+	ID        uuid.UUID `gorm:"type:uuid"`
+	MessageID uuid.UUID `gorm:"type:uuid"`
+	Text      string
 }
 
-func ToMessageDTO(message *MessageDAO, user *UserDAO, requestUserID uuid.UUID) *MessageDTO {
-	messageDTO := MessageDTO{
+type LeftMessage struct {
+	ID        uuid.UUID `gorm:"type:uuid"`
+	MessageID uuid.UUID `gorm:"type:uuid"`
+}
+
+type JoinedMessage struct {
+	ID        uuid.UUID `gorm:"type:uuid"`
+	MessageID uuid.UUID `gorm:"type:uuid"`
+}
+
+type ConversationRenamedMessage struct {
+	ID        uuid.UUID `gorm:"type:uuid"`
+	MessageID uuid.UUID `gorm:"type:uuid"`
+	NewName   string
+}
+
+func ToMessageDTO(message *Message, user *User, requestUserID uuid.UUID) *readModel.MessageDTO {
+	messageDTO := readModel.MessageDTO{
 		ID:        message.ID,
 		CreatedAt: message.CreatedAt,
 		Text:      message.Text,
@@ -45,16 +56,7 @@ func ToMessageDTO(message *MessageDAO, user *UserDAO, requestUserID uuid.UUID) *
 	return &messageDTO
 }
 
-func ToMessageDTOFromDomain(message *Message) *MessageDTO {
-	return &MessageDTO{
-		ID:        message.ID,
-		CreatedAt: message.CreatedAt,
-		Text:      message.Text,
-		Type:      message.Type,
-	}
-}
-
-func ToMessageDAO(message *Message) *MessageDAO {
+func ToMessagePersistence(message *domain.Message) *Message {
 	var messageType uint8
 
 	switch message.Type {
@@ -64,7 +66,7 @@ func ToMessageDAO(message *Message) *MessageDAO {
 		messageType = 1
 	}
 
-	return &MessageDAO{
+	return &Message{
 		ID:             message.ID,
 		ConversationID: message.ConversationID,
 		UserID:         message.UserID,

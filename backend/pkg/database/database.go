@@ -1,9 +1,10 @@
 package database
 
 import (
-	"GitHub/go-chat/backend/domain"
 	"fmt"
 	"os"
+
+	pg "GitHub/go-chat/backend/pkg/postgres"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -26,10 +27,13 @@ func GetDatabaseConnection() *gorm.DB {
 
 	// Migrate the schema
 
-	db.AutoMigrate(domain.MessageDAO{})
-	db.AutoMigrate(domain.ConversationDAO{})
-	db.AutoMigrate(domain.UserDAO{})
-	db.AutoMigrate(domain.ParticipantDAO{})
+	db.AutoMigrate(pg.Message{})
+	db.AutoMigrate(pg.Conversation{})
+	db.AutoMigrate(pg.User{})
+	db.AutoMigrate(pg.Participant{})
+	db.AutoMigrate(pg.JoinedMessage{})
+	db.AutoMigrate(pg.LeftMessage{})
+	db.AutoMigrate(pg.ConversationRenamedMessage{})
 
 	return db
 }

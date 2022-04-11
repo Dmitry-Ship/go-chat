@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/readModel"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -19,20 +20,20 @@ func NewMessageRepository(db *gorm.DB) *messageRepository {
 
 func (r *messageRepository) Store(chatMessage *domain.Message) error {
 
-	err := r.db.Create(domain.ToMessageDAO(chatMessage)).Error
+	err := r.db.Create(ToMessagePersistence(chatMessage)).Error
 
 	return err
 }
 
-func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, requestUserID uuid.UUID) ([]*domain.MessageDTO, error) {
-	messages := []*domain.MessageDAO{}
+func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, requestUserID uuid.UUID) ([]*readModel.MessageDTO, error) {
+	messages := []*Message{}
 
 	err := r.db.Limit(50).Where("conversation_id = ?", conversationID).Find(&messages).Error
 
-	dtoMessages := make([]*domain.MessageDTO, len(messages))
+	dtoMessages := make([]*readModel.MessageDTO, len(messages))
 
 	for i, message := range messages {
-		user := domain.UserDAO{}
+		user := User{}
 
 		if message.Type == 0 {
 			err := r.db.Where("id = ?", message.UserID).First(&user).Error
@@ -42,14 +43,14 @@ func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, re
 			}
 		}
 
-		dtoMessages[i] = domain.ToMessageDTO(message, &user, requestUserID)
+		dtoMessages[i] = ToMessageDTO(message, &user, requestUserID)
 	}
 
 	return dtoMessages, err
 }
 
-func (r *messageRepository) GetMessageByID(messageID uuid.UUID, requestUserID uuid.UUID) (*domain.MessageDTO, error) {
-	message := domain.MessageDAO{}
+func (r *messageRepository) GetMessageByID(messageID uuid.UUID, requestUserID uuid.UUID) (*readModel.MessageDTO, error) {
+	message := Message{}
 
 	err := r.db.Where("id = ?", messageID).First(&message).Error
 
@@ -57,7 +58,7 @@ func (r *messageRepository) GetMessageByID(messageID uuid.UUID, requestUserID uu
 		return nil, err
 	}
 
-	user := domain.UserDAO{}
+	user := User{}
 
 	if message.Type == 0 {
 		err = r.db.Where("id = ?", message.UserID).First(&user).Error
@@ -67,7 +68,7 @@ func (r *messageRepository) GetMessageByID(messageID uuid.UUID, requestUserID uu
 		}
 	}
 
-	dtoMessage := domain.ToMessageDTO(&message, &user, requestUserID)
+	dtoMessage := ToMessageDTO(&message, &user, requestUserID)
 
 	return dtoMessage, err
 }

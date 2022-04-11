@@ -1,8 +1,8 @@
 package interfaces
 
 import (
-	"GitHub/go-chat/backend/domain"
 	"GitHub/go-chat/backend/pkg/application"
+	"GitHub/go-chat/backend/pkg/readModel"
 	ws "GitHub/go-chat/backend/pkg/websocket"
 	"fmt"
 	"log"
@@ -102,7 +102,7 @@ func HandleGetConversationsMessages(conversationService application.Conversation
 		}
 
 		data := struct {
-			Messages []*domain.MessageDTO `json:"messages"`
+			Messages []*readModel.MessageDTO `json:"messages"`
 		}{
 			Messages: messages,
 		}

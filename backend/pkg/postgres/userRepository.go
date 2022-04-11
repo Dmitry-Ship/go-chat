@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/readModel"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -18,54 +19,54 @@ func NewUserRepository(db *gorm.DB) *userRepository {
 }
 
 func (r *userRepository) Store(user *domain.User) error {
-	err := r.db.Create(domain.ToUserDAO(user)).Error
+	err := r.db.Create(ToUserDAO(user)).Error
 
 	return err
 }
 
-func (r *userRepository) GetUserByID(id uuid.UUID) (*domain.UserDTO, error) {
-	user := domain.UserDAO{}
+func (r *userRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error) {
+	user := User{}
 	err := r.db.Where("id = ?", id).First(&user).Error
 
-	return domain.ToUserDTO(&user), err
+	return ToUserDTO(&user), err
 }
 
 func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
-	user := domain.UserDAO{}
+	user := User{}
 
 	err := r.db.Where("name = ?", username).First(&user).Error
 
-	return domain.ToUserDomain(&user), err
+	return ToUserDomain(&user), err
 }
 
 func (r *userRepository) StoreRefreshToken(userID uuid.UUID, refreshToken string) error {
-	err := r.db.Where("id = ?", userID).First(&domain.UserDAO{}).Update("refresh_token", refreshToken).Error
+	err := r.db.Where("id = ?", userID).First(&User{}).Update("refresh_token", refreshToken).Error
 
 	return err
 }
 
 func (r *userRepository) GetRefreshTokenByUserID(userID uuid.UUID) (string, error) {
-	user := domain.UserDAO{}
+	user := User{}
 	err := r.db.Where("id = ?", userID).First(&user).Error
 
 	return user.RefreshToken, err
 }
 
 func (r *userRepository) DeleteRefreshToken(userID uuid.UUID) error {
-	user := domain.UserDAO{}
+	user := User{}
 	err := r.db.Where("id = ?", userID).First(&user).Update("refresh_token", nil).Error
 
 	return err
 }
 
-func (r *userRepository) FindAll() ([]*domain.UserDTO, error) {
-	users := []*domain.UserDAO{}
+func (r *userRepository) FindAll() ([]*readModel.UserDTO, error) {
+	users := []*User{}
 	err := r.db.Limit(50).Find(&users).Error
 
-	dtoUsers := make([]*domain.UserDTO, len(users))
+	dtoUsers := make([]*readModel.UserDTO, len(users))
 
 	for i, user := range users {
-		dtoUsers[i] = domain.ToUserDTO(user)
+		dtoUsers[i] = ToUserDTO(user)
 	}
 
 	return dtoUsers, err

@@ -2,6 +2,7 @@ package application
 
 import (
 	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/readModel"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ type ConversationCommandService interface {
 	LeavePublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	DeleteConversation(id uuid.UUID) error
 	SendUserMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
-	SendSystemMessage(messageText string, conversationId uuid.UUID) error
+	sendSystemMessage(messageText string, conversationId uuid.UUID) error
 	RenamePublicConversation(conversationId uuid.UUID, name string) error
 }
 
@@ -21,6 +22,7 @@ type conversationCommandService struct {
 	conversations          domain.ConversationCommandRepository
 	participants           domain.ParticipantCommandRepository
 	users                  domain.UserCommandRepository
+	usersQuery             readModel.UserQueryRepository
 	messages               domain.MessageCommandRepository
 	conversationWSResolver ConversationWSResolver
 }
@@ -29,12 +31,14 @@ func NewConversationCommandService(
 	conversations domain.ConversationCommandRepository,
 	participants domain.ParticipantCommandRepository,
 	users domain.UserCommandRepository,
+	usersQuery readModel.UserQueryRepository,
 	messages domain.MessageCommandRepository,
 	conversationWSResolver ConversationWSResolver,
 ) *conversationCommandService {
 	return &conversationCommandService{
 		conversations:          conversations,
 		users:                  users,
+		usersQuery:             usersQuery,
 		participants:           participants,
 		messages:               messages,
 		conversationWSResolver: conversationWSResolver,
@@ -65,13 +69,15 @@ func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.
 		return err
 	}
 
-	user, err := s.users.GetUserByID(userId)
+	// Dispatch event to send system message
+
+	user, err := s.usersQuery.GetUserByID(userId)
 
 	if err != nil {
 		return err
 	}
 
-	err = s.SendSystemMessage(fmt.Sprintf("%s joined", user.Name), conversationID)
+	err = s.sendSystemMessage(fmt.Sprintf("%s joined", user.Name), conversationID)
 
 	if err != nil {
 		return err
@@ -87,7 +93,9 @@ func (s *conversationCommandService) RenamePublicConversation(conversationID uui
 		return err
 	}
 
-	err = s.SendSystemMessage(fmt.Sprintf("chat has been renamed to %s", name), conversationID)
+	// Dispatch event to send system message and send update notification to all participants
+
+	err = s.sendSystemMessage(fmt.Sprintf("chat has been renamed to %s", name), conversationID)
 
 	if err != nil {
 		return err
@@ -105,13 +113,15 @@ func (s *conversationCommandService) LeavePublicConversation(conversationID uuid
 		return err
 	}
 
-	user, err := s.users.GetUserByID(userId)
+	// Dispatch event to send system message
+
+	user, err := s.usersQuery.GetUserByID(userId)
 
 	if err != nil {
 		return err
 	}
 
-	err = s.SendSystemMessage(fmt.Sprintf("%s left", user.Name), conversationID)
+	err = s.sendSystemMessage(fmt.Sprintf("%s left", user.Name), conversationID)
 
 	if err != nil {
 		return err
@@ -121,6 +131,8 @@ func (s *conversationCommandService) LeavePublicConversation(conversationID uuid
 }
 
 func (s *conversationCommandService) DeleteConversation(id uuid.UUID) error {
+
+	// Dispatch event to send system message
 	s.conversationWSResolver.DispatchConversationDeleted(id)
 
 	err := s.conversations.Delete(id)
@@ -141,12 +153,13 @@ func (s *conversationCommandService) SendUserMessage(messageText string, convers
 		return err
 	}
 
+	// Dispatch event to send system message
 	s.conversationWSResolver.DispatchUserMessage(message.ID, conversationId, userId)
 
 	return nil
 }
 
-func (s *conversationCommandService) SendSystemMessage(messageText string, conversationId uuid.UUID) error {
+func (s *conversationCommandService) sendSystemMessage(messageText string, conversationId uuid.UUID) error {
 	message := domain.NewSystemMessage(messageText, conversationId)
 
 	err := s.messages.Store(message)

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/readModel"
 	"errors"
 
 	"github.com/google/uuid"
@@ -20,19 +21,19 @@ func NewConversationRepository(db *gorm.DB) *conversationRepository {
 }
 
 func (r *conversationRepository) Store(conversation *domain.Conversation) error {
-	err := r.db.Create(domain.ToConversationDAO(conversation)).Error
+	err := r.db.Create(ToConversationPersistence(conversation)).Error
 
 	return err
 }
 
 func (r *conversationRepository) RenameConversation(id uuid.UUID, name string) error {
-	err := r.db.Model(domain.ConversationDAO{}).Where("id = ?", id).Update("name", name).Error
+	err := r.db.Model(Conversation{}).Where("id = ?", id).Update("name", name).Error
 
 	return err
 }
 
-func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.UUID) (*domain.ConversationDTOFull, error) {
-	conversation := domain.ConversationDAO{}
+func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.UUID) (*readModel.ConversationDTOFull, error) {
+	conversation := Conversation{}
 
 	err := r.db.Where("id = ?", id).First(&conversation).Error
 
@@ -42,7 +43,7 @@ func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.U
 
 	hasUserJoined := true
 
-	participant := domain.ParticipantDAO{}
+	participant := Participant{}
 	if err := r.db.Where("conversation_id = ?", id).Where("user_id = ?", userId).First(&participant).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			hasUserJoined = false
@@ -51,25 +52,25 @@ func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.U
 		}
 	}
 
-	return domain.ToConversationDTOFull(&conversation, hasUserJoined), err
+	return ToConversationDTOFull(&conversation, hasUserJoined), err
 }
 
-func (r *conversationRepository) FindAll() ([]*domain.ConversationDTO, error) {
-	conversations := []*domain.ConversationDAO{}
+func (r *conversationRepository) FindAll() ([]*readModel.ConversationDTO, error) {
+	conversations := []*Conversation{}
 
 	err := r.db.Limit(50).Find(&conversations).Error
 
-	dtoConversations := make([]*domain.ConversationDTO, len(conversations))
+	dtoConversations := make([]*readModel.ConversationDTO, len(conversations))
 
 	for i, conversation := range conversations {
-		dtoConversations[i] = domain.ToConversationDTO(conversation)
+		dtoConversations[i] = ToConversationDTO(conversation)
 	}
 
 	return dtoConversations, err
 }
 
 func (r *conversationRepository) Delete(id uuid.UUID) error {
-	err := r.db.Where("id = ?", id).Delete(domain.ConversationDAO{}).Error
+	err := r.db.Where("id = ?", id).Delete(Conversation{}).Error
 
 	return err
 }

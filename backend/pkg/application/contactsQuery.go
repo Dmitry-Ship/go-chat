@@ -1,23 +1,23 @@
 package application
 
 import (
-	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/readModel"
 )
 
 type ContactsQueryService interface {
-	GetContacts() ([]*domain.UserDTO, error)
+	GetContacts() ([]*readModel.UserDTO, error)
 }
 
 type contactsQueryService struct {
-	users domain.UserQueryRepository
+	users readModel.UserQueryRepository
 }
 
-func NewContactsQueryService(users domain.UserQueryRepository) *contactsQueryService {
+func NewContactsQueryService(users readModel.UserQueryRepository) *contactsQueryService {
 	return &contactsQueryService{
 		users: users,
 	}
 }
 
-func (s *contactsQueryService) GetContacts() ([]*domain.UserDTO, error) {
+func (s *contactsQueryService) GetContacts() ([]*readModel.UserDTO, error) {
 	return s.users.FindAll()
 }

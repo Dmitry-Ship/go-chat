@@ -1,24 +1,21 @@
-package domain
+package postgres
 
 import (
+	"GitHub/go-chat/backend/domain"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-type ParticipantDAO struct {
+type Participant struct {
 	ID             uuid.UUID `gorm:"type:uuid"`
 	ConversationID uuid.UUID `gorm:"type:uuid"`
 	UserID         uuid.UUID `gorm:"type:uuid"`
 	CreatedAt      time.Time
 }
 
-func (ParticipantDAO) TableName() string {
-	return "participants"
-}
-
-func ToParticipantDAO(participant *Participant) *ParticipantDAO {
-	return &ParticipantDAO{
+func ToParticipantPersistence(participant *domain.Participant) *Participant {
+	return &Participant{
 		ID:             participant.ID,
 		ConversationID: participant.ConversationID,
 		UserID:         participant.UserID,

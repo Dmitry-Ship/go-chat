@@ -1,18 +1,14 @@
-package domain
+package postgres
 
 import (
+	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/readModel"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-type UserDTO struct {
-	ID     uuid.UUID `json:"id"`
-	Avatar string    `json:"avatar"`
-	Name   string    `json:"name"`
-}
-
-type UserDAO struct {
+type User struct {
 	ID           uuid.UUID `gorm:"type:uuid"`
 	Avatar       string
 	Name         string
@@ -21,20 +17,20 @@ type UserDAO struct {
 	RefreshToken string `gorm:"column:refresh_token"`
 }
 
-func (UserDAO) TableName() string {
+func (User) TableName() string {
 	return "users"
 }
 
-func ToUserDTO(user *UserDAO) *UserDTO {
-	return &UserDTO{
+func ToUserDTO(user *User) *readModel.UserDTO {
+	return &readModel.UserDTO{
 		ID:     user.ID,
 		Avatar: user.Avatar,
 		Name:   user.Name,
 	}
 }
 
-func ToUserDAO(user *User) *UserDAO {
-	return &UserDAO{
+func ToUserDAO(user *domain.User) *User {
+	return &User{
 		ID:           user.ID,
 		Avatar:       user.Avatar,
 		Name:         user.Name,
@@ -44,8 +40,8 @@ func ToUserDAO(user *User) *UserDAO {
 	}
 }
 
-func ToUserDomain(user *UserDAO) *User {
-	return &User{
+func ToUserDomain(user *User) *domain.User {
+	return &domain.User{
 		ID:           user.ID,
 		Avatar:       user.Avatar,
 		Name:         user.Name,
