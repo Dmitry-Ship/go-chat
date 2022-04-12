@@ -14,7 +14,7 @@ type ConversationDTO struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-type ConversationDTOFull struct {
+type ConversationFullDTO struct {
 	Conversation ConversationDTO `json:"conversation"`
 	HasJoined    bool            `json:"joined"`
 }

@@ -21,7 +21,7 @@ func NewConversationRepository(db *gorm.DB) *conversationRepository {
 }
 
 func (r *conversationRepository) Store(conversation *domain.ConversationAggregate) error {
-	err := r.db.Create(ToConversationPersistence(conversation)).Error
+	err := r.db.Create(toConversationPersistence(conversation)).Error
 
 	return err
 }
@@ -32,7 +32,7 @@ func (r *conversationRepository) RenameConversation(id uuid.UUID, name string) e
 	return err
 }
 
-func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.UUID) (*readModel.ConversationDTOFull, error) {
+func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.UUID) (*readModel.ConversationFullDTO, error) {
 	conversation := Conversation{}
 
 	err := r.db.Where("id = ?", id).First(&conversation).Error
@@ -52,7 +52,7 @@ func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.U
 		}
 	}
 
-	return ToConversationDTOFull(&conversation, hasUserJoined), err
+	return toConversationFullDTO(&conversation, hasUserJoined), err
 }
 
 func (r *conversationRepository) FindAll() ([]*readModel.ConversationDTO, error) {
@@ -60,13 +60,13 @@ func (r *conversationRepository) FindAll() ([]*readModel.ConversationDTO, error)
 
 	err := r.db.Limit(50).Find(&conversations).Error
 
-	dtoConversations := make([]*readModel.ConversationDTO, len(conversations))
+	conversationsDTOs := make([]*readModel.ConversationDTO, len(conversations))
 
 	for i, conversation := range conversations {
-		dtoConversations[i] = ToConversationDTO(conversation)
+		conversationsDTOs[i] = toConversationDTO(conversation)
 	}
 
-	return dtoConversations, err
+	return conversationsDTOs, err
 }
 
 func (r *conversationRepository) Delete(id uuid.UUID) error {

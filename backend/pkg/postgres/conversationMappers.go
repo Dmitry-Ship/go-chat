@@ -16,14 +16,7 @@ type Conversation struct {
 	CreatedAt time.Time
 }
 
-func ToConversationDTOFull(conversation *Conversation, hasJoined bool) *readModel.ConversationDTOFull {
-	return &readModel.ConversationDTOFull{
-		Conversation: *ToConversationDTO(conversation),
-		HasJoined:    hasJoined,
-	}
-}
-
-func ToConversationDTO(conversation *Conversation) *readModel.ConversationDTO {
+func toConversationDTO(conversation *Conversation) *readModel.ConversationDTO {
 	return &readModel.ConversationDTO{
 		ID:        conversation.ID,
 		Name:      conversation.Name,
@@ -33,7 +26,14 @@ func ToConversationDTO(conversation *Conversation) *readModel.ConversationDTO {
 	}
 }
 
-func ToConversationPersistence(conversation *domain.ConversationAggregate) *Conversation {
+func toConversationFullDTO(conversation *Conversation, hasJoined bool) *readModel.ConversationFullDTO {
+	return &readModel.ConversationFullDTO{
+		Conversation: *toConversationDTO(conversation),
+		HasJoined:    hasJoined,
+	}
+}
+
+func toConversationPersistence(conversation *domain.ConversationAggregate) *Conversation {
 	return &Conversation{
 		ID:        conversation.ID,
 		Name:      conversation.Name,

@@ -19,7 +19,7 @@ func NewUserRepository(db *gorm.DB) *userRepository {
 }
 
 func (r *userRepository) Store(user *domain.UserAggregate) error {
-	err := r.db.Create(ToUserDAO(user)).Error
+	err := r.db.Create(ToUserPersistence(user)).Error
 
 	return err
 }
@@ -28,7 +28,7 @@ func (r *userRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error) {
 	user := User{}
 	err := r.db.Where("id = ?", id).First(&user).Error
 
-	return ToUserDTO(&user), err
+	return toUserDTO(&user), err
 }
 
 func (r *userRepository) FindByUsername(username string) (*domain.UserAggregate, error) {
@@ -66,7 +66,7 @@ func (r *userRepository) FindAll() ([]*readModel.UserDTO, error) {
 	dtoUsers := make([]*readModel.UserDTO, len(users))
 
 	for i, user := range users {
-		dtoUsers[i] = ToUserDTO(user)
+		dtoUsers[i] = toUserDTO(user)
 	}
 
 	return dtoUsers, err

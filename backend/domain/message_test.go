@@ -12,7 +12,7 @@ func TestNewTextMessage(t *testing.T) {
 	userID := uuid.New()
 	message := NewTextMessage(conversationID, userID, "content")
 
-	assert.Equal(t, "content", message.Text)
+	assert.Equal(t, "content", message.Data.Text)
 	assert.Equal(t, 0, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)

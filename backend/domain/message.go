@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type MessageAggregate struct {
+type Message struct {
 	ID             uuid.UUID
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
@@ -14,12 +14,8 @@ type MessageAggregate struct {
 	Type           string
 }
 
-func (m *MessageAggregate) GetBaseMessage() *MessageAggregate {
-	return m
-}
-
-func newMessage(conversationId uuid.UUID, userID uuid.UUID, messageType string) *MessageAggregate {
-	return &MessageAggregate{
+func newMessage(conversationId uuid.UUID, userID uuid.UUID, messageType string) *Message {
+	return &Message{
 		ID:             uuid.New(),
 		ConversationID: conversationId,
 		CreatedAt:      time.Now(),
@@ -28,27 +24,27 @@ func newMessage(conversationId uuid.UUID, userID uuid.UUID, messageType string) 
 	}
 }
 
-type TextMessage struct {
+func (m *Message) GetBaseData() *Message {
+	return m
+}
+
+type TextMessageData struct {
 	ID        uuid.UUID
 	MessageID uuid.UUID
 	Text      string
 }
 
-type TextMessageAggregate struct {
-	MessageAggregate
-	Text TextMessage
+type TextMessage struct {
+	Message
+	Data TextMessageData
 }
 
-func (tm *TextMessageAggregate) GetText() TextMessage {
-	return tm.Text
-}
-
-func NewTextMessage(conversationId uuid.UUID, userID uuid.UUID, text string) *TextMessageAggregate {
+func NewTextMessage(conversationId uuid.UUID, userID uuid.UUID, text string) *TextMessage {
 	baseMessage := newMessage(conversationId, userID, "text")
 
-	return &TextMessageAggregate{
-		MessageAggregate: *baseMessage,
-		Text: TextMessage{
+	return &TextMessage{
+		Message: *baseMessage,
+		Data: TextMessageData{
 			ID:        uuid.New(),
 			MessageID: baseMessage.ID,
 			Text:      text,
@@ -56,38 +52,46 @@ func NewTextMessage(conversationId uuid.UUID, userID uuid.UUID, text string) *Te
 	}
 }
 
-type ConversationRenamedMessage struct {
+func (tm *TextMessage) GetTextMessageData() TextMessageData {
+	return tm.Data
+}
+
+type conversationRenamedMessageData struct {
 	ID        uuid.UUID
 	MessageID uuid.UUID
 	NewName   string
 }
 
-type ConversationRenamedMessageAggregate struct {
-	MessageAggregate
-	ConversationRenamedMessage ConversationRenamedMessage
+type ConversationRenamedMessage struct {
+	Message
+	Data conversationRenamedMessageData
 }
 
-func (crm *ConversationRenamedMessageAggregate) GetConversationRenamedMessage() ConversationRenamedMessage {
-	return crm.ConversationRenamedMessage
-}
-
-func NewConversationRenamedMessage(conversationId uuid.UUID, userID uuid.UUID, newName string) *ConversationRenamedMessageAggregate {
-
-	baseMessage := newMessage(conversationId, userID, "conversation_renamed")
-	return &ConversationRenamedMessageAggregate{
-		MessageAggregate: *baseMessage,
-		ConversationRenamedMessage: ConversationRenamedMessage{
+func NewConversationRenamedMessage(conversationId uuid.UUID, userID uuid.UUID, newName string) *ConversationRenamedMessage {
+	baseMessage := newMessage(conversationId, userID, "renamed_conversation")
+	return &ConversationRenamedMessage{
+		Message: *baseMessage,
+		Data: conversationRenamedMessageData{
 			ID:        uuid.New(),
 			MessageID: baseMessage.ID,
 			NewName:   newName,
 		},
 	}
+
 }
 
-func NewLeftConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *MessageAggregate {
+func (crm *ConversationRenamedMessage) GetConversationRenamedMessage() *conversationRenamedMessageData {
+	return &crm.Data
+}
+
+type LeftConversationMessage = Message
+
+func NewLeftConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *LeftConversationMessage {
 	return newMessage(conversationId, userID, "left_conversation")
 }
 
-func NewJoinedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *MessageAggregate {
+type JoinedConversationMessage = Message
+
+func NewJoinedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *JoinedConversationMessage {
 	return newMessage(conversationId, userID, "joined_conversation")
 }

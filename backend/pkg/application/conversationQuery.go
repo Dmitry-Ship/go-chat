@@ -7,7 +7,7 @@ import (
 )
 
 type ConversationQueryService interface {
-	GetConversation(conversationId uuid.UUID, userId uuid.UUID) (*readModel.ConversationDTOFull, error)
+	GetConversation(conversationId uuid.UUID, userId uuid.UUID) (*readModel.ConversationFullDTO, error)
 	GetConversations() ([]*readModel.ConversationDTO, error)
 	GetConversationMessages(conversationId uuid.UUID, userId uuid.UUID) ([]*readModel.MessageDTO, error)
 }
@@ -24,7 +24,7 @@ func NewConversationQueryService(conversations readModel.ConversationQueryReposi
 	}
 }
 
-func (s *conversationQueryService) GetConversation(conversationId uuid.UUID, userId uuid.UUID) (*readModel.ConversationDTOFull, error) {
+func (s *conversationQueryService) GetConversation(conversationId uuid.UUID, userId uuid.UUID) (*readModel.ConversationFullDTO, error) {
 	return s.conversations.GetConversationByID(conversationId, userId)
 }
 

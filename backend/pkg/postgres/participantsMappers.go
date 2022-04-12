@@ -14,7 +14,7 @@ type Participant struct {
 	CreatedAt      time.Time
 }
 
-func ToParticipantPersistence(participant *domain.ParticipantAggregate) *Participant {
+func toParticipantPersistence(participant *domain.ParticipantAggregate) *Participant {
 	return &Participant{
 		ID:             participant.ID,
 		ConversationID: participant.ConversationID,

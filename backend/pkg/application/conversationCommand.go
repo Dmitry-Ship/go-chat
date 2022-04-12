@@ -75,6 +75,8 @@ func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.
 		return err
 	}
 
+	s.conversationWSResolver.DispatchMessage(message.ID, conversationID, userId)
+
 	return nil
 }
 
@@ -93,6 +95,7 @@ func (s *conversationCommandService) RenamePublicConversation(conversationID uui
 		return err
 	}
 
+	s.conversationWSResolver.DispatchMessage(message.ID, conversationID, userId)
 	s.conversationWSResolver.DispatchConversationRenamed(conversationID, name)
 
 	return nil
@@ -113,7 +116,7 @@ func (s *conversationCommandService) LeavePublicConversation(conversationID uuid
 		return err
 	}
 
-	s.conversationWSResolver.DispatchSystemMessage(message.ID, conversationID)
+	s.conversationWSResolver.DispatchMessage(message.ID, conversationID, userId)
 
 	return nil
 }
@@ -139,7 +142,7 @@ func (s *conversationCommandService) SendTextMessage(messageText string, convers
 		return err
 	}
 
-	s.conversationWSResolver.DispatchUserMessage(message.ID, conversationId, userId)
+	s.conversationWSResolver.DispatchMessage(message.ID, conversationId, userId)
 
 	return nil
 }

@@ -10,7 +10,7 @@ type UserQueryRepository interface {
 }
 
 type ConversationQueryRepository interface {
-	GetConversationByID(id uuid.UUID, userId uuid.UUID) (*ConversationDTOFull, error)
+	GetConversationByID(id uuid.UUID, userId uuid.UUID) (*ConversationFullDTO, error)
 	FindAll() ([]*ConversationDTO, error)
 }
 

@@ -9,19 +9,13 @@ import (
 )
 
 type ConversationWSResolver interface {
-	DispatchUserMessage(messageID uuid.UUID, conversationId uuid.UUID, userId uuid.UUID)
+	DispatchMessage(messageID uuid.UUID, conversationId uuid.UUID, userId uuid.UUID)
 	DispatchConversationDeleted(conversationId uuid.UUID)
-	DispatchSystemMessage(messageID uuid.UUID, conversationId uuid.UUID)
 	DispatchConversationRenamed(conversationId uuid.UUID, newName string)
 }
 
-type userMessageChannelItem struct {
+type messageChannelItem struct {
 	senderUserID   uuid.UUID
-	messageID      uuid.UUID
-	conversationID uuid.UUID
-}
-
-type systemMessageChannelItem struct {
 	messageID      uuid.UUID
 	conversationID uuid.UUID
 }
@@ -35,8 +29,7 @@ type conversationWSResolver struct {
 	participants               readModel.ParticipantQueryRepository
 	messages                   readModel.MessageQueryRepository
 	hub                        ws.Hub
-	userMessageChannel         chan userMessageChannelItem
-	systemMessageChannel       chan systemMessageChannelItem
+	messageChannel             chan messageChannelItem
 	conversationDeletedChannel chan uuid.UUID
 	conversationRenamedChannel chan conversationRenamedItem
 }
@@ -50,8 +43,7 @@ func NewConversationWSResolver(
 		participants:               participants,
 		messages:                   messages,
 		hub:                        hub,
-		userMessageChannel:         make(chan userMessageChannelItem, 1000),
-		systemMessageChannel:       make(chan systemMessageChannelItem, 1000),
+		messageChannel:             make(chan messageChannelItem, 1000),
 		conversationDeletedChannel: make(chan uuid.UUID, 1000),
 		conversationRenamedChannel: make(chan conversationRenamedItem, 1000),
 	}
@@ -60,14 +52,8 @@ func NewConversationWSResolver(
 func (s *conversationWSResolver) Run() {
 	for {
 		select {
-		case message := <-s.userMessageChannel:
-			err := s.notifyAboutUserMessage(message.messageID, message.conversationID, message.senderUserID)
-
-			if err != nil {
-				fmt.Println(err)
-			}
-		case message := <-s.systemMessageChannel:
-			err := s.notifyAboutSystemMessage(message.messageID, message.conversationID)
+		case message := <-s.messageChannel:
+			err := s.notifyAboutMessage(message.messageID, message.conversationID, message.senderUserID)
 
 			if err != nil {
 				fmt.Println(err)
@@ -90,8 +76,8 @@ func (s *conversationWSResolver) Run() {
 
 }
 
-func (s *conversationWSResolver) DispatchUserMessage(messageID uuid.UUID, conversationId uuid.UUID, userId uuid.UUID) {
-	s.userMessageChannel <- userMessageChannelItem{
+func (s *conversationWSResolver) DispatchMessage(messageID uuid.UUID, conversationId uuid.UUID, userId uuid.UUID) {
+	s.messageChannel <- messageChannelItem{
 		senderUserID:   userId,
 		messageID:      messageID,
 		conversationID: conversationId,
@@ -100,13 +86,6 @@ func (s *conversationWSResolver) DispatchUserMessage(messageID uuid.UUID, conver
 
 func (s *conversationWSResolver) DispatchConversationDeleted(conversationId uuid.UUID) {
 	s.conversationDeletedChannel <- conversationId
-}
-
-func (s *conversationWSResolver) DispatchSystemMessage(messageID uuid.UUID, conversationId uuid.UUID) {
-	s.systemMessageChannel <- systemMessageChannelItem{
-		messageID:      messageID,
-		conversationID: conversationId,
-	}
 }
 
 func (s *conversationWSResolver) DispatchConversationRenamed(conversationId uuid.UUID, newName string) {
@@ -128,29 +107,8 @@ func (s *conversationWSResolver) notifyParticipants(conversationID uuid.UUID, no
 	return nil
 }
 
-func (s *conversationWSResolver) notifyAboutUserMessage(messageID uuid.UUID, conversationId uuid.UUID, userId uuid.UUID) error {
+func (s *conversationWSResolver) notifyAboutMessage(messageID uuid.UUID, conversationId uuid.UUID, userId uuid.UUID) error {
 	messageDTO, err := s.messages.GetMessageByID(messageID, userId)
-
-	if err != nil {
-		return err
-	}
-
-	notification := ws.OutgoingNotification{
-		Type:    "message",
-		Payload: messageDTO,
-	}
-
-	err = s.notifyParticipants(conversationId, notification)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *conversationWSResolver) notifyAboutSystemMessage(messageID uuid.UUID, conversationId uuid.UUID) error {
-	messageDTO, err := s.messages.GetMessageByID(messageID, uuid.Nil)
 
 	if err != nil {
 		return err

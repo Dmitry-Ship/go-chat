@@ -5,7 +5,7 @@ import (
 )
 
 type BaseMessage interface {
-	GetBaseMessage() *MessageAggregate
+	GetBaseData() *Message
 }
 
 type ConversationCommandRepository interface {
@@ -23,10 +23,10 @@ type UserCommandRepository interface {
 }
 
 type MessageCommandRepository interface {
-	StoreTextMessage(message *TextMessageAggregate) error
-	StoreLeftConversation(message *MessageAggregate) error
-	StoreJoinedConversation(message *MessageAggregate) error
-	StoreRenamedConversation(message *ConversationRenamedMessageAggregate) error
+	StoreTextMessage(message *TextMessage) error
+	StoreLeftConversation(message *Message) error
+	StoreJoinedConversation(message *Message) error
+	StoreRenamedConversation(message *ConversationRenamedMessage) error
 }
 
 type ParticipantCommandRepository interface {

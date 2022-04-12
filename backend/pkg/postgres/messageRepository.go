@@ -18,38 +18,38 @@ func NewMessageRepository(db *gorm.DB) *messageRepository {
 	}
 }
 
-func (r *messageRepository) StoreTextMessage(message *domain.TextMessageAggregate) error {
-	err := r.db.Create(ToMessagePersistence(message)).Error
+func (r *messageRepository) StoreTextMessage(message *domain.TextMessage) error {
+	err := r.db.Create(toMessagePersistence(message)).Error
 
 	if err != nil {
 		return err
 	}
 
-	err = r.db.Create(ToTextMessagePersistence(*message)).Error
+	err = r.db.Create(toTextMessagePersistence(*message)).Error
 
 	return err
 }
 
-func (r *messageRepository) StoreLeftConversation(message *domain.MessageAggregate) error {
-	err := r.db.Create(ToMessagePersistence(message)).Error
+func (r *messageRepository) StoreLeftConversation(message *domain.Message) error {
+	err := r.db.Create(toMessagePersistence(message)).Error
 
 	return err
 }
 
-func (r *messageRepository) StoreJoinedConversation(message *domain.MessageAggregate) error {
-	err := r.db.Create(ToMessagePersistence(message)).Error
+func (r *messageRepository) StoreJoinedConversation(message *domain.Message) error {
+	err := r.db.Create(toMessagePersistence(message)).Error
 
 	return err
 }
 
-func (r *messageRepository) StoreRenamedConversation(message *domain.ConversationRenamedMessageAggregate) error {
-	err := r.db.Create(ToMessagePersistence(message)).Error
+func (r *messageRepository) StoreRenamedConversation(message *domain.ConversationRenamedMessage) error {
+	err := r.db.Create(toMessagePersistence(message)).Error
 
 	if err != nil {
 		return err
 	}
 
-	err = r.db.Create(ToRenameConversationMessagePersistence(*message)).Error
+	err = r.db.Create(toRenameConversationMessagePersistence(*message)).Error
 
 	return err
 }
@@ -62,7 +62,6 @@ func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, re
 	dtoMessages := make([]*readModel.MessageDTO, len(messages))
 
 	for i, message := range messages {
-
 		msgDTO, err := r.getMessageDTO(message, requestUserID)
 
 		if err != nil {
@@ -116,11 +115,11 @@ func (r *messageRepository) getMessageDTO(message *Message, requestUserID uuid.U
 			return nil, err
 		}
 
-		return ToConversationRenamedMessageDTO(message, &user, conversationRenamedMessage.NewName), nil
+		return toConversationRenamedMessageDTO(message, &user, conversationRenamedMessage.NewName), nil
 	case 2:
-		return ToMessageDTO(message, &user), nil
+		return toMessageDTO(message, &user), nil
 	case 3:
-		return ToMessageDTO(message, &user), nil
+		return toMessageDTO(message, &user), nil
 
 	}
 

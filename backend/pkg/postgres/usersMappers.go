@@ -17,11 +17,7 @@ type User struct {
 	RefreshToken string `gorm:"column:refresh_token"`
 }
 
-func (User) TableName() string {
-	return "users"
-}
-
-func ToUserDTO(user *User) *readModel.UserDTO {
+func toUserDTO(user *User) *readModel.UserDTO {
 	return &readModel.UserDTO{
 		ID:     user.ID,
 		Avatar: user.Avatar,
@@ -29,7 +25,7 @@ func ToUserDTO(user *User) *readModel.UserDTO {
 	}
 }
 
-func ToUserDAO(user *domain.UserAggregate) *User {
+func ToUserPersistence(user *domain.UserAggregate) *User {
 	return &User{
 		ID:           user.ID,
 		Avatar:       user.Avatar,

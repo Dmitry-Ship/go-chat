@@ -18,7 +18,7 @@ func NewParticipantRepository(db *gorm.DB) *participantRepository {
 }
 
 func (r *participantRepository) Store(participant *domain.ParticipantAggregate) error {
-	err := r.db.Create(ToParticipantPersistence(participant)).Error
+	err := r.db.Create(toParticipantPersistence(participant)).Error
 
 	return err
 }

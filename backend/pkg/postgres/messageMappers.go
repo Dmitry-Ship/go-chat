@@ -22,23 +22,13 @@ type TextMessage struct {
 	Text      string
 }
 
-type LeftMessage struct {
-	ID        uuid.UUID `gorm:"type:uuid"`
-	MessageID uuid.UUID `gorm:"type:uuid"`
-}
-
-type JoinedMessage struct {
-	ID        uuid.UUID `gorm:"type:uuid"`
-	MessageID uuid.UUID `gorm:"type:uuid"`
-}
-
 type ConversationRenamedMessage struct {
 	ID        uuid.UUID `gorm:"type:uuid"`
 	MessageID uuid.UUID `gorm:"type:uuid"`
 	NewName   string
 }
 
-func ToMessageDTO(message *Message, user *User) *readModel.MessageDTO {
+func toMessageDTO(message *Message, user *User) *readModel.MessageDTO {
 	var messageType string
 	switch message.Type {
 	case 0:
@@ -55,31 +45,31 @@ func ToMessageDTO(message *Message, user *User) *readModel.MessageDTO {
 		ID:        message.ID,
 		CreatedAt: message.CreatedAt,
 		Type:      messageType,
-		User:      ToUserDTO(user),
+		User:      toUserDTO(user),
 	}
 
 	return &messageDTO
 }
 
 func ToTextMessageDTO(message *Message, user *User, text string, requestUserID uuid.UUID) *readModel.MessageDTO {
-	messageDTO := ToMessageDTO(message, user)
+	messageDTO := toMessageDTO(message, user)
 	messageDTO.IsInbound = user.ID != requestUserID
 	messageDTO.Text = text
 
 	return messageDTO
 }
 
-func ToConversationRenamedMessageDTO(message *Message, user *User, newName string) *readModel.MessageDTO {
-	messageDTO := ToMessageDTO(message, user)
+func toConversationRenamedMessageDTO(message *Message, user *User, newName string) *readModel.MessageDTO {
+	messageDTO := toMessageDTO(message, user)
 	messageDTO.NewConversationName = newName
 
 	return messageDTO
 }
 
-func ToMessagePersistence(message domain.BaseMessage) *Message {
+func toMessagePersistence(message domain.BaseMessage) *Message {
 	var messageType uint8
 
-	baseMessage := message.GetBaseMessage()
+	baseMessage := message.GetBaseData()
 
 	switch baseMessage.Type {
 	case "text":
@@ -101,8 +91,8 @@ func ToMessagePersistence(message domain.BaseMessage) *Message {
 	}
 }
 
-func ToTextMessagePersistence(message domain.TextMessageAggregate) *TextMessage {
-	text := message.GetText()
+func toTextMessagePersistence(message domain.TextMessage) *TextMessage {
+	text := message.GetTextMessageData()
 
 	return &TextMessage{
 		ID:        text.ID,
@@ -111,7 +101,7 @@ func ToTextMessagePersistence(message domain.TextMessageAggregate) *TextMessage 
 	}
 }
 
-func ToRenameConversationMessagePersistence(message domain.ConversationRenamedMessageAggregate) *ConversationRenamedMessage {
+func toRenameConversationMessagePersistence(message domain.ConversationRenamedMessage) *ConversationRenamedMessage {
 	conversationRenamedMessage := message.GetConversationRenamedMessage()
 
 	return &ConversationRenamedMessage{
