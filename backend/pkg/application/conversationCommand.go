@@ -3,7 +3,6 @@ package application
 import (
 	"GitHub/go-chat/backend/domain"
 	"GitHub/go-chat/backend/pkg/readModel"
-	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -13,9 +12,8 @@ type ConversationCommandService interface {
 	JoinPublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	LeavePublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	DeleteConversation(id uuid.UUID) error
-	SendUserMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
-	sendSystemMessage(messageText string, conversationId uuid.UUID) error
-	RenamePublicConversation(conversationId uuid.UUID, name string) error
+	SendTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
+	RenamePublicConversation(conversationId uuid.UUID, userId uuid.UUID, name string) error
 }
 
 type conversationCommandService struct {
@@ -69,15 +67,9 @@ func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.
 		return err
 	}
 
-	// Dispatch event to send system message
+	message := domain.NewJoinedConversationMessage(conversationID, userId)
 
-	user, err := s.usersQuery.GetUserByID(userId)
-
-	if err != nil {
-		return err
-	}
-
-	err = s.sendSystemMessage(fmt.Sprintf("%s joined", user.Name), conversationID)
+	err = s.messages.StoreJoinedConversation(message)
 
 	if err != nil {
 		return err
@@ -86,16 +78,16 @@ func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.
 	return nil
 }
 
-func (s *conversationCommandService) RenamePublicConversation(conversationID uuid.UUID, name string) error {
+func (s *conversationCommandService) RenamePublicConversation(conversationID uuid.UUID, userId uuid.UUID, name string) error {
 	err := s.conversations.RenameConversation(conversationID, name)
 
 	if err != nil {
 		return err
 	}
 
-	// Dispatch event to send system message and send update notification to all participants
+	message := domain.NewConversationRenamedMessage(conversationID, userId, name)
 
-	err = s.sendSystemMessage(fmt.Sprintf("chat has been renamed to %s", name), conversationID)
+	err = s.messages.StoreRenamedConversation(message)
 
 	if err != nil {
 		return err
@@ -113,26 +105,20 @@ func (s *conversationCommandService) LeavePublicConversation(conversationID uuid
 		return err
 	}
 
-	// Dispatch event to send system message
+	message := domain.NewLeftConversationMessage(conversationID, userId)
 
-	user, err := s.usersQuery.GetUserByID(userId)
-
-	if err != nil {
-		return err
-	}
-
-	err = s.sendSystemMessage(fmt.Sprintf("%s left", user.Name), conversationID)
+	err = s.messages.StoreLeftConversation(message)
 
 	if err != nil {
 		return err
 	}
+
+	s.conversationWSResolver.DispatchSystemMessage(message.ID, conversationID)
 
 	return nil
 }
 
 func (s *conversationCommandService) DeleteConversation(id uuid.UUID) error {
-
-	// Dispatch event to send system message
 	s.conversationWSResolver.DispatchConversationDeleted(id)
 
 	err := s.conversations.Delete(id)
@@ -144,31 +130,16 @@ func (s *conversationCommandService) DeleteConversation(id uuid.UUID) error {
 	return nil
 }
 
-func (s *conversationCommandService) SendUserMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
-	message := domain.NewUserMessage(messageText, conversationId, userId)
+func (s *conversationCommandService) SendTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
+	message := domain.NewTextMessage(conversationId, userId, messageText)
 
-	err := s.messages.Store(message)
+	err := s.messages.StoreTextMessage(message)
 
 	if err != nil {
 		return err
 	}
 
-	// Dispatch event to send system message
 	s.conversationWSResolver.DispatchUserMessage(message.ID, conversationId, userId)
-
-	return nil
-}
-
-func (s *conversationCommandService) sendSystemMessage(messageText string, conversationId uuid.UUID) error {
-	message := domain.NewSystemMessage(messageText, conversationId)
-
-	err := s.messages.Store(message)
-
-	if err != nil {
-		return err
-	}
-
-	s.conversationWSResolver.DispatchSystemMessage(message.ID, conversationId)
 
 	return nil
 }

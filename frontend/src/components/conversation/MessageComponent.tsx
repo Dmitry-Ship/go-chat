@@ -11,31 +11,36 @@ const MessageComponent: React.FC<{
   const date = new Date(message.createdAt);
   const time = `${date.getHours()}:${date.getMinutes()}`;
 
-  const isSystem = message.type === "system";
-
   return (
     <div className={styles.message}>
-      {isSystem ? (
-        <div className={styles.systemMessage}>{message.text}</div>
-      ) : (
-        <>
-          <div className={styles.avatarColumn}>
-            {isLastInAGroup && <Avatar src={message.user.avatar} />}
-          </div>
+      {(() => {
+        switch (message.type) {
+          case "text":
+            return (
+              <>
+                <div className={styles.avatarColumn}>
+                  {isLastInAGroup && <Avatar src={message.user.avatar} />}
+                </div>
 
-          <div
-            className={`${
-              message.isInbound ? styles.inboundMessage : styles.outboundMessage
-            } ${styles.messageBubble}`}
-          >
-            {isFistInAGroup && (
-              <div className={styles.userName}>{message.user.name}</div>
-            )}
-            {message.text}
-            <div className={styles.time}>{time}</div>
-          </div>
-        </>
-      )}
+                <div
+                  className={`${
+                    message.isInbound
+                      ? styles.inboundMessage
+                      : styles.outboundMessage
+                  } ${styles.messageBubble}`}
+                >
+                  {isFistInAGroup && (
+                    <div className={styles.userName}>{message.user.name}</div>
+                  )}
+                  {message.text}
+                  <div className={styles.time}>{time}</div>
+                </div>
+              </>
+            );
+          default:
+            return <div className={styles.systemMessage}>{message.text}</div>;
+        }
+      })()}
     </div>
   );
 };

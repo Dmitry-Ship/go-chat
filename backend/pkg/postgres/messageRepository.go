@@ -18,9 +18,38 @@ func NewMessageRepository(db *gorm.DB) *messageRepository {
 	}
 }
 
-func (r *messageRepository) Store(chatMessage *domain.Message) error {
+func (r *messageRepository) StoreTextMessage(message *domain.TextMessageAggregate) error {
+	err := r.db.Create(ToMessagePersistence(message)).Error
 
-	err := r.db.Create(ToMessagePersistence(chatMessage)).Error
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Create(ToTextMessagePersistence(*message)).Error
+
+	return err
+}
+
+func (r *messageRepository) StoreLeftConversation(message *domain.MessageAggregate) error {
+	err := r.db.Create(ToMessagePersistence(message)).Error
+
+	return err
+}
+
+func (r *messageRepository) StoreJoinedConversation(message *domain.MessageAggregate) error {
+	err := r.db.Create(ToMessagePersistence(message)).Error
+
+	return err
+}
+
+func (r *messageRepository) StoreRenamedConversation(message *domain.ConversationRenamedMessageAggregate) error {
+	err := r.db.Create(ToMessagePersistence(message)).Error
+
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Create(ToRenameConversationMessagePersistence(*message)).Error
 
 	return err
 }
@@ -33,17 +62,14 @@ func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, re
 	dtoMessages := make([]*readModel.MessageDTO, len(messages))
 
 	for i, message := range messages {
-		user := User{}
 
-		if message.Type == 0 {
-			err := r.db.Where("id = ?", message.UserID).First(&user).Error
+		msgDTO, err := r.getMessageDTO(message, requestUserID)
 
-			if err != nil {
-				return nil, err
-			}
+		if err != nil {
+			return nil, err
 		}
 
-		dtoMessages[i] = ToMessageDTO(message, &user, requestUserID)
+		dtoMessages[i] = msgDTO
 	}
 
 	return dtoMessages, err
@@ -58,17 +84,45 @@ func (r *messageRepository) GetMessageByID(messageID uuid.UUID, requestUserID uu
 		return nil, err
 	}
 
+	return r.getMessageDTO(&message, requestUserID)
+}
+
+func (r *messageRepository) getMessageDTO(message *Message, requestUserID uuid.UUID) (*readModel.MessageDTO, error) {
 	user := User{}
 
-	if message.Type == 0 {
-		err = r.db.Where("id = ?", message.UserID).First(&user).Error
+	err := r.db.Where("id = ?", message.UserID).First(&user).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	switch message.Type {
+	case 0:
+		textMessage := TextMessage{}
+
+		err = r.db.Where("message_id = ?", message.ID).First(&textMessage).Error
 
 		if err != nil {
 			return nil, err
 		}
+
+		return ToTextMessageDTO(message, &user, textMessage.Text, requestUserID), nil
+	case 1:
+		conversationRenamedMessage := ConversationRenamedMessage{}
+
+		err = r.db.Where("message_id = ?", message.ID).First(&conversationRenamedMessage).Error
+
+		if err != nil {
+			return nil, err
+		}
+
+		return ToConversationRenamedMessageDTO(message, &user, conversationRenamedMessage.NewName), nil
+	case 2:
+		return ToMessageDTO(message, &user), nil
+	case 3:
+		return ToMessageDTO(message, &user), nil
+
 	}
 
-	dtoMessage := ToMessageDTO(&message, &user, requestUserID)
-
-	return dtoMessage, err
+	return nil, nil
 }

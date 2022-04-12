@@ -32,6 +32,7 @@ func GetDatabaseConnection() *gorm.DB {
 	db.AutoMigrate(pg.User{})
 	db.AutoMigrate(pg.Participant{})
 	db.AutoMigrate(pg.JoinedMessage{})
+	db.AutoMigrate(pg.TextMessage{})
 	db.AutoMigrate(pg.LeftMessage{})
 	db.AutoMigrate(pg.ConversationRenamedMessage{})
 

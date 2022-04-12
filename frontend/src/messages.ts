@@ -1,27 +1,51 @@
-import { Message, MessageRaw } from "./types/coreTypes";
+import { Message, MessageRaw, BaseMessage } from "./types/coreTypes";
+
+const ParseBaseMessage = (raw: MessageRaw): BaseMessage => {
+  return {
+    id: raw.id,
+    conversationId: raw.conversation_id,
+    user: {
+      id: raw.user.id,
+      avatar: raw.user.avatar,
+      name: raw.user.name,
+    },
+    createdAt: raw.created_at,
+  };
+};
 
 export const parseMessage = (data: MessageRaw): Message => {
-  if (data.type === "user") {
-    return {
-      id: data.id,
-      type: data.type,
-      text: data.text,
-      conversationId: data.conversation_id,
-      createdAt: data.created_at,
-      user: {
-        id: data.user.id,
-        name: data.user.name,
-        avatar: data.user.avatar,
-      },
-      isInbound: data.is_inbound,
-    };
-  }
+  const base = ParseBaseMessage(data);
+  switch (data.type) {
+    case "joined_conversation":
+      return {
+        ...base,
+        text: `${base.user.name} joined the conversation`,
+        type: "joined_conversation",
+      };
+    case "left_conversation":
+      return {
+        ...base,
+        text: `${base.user.name} left the conversation`,
+        type: "left_conversation",
+      };
 
-  return {
-    id: data.id,
-    type: data.type,
-    text: data.text,
-    conversationId: data.conversation_id,
-    createdAt: data.created_at,
-  };
+    case "renamed_conversation":
+      return {
+        ...base,
+        text: `${base.user.name} renamed the conversation to ${data.new_name}`,
+        type: "renamed_conversation",
+        newName: data.new_name,
+      };
+
+    case "text":
+      return {
+        ...base,
+        text: data.text,
+        type: "text",
+        isInbound: data.is_inbound,
+      };
+
+    default:
+      throw new Error("Unknown message type");
+  }
 };

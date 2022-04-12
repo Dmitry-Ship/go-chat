@@ -1,37 +1,38 @@
-type SystemMessage = {
+export type BaseMessage = {
   id: string;
-  type: "system";
-  text: string;
-  conversationId: string;
-  createdAt: string;
-};
-
-type UserMessage = {
-  id: string;
-  text: string;
-  type: "user";
-  conversationId: string;
   user: {
     id: string;
     avatar: string;
     name: string;
   };
+  conversationId: string;
+  createdAt: string;
+};
+
+type JoinedMessage = BaseMessage & {
+  type: "joined_conversation";
+  text: string;
+};
+
+type LeftMessage = BaseMessage & {
+  type: "left_conversation";
+  text: string;
+};
+
+type RenamedMessage = BaseMessage & {
+  type: "renamed_conversation";
+  text: string;
+  newName: string;
+};
+
+type TextMessage = BaseMessage & {
+  text: string;
+  type: "text";
   isInbound: boolean;
-  createdAt: string;
 };
 
-type SystemMessageRaw = {
+type baseMessageRaw = {
   id: string;
-  text: string;
-  type: "system";
-  conversation_id: string;
-  created_at: string;
-};
-
-type UserMessageRaw = {
-  id: string;
-  text: string;
-  type: "user";
   conversation_id: string;
   user: {
     id: string;
@@ -39,12 +40,38 @@ type UserMessageRaw = {
     name: string;
   };
   created_at: string;
+};
+
+type JoinedMessageRaw = baseMessageRaw & {
+  type: "joined_conversation";
+};
+
+type LeftMessageRaw = baseMessageRaw & {
+  type: "left_conversation";
+};
+
+type TextMessageRaw = baseMessageRaw & {
+  text: string;
+  type: "text";
   is_inbound: boolean;
 };
 
-export type Message = SystemMessage | UserMessage;
+type RenamedMessageRaw = baseMessageRaw & {
+  type: "renamed_conversation";
+  new_name: string;
+};
 
-export type MessageRaw = SystemMessageRaw | UserMessageRaw;
+export type Message =
+  | JoinedMessage
+  | TextMessage
+  | LeftMessage
+  | RenamedMessage;
+
+export type MessageRaw =
+  | LeftMessageRaw
+  | TextMessageRaw
+  | JoinedMessageRaw
+  | RenamedMessageRaw;
 
 export type Conversation = {
   name: string;

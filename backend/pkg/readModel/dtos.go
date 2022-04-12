@@ -1,7 +1,6 @@
 package readModel
 
 import (
-	"GitHub/go-chat/backend/domain"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,19 +26,11 @@ type UserDTO struct {
 }
 
 type MessageDTO struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	Text      string    `json:"text"`
-	Type      string    `json:"type"`
-	User      *UserDTO  `json:"user,omitempty"`
-	IsInbound bool      `json:"is_inbound,omitempty"`
-}
-
-func ToMessageDTOFromDomain(message *domain.Message) *MessageDTO {
-	return &MessageDTO{
-		ID:        message.ID,
-		CreatedAt: message.CreatedAt,
-		Text:      message.Text,
-		Type:      message.Type,
-	}
+	ID                  uuid.UUID `json:"id"`
+	CreatedAt           time.Time `json:"created_at"`
+	Text                string    `json:"text,omitempty"`
+	Type                string    `json:"type"`
+	User                *UserDTO  `json:"user,omitempty"`
+	IsInbound           bool      `json:"is_inbound,omitempty"`
+	NewConversationName string    `json:"new_name,omitempty"`
 }

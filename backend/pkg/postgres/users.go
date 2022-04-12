@@ -29,7 +29,7 @@ func ToUserDTO(user *User) *readModel.UserDTO {
 	}
 }
 
-func ToUserDAO(user *domain.User) *User {
+func ToUserDAO(user *domain.UserAggregate) *User {
 	return &User{
 		ID:           user.ID,
 		Avatar:       user.Avatar,
@@ -40,8 +40,8 @@ func ToUserDAO(user *domain.User) *User {
 	}
 }
 
-func ToUserDomain(user *User) *domain.User {
-	return &domain.User{
+func ToUserDomain(user *User) *domain.UserAggregate {
+	return &domain.UserAggregate{
 		ID:           user.ID,
 		Avatar:       user.Avatar,
 		Name:         user.Name,

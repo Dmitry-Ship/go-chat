@@ -20,7 +20,7 @@ func NewConversationRepository(db *gorm.DB) *conversationRepository {
 
 }
 
-func (r *conversationRepository) Store(conversation *domain.Conversation) error {
+func (r *conversationRepository) Store(conversation *domain.ConversationAggregate) error {
 	err := r.db.Create(ToConversationPersistence(conversation)).Error
 
 	return err

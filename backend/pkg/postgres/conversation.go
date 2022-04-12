@@ -33,7 +33,7 @@ func ToConversationDTO(conversation *Conversation) *readModel.ConversationDTO {
 	}
 }
 
-func ToConversationPersistence(conversation *domain.Conversation) *Conversation {
+func ToConversationPersistence(conversation *domain.ConversationAggregate) *Conversation {
 	return &Conversation{
 		ID:        conversation.ID,
 		Name:      conversation.Name,

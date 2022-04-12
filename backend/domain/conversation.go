@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Conversation struct {
+type ConversationAggregate struct {
 	ID        uuid.UUID
 	Name      string
 	Avatar    string
@@ -14,8 +14,8 @@ type Conversation struct {
 	CreatedAt time.Time
 }
 
-func NewConversation(id uuid.UUID, name string, isPrivate bool) *Conversation {
-	return &Conversation{
+func NewConversation(id uuid.UUID, name string, isPrivate bool) *ConversationAggregate {
+	return &ConversationAggregate{
 		ID:        id,
 		Name:      name,
 		Avatar:    string(name[0]),

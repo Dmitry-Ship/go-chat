@@ -37,7 +37,7 @@ func HandleWSMessage(conversationService application.ConversationCommandService)
 			return
 		}
 
-		err := conversationService.SendUserMessage(request.Content, request.ConversationId, incomingNotification.UserID)
+		err := conversationService.SendTextMessage(request.Content, request.ConversationId, incomingNotification.UserID)
 
 		if err != nil {
 			log.Println(err)
@@ -239,6 +239,7 @@ func HandleLeavePublicConversation(conversationService application.ConversationC
 
 func HandleRenamePublicConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		request := struct {
 			ConversationId   uuid.UUID `json:"conversation_id"`
 			ConversationName string    `json:"new_name"`
@@ -251,7 +252,7 @@ func HandleRenamePublicConversation(conversationService application.Conversation
 			return
 		}
 
-		err = conversationService.RenamePublicConversation(request.ConversationId, request.ConversationName)
+		err = conversationService.RenamePublicConversation(request.ConversationId, userID, request.ConversationName)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
