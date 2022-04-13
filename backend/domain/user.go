@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserAggregate struct {
+type User struct {
 	ID           uuid.UUID
 	Avatar       string
 	Name         string
@@ -15,8 +15,8 @@ type UserAggregate struct {
 	RefreshToken string
 }
 
-func NewUser(username string, password string) *UserAggregate {
-	return &UserAggregate{
+func NewUser(username string, password string) *User {
+	return &User{
 		ID:        uuid.New(),
 		Avatar:    string(username[0]),
 		CreatedAt: time.Now(),
@@ -25,6 +25,6 @@ func NewUser(username string, password string) *UserAggregate {
 	}
 }
 
-func (u *UserAggregate) SetRefreshToken(refreshToken string) {
+func (u *User) SetRefreshToken(refreshToken string) {
 	u.RefreshToken = refreshToken
 }

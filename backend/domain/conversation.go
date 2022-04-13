@@ -6,20 +6,20 @@ import (
 	"github.com/google/uuid"
 )
 
-type ConversationAggregate struct {
+type Conversation struct {
 	ID        uuid.UUID
 	Name      string
 	Avatar    string
-	IsPrivate bool
+	Type      string
 	CreatedAt time.Time
 }
 
-func NewConversation(id uuid.UUID, name string, isPrivate bool) *ConversationAggregate {
-	return &ConversationAggregate{
+func NewPublicConversation(id uuid.UUID, name string) *Conversation {
+	return &Conversation{
 		ID:        id,
 		Name:      name,
 		Avatar:    string(name[0]),
-		IsPrivate: isPrivate,
+		Type:      "public",
 		CreatedAt: time.Now(),
 	}
 }

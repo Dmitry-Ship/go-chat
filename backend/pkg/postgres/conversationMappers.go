@@ -12,8 +12,23 @@ type Conversation struct {
 	ID        uuid.UUID `gorm:"type:uuid"`
 	Name      string
 	Avatar    string
-	IsPrivate bool
+	Type      uint8
 	CreatedAt time.Time
+}
+
+var conversationTypesMap = map[uint8]string{
+	0: "public",
+	1: "private",
+}
+
+func toConversationTypePersistence(conversationType string) uint8 {
+	for k, v := range conversationTypesMap {
+		if v == conversationType {
+			return k
+		}
+	}
+
+	return 0
 }
 
 func toConversationDTO(conversation *Conversation) *readModel.ConversationDTO {
@@ -21,7 +36,7 @@ func toConversationDTO(conversation *Conversation) *readModel.ConversationDTO {
 		ID:        conversation.ID,
 		Name:      conversation.Name,
 		Avatar:    conversation.Avatar,
-		IsPrivate: conversation.IsPrivate,
+		Type:      conversationTypesMap[conversation.Type],
 		CreatedAt: conversation.CreatedAt,
 	}
 }
@@ -33,12 +48,12 @@ func toConversationFullDTO(conversation *Conversation, hasJoined bool) *readMode
 	}
 }
 
-func toConversationPersistence(conversation *domain.ConversationAggregate) *Conversation {
+func toConversationPersistence(conversation *domain.Conversation) *Conversation {
 	return &Conversation{
 		ID:        conversation.ID,
 		Name:      conversation.Name,
 		Avatar:    conversation.Avatar,
-		IsPrivate: conversation.IsPrivate,
+		Type:      toConversationTypePersistence(conversation.Type),
 		CreatedAt: conversation.CreatedAt,
 	}
 }

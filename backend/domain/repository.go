@@ -9,14 +9,14 @@ type BaseMessage interface {
 }
 
 type ConversationCommandRepository interface {
-	Store(conversation *ConversationAggregate) error
+	Store(conversation *Conversation) error
 	RenameConversation(conversationId uuid.UUID, name string) error
 	Delete(id uuid.UUID) error
 }
 
 type UserCommandRepository interface {
-	Store(user *UserAggregate) error
-	FindByUsername(username string) (*UserAggregate, error)
+	Store(user *User) error
+	FindByUsername(username string) (*User, error)
 	StoreRefreshToken(userID uuid.UUID, refreshToken string) error
 	GetRefreshTokenByUserID(userID uuid.UUID) (string, error)
 	DeleteRefreshToken(userID uuid.UUID) error
@@ -30,6 +30,6 @@ type MessageCommandRepository interface {
 }
 
 type ParticipantCommandRepository interface {
-	Store(participant *ParticipantAggregate) error
+	Store(participant *Participant) error
 	DeleteByConversationIDAndUserID(conversationId uuid.UUID, userId uuid.UUID) error
 }

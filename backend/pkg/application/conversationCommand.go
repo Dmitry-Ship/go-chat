@@ -44,7 +44,7 @@ func NewConversationCommandService(
 }
 
 func (s *conversationCommandService) CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error {
-	conversation := domain.NewConversation(id, name, false)
+	conversation := domain.NewPublicConversation(id, name)
 	err := s.conversations.Store(conversation)
 
 	if err != nil {

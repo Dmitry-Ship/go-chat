@@ -29,9 +29,8 @@ func (m *Message) GetBaseData() *Message {
 }
 
 type TextMessageData struct {
-	ID        uuid.UUID
-	MessageID uuid.UUID
-	Text      string
+	ID   uuid.UUID
+	Text string
 }
 
 type TextMessage struct {
@@ -45,9 +44,8 @@ func NewTextMessage(conversationId uuid.UUID, userID uuid.UUID, text string) *Te
 	return &TextMessage{
 		Message: *baseMessage,
 		Data: TextMessageData{
-			ID:        uuid.New(),
-			MessageID: baseMessage.ID,
-			Text:      text,
+			ID:   uuid.New(),
+			Text: text,
 		},
 	}
 }
@@ -57,9 +55,8 @@ func (tm *TextMessage) GetTextMessageData() TextMessageData {
 }
 
 type conversationRenamedMessageData struct {
-	ID        uuid.UUID
-	MessageID uuid.UUID
-	NewName   string
+	ID      uuid.UUID
+	NewName string
 }
 
 type ConversationRenamedMessage struct {
@@ -72,9 +69,8 @@ func NewConversationRenamedMessage(conversationId uuid.UUID, userID uuid.UUID, n
 	return &ConversationRenamedMessage{
 		Message: *baseMessage,
 		Data: conversationRenamedMessageData{
-			ID:        uuid.New(),
-			MessageID: baseMessage.ID,
-			NewName:   newName,
+			ID:      uuid.New(),
+			NewName: newName,
 		},
 	}
 

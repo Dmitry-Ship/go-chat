@@ -28,23 +28,28 @@ type ConversationRenamedMessage struct {
 	NewName   string
 }
 
-func toMessageDTO(message *Message, user *User) *readModel.MessageDTO {
-	var messageType string
-	switch message.Type {
-	case 0:
-		messageType = "text"
-	case 1:
-		messageType = "renamed_conversation"
-	case 2:
-		messageType = "left_conversation"
-	case 3:
-		messageType = "joined_conversation"
+var messageTypesMap = map[uint8]string{
+	0: "text",
+	1: "conversation_renamed",
+	2: "left_conversation",
+	3: "joined_conversation",
+}
+
+func toMessageTypePersistence(messageType string) uint8 {
+	for k, v := range messageTypesMap {
+		if v == messageType {
+			return k
+		}
 	}
 
+	return 0
+}
+
+func toMessageDTO(message *Message, user *User) *readModel.MessageDTO {
 	messageDTO := readModel.MessageDTO{
 		ID:        message.ID,
 		CreatedAt: message.CreatedAt,
-		Type:      messageType,
+		Type:      messageTypesMap[message.Type],
 		User:      toUserDTO(user),
 	}
 
@@ -67,27 +72,13 @@ func toConversationRenamedMessageDTO(message *Message, user *User, newName strin
 }
 
 func toMessagePersistence(message domain.BaseMessage) *Message {
-	var messageType uint8
-
 	baseMessage := message.GetBaseData()
-
-	switch baseMessage.Type {
-	case "text":
-		messageType = 0
-	case "renamed_conversation":
-		messageType = 1
-	case "left_conversation":
-		messageType = 2
-	case "joined_conversation":
-		messageType = 3
-	}
-
 	return &Message{
 		ID:             baseMessage.ID,
 		ConversationID: baseMessage.ConversationID,
 		UserID:         baseMessage.UserID,
 		CreatedAt:      baseMessage.CreatedAt,
-		Type:           messageType,
+		Type:           toMessageTypePersistence(baseMessage.Type),
 	}
 }
 
@@ -96,7 +87,7 @@ func toTextMessagePersistence(message domain.TextMessage) *TextMessage {
 
 	return &TextMessage{
 		ID:        text.ID,
-		MessageID: text.MessageID,
+		MessageID: message.GetBaseData().ID,
 		Text:      text.Text,
 	}
 }
@@ -106,7 +97,7 @@ func toRenameConversationMessagePersistence(message domain.ConversationRenamedMe
 
 	return &ConversationRenamedMessage{
 		ID:        conversationRenamedMessage.ID,
-		MessageID: conversationRenamedMessage.MessageID,
+		MessageID: message.GetBaseData().ID,
 		NewName:   conversationRenamedMessage.NewName,
 	}
 }

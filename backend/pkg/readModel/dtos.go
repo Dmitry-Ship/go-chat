@@ -10,7 +10,7 @@ type ConversationDTO struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Avatar    string    `json:"avatar"`
-	IsPrivate bool      `json:"is_private"`
+	Type      string    `json:"type"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

@@ -25,7 +25,7 @@ func toUserDTO(user *User) *readModel.UserDTO {
 	}
 }
 
-func ToUserPersistence(user *domain.UserAggregate) *User {
+func ToUserPersistence(user *domain.User) *User {
 	return &User{
 		ID:           user.ID,
 		Avatar:       user.Avatar,
@@ -36,8 +36,8 @@ func ToUserPersistence(user *domain.UserAggregate) *User {
 	}
 }
 
-func ToUserDomain(user *User) *domain.UserAggregate {
-	return &domain.UserAggregate{
+func ToUserDomain(user *User) *domain.User {
+	return &domain.User{
 		ID:           user.ID,
 		Avatar:       user.Avatar,
 		Name:         user.Name,
