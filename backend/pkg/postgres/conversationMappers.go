@@ -9,11 +9,17 @@ import (
 )
 
 type Conversation struct {
-	ID        uuid.UUID `gorm:"type:uuid"`
-	Name      string
-	Avatar    string
+	ID uuid.UUID `gorm:"type:uuid"`
+
 	Type      uint8
 	CreatedAt time.Time
+}
+
+type PublicConversation struct {
+	ID             uuid.UUID `gorm:"type:uuid"`
+	Name           string
+	Avatar         string
+	ConversationID uuid.UUID `gorm:"type:uuid"`
 }
 
 var conversationTypesMap = map[uint8]string{
@@ -32,28 +38,45 @@ func toConversationTypePersistence(conversationType string) uint8 {
 }
 
 func toConversationDTO(conversation *Conversation) *readModel.ConversationDTO {
-	return &readModel.ConversationDTO{
+	dto := readModel.ConversationDTO{
 		ID:        conversation.ID,
-		Name:      conversation.Name,
-		Avatar:    conversation.Avatar,
-		Type:      conversationTypesMap[conversation.Type],
 		CreatedAt: conversation.CreatedAt,
+		Type:      messageTypesMap[conversation.Type],
 	}
+
+	return &dto
 }
 
-func toConversationFullDTO(conversation *Conversation, hasJoined bool) *readModel.ConversationFullDTO {
+func toPublicConversationDTO(conversation *Conversation, avatar string, name string) *readModel.ConversationDTO {
+	dto := toConversationDTO(conversation)
+
+	dto.Avatar = avatar
+	dto.Name = name
+
+	return dto
+}
+
+func toConversationFullDTO(conversation *Conversation, avatar string, name string, hasJoined bool) *readModel.ConversationFullDTO {
 	return &readModel.ConversationFullDTO{
-		Conversation: *toConversationDTO(conversation),
+		Conversation: *toPublicConversationDTO(conversation, avatar, name),
 		HasJoined:    hasJoined,
 	}
 }
 
-func toConversationPersistence(conversation *domain.Conversation) *Conversation {
+func toConversationPersistence(conversation domain.BaseConversation) *Conversation {
+	conversationBase := conversation.GetBaseData()
 	return &Conversation{
-		ID:        conversation.ID,
-		Name:      conversation.Name,
-		Avatar:    conversation.Avatar,
-		Type:      toConversationTypePersistence(conversation.Type),
-		CreatedAt: conversation.CreatedAt,
+		ID:        conversationBase.ID,
+		Type:      toConversationTypePersistence(conversationBase.Type),
+		CreatedAt: conversationBase.CreatedAt,
+	}
+}
+
+func toPublicConversationPersistence(conversation *domain.PublicConversation) *PublicConversation {
+	return &PublicConversation{
+		ID:             conversation.Data.ID,
+		ConversationID: conversation.ID,
+		Name:           conversation.Data.Name,
+		Avatar:         conversation.Data.Avatar,
 	}
 }

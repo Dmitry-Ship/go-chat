@@ -19,13 +19,13 @@ export const parseMessage = (data: MessageRaw): Message => {
     case "joined_conversation":
       return {
         ...base,
-        text: `${base.user.name} joined the conversation`,
+        text: `${base.user.name} joined`,
         type: "joined_conversation",
       };
     case "left_conversation":
       return {
         ...base,
-        text: `${base.user.name} left the conversation`,
+        text: `${base.user.name} left`,
         type: "left_conversation",
       };
 

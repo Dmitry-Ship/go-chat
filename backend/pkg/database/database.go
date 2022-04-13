@@ -23,12 +23,14 @@ func GetDatabaseConnection() *gorm.DB {
 	if err != nil {
 		panic("⛔️ Could not connect to database")
 	}
+
 	fmt.Println(fmt.Sprintf("💿 Connected to database %s", dbname))
 
 	// Migrate the schema
 
 	db.AutoMigrate(pg.Message{})
 	db.AutoMigrate(pg.Conversation{})
+	db.AutoMigrate(pg.PublicConversation{})
 	db.AutoMigrate(pg.User{})
 	db.AutoMigrate(pg.Participant{})
 	db.AutoMigrate(pg.TextMessage{})

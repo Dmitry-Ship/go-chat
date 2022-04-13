@@ -30,7 +30,7 @@ type ConversationRenamedMessage struct {
 
 var messageTypesMap = map[uint8]string{
 	0: "text",
-	1: "conversation_renamed",
+	1: "renamed_conversation",
 	2: "left_conversation",
 	3: "joined_conversation",
 }

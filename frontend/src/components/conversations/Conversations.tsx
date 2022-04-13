@@ -20,14 +20,17 @@ function Conversations() {
             switch (response.status) {
               case "fetching":
                 return <Loader />;
-              case "done":
-                return response.data?.map((conversation, i) => (
-                  <ConversationItem
-                    key={i}
-                    href={"conversations/" + conversation.id}
-                    name={conversation.name}
-                  />
-                ));
+              case "done": {
+                return response.data?.length === 0 ? (
+                  <NewConversationBtn />
+                ) : (
+                  <>
+                    {response.data?.map((conversation, i) => (
+                      <ConversationItem key={i} conversation={conversation} />
+                    ))}
+                  </>
+                );
+              }
               default:
                 return null;
             }

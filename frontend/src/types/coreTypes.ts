@@ -75,7 +75,8 @@ export type MessageRaw =
 
 export type Conversation = {
   name: string;
-  id: number;
+  avatar: string;
+  id: string;
 };
 
 export type MessageEvent = {

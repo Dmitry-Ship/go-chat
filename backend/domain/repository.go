@@ -4,13 +4,13 @@ import (
 	"github.com/google/uuid"
 )
 
-type BaseMessage interface {
-	GetBaseData() *Message
+type BaseConversation interface {
+	GetBaseData() *Conversation
 }
 
 type ConversationCommandRepository interface {
-	Store(conversation *Conversation) error
-	RenameConversation(conversationId uuid.UUID, name string) error
+	StorePublicConversation(conversation *PublicConversation) error
+	RenamePublicConversation(conversationId uuid.UUID, name string) error
 	Delete(id uuid.UUID) error
 }
 
@@ -20,6 +20,10 @@ type UserCommandRepository interface {
 	StoreRefreshToken(userID uuid.UUID, refreshToken string) error
 	GetRefreshTokenByUserID(userID uuid.UUID) (string, error)
 	DeleteRefreshToken(userID uuid.UUID) error
+}
+
+type BaseMessage interface {
+	GetBaseData() *Message
 }
 
 type MessageCommandRepository interface {

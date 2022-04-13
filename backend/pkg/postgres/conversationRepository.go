@@ -20,14 +20,22 @@ func NewConversationRepository(db *gorm.DB) *conversationRepository {
 
 }
 
-func (r *conversationRepository) Store(conversation *domain.Conversation) error {
+func (r *conversationRepository) StorePublicConversation(conversation *domain.PublicConversation) error {
 	err := r.db.Create(toConversationPersistence(conversation)).Error
+
+	if err != nil {
+
+		return err
+
+	}
+
+	err = r.db.Create(toPublicConversationPersistence(conversation)).Error
 
 	return err
 }
 
-func (r *conversationRepository) RenameConversation(id uuid.UUID, name string) error {
-	err := r.db.Model(Conversation{}).Where("id = ?", id).Update("name", name).Error
+func (r *conversationRepository) RenamePublicConversation(id uuid.UUID, name string) error {
+	err := r.db.Model(PublicConversation{}).Where("conversation_id = ?", id).Update("name", name).Error
 
 	return err
 }
@@ -52,7 +60,21 @@ func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.U
 		}
 	}
 
-	return toConversationFullDTO(&conversation, hasUserJoined), err
+	switch conversation.Type {
+	case 0:
+		publicConversation := PublicConversation{}
+
+		err = r.db.Where("conversation_id = ?", id).First(&publicConversation).Error
+
+		if err != nil {
+			return nil, err
+		}
+
+		return toConversationFullDTO(&conversation, publicConversation.Avatar, publicConversation.Name, hasUserJoined), nil
+
+	default:
+		return nil, errors.New("unsupported conversation type")
+	}
 }
 
 func (r *conversationRepository) FindAll() ([]*readModel.ConversationDTO, error) {
@@ -63,7 +85,22 @@ func (r *conversationRepository) FindAll() ([]*readModel.ConversationDTO, error)
 	conversationsDTOs := make([]*readModel.ConversationDTO, len(conversations))
 
 	for i, conversation := range conversations {
-		conversationsDTOs[i] = toConversationDTO(conversation)
+		switch conversation.Type {
+		case 0:
+			publicConversation := PublicConversation{}
+
+			err = r.db.Where("conversation_id = ?", conversation.ID).First(&publicConversation).Error
+
+			if err != nil {
+				return nil, err
+			}
+
+			conversationsDTOs[i] = toPublicConversationDTO(conversation, publicConversation.Avatar, publicConversation.Name)
+
+		default:
+			return nil, errors.New("unsupported conversation type")
+		}
+
 	}
 
 	return conversationsDTOs, err

@@ -18,8 +18,11 @@ function ContactsList() {
             return response.data?.map((user, i) => (
               <ConversationItem
                 key={i}
-                href={"conversations/" + user.id}
-                name={user.name}
+                conversation={{
+                  id: user.id,
+                  name: user.name,
+                  avatar: user.avatar,
+                }}
               />
             ));
           default:

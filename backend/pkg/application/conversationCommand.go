@@ -45,7 +45,7 @@ func NewConversationCommandService(
 
 func (s *conversationCommandService) CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error {
 	conversation := domain.NewPublicConversation(id, name)
-	err := s.conversations.Store(conversation)
+	err := s.conversations.StorePublicConversation(conversation)
 
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.
 }
 
 func (s *conversationCommandService) RenamePublicConversation(conversationID uuid.UUID, userId uuid.UUID, name string) error {
-	err := s.conversations.RenameConversation(conversationID, name)
+	err := s.conversations.RenamePublicConversation(conversationID, name)
 
 	if err != nil {
 		return err

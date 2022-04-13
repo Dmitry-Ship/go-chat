@@ -2,18 +2,20 @@ import React from "react";
 import styles from "./ConversationItem.module.css";
 import Link from "next/link";
 import Avatar from "../common/Avatar";
+import { Conversation } from "../../types/coreTypes";
 
 type ConversationItemProps = {
-  name: string;
-  href: string;
+  conversation: Conversation;
 };
 
-const ConversationItem: React.FC<ConversationItemProps> = ({ href, name }) => {
+const ConversationItem: React.FC<ConversationItemProps> = ({
+  conversation,
+}) => {
   return (
-    <Link href={href}>
+    <Link href={"conversations/" + conversation.id}>
       <a className={`${styles.conversation} rounded`}>
-        <Avatar src={"H"} size={55} />
-        <h3 className={styles.conversationName}>{name}</h3>
+        <Avatar src={conversation.avatar} size={55} />
+        <h3 className={styles.conversationName}>{conversation.name}</h3>
       </a>
     </Link>
   );
