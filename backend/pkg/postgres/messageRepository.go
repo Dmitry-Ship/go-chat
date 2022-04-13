@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/domain"
 	"GitHub/go-chat/backend/pkg/readModel"
 
 	"github.com/google/uuid"
@@ -30,19 +30,19 @@ func (r *messageRepository) StoreTextMessage(message *domain.TextMessage) error 
 	return err
 }
 
-func (r *messageRepository) StoreLeftConversation(message *domain.Message) error {
+func (r *messageRepository) StoreLeftConversationMessage(message *domain.Message) error {
 	err := r.db.Create(toMessagePersistence(message)).Error
 
 	return err
 }
 
-func (r *messageRepository) StoreJoinedConversation(message *domain.Message) error {
+func (r *messageRepository) StoreJoinedConversationMessage(message *domain.Message) error {
 	err := r.db.Create(toMessagePersistence(message)).Error
 
 	return err
 }
 
-func (r *messageRepository) StoreRenamedConversation(message *domain.ConversationRenamedMessage) error {
+func (r *messageRepository) StoreRenamedConversationMessage(message *domain.ConversationRenamedMessage) error {
 	err := r.db.Create(toMessagePersistence(message)).Error
 
 	if err != nil {

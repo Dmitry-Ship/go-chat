@@ -1,26 +1,9 @@
 package postgres
 
 import (
-	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/domain"
 	"GitHub/go-chat/backend/pkg/readModel"
-	"time"
-
-	"github.com/google/uuid"
 )
-
-type Conversation struct {
-	ID uuid.UUID `gorm:"type:uuid"`
-
-	Type      uint8
-	CreatedAt time.Time
-}
-
-type PublicConversation struct {
-	ID             uuid.UUID `gorm:"type:uuid"`
-	Name           string
-	Avatar         string
-	ConversationID uuid.UUID `gorm:"type:uuid"`
-}
 
 var conversationTypesMap = map[uint8]string{
 	0: "public",

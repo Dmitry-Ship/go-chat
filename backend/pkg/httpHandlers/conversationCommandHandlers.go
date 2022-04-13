@@ -1,8 +1,7 @@
-package interfaces
+package httpHandlers
 
 import (
-	"GitHub/go-chat/backend/pkg/application"
-	"GitHub/go-chat/backend/pkg/readModel"
+	"GitHub/go-chat/backend/pkg/services"
 	ws "GitHub/go-chat/backend/pkg/websocket"
 	"fmt"
 	"log"
@@ -25,7 +24,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func HandleWSMessage(conversationService application.ConversationCommandService) ws.WSHandler {
+func HandleWSMessage(conversationService services.ConversationService) ws.WSHandler {
 	return func(incomingNotification ws.IncomingNotification, data json.RawMessage) {
 		request := struct {
 			Content        string    `json:"content"`
@@ -62,80 +61,12 @@ func HandleWS(hub ws.Hub, wsHandlers ws.WSHandlers) http.HandlerFunc {
 
 		hub.RegisterClient(client)
 
-		go client.SendNotifications()
-		go client.ReceiveMessages()
+		go client.WritePump()
+		go client.ReadPump()
 	}
 }
 
-func HandleGetConversations(conversationService application.ConversationQueryService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		conversations, err := conversationService.GetConversations()
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		json.NewEncoder(w).Encode(conversations)
-	}
-}
-
-func HandleGetConversationsMessages(conversationService application.ConversationQueryService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-
-		conversationIdQuery := query.Get("conversation_id")
-		conversationId, err := uuid.Parse(conversationIdQuery)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		userID, _ := r.Context().Value("userId").(uuid.UUID)
-
-		messages, err := conversationService.GetConversationMessages(conversationId, userID)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		data := struct {
-			Messages []*readModel.MessageDTO `json:"messages"`
-		}{
-			Messages: messages,
-		}
-
-		json.NewEncoder(w).Encode(data)
-	}
-}
-
-func HandleGetConversation(conversationService application.ConversationQueryService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		userID, _ := r.Context().Value("userId").(uuid.UUID)
-		query := r.URL.Query()
-
-		conversationIdQuery := query.Get("conversation_id")
-		conversationId, err := uuid.Parse(conversationIdQuery)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		conversation, err := conversationService.GetConversation(conversationId, userID)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		}
-
-		json.NewEncoder(w).Encode(conversation)
-	}
-}
-
-func HandleCreateConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
+func HandleCreateConversation(conversationService services.ConversationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			ConversationName string    `json:"conversation_name"`
@@ -162,7 +93,7 @@ func HandleCreateConversation(conversationService application.ConversationComman
 	}
 }
 
-func HandleDeleteConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
+func HandleDeleteConversation(conversationService services.ConversationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			ConversationId uuid.UUID `json:"conversation_id"`
@@ -186,7 +117,7 @@ func HandleDeleteConversation(conversationService application.ConversationComman
 	}
 }
 
-func HandleJoinPublicConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
+func HandleJoinPublicConversation(conversationService services.ConversationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			ConversationId uuid.UUID `json:"conversation_id"`
@@ -212,7 +143,7 @@ func HandleJoinPublicConversation(conversationService application.ConversationCo
 	}
 }
 
-func HandleLeavePublicConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
+func HandleLeavePublicConversation(conversationService services.ConversationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		request := struct {
@@ -237,7 +168,7 @@ func HandleLeavePublicConversation(conversationService application.ConversationC
 	}
 }
 
-func HandleRenamePublicConversation(conversationService application.ConversationCommandService) http.HandlerFunc {
+func HandleRenamePublicConversation(conversationService services.ConversationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		request := struct {

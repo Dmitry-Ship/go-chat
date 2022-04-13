@@ -1,13 +1,12 @@
-package application
+package services
 
 import (
-	"GitHub/go-chat/backend/domain"
-	"GitHub/go-chat/backend/pkg/readModel"
+	"GitHub/go-chat/backend/pkg/domain"
 
 	"github.com/google/uuid"
 )
 
-type ConversationCommandService interface {
+type ConversationService interface {
 	CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error
 	JoinPublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	LeavePublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
@@ -16,34 +15,28 @@ type ConversationCommandService interface {
 	RenamePublicConversation(conversationId uuid.UUID, userId uuid.UUID, name string) error
 }
 
-type conversationCommandService struct {
+type conversationService struct {
 	conversations          domain.ConversationCommandRepository
 	participants           domain.ParticipantCommandRepository
-	users                  domain.UserCommandRepository
-	usersQuery             readModel.UserQueryRepository
 	messages               domain.MessageCommandRepository
 	conversationWSResolver ConversationWSResolver
 }
 
-func NewConversationCommandService(
+func NewConversationService(
 	conversations domain.ConversationCommandRepository,
 	participants domain.ParticipantCommandRepository,
-	users domain.UserCommandRepository,
-	usersQuery readModel.UserQueryRepository,
 	messages domain.MessageCommandRepository,
 	conversationWSResolver ConversationWSResolver,
-) *conversationCommandService {
-	return &conversationCommandService{
+) *conversationService {
+	return &conversationService{
 		conversations:          conversations,
-		users:                  users,
-		usersQuery:             usersQuery,
 		participants:           participants,
 		messages:               messages,
 		conversationWSResolver: conversationWSResolver,
 	}
 }
 
-func (s *conversationCommandService) CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error {
+func (s *conversationService) CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error {
 	conversation := domain.NewPublicConversation(id, name)
 	err := s.conversations.StorePublicConversation(conversation)
 
@@ -60,7 +53,7 @@ func (s *conversationCommandService) CreatePublicConversation(id uuid.UUID, name
 	return nil
 }
 
-func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
+func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
 	err := s.participants.Store(domain.NewParticipant(conversationID, userId))
 
 	if err != nil {
@@ -69,18 +62,18 @@ func (s *conversationCommandService) JoinPublicConversation(conversationID uuid.
 
 	message := domain.NewJoinedConversationMessage(conversationID, userId)
 
-	err = s.messages.StoreJoinedConversation(message)
+	err = s.messages.StoreJoinedConversationMessage(message)
 
 	if err != nil {
 		return err
 	}
 
-	s.conversationWSResolver.DispatchMessage(message.ID, conversationID, userId)
+	go s.conversationWSResolver.NotifyAboutMessage(conversationID, message.ID, userId)
 
 	return nil
 }
 
-func (s *conversationCommandService) RenamePublicConversation(conversationID uuid.UUID, userId uuid.UUID, name string) error {
+func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID, userId uuid.UUID, name string) error {
 	err := s.conversations.RenamePublicConversation(conversationID, name)
 
 	if err != nil {
@@ -89,19 +82,19 @@ func (s *conversationCommandService) RenamePublicConversation(conversationID uui
 
 	message := domain.NewConversationRenamedMessage(conversationID, userId, name)
 
-	err = s.messages.StoreRenamedConversation(message)
+	err = s.messages.StoreRenamedConversationMessage(message)
 
 	if err != nil {
 		return err
 	}
 
-	s.conversationWSResolver.DispatchMessage(message.ID, conversationID, userId)
-	s.conversationWSResolver.DispatchConversationRenamed(conversationID, name)
+	go s.conversationWSResolver.NotifyAboutMessage(conversationID, message.ID, userId)
+	go s.conversationWSResolver.NotifyAboutConversationRenamed(conversationID, name)
 
 	return nil
 }
 
-func (s *conversationCommandService) LeavePublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
+func (s *conversationService) LeavePublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
 	err := s.participants.DeleteByConversationIDAndUserID(conversationID, userId)
 
 	if err != nil {
@@ -110,19 +103,19 @@ func (s *conversationCommandService) LeavePublicConversation(conversationID uuid
 
 	message := domain.NewLeftConversationMessage(conversationID, userId)
 
-	err = s.messages.StoreLeftConversation(message)
+	err = s.messages.StoreLeftConversationMessage(message)
 
 	if err != nil {
 		return err
 	}
 
-	s.conversationWSResolver.DispatchMessage(message.ID, conversationID, userId)
+	go s.conversationWSResolver.NotifyAboutMessage(conversationID, message.ID, userId)
 
 	return nil
 }
 
-func (s *conversationCommandService) DeleteConversation(id uuid.UUID) error {
-	s.conversationWSResolver.DispatchConversationDeleted(id)
+func (s *conversationService) DeleteConversation(id uuid.UUID) error {
+	go s.conversationWSResolver.NotifyAboutConversationDeletion(id)
 
 	err := s.conversations.Delete(id)
 
@@ -133,7 +126,7 @@ func (s *conversationCommandService) DeleteConversation(id uuid.UUID) error {
 	return nil
 }
 
-func (s *conversationCommandService) SendTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
+func (s *conversationService) SendTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
 	message := domain.NewTextMessage(conversationId, userId, messageText)
 
 	err := s.messages.StoreTextMessage(message)
@@ -142,7 +135,7 @@ func (s *conversationCommandService) SendTextMessage(messageText string, convers
 		return err
 	}
 
-	s.conversationWSResolver.DispatchMessage(message.ID, conversationId, userId)
+	go s.conversationWSResolver.NotifyAboutMessage(conversationId, message.ID, userId)
 
 	return nil
 }

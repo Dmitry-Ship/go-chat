@@ -1,21 +1,9 @@
 package postgres
 
 import (
-	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/domain"
 	"GitHub/go-chat/backend/pkg/readModel"
-	"time"
-
-	"github.com/google/uuid"
 )
-
-type User struct {
-	ID           uuid.UUID `gorm:"type:uuid"`
-	Avatar       string
-	Name         string
-	Password     string
-	CreatedAt    time.Time
-	RefreshToken string `gorm:"column:refresh_token"`
-}
 
 func toUserDTO(user *User) *readModel.UserDTO {
 	return &readModel.UserDTO{

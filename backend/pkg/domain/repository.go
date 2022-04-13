@@ -28,9 +28,9 @@ type BaseMessage interface {
 
 type MessageCommandRepository interface {
 	StoreTextMessage(message *TextMessage) error
-	StoreLeftConversation(message *Message) error
-	StoreJoinedConversation(message *Message) error
-	StoreRenamedConversation(message *ConversationRenamedMessage) error
+	StoreLeftConversationMessage(message *Message) error
+	StoreJoinedConversationMessage(message *Message) error
+	StoreRenamedConversationMessage(message *ConversationRenamedMessage) error
 }
 
 type ParticipantCommandRepository interface {

@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/domain"
 	"GitHub/go-chat/backend/pkg/readModel"
 	"errors"
 
@@ -77,7 +77,7 @@ func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.U
 	}
 }
 
-func (r *conversationRepository) FindAll() ([]*readModel.ConversationDTO, error) {
+func (r *conversationRepository) FindAllConversations() ([]*readModel.ConversationDTO, error) {
 	conversations := []*Conversation{}
 
 	err := r.db.Limit(50).Find(&conversations).Error

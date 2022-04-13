@@ -1,15 +1,14 @@
-package interfaces
+package httpHandlers
 
 import (
-	"GitHub/go-chat/backend/pkg/application"
-
+	"GitHub/go-chat/backend/pkg/readModel"
 	"encoding/json"
 	"net/http"
 )
 
-func HandleGetContacts(contactsService application.ContactsQueryService) http.HandlerFunc {
+func HandleGetContacts(userQueryRepository readModel.UserQueryRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		contacts, err := contactsService.GetContacts()
+		contacts, err := userQueryRepository.FindAllUsers()
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

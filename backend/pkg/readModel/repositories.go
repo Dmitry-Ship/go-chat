@@ -5,13 +5,13 @@ import (
 )
 
 type UserQueryRepository interface {
-	FindAll() ([]*UserDTO, error)
+	FindAllUsers() ([]*UserDTO, error)
 	GetUserByID(id uuid.UUID) (*UserDTO, error)
 }
 
 type ConversationQueryRepository interface {
 	GetConversationByID(id uuid.UUID, userId uuid.UUID) (*ConversationFullDTO, error)
-	FindAll() ([]*ConversationDTO, error)
+	FindAllConversations() ([]*ConversationDTO, error)
 }
 
 type MessageQueryRepository interface {

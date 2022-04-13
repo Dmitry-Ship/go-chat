@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/domain"
 	"GitHub/go-chat/backend/pkg/readModel"
 
 	"github.com/google/uuid"
@@ -59,7 +59,7 @@ func (r *userRepository) DeleteRefreshToken(userID uuid.UUID) error {
 	return err
 }
 
-func (r *userRepository) FindAll() ([]*readModel.UserDTO, error) {
+func (r *userRepository) FindAllUsers() ([]*readModel.UserDTO, error) {
 	users := []*User{}
 	err := r.db.Limit(50).Find(&users).Error
 

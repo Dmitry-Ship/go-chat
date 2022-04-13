@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/domain"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"

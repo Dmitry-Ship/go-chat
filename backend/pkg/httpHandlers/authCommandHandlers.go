@@ -1,8 +1,7 @@
-package interfaces
+package httpHandlers
 
 import (
-	"GitHub/go-chat/backend/pkg/application"
-
+	"GitHub/go-chat/backend/pkg/services"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -10,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func HandleLogin(authService application.AuthService) http.HandlerFunc {
+func HandleLogin(authService services.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			UserName string `json:"username"`
@@ -61,7 +60,7 @@ func HandleLogin(authService application.AuthService) http.HandlerFunc {
 	}
 }
 
-func HandleLogout(authService application.AuthService) http.HandlerFunc {
+func HandleLogout(authService services.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value("userId").(uuid.UUID)
 		err := authService.Logout(userID)
@@ -89,7 +88,7 @@ func HandleLogout(authService application.AuthService) http.HandlerFunc {
 	}
 }
 
-func HandleSignUp(authService application.AuthService) http.HandlerFunc {
+func HandleSignUp(authService services.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := struct {
 			UserName string `json:"username"`
@@ -140,7 +139,7 @@ func HandleSignUp(authService application.AuthService) http.HandlerFunc {
 	}
 }
 
-func HandleRefreshToken(authService application.AuthService) http.HandlerFunc {
+func HandleRefreshToken(authService services.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		refreshToken, err := r.Cookie("refresh_token")
 
@@ -187,20 +186,5 @@ func HandleRefreshToken(authService application.AuthService) http.HandlerFunc {
 		}
 
 		json.NewEncoder(w).Encode(expiration)
-	}
-}
-
-func HandleGetUser(authService application.AuthService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		userID, _ := r.Context().Value("userId").(uuid.UUID)
-		user, err := authService.GetUser(userID)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		json.NewEncoder(w).Encode(user)
-
 	}
 }

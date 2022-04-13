@@ -1,32 +1,11 @@
 package postgres
 
 import (
-	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/domain"
 	"GitHub/go-chat/backend/pkg/readModel"
-	"time"
 
 	"github.com/google/uuid"
 )
-
-type Message struct {
-	ID             uuid.UUID `gorm:"type:uuid"`
-	ConversationID uuid.UUID `gorm:"type:uuid"`
-	UserID         uuid.UUID `gorm:"type:uuid"`
-	CreatedAt      time.Time
-	Type           uint8
-}
-
-type TextMessage struct {
-	ID        uuid.UUID `gorm:"type:uuid"`
-	MessageID uuid.UUID `gorm:"type:uuid"`
-	Text      string
-}
-
-type ConversationRenamedMessage struct {
-	ID        uuid.UUID `gorm:"type:uuid"`
-	MessageID uuid.UUID `gorm:"type:uuid"`
-	NewName   string
-}
 
 var messageTypesMap = map[uint8]string{
 	0: "text",

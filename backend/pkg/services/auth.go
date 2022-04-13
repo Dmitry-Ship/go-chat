@@ -1,7 +1,7 @@
-package application
+package services
 
 import (
-	"GitHub/go-chat/backend/domain"
+	"GitHub/go-chat/backend/pkg/domain"
 	"GitHub/go-chat/backend/pkg/readModel"
 	"errors"
 	"os"

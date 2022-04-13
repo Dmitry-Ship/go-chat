@@ -1,11 +1,10 @@
 package main
 
 import (
-	"GitHub/go-chat/backend/pkg/application"
-	"GitHub/go-chat/backend/pkg/database"
-	"GitHub/go-chat/backend/pkg/interfaces"
+	"GitHub/go-chat/backend/pkg/httpHandlers"
 	"GitHub/go-chat/backend/pkg/postgres"
 	pubsub "GitHub/go-chat/backend/pkg/redis"
+	"GitHub/go-chat/backend/pkg/services"
 
 	ws "GitHub/go-chat/backend/pkg/websocket"
 
@@ -15,43 +14,44 @@ import (
 )
 
 func main() {
-	db := database.GetDatabaseConnection()
+	db := postgres.GetDatabaseConnection()
+	redisClient := pubsub.GetRedisClient()
+	hub := ws.NewHub(redisClient)
 
 	messagesRepository := postgres.NewMessageRepository(db)
 	usersRepository := postgres.NewUserRepository(db)
 	conversationsRepository := postgres.NewConversationRepository(db)
 	participantRepository := postgres.NewParticipantRepository(db)
 
-	redisClient := pubsub.GetRedisClient()
-	hub := ws.NewHub(redisClient)
-	conversationWSResolver := application.NewConversationWSResolver(participantRepository, messagesRepository, hub)
+	conversationWSResolver := services.NewConversationWSResolver(participantRepository, messagesRepository, hub)
 
-	conversationCommandService := application.NewConversationCommandService(conversationsRepository, participantRepository, usersRepository, usersRepository, messagesRepository, conversationWSResolver)
-	conversationQueryService := application.NewConversationQueryService(conversationsRepository, messagesRepository)
-	authService := application.NewAuthService(usersRepository, usersRepository)
-	contactsQueryService := application.NewContactsQueryService(usersRepository)
-	ensureAuth := interfaces.MakeEnsureAuth(authService)
+	conversationService := services.NewConversationService(conversationsRepository, participantRepository, messagesRepository, conversationWSResolver)
+	authService := services.NewAuthService(usersRepository, usersRepository)
+
+	ensureAuth := httpHandlers.MakeEnsureAuth(authService)
 
 	wsHandlers := ws.NewWSHandlers()
-	wsHandlers.SetWSHandler("message", interfaces.HandleWSMessage(conversationCommandService))
-	http.HandleFunc("/ws", ensureAuth(interfaces.HandleWS(hub, wsHandlers)))
 
-	http.HandleFunc("/signup", interfaces.AddHeaders(interfaces.HandleSignUp(authService)))
-	http.HandleFunc("/login", interfaces.AddHeaders(interfaces.HandleLogin(authService)))
-	http.HandleFunc("/logout", interfaces.AddHeaders(ensureAuth(interfaces.HandleLogout(authService))))
-	http.HandleFunc("/refreshToken", interfaces.AddHeaders((interfaces.HandleRefreshToken(authService))))
-	http.HandleFunc("/getUser", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetUser(authService))))
+	wsHandlers.SetWSHandler("message", httpHandlers.HandleWSMessage(conversationService))
 
-	http.HandleFunc("/getConversations", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetConversations(conversationQueryService))))
-	http.HandleFunc("/getContacts", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetContacts(contactsQueryService))))
-	http.HandleFunc("/getConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetConversation(conversationQueryService))))
-	http.HandleFunc("/getConversationsMessages", interfaces.AddHeaders(ensureAuth(interfaces.HandleGetConversationsMessages(conversationQueryService))))
+	http.HandleFunc("/ws", ensureAuth(httpHandlers.HandleWS(hub, wsHandlers)))
 
-	http.HandleFunc("/createConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleCreateConversation(conversationCommandService))))
-	http.HandleFunc("/deleteConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleDeleteConversation(conversationCommandService))))
-	http.HandleFunc("/joinConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleJoinPublicConversation(conversationCommandService))))
-	http.HandleFunc("/leaveConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleLeavePublicConversation(conversationCommandService))))
-	http.HandleFunc("/renameConversation", interfaces.AddHeaders(ensureAuth(interfaces.HandleRenamePublicConversation(conversationCommandService))))
+	http.HandleFunc("/signup", httpHandlers.AddHeaders(httpHandlers.HandleSignUp(authService)))
+	http.HandleFunc("/login", httpHandlers.AddHeaders(httpHandlers.HandleLogin(authService)))
+	http.HandleFunc("/logout", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleLogout(authService))))
+	http.HandleFunc("/refreshToken", httpHandlers.AddHeaders((httpHandlers.HandleRefreshToken(authService))))
+	http.HandleFunc("/getUser", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleGetUser(usersRepository))))
+
+	http.HandleFunc("/getConversations", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleGetConversations(conversationsRepository))))
+	http.HandleFunc("/getContacts", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleGetContacts(usersRepository))))
+	http.HandleFunc("/getConversation", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleGetConversation(conversationsRepository))))
+	http.HandleFunc("/getConversationsMessages", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleGetConversationsMessages(messagesRepository))))
+
+	http.HandleFunc("/createConversation", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleCreateConversation(conversationService))))
+	http.HandleFunc("/deleteConversation", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleDeleteConversation(conversationService))))
+	http.HandleFunc("/joinConversation", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleJoinPublicConversation(conversationService))))
+	http.HandleFunc("/leaveConversation", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleLeavePublicConversation(conversationService))))
+	http.HandleFunc("/renameConversation", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleRenamePublicConversation(conversationService))))
 
 	go hub.Run()
 	go conversationWSResolver.Run()

@@ -45,9 +45,9 @@ func NewClient(conn *websocket.Conn, hub Hub, wsHandler WSHandlers, userID uuid.
 
 	return &Client{
 		Id:             uuid.New(),
+		userID:         userID,
 		Conn:           conn,
 		send:           make(chan *OutgoingNotification, 1024),
-		userID:         userID,
 		hub:            hub,
 		wsHandler:      wsHandler,
 		writeWait:      writeWait,
@@ -57,7 +57,7 @@ func NewClient(conn *websocket.Conn, hub Hub, wsHandler WSHandlers, userID uuid.
 	}
 }
 
-func (c *Client) ReceiveMessages() {
+func (c *Client) ReadPump() {
 	defer func() {
 		c.hub.UnregisterClient(c)
 		c.Conn.Close()
@@ -86,7 +86,7 @@ func (c *Client) ReceiveMessages() {
 	}
 }
 
-func (c *Client) SendNotifications() {
+func (c *Client) WritePump() {
 	ticker := time.NewTicker(c.pingPeriod)
 	defer func() {
 		ticker.Stop()

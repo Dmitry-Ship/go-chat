@@ -1,18 +1,8 @@
 package postgres
 
 import (
-	"GitHub/go-chat/backend/domain"
-	"time"
-
-	"github.com/google/uuid"
+	"GitHub/go-chat/backend/pkg/domain"
 )
-
-type Participant struct {
-	ID             uuid.UUID `gorm:"type:uuid"`
-	ConversationID uuid.UUID `gorm:"type:uuid"`
-	UserID         uuid.UUID `gorm:"type:uuid"`
-	CreatedAt      time.Time
-}
 
 func toParticipantPersistence(participant *domain.Participant) *Participant {
 	return &Participant{
