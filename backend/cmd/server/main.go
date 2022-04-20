@@ -54,7 +54,6 @@ func main() {
 	http.HandleFunc("/renameConversation", httpHandlers.AddHeaders(ensureAuth(httpHandlers.HandleRenamePublicConversation(conversationService))))
 
 	go hub.Run()
-	go conversationWSResolver.Run()
 
 	port := os.Getenv("PORT")
 

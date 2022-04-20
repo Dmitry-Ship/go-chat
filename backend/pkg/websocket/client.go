@@ -21,11 +21,11 @@ type OutgoingNotification struct {
 
 type Client struct {
 	Id             uuid.UUID
+	connection     *websocket.Conn
 	hub            Hub
-	wsHandler      WSHandlers
-	Conn           *websocket.Conn
-	send           chan *OutgoingNotification
 	userID         uuid.UUID
+	sendChannel    chan *OutgoingNotification
+	wsHandler      WSHandlers
 	writeWait      time.Duration
 	pongWait       time.Duration
 	pingPeriod     time.Duration
@@ -46,8 +46,8 @@ func NewClient(conn *websocket.Conn, hub Hub, wsHandler WSHandlers, userID uuid.
 	return &Client{
 		Id:             uuid.New(),
 		userID:         userID,
-		Conn:           conn,
-		send:           make(chan *OutgoingNotification, 1024),
+		connection:     conn,
+		sendChannel:    make(chan *OutgoingNotification, 1024),
 		hub:            hub,
 		wsHandler:      wsHandler,
 		writeWait:      writeWait,
@@ -60,15 +60,15 @@ func NewClient(conn *websocket.Conn, hub Hub, wsHandler WSHandlers, userID uuid.
 func (c *Client) ReadPump() {
 	defer func() {
 		c.hub.UnregisterClient(c)
-		c.Conn.Close()
+		c.connection.Close()
 	}()
 
-	c.Conn.SetReadLimit(c.maxMessageSize)
-	c.Conn.SetReadDeadline(time.Now().Add(c.pongWait))
-	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(c.pongWait)); return nil })
+	c.connection.SetReadLimit(c.maxMessageSize)
+	c.connection.SetReadDeadline(time.Now().Add(c.pongWait))
+	c.connection.SetPongHandler(func(string) error { c.connection.SetReadDeadline(time.Now().Add(c.pongWait)); return nil })
 
 	for {
-		_, message, err := c.Conn.ReadMessage()
+		_, message, err := c.connection.ReadMessage()
 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -90,27 +90,27 @@ func (c *Client) WritePump() {
 	ticker := time.NewTicker(c.pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.Conn.Close()
+		c.connection.Close()
 	}()
 
 	for {
 		select {
-		case notification, ok := <-c.send:
-			c.Conn.SetWriteDeadline(time.Now().Add(c.writeWait))
+		case notification, ok := <-c.sendChannel:
+			c.connection.SetWriteDeadline(time.Now().Add(c.writeWait))
 			if !ok {
 				// The conversation closed the channel.
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				c.connection.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
-			if err := c.Conn.WriteJSON(notification); err != nil {
+			if err := c.connection.WriteJSON(notification); err != nil {
 
 				return
 			}
 
 		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(c.writeWait))
-			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			c.connection.SetWriteDeadline(time.Now().Add(c.writeWait))
+			if err := c.connection.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		}
@@ -118,5 +118,5 @@ func (c *Client) WritePump() {
 }
 
 func (c *Client) SendNotification(notification *OutgoingNotification) {
-	c.send <- notification
+	c.sendChannel <- notification
 }

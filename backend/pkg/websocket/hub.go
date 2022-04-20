@@ -34,7 +34,6 @@ var ctx = context.Background()
 
 func NewHub(redisClient *redis.Client) *hub {
 	return &hub{
-		// broadcast:      make(chan broadcastMessage, 1024),
 		register:       make(chan *Client),
 		unregister:     make(chan *Client),
 		userClientsMap: make(map[uuid.UUID]map[uuid.UUID]*Client),
@@ -80,7 +79,7 @@ func (s *hub) Run() {
 		case client := <-s.unregister:
 			if _, ok := s.userClientsMap[client.userID]; ok {
 				delete(s.userClientsMap[client.userID], client.Id)
-				close(client.send)
+				close(client.sendChannel)
 			}
 		}
 
