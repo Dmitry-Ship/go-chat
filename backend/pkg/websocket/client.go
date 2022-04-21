@@ -9,11 +9,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type IncomingNotification struct {
-	UserID uuid.UUID
-	Data   json.RawMessage
-}
-
 type OutgoingNotification struct {
 	Type    string      `json:"type"`
 	Payload interface{} `json:"data"`
@@ -77,12 +72,21 @@ func (c *Client) ReadPump() {
 			break
 		}
 
-		incomingNotification := IncomingNotification{
-			UserID: c.userID,
-			Data:   message,
+		var data json.RawMessage
+
+		incomingNotification := struct {
+			Type string      `json:"type"`
+			Data interface{} `json:"data"`
+		}{
+			Data: &data,
 		}
 
-		go c.wsHandler.HandleNotification(incomingNotification)
+		if err := json.Unmarshal(message, &incomingNotification); err != nil {
+			log.Println(err)
+			return
+		}
+
+		go c.wsHandler.HandleNotification(incomingNotification.Type, data, c.userID)
 	}
 }
 

@@ -3,13 +3,15 @@ package ws
 import (
 	"encoding/json"
 	"log"
+
+	"github.com/google/uuid"
 )
 
 type WSHandlers interface {
-	HandleNotification(notification IncomingNotification)
+	HandleNotification(notificationType string, message json.RawMessage, userID uuid.UUID)
 }
 
-type WSHandler func(message IncomingNotification, data json.RawMessage)
+type WSHandler func(data json.RawMessage, userID uuid.UUID)
 
 type wsHandlers struct {
 	messageHandlers map[string]WSHandler
@@ -21,23 +23,11 @@ func NewWSHandlers() *wsHandlers {
 	}
 }
 
-func (s *wsHandlers) HandleNotification(message IncomingNotification) {
-	var data json.RawMessage
-
-	notificationPayload := struct {
-		Type string      `json:"type"`
-		Data interface{} `json:"data"`
-	}{
-		Data: &data,
-	}
-
-	if err := json.Unmarshal(message.Data, &notificationPayload); err != nil {
-		log.Println(err)
-		return
-	}
-
-	if handler, ok := s.messageHandlers[notificationPayload.Type]; ok {
-		handler(message, data)
+func (s *wsHandlers) HandleNotification(notificationType string, data json.RawMessage, userID uuid.UUID) {
+	if handler, ok := s.messageHandlers[notificationType]; ok {
+		handler(data, userID)
+	} else {
+		log.Printf("No handler for notification type %s", notificationType)
 	}
 }
 

@@ -1,4 +1,4 @@
-package httpHandlers
+package httpServer
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func AddHeaders(next http.HandlerFunc) http.HandlerFunc {
+func addHeaders(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		clientURL := os.Getenv("API_URL")
 

@@ -34,9 +34,9 @@ type AuthService interface {
 	Logout(userId uuid.UUID) error
 	SignUp(username string, password string) (Tokens, error)
 	RotateTokens(refreshTokenString string) (Tokens, error)
-	GetUser(userId uuid.UUID) (*readModel.UserDTO, error)
 	GetAccessTokenExpiration() time.Duration
 	GetRefreshTokenExpiration() time.Duration
+	ParseAccessToken(accessTokenString string) (uuid.UUID, error)
 }
 
 func NewAuthService(users domain.UserCommandRepository, usersQuery readModel.UserQueryRepository) *authService {
@@ -46,16 +46,6 @@ func NewAuthService(users domain.UserCommandRepository, usersQuery readModel.Use
 		refreshTokenExpiration: 24 * 90 * time.Hour,
 		accessTokenExpiration:  10 * time.Minute,
 	}
-}
-
-func (s *authService) GetUser(userId uuid.UUID) (*readModel.UserDTO, error) {
-	user, err := s.usersQuery.GetUserByID(userId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
 }
 
 func (a *authService) hashPassword(password string) (string, error) {
