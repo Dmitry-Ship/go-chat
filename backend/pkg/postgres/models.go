@@ -54,3 +54,9 @@ type User struct {
 	CreatedAt    time.Time
 	RefreshToken string `gorm:"column:refresh_token"`
 }
+
+type UserNotificationTopic struct {
+	ID     uuid.UUID `gorm:"type:uuid"`
+	UserID uuid.UUID `gorm:"type:uuid"`
+	Topic  string
+}

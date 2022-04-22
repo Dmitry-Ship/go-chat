@@ -6,6 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
+type BaseConversation interface {
+	GetBaseData() *Conversation
+}
+
 type Conversation struct {
 	ID        uuid.UUID
 	Type      string

@@ -8,10 +8,10 @@ import (
 )
 
 var messageTypesMap = map[uint8]string{
-	0: "text",
-	1: "renamed_conversation",
-	2: "left_conversation",
-	3: "joined_conversation",
+	0: domain.MessageTypeText,
+	1: domain.MessageTypeRenamedConversation,
+	2: domain.MessageTypeLeftConversation,
+	3: domain.MessageTypeJoinedConversation,
 }
 
 func toMessageTypePersistence(messageType string) uint8 {

@@ -33,6 +33,7 @@ func GetDatabaseConnection() *gorm.DB {
 	db.AutoMigrate(Participant{})
 	db.AutoMigrate(TextMessage{})
 	db.AutoMigrate(ConversationRenamedMessage{})
+	db.AutoMigrate(UserNotificationTopic{})
 
 	return db
 }

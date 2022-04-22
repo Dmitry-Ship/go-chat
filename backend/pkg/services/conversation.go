@@ -16,23 +16,23 @@ type ConversationService interface {
 }
 
 type conversationService struct {
-	conversations          domain.ConversationCommandRepository
-	participants           domain.ParticipantCommandRepository
-	messages               domain.MessageCommandRepository
-	conversationWSResolver ConversationWSResolver
+	conversations        domain.ConversationCommandRepository
+	participants         domain.ParticipantCommandRepository
+	messages             domain.MessageCommandRepository
+	notificationsService NotificationsService
 }
 
 func NewConversationService(
 	conversations domain.ConversationCommandRepository,
 	participants domain.ParticipantCommandRepository,
 	messages domain.MessageCommandRepository,
-	conversationWSResolver ConversationWSResolver,
+	notificationsService NotificationsService,
 ) *conversationService {
 	return &conversationService{
-		conversations:          conversations,
-		participants:           participants,
-		messages:               messages,
-		conversationWSResolver: conversationWSResolver,
+		conversations:        conversations,
+		participants:         participants,
+		messages:             messages,
+		notificationsService: notificationsService,
 	}
 }
 
@@ -60,6 +60,12 @@ func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, u
 		return err
 	}
 
+	err = s.notificationsService.SubscribeToTopic("conversation:"+conversationID.String(), userId)
+
+	if err != nil {
+		return err
+	}
+
 	message := domain.NewJoinedConversationMessage(conversationID, userId)
 
 	err = s.messages.StoreJoinedConversationMessage(message)
@@ -68,7 +74,7 @@ func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, u
 		return err
 	}
 
-	go s.conversationWSResolver.NotifyAboutMessage(conversationID, message.ID, userId)
+	go s.notificationsService.NotifyAboutMessage(conversationID, message.ID, userId)
 
 	return nil
 }
@@ -88,8 +94,8 @@ func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID,
 		return err
 	}
 
-	go s.conversationWSResolver.NotifyAboutMessage(conversationID, message.ID, userId)
-	go s.conversationWSResolver.NotifyAboutConversationRenamed(conversationID, name)
+	go s.notificationsService.NotifyAboutMessage(conversationID, message.ID, userId)
+	go s.notificationsService.NotifyAboutConversationRenamed(conversationID, name)
 
 	return nil
 }
@@ -109,13 +115,19 @@ func (s *conversationService) LeavePublicConversation(conversationID uuid.UUID, 
 		return err
 	}
 
-	go s.conversationWSResolver.NotifyAboutMessage(conversationID, message.ID, userId)
+	err = s.notificationsService.UnsubscribeFromTopic("conversation:"+conversationID.String(), userId)
+
+	if err != nil {
+		return err
+	}
+
+	go s.notificationsService.NotifyAboutMessage(conversationID, message.ID, userId)
 
 	return nil
 }
 
 func (s *conversationService) DeleteConversation(id uuid.UUID) error {
-	go s.conversationWSResolver.NotifyAboutConversationDeletion(id)
+	go s.notificationsService.NotifyAboutConversationDeletion(id)
 
 	err := s.conversations.Delete(id)
 
@@ -135,7 +147,7 @@ func (s *conversationService) SendTextMessage(messageText string, conversationId
 		return err
 	}
 
-	go s.conversationWSResolver.NotifyAboutMessage(conversationId, message.ID, userId)
+	go s.notificationsService.NotifyAboutMessage(conversationId, message.ID, userId)
 
 	return nil
 }

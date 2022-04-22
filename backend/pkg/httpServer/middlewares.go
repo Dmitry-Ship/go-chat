@@ -4,11 +4,9 @@ import (
 	"context"
 	"net/http"
 	"os"
-
-	"github.com/google/uuid"
 )
 
-func addHeaders(next http.HandlerFunc) http.HandlerFunc {
+func (s *HTTPServer) withHeaders(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		clientURL := os.Getenv("API_URL")
 
@@ -27,36 +25,28 @@ func addHeaders(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-type accessTokenParser interface {
-	ParseAccessToken(tokenString string) (uuid.UUID, error)
-}
+func (s *HTTPServer) private(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accessToken, err := r.Cookie("access_token")
 
-type ensureAuthMiddleware func(handlerToWrap http.HandlerFunc) http.HandlerFunc
-
-func MakeEnsureAuth(authService accessTokenParser) ensureAuthMiddleware {
-	return func(next http.HandlerFunc) http.HandlerFunc {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			accessToken, err := r.Cookie("access_token")
-
-			if err != nil {
-				if err == http.ErrNoCookie {
-					w.WriteHeader(http.StatusUnauthorized)
-					return
-				}
-				w.WriteHeader(http.StatusBadRequest)
+		if err != nil {
+			if err == http.ErrNoCookie {
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-			userId, err := authService.ParseAccessToken(accessToken.Value)
+		userId, err := s.app.Commands.AuthService.ParseAccessToken(accessToken.Value)
 
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				return
-			}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
 
-			ctx := context.WithValue(r.Context(), "userId", userId)
+		ctx := context.WithValue(r.Context(), "userId", userId)
 
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
+		s.withHeaders(next).ServeHTTP(w, r.WithContext(ctx))
+	})
 }

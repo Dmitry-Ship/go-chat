@@ -15,8 +15,9 @@ type App struct {
 }
 
 type commands struct {
-	ConversationService services.ConversationService
-	AuthService         services.AuthService
+	ConversationService  services.ConversationService
+	AuthService          services.AuthService
+	NotificationsService services.NotificationsService
 }
 
 type queries struct {
@@ -31,13 +32,15 @@ func NewApp(db *gorm.DB, hub ws.Hub) *App {
 	usersRepository := postgres.NewUserRepository(db)
 	conversationsRepository := postgres.NewConversationRepository(db)
 	participantRepository := postgres.NewParticipantRepository(db)
+	notificationTopicRepository := postgres.NewNotificationTopicRepository(db)
 
-	conversationWSResolver := services.NewConversationWSResolver(participantRepository, messagesRepository, hub)
+	notificationsService := services.NewNotificationsService(messagesRepository, notificationTopicRepository, hub)
 
 	return &App{
 		Commands: commands{
-			ConversationService: services.NewConversationService(conversationsRepository, participantRepository, messagesRepository, conversationWSResolver),
-			AuthService:         services.NewAuthService(usersRepository, usersRepository),
+			ConversationService:  services.NewConversationService(conversationsRepository, participantRepository, messagesRepository, notificationsService),
+			AuthService:          services.NewAuthService(usersRepository, usersRepository),
+			NotificationsService: notificationsService,
 		},
 		Queries: queries{
 			UsersRepository:        usersRepository,

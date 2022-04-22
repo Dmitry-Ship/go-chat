@@ -4,10 +4,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type BaseConversation interface {
-	GetBaseData() *Conversation
-}
-
 type ConversationCommandRepository interface {
 	StorePublicConversation(conversation *PublicConversation) error
 	RenamePublicConversation(conversationId uuid.UUID, name string) error
@@ -22,10 +18,6 @@ type UserCommandRepository interface {
 	DeleteRefreshToken(userID uuid.UUID) error
 }
 
-type BaseMessage interface {
-	GetBaseData() *Message
-}
-
 type MessageCommandRepository interface {
 	StoreTextMessage(message *TextMessage) error
 	StoreLeftConversationMessage(message *Message) error
@@ -36,4 +28,10 @@ type MessageCommandRepository interface {
 type ParticipantCommandRepository interface {
 	Store(participant *Participant) error
 	DeleteByConversationIDAndUserID(conversationId uuid.UUID, userId uuid.UUID) error
+}
+
+type NotificationTopicCommandRepository interface {
+	Store(notificationTopic *NotificationTopic) error
+	DeleteByUserIDAndTopic(userId uuid.UUID, topic string) error
+	GetAllNotificationTopics(userID uuid.UUID) ([]string, error)
 }

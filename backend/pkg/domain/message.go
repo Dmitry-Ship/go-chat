@@ -6,6 +6,17 @@ import (
 	"github.com/google/uuid"
 )
 
+type BaseMessage interface {
+	GetBaseData() *Message
+}
+
+const (
+	MessageTypeText                = "text"
+	MessageTypeRenamedConversation = "renamed_conversation"
+	MessageTypeLeftConversation    = "left_conversation"
+	MessageTypeJoinedConversation  = "joined_conversation"
+)
+
 type Message struct {
 	ID             uuid.UUID
 	ConversationID uuid.UUID
@@ -39,7 +50,7 @@ type TextMessage struct {
 }
 
 func NewTextMessage(conversationId uuid.UUID, userID uuid.UUID, text string) *TextMessage {
-	baseMessage := newMessage(conversationId, userID, "text")
+	baseMessage := newMessage(conversationId, userID, MessageTypeText)
 
 	return &TextMessage{
 		Message: *baseMessage,
@@ -65,7 +76,7 @@ type ConversationRenamedMessage struct {
 }
 
 func NewConversationRenamedMessage(conversationId uuid.UUID, userID uuid.UUID, newName string) *ConversationRenamedMessage {
-	baseMessage := newMessage(conversationId, userID, "renamed_conversation")
+	baseMessage := newMessage(conversationId, userID, MessageTypeRenamedConversation)
 	return &ConversationRenamedMessage{
 		Message: *baseMessage,
 		Data: conversationRenamedMessageData{
@@ -83,11 +94,11 @@ func (crm *ConversationRenamedMessage) GetConversationRenamedMessage() *conversa
 type LeftConversationMessage = Message
 
 func NewLeftConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *LeftConversationMessage {
-	return newMessage(conversationId, userID, "left_conversation")
+	return newMessage(conversationId, userID, MessageTypeLeftConversation)
 }
 
 type JoinedConversationMessage = Message
 
 func NewJoinedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *JoinedConversationMessage {
-	return newMessage(conversationId, userID, "joined_conversation")
+	return newMessage(conversationId, userID, MessageTypeJoinedConversation)
 }

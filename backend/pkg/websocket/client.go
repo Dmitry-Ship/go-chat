@@ -18,7 +18,7 @@ type Client struct {
 	Id             uuid.UUID
 	connection     *websocket.Conn
 	hub            Hub
-	userID         uuid.UUID
+	UserID         uuid.UUID
 	sendChannel    chan *OutgoingNotification
 	wsHandler      WSHandlers
 	writeWait      time.Duration
@@ -40,7 +40,7 @@ func NewClient(conn *websocket.Conn, hub Hub, wsHandler WSHandlers, userID uuid.
 
 	return &Client{
 		Id:             uuid.New(),
-		userID:         userID,
+		UserID:         userID,
 		connection:     conn,
 		sendChannel:    make(chan *OutgoingNotification, 1024),
 		hub:            hub,
@@ -86,7 +86,7 @@ func (c *Client) ReadPump() {
 			return
 		}
 
-		go c.wsHandler.HandleNotification(incomingNotification.Type, data, c.userID)
+		go c.wsHandler.HandleNotification(incomingNotification.Type, data, c.UserID)
 	}
 }
 
