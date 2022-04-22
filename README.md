@@ -26,3 +26,7 @@ graph LR
     C --> F(Redis PubSub)
     D --> F
 ```
+
+## 💿 Database Design
+
+https://drawsql.app/none-794/diagrams/go-chat/embed
