@@ -1,7 +1,7 @@
 .conversation {
   margin-bottom: 20px;
-  /* background-color: var(--warn); */
-  border: 1px solid var(--warn);
+  /* background-color: var(--warn-color); */
+  border: 1px solid var(--accent-color);
   height: 80px;
   display: flex;
   padding: 20px;

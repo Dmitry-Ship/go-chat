@@ -10,7 +10,8 @@ import (
 )
 
 func (s *HTTPServer) handleGetConversations(w http.ResponseWriter, r *http.Request) {
-	conversations, err := s.app.Queries.ConversationRepository.FindAllConversations()
+	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	conversations, err := s.app.Queries.ConversationRepository.FindMyConversations(userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -1,12 +1,17 @@
 .navBtn {
-  font-size: xx-large;
+  font-size: x-large;
   background: none;
   border: none;
   padding: 0;
   text-decoration: none;
-  opacity: 0.2;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .active {
-  opacity: 1;
+  border: 1px solid var(--accent-color);
 }

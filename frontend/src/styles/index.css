@@ -5,7 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--secondary);
+  background-color: var(--secondary-color);
 }
 
 code {
@@ -15,11 +15,11 @@ code {
 
 :root {
   --br: 20px;
-  --warn: #eaac8b;
-  --accent: #e56b6f;
-  --primary: #b56576;
-  --secondary: #6d597a;
-  --tertiary: #355070;
+  --warn-color: #e56b6f;
+  --accent-color: #eaac8b;
+  --primary-color: #b56576;
+  --secondary-color: #5c5263;
+  --tertiary-color: #355070;
   --vh: 1px;
   --bar-height: calc(9 * var(--vh));
   --max-width: 756px;
@@ -52,7 +52,7 @@ code {
   position: fixed;
   top: 0;
   width: 100%;
-  background-color: var(--secondary);
+  background-color: var(--secondary-color);
 }
 
 .controls-for-scrollable {
@@ -70,7 +70,7 @@ code {
 .wrap {
   justify-content: center;
   min-height: calc(var(--vh) * 100);
-  background-color: var(--secondary);
+  background-color: var(--secondary-color);
   display: flex;
   flex-direction: column;
 }
@@ -85,7 +85,7 @@ code {
 
 .btn {
   border-radius: var(--br);
-  background-color: var(--accent);
+  background-color: var(--accent-color);
   padding: 0.7rem;
   color: white;
   text-align: center;
@@ -100,7 +100,7 @@ code {
 }
 
 .btn:active {
-  background-color: var(--secondary);
+  background-color: var(--secondary-color);
 }
 
 .input {
@@ -113,11 +113,11 @@ code {
   outline: none;
   border: 2px solid transparent;
   color: white;
-  background-color: var(--tertiary);
+  background-color: var(--tertiary-color);
   margin-right: 10px;
 }
 
 .input:focus {
   color: white;
-  border-color: var(--accent);
+  border-color: var(--accent-color);
 }

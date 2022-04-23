@@ -1,12 +1,12 @@
 .list {
-  background: var(--tertiary);
+  background: var(--tertiary-color);
   display: flex;
   flex-direction: column;
 }
 
 .contact {
   margin-bottom: 10px;
-  background-color: var(--warn);
+  background-color: var(--accent-color);
   padding: 24px;
   height: 100px;
   display: flex;

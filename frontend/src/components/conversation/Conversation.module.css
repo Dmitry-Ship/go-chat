@@ -2,3 +2,9 @@
   font-size: xx-large;
   text-decoration: none;
 }
+
+.conversationInfo {
+  display: flex;
+  align-items: center;
+}
+ 

@@ -8,6 +8,7 @@ import EditConversationBtn from "./EditConversationBtn";
 import { useWS } from "../../contexts/WSContext";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import Avatar from "../common/Avatar";
 
 const Conversation: React.FC = () => {
   const router = useRouter();
@@ -52,7 +53,11 @@ const Conversation: React.FC = () => {
         <Link href="/">
           <a className={styles.backButton}>⏪</a>
         </Link>
-        <b>{conversation?.name}</b>
+
+        <div className={styles.conversationInfo}>
+          <Avatar src={conversation?.avatar || ""} />
+          {conversation?.name}
+        </div>
 
         <EditConversationBtn
           conversationId={conversationId}

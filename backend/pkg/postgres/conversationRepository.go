@@ -77,10 +77,14 @@ func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.U
 	}
 }
 
-func (r *conversationRepository) FindAllConversations() ([]*readModel.ConversationDTO, error) {
+func (r *conversationRepository) FindMyConversations(userID uuid.UUID) ([]*readModel.ConversationDTO, error) {
 	conversations := []*Conversation{}
 
-	err := r.db.Limit(50).Find(&conversations).Error
+	err := r.db.Joins("JOIN participants ON participants.conversation_id = conversations.id").Where("participants.user_id = ?", userID).Find(&conversations).Error
+
+	if err != nil {
+		return nil, err
+	}
 
 	conversationsDTOs := make([]*readModel.ConversationDTO, len(conversations))
 

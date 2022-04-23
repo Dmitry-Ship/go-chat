@@ -9,27 +9,32 @@ function ContactsList() {
   const response = useQuery<User[]>(`/getContacts`);
 
   return (
-    <main className={`${styles.list} scrollable-content`}>
-      {(() => {
-        switch (response.status) {
-          case "fetching":
-            return <Loader />;
-          case "done":
-            return response.data?.map((user, i) => (
-              <ConversationItem
-                key={i}
-                conversation={{
-                  id: user.id,
-                  name: user.name,
-                  avatar: user.avatar,
-                }}
-              />
-            ));
-          default:
-            return null;
-        }
-      })()}
-    </main>
+    <>
+      <header className={`header header-for-scrollable`}>
+        <h2>Contacts</h2>
+      </header>
+      <main className={`${styles.list} scrollable-content`}>
+        {(() => {
+          switch (response.status) {
+            case "fetching":
+              return <Loader />;
+            case "done":
+              return response.data?.map((user, i) => (
+                <ConversationItem
+                  key={i}
+                  conversation={{
+                    id: user.id,
+                    name: user.name,
+                    avatar: user.avatar,
+                  }}
+                />
+              ));
+            default:
+              return null;
+          }
+        })()}
+      </main>
+    </>
   );
 }
 

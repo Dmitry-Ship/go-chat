@@ -44,9 +44,9 @@
 }
 
 .inboundMessage {
-  background-color: var(--warn);
+  background-color: var(--warn-color);
 }
 
 .outboundMessage {
-  background-color: var(--primary);
+  background-color: var(--primary-color);
 }

@@ -59,9 +59,9 @@ func (r *userRepository) DeleteRefreshToken(userID uuid.UUID) error {
 	return err
 }
 
-func (r *userRepository) FindAllUsers() ([]*readModel.UserDTO, error) {
+func (r *userRepository) FindContacts(userID uuid.UUID) ([]*readModel.UserDTO, error) {
 	users := []*User{}
-	err := r.db.Limit(50).Find(&users).Error
+	err := r.db.Limit(50).Where("id <> ?", userID).Find(&users).Error
 
 	dtoUsers := make([]*readModel.UserDTO, len(users))
 
