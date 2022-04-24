@@ -12,27 +12,26 @@ type ConversationService interface {
 	JoinPublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	LeavePublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	DeleteConversation(id uuid.UUID) error
-	SendTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
 	RenamePublicConversation(conversationId uuid.UUID, userId uuid.UUID, name string) error
 }
 
 type conversationService struct {
 	conversations        domain.ConversationCommandRepository
 	participants         domain.ParticipantCommandRepository
-	messages             domain.MessageCommandRepository
+	messagingService     MessagingService
 	notificationsService NotificationsService
 }
 
 func NewConversationService(
 	conversations domain.ConversationCommandRepository,
 	participants domain.ParticipantCommandRepository,
-	messages domain.MessageCommandRepository,
+	messagingService MessagingService,
 	notificationsService NotificationsService,
 ) *conversationService {
 	return &conversationService{
 		conversations:        conversations,
 		participants:         participants,
-		messages:             messages,
+		messagingService:     messagingService,
 		notificationsService: notificationsService,
 	}
 }
@@ -91,11 +90,7 @@ func (s *conversationService) CreatePublicConversation(id uuid.UUID, name string
 
 	err = s.JoinPublicConversation(conversation.ID, userId)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
@@ -111,17 +106,9 @@ func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, u
 		return err
 	}
 
-	message := domain.NewJoinedConversationMessage(conversationID, userId)
+	err = s.messagingService.SendJoinedConversationMessage(conversationID, userId)
 
-	err = s.messages.StoreJoinedConversationMessage(message)
-
-	if err != nil {
-		return err
-	}
-
-	go s.notificationsService.NotifyAboutMessage(conversationID, message.ID, userId)
-
-	return nil
+	return err
 }
 
 func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID, userId uuid.UUID, name string) error {
@@ -133,32 +120,21 @@ func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID,
 
 	conversation.Rename(name)
 
-	s.conversations.UpdatePublicConversation(conversation)
-
-	message := domain.NewConversationRenamedMessage(conversationID, userId, name)
-
-	err = s.messages.StoreRenamedConversationMessage(message)
+	err = s.conversations.UpdatePublicConversation(conversation)
 
 	if err != nil {
 		return err
 	}
 
-	go s.notificationsService.NotifyAboutMessage(conversationID, message.ID, userId)
 	go s.notificationsService.NotifyAboutConversationRenamed(conversationID, name)
 
-	return nil
+	err = s.messagingService.SendRenamedConversationMessage(conversationID, userId, name)
+
+	return err
 }
 
 func (s *conversationService) LeavePublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
 	err := s.participants.DeleteByConversationIDAndUserID(conversationID, userId)
-
-	if err != nil {
-		return err
-	}
-
-	message := domain.NewLeftConversationMessage(conversationID, userId)
-
-	err = s.messages.StoreLeftConversationMessage(message)
 
 	if err != nil {
 		return err
@@ -170,9 +146,9 @@ func (s *conversationService) LeavePublicConversation(conversationID uuid.UUID, 
 		return err
 	}
 
-	go s.notificationsService.NotifyAboutMessage(conversationID, message.ID, userId)
+	err = s.messagingService.SendLeftConversationMessage(conversationID, userId)
 
-	return nil
+	return err
 }
 
 func (s *conversationService) DeleteConversation(id uuid.UUID) error {
@@ -180,23 +156,5 @@ func (s *conversationService) DeleteConversation(id uuid.UUID) error {
 
 	err := s.conversations.Delete(id)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *conversationService) SendTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
-	message := domain.NewTextMessage(conversationId, userId, messageText)
-
-	err := s.messages.StoreTextMessage(message)
-
-	if err != nil {
-		return err
-	}
-
-	go s.notificationsService.NotifyAboutMessage(conversationId, message.ID, userId)
-
-	return nil
+	return err
 }

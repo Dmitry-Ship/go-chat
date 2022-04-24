@@ -4,7 +4,7 @@ import (
 	"GitHub/go-chat/backend/pkg/app"
 	"GitHub/go-chat/backend/pkg/httpServer"
 	"GitHub/go-chat/backend/pkg/postgres"
-	pubsub "GitHub/go-chat/backend/pkg/redis"
+	redisPubsub "GitHub/go-chat/backend/pkg/redis"
 	ws "GitHub/go-chat/backend/pkg/websocket"
 	"log"
 	"net/http"
@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	redisClient := pubsub.GetRedisClient()
+	redisClient := redisPubsub.GetRedisClient()
 	db := postgres.NewDatabaseConnection()
 	db.RunMigrations()
 

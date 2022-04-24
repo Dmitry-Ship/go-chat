@@ -71,7 +71,7 @@ func (s *notificationsService) UnsubscribeFromTopic(topic string, userId uuid.UU
 	return err
 }
 
-func (s *notificationsService) notifyParticipants(conversationID uuid.UUID, notification ws.OutgoingNotification) {
+func (s *notificationsService) broadcastToConversation(conversationID uuid.UUID, notification ws.OutgoingNotification) {
 	s.conencionsHub.BroadcastToTopic("conversation:"+conversationID.String(), notification)
 }
 
@@ -87,7 +87,7 @@ func (s *notificationsService) NotifyAboutMessage(conversationId uuid.UUID, mess
 		Payload: messageDTO,
 	}
 
-	s.notifyParticipants(conversationId, notification)
+	s.broadcastToConversation(conversationId, notification)
 
 	return nil
 }
@@ -102,7 +102,7 @@ func (s *notificationsService) NotifyAboutConversationDeletion(id uuid.UUID) {
 		},
 	}
 
-	s.notifyParticipants(id, notification)
+	s.broadcastToConversation(id, notification)
 }
 
 func (s *notificationsService) NotifyAboutConversationRenamed(conversationId uuid.UUID, newName string) {
@@ -117,5 +117,5 @@ func (s *notificationsService) NotifyAboutConversationRenamed(conversationId uui
 		},
 	}
 
-	s.notifyParticipants(conversationId, notification)
+	s.broadcastToConversation(conversationId, notification)
 }

@@ -61,7 +61,7 @@ func (s *HTTPServer) handleReceiveWSChatMessage(data json.RawMessage, userID uui
 		return
 	}
 
-	err := s.app.Commands.ConversationService.SendTextMessage(request.Content, request.ConversationId, userID)
+	err := s.app.Commands.MessagingService.SendTextMessage(request.Content, request.ConversationId, userID)
 
 	if err != nil {
 		log.Println(err)
