@@ -25,6 +25,12 @@ type UserDTO struct {
 	Name   string    `json:"name"`
 }
 
+type ContactDTO struct {
+	ID     uuid.UUID `json:"id"`
+	Avatar string    `json:"avatar"`
+	Name   string    `json:"name"`
+}
+
 type MessageDTO struct {
 	ID                  uuid.UUID `json:"id"`
 	CreatedAt           time.Time `json:"created_at"`

@@ -7,7 +7,37 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *HTTPServer) handleCreateConversation(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPServer) handleCreatePrivateConversationIfNotExists(w http.ResponseWriter, r *http.Request) {
+	request := struct {
+		ToUserId uuid.UUID `json:"to_user_id"`
+	}{}
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	userID, _ := r.Context().Value("userId").(uuid.UUID)
+
+	conversationId, err := s.app.Commands.ConversationService.CreatePrivateConversationIfNotExists(userID, request.ToUserId)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := struct {
+		ConversationId uuid.UUID `json:"conversation_id"`
+	}{
+		ConversationId: conversationId,
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func (s *HTTPServer) handleCreatePublicConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationName string    `json:"conversation_name"`
 		ConversationId   uuid.UUID `json:"conversation_id"`

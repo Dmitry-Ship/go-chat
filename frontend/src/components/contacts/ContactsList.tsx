@@ -1,12 +1,12 @@
 import React from "react";
 import { useQuery } from "../../api/hooks";
-import { User } from "../../types/coreTypes";
+import { Contact } from "../../types/coreTypes";
 import Loader from "../common/Loader";
-import ConversationItem from "../conversations/ConversationItem";
+import ContactItem from "./ContactItem";
 import styles from "./ContactsList.module.css";
 
 function ContactsList() {
-  const response = useQuery<User[]>(`/getContacts`);
+  const response = useQuery<Contact[]>(`/getContacts`);
 
   return (
     <>
@@ -20,14 +20,7 @@ function ContactsList() {
               return <Loader />;
             case "done":
               return response.data?.map((user, i) => (
-                <ConversationItem
-                  key={i}
-                  conversation={{
-                    id: user.id,
-                    name: user.name,
-                    avatar: user.avatar,
-                  }}
-                />
+                <ContactItem key={i} contact={user} />
               ));
             default:
               return null;

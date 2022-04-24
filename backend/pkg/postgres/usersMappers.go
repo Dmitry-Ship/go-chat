@@ -13,6 +13,14 @@ func toUserDTO(user *User) *readModel.UserDTO {
 	}
 }
 
+func toContactDTO(user *User) *readModel.ContactDTO {
+	return &readModel.ContactDTO{
+		ID:     user.ID,
+		Avatar: user.Avatar,
+		Name:   user.Name,
+	}
+}
+
 func ToUserPersistence(user *domain.User) *User {
 	return &User{
 		ID:           user.ID,

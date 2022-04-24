@@ -8,6 +8,7 @@ import (
 
 type ConversationService interface {
 	CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error
+	CreatePrivateConversationIfNotExists(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error)
 	JoinPublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	LeavePublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	DeleteConversation(id uuid.UUID) error
@@ -34,6 +35,50 @@ func NewConversationService(
 		messages:             messages,
 		notificationsService: notificationsService,
 	}
+}
+
+func (s *conversationService) CreatePrivateConversationIfNotExists(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error) {
+	existingConversationID, err := s.conversations.GetPrivateConversationID(fromUserId, toUserId)
+
+	if err == nil {
+		return existingConversationID, nil
+	}
+
+	newConversationID := uuid.New()
+
+	conversation := domain.NewPrivateConversation(newConversationID, toUserId, fromUserId)
+
+	err = s.conversations.StorePrivateConversation(conversation)
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	err = s.participants.Store(domain.NewParticipant(newConversationID, fromUserId))
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	err = s.participants.Store(domain.NewParticipant(newConversationID, toUserId))
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	err = s.notificationsService.SubscribeToTopic("conversation:"+newConversationID.String(), fromUserId)
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	err = s.notificationsService.SubscribeToTopic("conversation:"+newConversationID.String(), toUserId)
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return newConversationID, nil
 }
 
 func (s *conversationService) CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error {

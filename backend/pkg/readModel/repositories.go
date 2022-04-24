@@ -5,7 +5,7 @@ import (
 )
 
 type UserQueryRepository interface {
-	FindContacts(userID uuid.UUID) ([]*UserDTO, error)
+	FindContacts(userID uuid.UUID) ([]*ContactDTO, error)
 	GetUserByID(userID uuid.UUID) (*UserDTO, error)
 }
 

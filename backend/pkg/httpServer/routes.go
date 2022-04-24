@@ -22,7 +22,8 @@ func (s *HTTPServer) Init() {
 	http.HandleFunc("/getConversation", s.private(s.handleGetConversation))
 	http.HandleFunc("/getConversationsMessages", s.private(s.handleGetConversationsMessages))
 
-	http.HandleFunc("/createConversation", s.private(s.handleCreateConversation))
+	http.HandleFunc("/createConversation", s.private(s.handleCreatePublicConversation))
+	http.HandleFunc("/createPrivateConversationIfNotExists", s.private(s.handleCreatePrivateConversationIfNotExists))
 	http.HandleFunc("/deleteConversation", s.private(s.handleDeleteConversation))
 	http.HandleFunc("/joinConversation", s.private(s.handleJoinPublicConversation))
 	http.HandleFunc("/leaveConversation", s.private(s.handleLeavePublicConversation))

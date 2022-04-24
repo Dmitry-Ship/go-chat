@@ -9,9 +9,19 @@ const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
 
   useEffect(() => {
-    router.push(isAuthenticated ? "/" : "/login");
+    if (!isAuthenticated && !isChecking) {
+      router.push("/login");
+      return;
+    }
+
+    if (isAuthenticated) {
+      if (router.pathname === "/login" || router.pathname === "/signup") {
+        router.push("/");
+      }
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isChecking]);
 
   if (isChecking) {
     return <Loader />;

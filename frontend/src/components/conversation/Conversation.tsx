@@ -53,17 +53,19 @@ const Conversation: React.FC = () => {
         <Link href="/">
           <a className={styles.backButton}>⏪</a>
         </Link>
-
         <div className={styles.conversationInfo}>
           <Avatar src={conversation?.avatar || ""} />
-          {conversation?.name}
+          <h3 className={styles.conversationName}>{conversation?.name}</h3>
         </div>
-
-        <EditConversationBtn
-          conversationId={conversationId}
-          joined={isJoined}
-          onLeave={() => setIsJoined(false)}
-        />
+        {conversation?.type === "public" ? (
+          <EditConversationBtn
+            conversationId={conversationId}
+            joined={isJoined}
+            onLeave={() => setIsJoined(false)}
+          />
+        ) : (
+          <div />
+        )}
       </header>
 
       <section className="wrap">

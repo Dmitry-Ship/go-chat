@@ -34,6 +34,29 @@ func (r *conversationRepository) StorePublicConversation(conversation *domain.Pu
 	return err
 }
 
+func (r *conversationRepository) StorePrivateConversation(conversation *domain.PrivateConversation) error {
+	err := r.db.Create(toConversationPersistence(conversation)).Error
+
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Create(toPrivateConversationPersistence(conversation)).Error
+
+	return err
+}
+
+func (r *conversationRepository) GetPrivateConversationID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {
+	privateConversation := PrivateConversation{}
+	err := r.db.Where("to_user_id = ? AND from_user_id = ?", firstUserId, secondUserID).Or("to_user_id = ? AND from_user_id = ?", secondUserID, firstUserId).First(&privateConversation).Error
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return privateConversation.ConversationID, nil
+}
+
 func (r *conversationRepository) RenamePublicConversation(id uuid.UUID, name string) error {
 	err := r.db.Model(PublicConversation{}).Where("conversation_id = ?", id).Update("name", name).Error
 
@@ -71,7 +94,30 @@ func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.U
 		}
 
 		return toConversationFullDTO(&conversation, publicConversation.Avatar, publicConversation.Name, hasUserJoined), nil
+	case 1:
+		privateConversation := PrivateConversation{}
 
+		err = r.db.Where("conversation_id = ?", conversation.ID).First(&privateConversation).Error
+
+		if err != nil {
+			return nil, err
+		}
+
+		user := User{}
+
+		oppositeUserId := privateConversation.FromUserID
+
+		if privateConversation.FromUserID == userId {
+			oppositeUserId = privateConversation.ToUserID
+		}
+
+		err = r.db.Where("id = ?", oppositeUserId).First(&user).Error
+
+		if err != nil {
+			return nil, err
+		}
+
+		return toConversationFullDTO(&conversation, user.Avatar, user.Name, hasUserJoined), nil
 	default:
 		return nil, errors.New("unsupported conversation type")
 	}
@@ -101,6 +147,29 @@ func (r *conversationRepository) FindMyConversations(userID uuid.UUID) ([]*readM
 
 			conversationsDTOs[i] = toPublicConversationDTO(conversation, publicConversation.Avatar, publicConversation.Name)
 
+		case 1:
+			privateConversation := PrivateConversation{}
+
+			err = r.db.Where("conversation_id = ?", conversation.ID).First(&privateConversation).Error
+
+			if err != nil {
+				return nil, err
+			}
+
+			user := User{}
+
+			oppositeUserId := privateConversation.FromUserID
+			if privateConversation.FromUserID == userID {
+				oppositeUserId = privateConversation.ToUserID
+			}
+
+			err = r.db.Where("id = ?", oppositeUserId).First(&user).Error
+
+			if err != nil {
+				return nil, err
+			}
+
+			conversationsDTOs[i] = toPrivateConversationDTO(conversation, &user)
 		default:
 			return nil, errors.New("unsupported conversation type")
 		}

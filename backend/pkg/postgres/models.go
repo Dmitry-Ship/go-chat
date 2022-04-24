@@ -19,6 +19,13 @@ type PublicConversation struct {
 	ConversationID uuid.UUID `gorm:"type:uuid"`
 }
 
+type PrivateConversation struct {
+	ID             uuid.UUID `gorm:"type:uuid"`
+	FromUserID     uuid.UUID `gorm:"type:uuid"`
+	ToUserID       uuid.UUID `gorm:"type:uuid"`
+	ConversationID uuid.UUID `gorm:"type:uuid"`
+}
+
 type Message struct {
 	ID             uuid.UUID `gorm:"type:uuid"`
 	ConversationID uuid.UUID `gorm:"type:uuid"`

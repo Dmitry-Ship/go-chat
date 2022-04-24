@@ -8,7 +8,11 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetDatabaseConnection() *gorm.DB {
+type DatabaseConnection struct {
+	connection *gorm.DB
+}
+
+func NewDatabaseConnection() *DatabaseConnection {
 	port := os.Getenv("DB_PORT")
 	host := os.Getenv("DB_HOST")
 	user := os.Getenv("DB_USER")
@@ -24,16 +28,23 @@ func GetDatabaseConnection() *gorm.DB {
 
 	fmt.Println(fmt.Sprintf("💿 Connected to database %s", dbname))
 
-	// Migrate the schema
+	return &DatabaseConnection{
+		connection: db,
+	}
+}
 
-	db.AutoMigrate(Message{})
-	db.AutoMigrate(Conversation{})
-	db.AutoMigrate(PublicConversation{})
-	db.AutoMigrate(User{})
-	db.AutoMigrate(Participant{})
-	db.AutoMigrate(TextMessage{})
-	db.AutoMigrate(ConversationRenamedMessage{})
-	db.AutoMigrate(UserNotificationTopic{})
+func (d *DatabaseConnection) GetConnection() *gorm.DB {
+	return d.connection
+}
 
-	return db
+func (d *DatabaseConnection) RunMigrations() {
+	d.connection.AutoMigrate(Message{})
+	d.connection.AutoMigrate(Conversation{})
+	d.connection.AutoMigrate(PublicConversation{})
+	d.connection.AutoMigrate(PrivateConversation{})
+	d.connection.AutoMigrate(User{})
+	d.connection.AutoMigrate(Participant{})
+	d.connection.AutoMigrate(TextMessage{})
+	d.connection.AutoMigrate(ConversationRenamedMessage{})
+	d.connection.AutoMigrate(UserNotificationTopic{})
 }

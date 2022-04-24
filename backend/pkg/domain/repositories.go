@@ -6,7 +6,9 @@ import (
 
 type ConversationCommandRepository interface {
 	StorePublicConversation(conversation *PublicConversation) error
+	StorePrivateConversation(conversation *PrivateConversation) error
 	RenamePublicConversation(conversationId uuid.UUID, name string) error
+	GetPrivateConversationID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
 	Delete(id uuid.UUID) error
 }
 

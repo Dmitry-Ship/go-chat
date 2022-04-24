@@ -77,6 +77,13 @@ export type Conversation = {
   name: string;
   avatar: string;
   id: string;
+  type: "private" | "public";
+};
+
+export type Contact = {
+  name: string;
+  avatar: string;
+  id: string;
 };
 
 export type MessageEvent = {

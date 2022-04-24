@@ -24,7 +24,7 @@ func toConversationDTO(conversation *Conversation) *readModel.ConversationDTO {
 	dto := readModel.ConversationDTO{
 		ID:        conversation.ID,
 		CreatedAt: conversation.CreatedAt,
-		Type:      messageTypesMap[conversation.Type],
+		Type:      conversationTypesMap[conversation.Type],
 	}
 
 	return &dto
@@ -35,6 +35,15 @@ func toPublicConversationDTO(conversation *Conversation, avatar string, name str
 
 	dto.Avatar = avatar
 	dto.Name = name
+
+	return dto
+}
+
+func toPrivateConversationDTO(conversation *Conversation, user *User) *readModel.ConversationDTO {
+	dto := toConversationDTO(conversation)
+
+	dto.Avatar = user.Avatar
+	dto.Name = user.Name
 
 	return dto
 }
@@ -61,5 +70,14 @@ func toPublicConversationPersistence(conversation *domain.PublicConversation) *P
 		ConversationID: conversation.ID,
 		Name:           conversation.Data.Name,
 		Avatar:         conversation.Data.Avatar,
+	}
+}
+
+func toPrivateConversationPersistence(conversation *domain.PrivateConversation) *PrivateConversation {
+	return &PrivateConversation{
+		ID:             conversation.Data.ID,
+		ConversationID: conversation.ID,
+		FromUserID:     conversation.Data.FromUserId,
+		ToUserID:       conversation.Data.ToUserId,
 	}
 }

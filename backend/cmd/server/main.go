@@ -13,12 +13,15 @@ import (
 
 func main() {
 	redisClient := pubsub.GetRedisClient()
-	db := postgres.GetDatabaseConnection()
+	db := postgres.NewDatabaseConnection()
+	db.RunMigrations()
+
+	connection := db.GetConnection()
 
 	connectionsHub := ws.NewHub(redisClient)
 	go connectionsHub.Run()
 
-	application := app.NewApp(db, connectionsHub)
+	application := app.NewApp(connection, connectionsHub)
 	server := httpServer.NewHTTPServer(application, connectionsHub)
 	server.Init()
 
