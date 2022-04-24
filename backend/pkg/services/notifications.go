@@ -44,11 +44,11 @@ func (s *notificationsService) RegisterClient(client *ws.Client) error {
 		return err
 	}
 
-	go s.conencionsHub.SubscribeToTopic("user:"+client.UserID.String(), client.UserID)
-
 	for _, topic := range notificationTopics {
 		go s.conencionsHub.SubscribeToTopic(topic, client.UserID)
 	}
+
+	go s.conencionsHub.SubscribeToTopic("user:"+client.UserID.String(), client.UserID)
 
 	return nil
 }

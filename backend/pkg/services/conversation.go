@@ -125,11 +125,15 @@ func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, u
 }
 
 func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID, userId uuid.UUID, name string) error {
-	err := s.conversations.RenamePublicConversation(conversationID, name)
+	conversation, err := s.conversations.GetPublicConversation(conversationID)
 
 	if err != nil {
 		return err
 	}
+
+	conversation.Rename(name)
+
+	s.conversations.UpdatePublicConversation(conversation)
 
 	message := domain.NewConversationRenamedMessage(conversationID, userId, name)
 

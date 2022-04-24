@@ -33,13 +33,12 @@ func NewApp(db *gorm.DB, hub ws.Hub) *App {
 	conversationsRepository := postgres.NewConversationRepository(db)
 	participantRepository := postgres.NewParticipantRepository(db)
 	notificationTopicRepository := postgres.NewNotificationTopicRepository(db)
-
 	notificationsService := services.NewNotificationsService(messagesRepository, notificationTopicRepository, hub)
 
 	return &App{
 		Commands: commands{
 			ConversationService:  services.NewConversationService(conversationsRepository, participantRepository, messagesRepository, notificationsService),
-			AuthService:          services.NewAuthService(usersRepository, usersRepository),
+			AuthService:          services.NewAuthService(usersRepository),
 			NotificationsService: notificationsService,
 		},
 		Queries: queries{

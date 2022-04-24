@@ -7,17 +7,17 @@ import (
 type ConversationCommandRepository interface {
 	StorePublicConversation(conversation *PublicConversation) error
 	StorePrivateConversation(conversation *PrivateConversation) error
-	RenamePublicConversation(conversationId uuid.UUID, name string) error
+	UpdatePublicConversation(conversation *PublicConversation) error
+	GetPublicConversation(id uuid.UUID) (*PublicConversation, error)
 	GetPrivateConversationID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
 	Delete(id uuid.UUID) error
 }
 
 type UserCommandRepository interface {
 	Store(user *User) error
+	Update(user *User) error
+	GetByID(id uuid.UUID) (*User, error)
 	FindByUsername(username string) (*User, error)
-	StoreRefreshToken(userID uuid.UUID, refreshToken string) error
-	GetRefreshTokenByUserID(userID uuid.UUID) (string, error)
-	DeleteRefreshToken(userID uuid.UUID) error
 }
 
 type MessageCommandRepository interface {

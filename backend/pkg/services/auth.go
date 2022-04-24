@@ -2,7 +2,6 @@ package services
 
 import (
 	"GitHub/go-chat/backend/pkg/domain"
-	"GitHub/go-chat/backend/pkg/readModel"
 	"errors"
 	"os"
 	"time"
@@ -24,7 +23,6 @@ type Tokens struct {
 
 type authService struct {
 	users                  domain.UserCommandRepository
-	usersQuery             readModel.UserQueryRepository
 	refreshTokenExpiration time.Duration
 	accessTokenExpiration  time.Duration
 }
@@ -39,10 +37,9 @@ type AuthService interface {
 	ParseAccessToken(accessTokenString string) (uuid.UUID, error)
 }
 
-func NewAuthService(users domain.UserCommandRepository, usersQuery readModel.UserQueryRepository) *authService {
+func NewAuthService(users domain.UserCommandRepository) *authService {
 	return &authService{
 		users:                  users,
-		usersQuery:             usersQuery,
 		refreshTokenExpiration: 24 * 90 * time.Hour,
 		accessTokenExpiration:  10 * time.Minute,
 	}
@@ -69,17 +66,21 @@ func (a *authService) Login(username string, password string) (Tokens, error) {
 		return Tokens{}, errors.New("password is incorrect")
 	}
 
-	return a.createTokens(user.ID)
+	return a.createAndSetTokens(user)
 }
 
 func (a *authService) Logout(userId uuid.UUID) error {
-	err := a.users.DeleteRefreshToken(userId)
+	user, err := a.users.GetByID(userId)
 
 	if err != nil {
 		return err
 	}
 
-	return nil
+	user.SetRefreshToken("")
+
+	err = a.users.Update(user)
+
+	return err
 }
 
 func (a *authService) SignUp(username string, password string) (Tokens, error) {
@@ -91,13 +92,21 @@ func (a *authService) SignUp(username string, password string) (Tokens, error) {
 
 	user := domain.NewUser(username, hashedPassword)
 
+	tokens, err := a.createTokens(user.ID)
+
+	if err != nil {
+		return Tokens{}, err
+	}
+
+	user.SetRefreshToken(tokens.RefreshToken)
+
 	err = a.users.Store(user)
 
 	if err != nil {
 		return Tokens{}, err
 	}
 
-	return a.createTokens(user.ID)
+	return tokens, err
 }
 
 func (a *authService) createAccessToken(userid uuid.UUID) (string, error) {
@@ -153,16 +162,28 @@ func (a *authService) createTokens(userid uuid.UUID) (Tokens, error) {
 		return tokens, err
 	}
 
-	err = a.users.StoreRefreshToken(userid, refreshToken)
-
-	if err != nil {
-		return tokens, err
-	}
-
 	tokens.AccessToken = accessToken
 	tokens.RefreshToken = refreshToken
 
 	return tokens, nil
+}
+
+func (a *authService) createAndSetTokens(user *domain.User) (Tokens, error) {
+	tokens, err := a.createTokens(user.ID)
+
+	if err != nil {
+		return Tokens{}, err
+	}
+
+	user.SetRefreshToken(tokens.RefreshToken)
+
+	err = a.users.Update(user)
+
+	if err != nil {
+		return Tokens{}, err
+	}
+
+	return tokens, err
 }
 
 func (a *authService) ParseAccessToken(tokenString string) (uuid.UUID, error) {
@@ -214,13 +235,14 @@ func (a *authService) parseRefreshToken(tokenString string) (uuid.UUID, error) {
 
 	if token.Valid {
 		userId := token.Claims.(*tokenClaims).UserID
-		refreshToken, err := a.users.GetRefreshTokenByUserID(userId)
+
+		user, err := a.users.GetByID(userId)
 
 		if err != nil {
 			return uuid.Nil, err
 		}
 
-		if refreshToken != tokenString {
+		if user.RefreshToken != tokenString {
 			return uuid.Nil, errors.New("invalid token")
 		}
 
@@ -233,13 +255,17 @@ func (a *authService) parseRefreshToken(tokenString string) (uuid.UUID, error) {
 func (a *authService) RotateTokens(refreshTokenString string) (Tokens, error) {
 	userId, err := a.parseRefreshToken(refreshTokenString)
 
-	var tokens Tokens
-
 	if err != nil {
-		return tokens, err
+		return Tokens{}, err
 	}
 
-	return a.createTokens(userId)
+	user, err := a.users.GetByID(userId)
+
+	if err != nil {
+		return Tokens{}, err
+	}
+
+	return a.createAndSetTokens(user)
 }
 
 func (a *authService) GetAccessTokenExpiration() time.Duration {

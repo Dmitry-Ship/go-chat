@@ -24,11 +24,24 @@ func (r *userRepository) Store(user *domain.User) error {
 	return err
 }
 
+func (r *userRepository) Update(user *domain.User) error {
+	err := r.db.Save(ToUserPersistence(user)).Error
+
+	return err
+}
+
 func (r *userRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error) {
 	user := User{}
 	err := r.db.Where("id = ?", id).First(&user).Error
 
 	return toUserDTO(&user), err
+}
+
+func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
+	user := User{}
+	err := r.db.Where("id = ?", id).First(&user).Error
+
+	return ToUserDomain(&user), err
 }
 
 func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
@@ -37,26 +50,6 @@ func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
 	err := r.db.Where("name = ?", username).First(&user).Error
 
 	return ToUserDomain(&user), err
-}
-
-func (r *userRepository) StoreRefreshToken(userID uuid.UUID, refreshToken string) error {
-	err := r.db.Where("id = ?", userID).First(&User{}).Update("refresh_token", refreshToken).Error
-
-	return err
-}
-
-func (r *userRepository) GetRefreshTokenByUserID(userID uuid.UUID) (string, error) {
-	user := User{}
-	err := r.db.Where("id = ?", userID).First(&user).Error
-
-	return user.RefreshToken, err
-}
-
-func (r *userRepository) DeleteRefreshToken(userID uuid.UUID) error {
-	user := User{}
-	err := r.db.Where("id = ?", userID).First(&user).Update("refresh_token", nil).Error
-
-	return err
 }
 
 func (r *userRepository) FindContacts(userID uuid.UUID) ([]*readModel.ContactDTO, error) {

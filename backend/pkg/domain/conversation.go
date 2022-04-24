@@ -45,6 +45,10 @@ func NewPublicConversation(id uuid.UUID, name string) *PublicConversation {
 	}
 }
 
+func (publicConversation *PublicConversation) Rename(newName string) {
+	publicConversation.Data.Name = newName
+}
+
 type PrivateConversationData struct {
 	ID         uuid.UUID
 	ToUserId   uuid.UUID

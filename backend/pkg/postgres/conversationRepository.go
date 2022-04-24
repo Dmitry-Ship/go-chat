@@ -24,12 +24,22 @@ func (r *conversationRepository) StorePublicConversation(conversation *domain.Pu
 	err := r.db.Create(toConversationPersistence(conversation)).Error
 
 	if err != nil {
-
 		return err
-
 	}
 
 	err = r.db.Create(toPublicConversationPersistence(conversation)).Error
+
+	return err
+}
+
+func (r *conversationRepository) UpdatePublicConversation(conversation *domain.PublicConversation) error {
+	err := r.db.Save(toConversationPersistence(conversation)).Error
+
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Save(toPublicConversationPersistence(conversation)).Error
 
 	return err
 }
@@ -57,10 +67,24 @@ func (r *conversationRepository) GetPrivateConversationID(firstUserId uuid.UUID,
 	return privateConversation.ConversationID, nil
 }
 
-func (r *conversationRepository) RenamePublicConversation(id uuid.UUID, name string) error {
-	err := r.db.Model(PublicConversation{}).Where("conversation_id = ?", id).Update("name", name).Error
+func (r *conversationRepository) GetPublicConversation(id uuid.UUID) (*domain.PublicConversation, error) {
+	conversation := Conversation{}
 
-	return err
+	err := r.db.Where("id = ?", id).First(&conversation).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	publicConversation := PublicConversation{}
+
+	err = r.db.Where("conversation_id = ?", id).First(&publicConversation).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return toPublicConversationDomain(&conversation, &publicConversation), nil
 }
 
 func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.UUID) (*readModel.ConversationFullDTO, error) {
