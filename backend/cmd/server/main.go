@@ -1,11 +1,11 @@
 package main
 
 import (
-	"GitHub/go-chat/backend/pkg/app"
-	"GitHub/go-chat/backend/pkg/httpServer"
-	"GitHub/go-chat/backend/pkg/postgres"
-	redisPubsub "GitHub/go-chat/backend/pkg/redis"
-	ws "GitHub/go-chat/backend/pkg/websocket"
+	"GitHub/go-chat/backend/internal/app"
+	"GitHub/go-chat/backend/internal/httpServer"
+	"GitHub/go-chat/backend/internal/infra/postgres"
+	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
+	ws "GitHub/go-chat/backend/internal/infra/websocket"
 	"log"
 	"net/http"
 	"os"
@@ -13,17 +13,17 @@ import (
 
 func main() {
 	redisClient := redisPubsub.GetRedisClient()
+	websocketConnectionsHub := ws.NewHub(redisClient)
+	go websocketConnectionsHub.Run()
 	db := postgres.NewDatabaseConnection()
 	db.RunMigrations()
+	dbConnection := db.GetConnection()
 
-	connection := db.GetConnection()
-
-	connectionsHub := ws.NewHub(redisClient)
-	go connectionsHub.Run()
-
-	application := app.NewApp(connection, connectionsHub)
-	server := httpServer.NewHTTPServer(application, connectionsHub)
-	server.Init()
+	application := app.NewApp(dbConnection, websocketConnectionsHub)
+	queryController := httpServer.NewQueryController(&application.Queries)
+	commandController := httpServer.NewCommandController(&application.Commands, websocketConnectionsHub)
+	server := httpServer.NewHTTPServer(queryController, commandController)
+	server.InitRoutes()
 
 	port := os.Getenv("PORT")
 
