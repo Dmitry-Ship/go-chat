@@ -53,7 +53,23 @@ func (r *conversationRepository) StorePrivateConversation(conversation *domain.P
 
 	err = r.db.Create(toPrivateConversationPersistence(conversation)).Error
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Create(toParticipantPersistence(conversation.GetFromUser())).Error
+
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Create(toParticipantPersistence(conversation.GetToUser())).Error
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *conversationRepository) GetPrivateConversationID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {

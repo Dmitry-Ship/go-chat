@@ -92,7 +92,7 @@ func toPrivateConversationPersistence(conversation *domain.PrivateConversation) 
 	return &PrivateConversation{
 		ID:             conversation.Data.ID,
 		ConversationID: conversation.ID,
-		FromUserID:     conversation.Data.FromUserId,
-		ToUserID:       conversation.Data.ToUserId,
+		FromUserID:     conversation.Data.FromUser.UserID,
+		ToUserID:       conversation.Data.ToUser.UserID,
 	}
 }

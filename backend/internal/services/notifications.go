@@ -16,6 +16,7 @@ type NotificationsService interface {
 	SubscribeToTopic(topic string, userId uuid.UUID) error
 	UnsubscribeFromTopic(topic string, userId uuid.UUID) error
 	RegisterClient(conn *websocket.Conn, wsHandlers ws.WSHandlers, userID uuid.UUID) error
+	DeleteTopic(topic string) error
 }
 
 type notificationsService struct {
@@ -75,6 +76,12 @@ func (s *notificationsService) UnsubscribeFromTopic(topic string, userId uuid.UU
 	err := s.notificationTopics.DeleteByUserIDAndTopic(userId, topic)
 
 	return err
+}
+
+func (s *notificationsService) DeleteTopic(topic string) error {
+	s.conencionsHub.DeleteTopic(topic)
+
+	return s.notificationTopics.DeleteByTopic(topic)
 }
 
 func (s *notificationsService) broadcastToConversation(conversationID uuid.UUID, notification ws.OutgoingNotification) {

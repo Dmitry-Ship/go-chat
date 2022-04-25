@@ -50,9 +50,9 @@ func (publicConversation *PublicConversation) Rename(newName string) {
 }
 
 type PrivateConversationData struct {
-	ID         uuid.UUID
-	ToUserId   uuid.UUID
-	FromUserId uuid.UUID
+	ID       uuid.UUID
+	ToUser   Participant
+	FromUser Participant
 }
 
 type PrivateConversation struct {
@@ -68,9 +68,17 @@ func NewPrivateConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) *Private
 			CreatedAt: time.Now(),
 		},
 		Data: PrivateConversationData{
-			ID:         uuid.New(),
-			ToUserId:   to,
-			FromUserId: from,
+			ID:       uuid.New(),
+			ToUser:   *NewParticipant(id, to),
+			FromUser: *NewParticipant(id, from),
 		},
 	}
+}
+
+func (privateConversation *PrivateConversation) GetFromUser() *Participant {
+	return &privateConversation.Data.FromUser
+}
+
+func (privateConversation *PrivateConversation) GetToUser() *Participant {
+	return &privateConversation.Data.ToUser
 }

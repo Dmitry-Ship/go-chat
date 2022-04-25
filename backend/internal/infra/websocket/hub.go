@@ -18,11 +18,12 @@ type Hub interface {
 	UnsubscribeFromTopic(topic string, userID uuid.UUID)
 	UnregisterClient(client *Client)
 	RegisterClient(client *Client)
+	DeleteTopic(topic string)
 }
 
-type broadcastMessageToTopic struct {
-	Notification OutgoingNotification `json:"notification"`
-	Topic        string               `json:"topic"`
+type broadcastMessage struct {
+	Payload OutgoingNotification `json:"notification"`
+	Topic   string               `json:"topic"`
 }
 
 type subscrition struct {
@@ -31,26 +32,28 @@ type subscrition struct {
 }
 
 type hub struct {
-	register       chan *Client
-	unregister     chan *Client
-	subscribe      chan *subscrition
-	unsubscribe    chan *subscrition
-	topicUsersMap  map[string]map[uuid.UUID]bool
-	userClientsMap map[uuid.UUID]map[uuid.UUID]*Client
-	redisClient    *redis.Client
+	registerClient       chan *Client
+	unregisterClient     chan *Client
+	subscribeToTopic     chan *subscrition
+	unsubscribeFromTopic chan *subscrition
+	deleteTopic          chan string
+	topicUsersMap        map[string]map[uuid.UUID]bool
+	userClientsMap       map[uuid.UUID]map[uuid.UUID]*Client
+	redisClient          *redis.Client
 }
 
 var ctx = context.Background()
 
 func NewHub(redisClient *redis.Client) *hub {
 	return &hub{
-		register:       make(chan *Client),
-		unregister:     make(chan *Client),
-		subscribe:      make(chan *subscrition),
-		unsubscribe:    make(chan *subscrition),
-		topicUsersMap:  make(map[string]map[uuid.UUID]bool),
-		userClientsMap: make(map[uuid.UUID]map[uuid.UUID]*Client),
-		redisClient:    redisClient,
+		registerClient:       make(chan *Client),
+		unregisterClient:     make(chan *Client),
+		subscribeToTopic:     make(chan *subscrition),
+		unsubscribeFromTopic: make(chan *subscrition),
+		deleteTopic:          make(chan string),
+		topicUsersMap:        make(map[string]map[uuid.UUID]bool),
+		userClientsMap:       make(map[uuid.UUID]map[uuid.UUID]*Client),
+		redisClient:          redisClient,
 	}
 }
 
@@ -67,7 +70,7 @@ func (s *hub) Run() {
 				continue
 			}
 
-			var bMessage broadcastMessageToTopic
+			var bMessage broadcastMessage
 
 			err := json.Unmarshal([]byte(message.Payload), &bMessage)
 
@@ -84,11 +87,11 @@ func (s *hub) Run() {
 				}
 
 				for _, client := range clients {
-					client.SendNotification(&bMessage.Notification)
+					client.SendNotification(&bMessage.Payload)
 				}
 			}
 
-		case client := <-s.register:
+		case client := <-s.registerClient:
 			userClients, ok := s.userClientsMap[client.UserID]
 
 			if !ok {
@@ -98,13 +101,13 @@ func (s *hub) Run() {
 
 			userClients[client.Id] = client
 
-		case client := <-s.unregister:
+		case client := <-s.unregisterClient:
 			if _, ok := s.userClientsMap[client.UserID]; ok {
 				delete(s.userClientsMap[client.UserID], client.Id)
 				close(client.sendChannel)
 			}
 
-		case subscrition := <-s.subscribe:
+		case subscrition := <-s.subscribeToTopic:
 			_, ok := s.userClientsMap[subscrition.userID]
 
 			if !ok {
@@ -117,7 +120,7 @@ func (s *hub) Run() {
 
 			s.topicUsersMap[subscrition.Topic][subscrition.userID] = true
 
-		case subscrition := <-s.unsubscribe:
+		case subscrition := <-s.unsubscribeFromTopic:
 			if _, ok := s.userClientsMap[subscrition.userID]; !ok {
 				return
 			}
@@ -127,14 +130,17 @@ func (s *hub) Run() {
 			}
 
 			delete(s.topicUsersMap[subscrition.Topic], subscrition.userID)
+
+		case topic := <-s.deleteTopic:
+			delete(s.topicUsersMap, topic)
 		}
 	}
 }
 
 func (s *hub) BroadcastToTopic(topic string, notification OutgoingNotification) {
-	message := broadcastMessageToTopic{
-		Notification: notification,
-		Topic:        topic,
+	message := broadcastMessage{
+		Payload: notification,
+		Topic:   topic,
 	}
 
 	json, err := json.Marshal(message)
@@ -146,23 +152,27 @@ func (s *hub) BroadcastToTopic(topic string, notification OutgoingNotification) 
 }
 
 func (s *hub) SubscribeToTopic(topic string, userID uuid.UUID) {
-	s.subscribe <- &subscrition{
+	s.subscribeToTopic <- &subscrition{
 		userID: userID,
 		Topic:  topic,
 	}
 }
 
 func (s *hub) UnsubscribeFromTopic(topic string, userID uuid.UUID) {
-	s.unsubscribe <- &subscrition{
+	s.unsubscribeFromTopic <- &subscrition{
 		userID: userID,
 		Topic:  topic,
 	}
 }
 
 func (s *hub) RegisterClient(client *Client) {
-	s.register <- client
+	s.registerClient <- client
 }
 
 func (s *hub) UnregisterClient(client *Client) {
-	s.unregister <- client
+	s.unregisterClient <- client
+}
+
+func (s *hub) DeleteTopic(topic string) {
+	s.deleteTopic <- topic
 }

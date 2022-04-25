@@ -53,18 +53,6 @@ func (s *conversationService) CreatePrivateConversationIfNotExists(fromUserId uu
 		return uuid.Nil, err
 	}
 
-	err = s.participants.Store(domain.NewParticipant(newConversationID, fromUserId))
-
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	err = s.participants.Store(domain.NewParticipant(newConversationID, toUserId))
-
-	if err != nil {
-		return uuid.Nil, err
-	}
-
 	err = s.notificationsService.SubscribeToTopic("conversation:"+newConversationID.String(), fromUserId)
 
 	if err != nil {
@@ -82,6 +70,7 @@ func (s *conversationService) CreatePrivateConversationIfNotExists(fromUserId uu
 
 func (s *conversationService) CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error {
 	conversation := domain.NewPublicConversation(id, name)
+
 	err := s.conversations.StorePublicConversation(conversation)
 
 	if err != nil {
@@ -155,6 +144,12 @@ func (s *conversationService) DeleteConversation(id uuid.UUID) error {
 	go s.notificationsService.NotifyAboutConversationDeletion(id)
 
 	err := s.conversations.Delete(id)
+
+	if err != nil {
+		return err
+	}
+
+	err = s.notificationsService.DeleteTopic("conversation:" + id.String())
 
 	return err
 }
