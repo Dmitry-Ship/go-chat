@@ -31,26 +31,26 @@ type subscrition struct {
 }
 
 type hub struct {
-	register         chan *Client
-	unregister       chan *Client
-	subscribe        chan *subscrition
-	unsubscribe      chan *subscrition
-	clientsTopicsMap map[string]map[uuid.UUID]*Client
-	userClientsMap   map[uuid.UUID]map[uuid.UUID]*Client
-	redisClient      *redis.Client
+	register       chan *Client
+	unregister     chan *Client
+	subscribe      chan *subscrition
+	unsubscribe    chan *subscrition
+	topicUsersMap  map[string]map[uuid.UUID]bool
+	userClientsMap map[uuid.UUID]map[uuid.UUID]*Client
+	redisClient    *redis.Client
 }
 
 var ctx = context.Background()
 
 func NewHub(redisClient *redis.Client) *hub {
 	return &hub{
-		register:         make(chan *Client),
-		unregister:       make(chan *Client),
-		subscribe:        make(chan *subscrition),
-		unsubscribe:      make(chan *subscrition),
-		clientsTopicsMap: make(map[string]map[uuid.UUID]*Client),
-		userClientsMap:   make(map[uuid.UUID]map[uuid.UUID]*Client),
-		redisClient:      redisClient,
+		register:       make(chan *Client),
+		unregister:     make(chan *Client),
+		subscribe:      make(chan *subscrition),
+		unsubscribe:    make(chan *subscrition),
+		topicUsersMap:  make(map[string]map[uuid.UUID]bool),
+		userClientsMap: make(map[uuid.UUID]map[uuid.UUID]*Client),
+		redisClient:    redisClient,
 	}
 }
 
@@ -76,10 +76,16 @@ func (s *hub) Run() {
 				continue
 			}
 
-			topicClients := s.clientsTopicsMap[bMessage.Topic]
+			for userID := range s.topicUsersMap[bMessage.Topic] {
+				clients, ok := s.userClientsMap[userID]
 
-			for _, client := range topicClients {
-				client.SendNotification(&bMessage.Notification)
+				if !ok {
+					continue
+				}
+
+				for _, client := range clients {
+					client.SendNotification(&bMessage.Notification)
+				}
 			}
 
 		case client := <-s.register:
@@ -99,32 +105,28 @@ func (s *hub) Run() {
 			}
 
 		case subscrition := <-s.subscribe:
-			clientsMap, ok := s.userClientsMap[subscrition.userID]
+			_, ok := s.userClientsMap[subscrition.userID]
 
 			if !ok {
 				return
 			}
 
-			if _, ok := s.clientsTopicsMap[subscrition.Topic]; !ok {
-				s.clientsTopicsMap[subscrition.Topic] = make(map[uuid.UUID]*Client)
+			if _, ok := s.topicUsersMap[subscrition.Topic]; !ok {
+				s.topicUsersMap[subscrition.Topic] = make(map[uuid.UUID]bool)
 			}
 
-			for _, client := range clientsMap {
-				s.clientsTopicsMap[subscrition.Topic][client.Id] = client
-			}
+			s.topicUsersMap[subscrition.Topic][subscrition.userID] = true
 
 		case subscrition := <-s.unsubscribe:
-			clientsMap, ok := s.userClientsMap[subscrition.userID]
-
-			if !ok {
+			if _, ok := s.userClientsMap[subscrition.userID]; !ok {
 				return
 			}
 
-			if _, ok := s.clientsTopicsMap[subscrition.Topic]; ok {
-				for _, client := range clientsMap {
-					delete(s.clientsTopicsMap[subscrition.Topic], client.Id)
-				}
+			if _, ok := s.topicUsersMap[subscrition.Topic]; !ok {
+				return
 			}
+
+			delete(s.topicUsersMap[subscrition.Topic], subscrition.userID)
 		}
 	}
 }

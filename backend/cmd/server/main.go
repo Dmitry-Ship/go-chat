@@ -21,7 +21,7 @@ func main() {
 
 	application := app.NewApp(dbConnection, websocketConnectionsHub)
 	queryController := httpServer.NewQueryController(&application.Queries)
-	commandController := httpServer.NewCommandController(&application.Commands, websocketConnectionsHub)
+	commandController := httpServer.NewCommandController(&application.Commands)
 	server := httpServer.NewHTTPServer(queryController, commandController)
 	server.InitRoutes()
 

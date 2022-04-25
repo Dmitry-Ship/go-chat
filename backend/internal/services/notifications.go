@@ -6,6 +6,7 @@ import (
 	"GitHub/go-chat/backend/internal/readModel"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 )
 
 type NotificationsService interface {
@@ -14,7 +15,7 @@ type NotificationsService interface {
 	NotifyAboutConversationRenamed(conversationId uuid.UUID, newName string)
 	SubscribeToTopic(topic string, userId uuid.UUID) error
 	UnsubscribeFromTopic(topic string, userId uuid.UUID) error
-	RegisterClient(client *ws.Client) error
+	RegisterClient(conn *websocket.Conn, wsHandlers ws.WSHandlers, userID uuid.UUID) error
 }
 
 type notificationsService struct {
@@ -35,7 +36,12 @@ func NewNotificationsService(
 	}
 }
 
-func (s *notificationsService) RegisterClient(client *ws.Client) error {
+func (s *notificationsService) RegisterClient(conn *websocket.Conn, wsHandlers ws.WSHandlers, userID uuid.UUID) error {
+	client := ws.NewClient(conn, s.conencionsHub, wsHandlers, userID)
+
+	go client.WritePump()
+	go client.ReadPump()
+
 	s.conencionsHub.RegisterClient(client)
 
 	notificationTopics, err := s.notificationTopics.GetAllNotificationTopics(client.UserID)

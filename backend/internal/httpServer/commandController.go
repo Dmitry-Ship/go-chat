@@ -2,17 +2,14 @@ package httpServer
 
 import (
 	"GitHub/go-chat/backend/internal/app"
-	ws "GitHub/go-chat/backend/internal/infra/websocket"
 )
 
 type CommandController struct {
-	commands         *app.Commands
-	wsConnectionsHub ws.Hub
+	commands *app.Commands
 }
 
-func NewCommandController(commands *app.Commands, hub ws.Hub) *CommandController {
+func NewCommandController(commands *app.Commands) *CommandController {
 	return &CommandController{
-		commands:         commands,
-		wsConnectionsHub: hub,
+		commands: commands,
 	}
 }

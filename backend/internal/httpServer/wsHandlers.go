@@ -3,7 +3,6 @@ package httpServer
 import (
 	ws "GitHub/go-chat/backend/internal/infra/websocket"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -28,25 +27,17 @@ func (s *CommandController) handleOpenWSConnection(wsHandlers ws.WSHandlers) htt
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			fmt.Println("WS", err.Error())
-
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		client := ws.NewClient(conn, s.wsConnectionsHub, wsHandlers, userID)
-
-		err = s.commands.NotificationsService.RegisterClient(client)
+		err = s.commands.NotificationsService.RegisterClient(conn, wsHandlers, userID)
 
 		if err != nil {
-			log.Println("WS", err.Error())
-
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		go client.WritePump()
-		go client.ReadPump()
 	}
 }
 
