@@ -17,6 +17,7 @@ type PublicConversation struct {
 	Name           string
 	Avatar         string
 	ConversationID uuid.UUID `gorm:"type:uuid"`
+	OwnerID        uuid.UUID `gorm:"type:uuid"`
 }
 
 type PrivateConversation struct {

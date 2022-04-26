@@ -93,6 +93,20 @@ func (h *notificationEventHandlers) Run() {
 
 			h.notificationsService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
 
+		case event := <-h.pubsub.Subscribe(domain.PublicConversationCreatedName):
+			e, ok := event.(*domain.PublicConversationCreated)
+
+			if !ok {
+				log.Printf("Unknown event type: %T", e)
+				continue
+			}
+
+			err := h.notificationsService.SubscribeToTopic("conversation:"+e.ConversationID.String(), e.OwnerID)
+
+			if err != nil {
+				log.Printf("Error handling %s event: %v", e.GetName(), err)
+			}
+
 		case event := <-h.pubsub.Subscribe(domain.PublicConversationJoinedName):
 			e, ok := event.(*domain.PublicConversationJoined)
 

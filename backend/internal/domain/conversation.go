@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,13 +25,14 @@ type PublicConversationData struct {
 	ID     uuid.UUID
 	Name   string
 	Avatar string
+	Owner  Participant
 }
 type PublicConversation struct {
 	Conversation
 	Data PublicConversationData
 }
 
-func NewPublicConversation(id uuid.UUID, name string) *PublicConversation {
+func NewPublicConversation(id uuid.UUID, name string, creatorID uuid.UUID) *PublicConversation {
 	return &PublicConversation{
 		Conversation: Conversation{
 			ID:        id,
@@ -41,12 +43,19 @@ func NewPublicConversation(id uuid.UUID, name string) *PublicConversation {
 			ID:     uuid.New(),
 			Name:   name,
 			Avatar: string(name[0]),
+			Owner:  *NewParticipant(id, creatorID),
 		},
 	}
 }
 
-func (publicConversation *PublicConversation) Rename(newName string) {
-	publicConversation.Data.Name = newName
+func (publicConversation *PublicConversation) Rename(newName string, userId uuid.UUID) error {
+	if publicConversation.Data.Owner.UserID == userId {
+		publicConversation.Data.Name = newName
+		publicConversation.Data.Avatar = string(newName[0])
+	} else {
+		return errors.New("user is not owner")
+	}
+	return nil
 }
 
 type PrivateConversationData struct {

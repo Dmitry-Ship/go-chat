@@ -70,15 +70,22 @@ func toPublicConversationPersistence(conversation *domain.PublicConversation) *P
 		ConversationID: conversation.ID,
 		Name:           conversation.Data.Name,
 		Avatar:         conversation.Data.Avatar,
+		OwnerID:        conversation.Data.Owner.UserID,
 	}
 }
 
-func toPublicConversationDomain(conversation *Conversation, publicConversation *PublicConversation) *domain.PublicConversation {
+func toPublicConversationDomain(conversation *Conversation, publicConversation *PublicConversation, participant *Participant) *domain.PublicConversation {
 	return &domain.PublicConversation{
 		Data: domain.PublicConversationData{
 			ID:     publicConversation.ID,
 			Name:   publicConversation.Name,
 			Avatar: publicConversation.Avatar,
+			Owner: domain.Participant{
+				UserID:         participant.UserID,
+				ID:             participant.ID,
+				ConversationID: publicConversation.ConversationID,
+				CreatedAt:      participant.CreatedAt,
+			},
 		},
 		Conversation: domain.Conversation{
 			ID:        conversation.ID,

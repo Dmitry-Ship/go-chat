@@ -3,6 +3,7 @@ package domain
 import "github.com/google/uuid"
 
 var MessageSentName = "message_sent"
+var PublicConversationCreatedName = "public_conversation_created"
 var PublicConversationDeletedName = "public_conversation_deleted"
 var PublicConversationRenamedName = "public_conversation_renamed"
 var PublicConversationLeftName = "left_public_conversation"
@@ -68,6 +69,22 @@ func NewPublicConversationRenamed(conversationID uuid.UUID, userID uuid.UUID, ne
 		ConversationID: conversationID,
 		UserID:         userID,
 		NewName:        newName,
+	}
+}
+
+type PublicConversationCreated struct {
+	domainEvent
+	ConversationID uuid.UUID
+	OwnerID        uuid.UUID
+}
+
+func NewPublicConversationCreated(conversationID uuid.UUID, ownerId uuid.UUID) *PublicConversationCreated {
+	return &PublicConversationCreated{
+		domainEvent: domainEvent{
+			name: PublicConversationCreatedName,
+		},
+		ConversationID: conversationID,
+		OwnerID:        ownerId,
 	}
 }
 

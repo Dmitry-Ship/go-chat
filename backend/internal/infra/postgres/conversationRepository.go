@@ -29,6 +29,12 @@ func (r *conversationRepository) StorePublicConversation(conversation *domain.Pu
 
 	err = r.db.Create(toPublicConversationPersistence(conversation)).Error
 
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Create(toParticipantPersistence(&conversation.Data.Owner)).Error
+
 	return err
 }
 
@@ -100,7 +106,15 @@ func (r *conversationRepository) GetPublicConversation(id uuid.UUID) (*domain.Pu
 		return nil, err
 	}
 
-	return toPublicConversationDomain(&conversation, &publicConversation), nil
+	participant := Participant{}
+
+	err = r.db.Where("conversation_id = ? AND user_id = ?", id, publicConversation.OwnerID).First(&participant).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return toPublicConversationDomain(&conversation, &publicConversation, &participant), nil
 }
 
 func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.UUID) (*readModel.ConversationFullDTO, error) {

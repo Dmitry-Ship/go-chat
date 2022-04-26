@@ -10,21 +10,45 @@ import (
 func TestNewPublicConversation(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
-	conversation := NewPublicConversation(conversationId, name)
+	creatorId := uuid.New()
+
+	conversation := NewPublicConversation(conversationId, name, creatorId)
 	assert.Equal(t, conversation.ID, conversationId)
 	assert.Equal(t, name, conversation.Data.Name)
 	assert.Equal(t, string(name[0]), conversation.Data.Avatar)
 	assert.Equal(t, conversation.Type, "public")
+
+	assert.Equal(t, conversationId, conversation.Data.Owner.ConversationID)
+	assert.Equal(t, creatorId, conversation.Data.Owner.UserID)
+	assert.NotNil(t, conversation.Data.Owner.CreatedAt)
+	assert.NotNil(t, conversation.Data.Owner.ID)
 }
 
-func TestRename(t *testing.T) {
+func TestRenameSuccess(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
-	conversation := NewPublicConversation(conversationId, name)
+	creatorId := uuid.New()
 
-	conversation.Rename("new name")
+	conversation := NewPublicConversation(conversationId, name, creatorId)
 
+	err := conversation.Rename("new name", creatorId)
+
+	assert.Nil(t, err)
 	assert.Equal(t, "new name", conversation.Data.Name)
+}
+
+func TestRenameFailure(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+
+	conversation := NewPublicConversation(conversationId, name, creatorId)
+
+	err := conversation.Rename("new name", uuid.New())
+
+	assert.NotNil(t, err)
+	assert.Equal(t, "user is not owner", err.Error())
+	assert.Equal(t, name, conversation.Data.Name)
 }
 
 func TestNewPrivateConversation(t *testing.T) {

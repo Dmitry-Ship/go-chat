@@ -56,15 +56,11 @@ func (s *conversationService) CreatePrivateConversationIfNotExists(fromUserId uu
 }
 
 func (s *conversationService) CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error {
-	conversation := domain.NewPublicConversation(id, name)
+	conversation := domain.NewPublicConversation(id, name, userId)
 
-	err := s.conversations.StorePublicConversation(conversation)
+	s.pubsub.Publish(domain.NewPublicConversationCreated(id, userId))
 
-	if err != nil {
-		return err
-	}
-
-	return s.JoinPublicConversation(conversation.ID, userId)
+	return s.conversations.StorePublicConversation(conversation)
 }
 
 func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
@@ -86,7 +82,11 @@ func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID,
 		return err
 	}
 
-	conversation.Rename(name)
+	err = conversation.Rename(name, userId)
+
+	if err != nil {
+		return err
+	}
 
 	err = s.conversations.UpdatePublicConversation(conversation)
 
