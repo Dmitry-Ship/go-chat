@@ -16,23 +16,20 @@ type ConversationService interface {
 }
 
 type conversationService struct {
-	conversations        domain.ConversationCommandRepository
-	participants         domain.ParticipantCommandRepository
-	messagingService     MessagingService
-	notificationsService NotificationsService
+	conversations domain.ConversationCommandRepository
+	participants  domain.ParticipantCommandRepository
+	pubsub        domain.PubSub
 }
 
 func NewConversationService(
 	conversations domain.ConversationCommandRepository,
 	participants domain.ParticipantCommandRepository,
-	messagingService MessagingService,
-	notificationsService NotificationsService,
+	pubsub domain.PubSub,
 ) *conversationService {
 	return &conversationService{
-		conversations:        conversations,
-		participants:         participants,
-		messagingService:     messagingService,
-		notificationsService: notificationsService,
+		conversations: conversations,
+		participants:  participants,
+		pubsub:        pubsub,
 	}
 }
 
@@ -53,17 +50,7 @@ func (s *conversationService) CreatePrivateConversationIfNotExists(fromUserId uu
 		return uuid.Nil, err
 	}
 
-	err = s.notificationsService.SubscribeToTopic("conversation:"+newConversationID.String(), fromUserId)
-
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	err = s.notificationsService.SubscribeToTopic("conversation:"+newConversationID.String(), toUserId)
-
-	if err != nil {
-		return uuid.Nil, err
-	}
+	s.pubsub.Publish(domain.NewPrivateConversationCreated(newConversationID, fromUserId, toUserId))
 
 	return newConversationID, nil
 }
@@ -77,9 +64,7 @@ func (s *conversationService) CreatePublicConversation(id uuid.UUID, name string
 		return err
 	}
 
-	err = s.JoinPublicConversation(conversation.ID, userId)
-
-	return err
+	return s.JoinPublicConversation(conversation.ID, userId)
 }
 
 func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
@@ -89,15 +74,9 @@ func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, u
 		return err
 	}
 
-	err = s.notificationsService.SubscribeToTopic("conversation:"+conversationID.String(), userId)
+	s.pubsub.Publish(domain.NewPublicConversationJoined(conversationID, userId))
 
-	if err != nil {
-		return err
-	}
-
-	err = s.messagingService.SendJoinedConversationMessage(conversationID, userId)
-
-	return err
+	return nil
 }
 
 func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID, userId uuid.UUID, name string) error {
@@ -115,11 +94,9 @@ func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID,
 		return err
 	}
 
-	go s.notificationsService.NotifyAboutConversationRenamed(conversationID, name)
+	s.pubsub.Publish(domain.NewPublicConversationRenamed(conversationID, userId, name))
 
-	err = s.messagingService.SendRenamedConversationMessage(conversationID, userId, name)
-
-	return err
+	return nil
 }
 
 func (s *conversationService) LeavePublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
@@ -129,27 +106,13 @@ func (s *conversationService) LeavePublicConversation(conversationID uuid.UUID, 
 		return err
 	}
 
-	err = s.notificationsService.UnsubscribeFromTopic("conversation:"+conversationID.String(), userId)
+	s.pubsub.Publish(domain.NewPublicConversationLeft(conversationID, userId))
 
-	if err != nil {
-		return err
-	}
-
-	err = s.messagingService.SendLeftConversationMessage(conversationID, userId)
-
-	return err
+	return nil
 }
 
 func (s *conversationService) DeleteConversation(id uuid.UUID) error {
-	go s.notificationsService.NotifyAboutConversationDeletion(id)
+	s.pubsub.Publish(domain.NewPublicConversationDeleted(id))
 
-	err := s.conversations.Delete(id)
-
-	if err != nil {
-		return err
-	}
-
-	err = s.notificationsService.DeleteTopic("conversation:" + id.String())
-
-	return err
+	return s.conversations.Delete(id)
 }

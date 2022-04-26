@@ -14,17 +14,17 @@ type MessagingService interface {
 }
 
 type messagingService struct {
-	messages             domain.MessageCommandRepository
-	notificationsService NotificationsService
+	messages domain.MessageCommandRepository
+	pubsub   domain.PubSub
 }
 
 func NewMessagingService(
 	messages domain.MessageCommandRepository,
-	notificationsService NotificationsService,
+	pubsub domain.PubSub,
 ) *messagingService {
 	return &messagingService{
-		messages:             messages,
-		notificationsService: notificationsService,
+		messages: messages,
+		pubsub:   pubsub,
 	}
 }
 
@@ -37,7 +37,7 @@ func (s *messagingService) SendTextMessage(messageText string, conversationId uu
 		return err
 	}
 
-	go s.notificationsService.NotifyAboutMessage(conversationId, message.ID, userId)
+	s.pubsub.Publish(domain.NewMessageSent(conversationId, message.ID, userId))
 
 	return nil
 }
@@ -51,7 +51,7 @@ func (s *messagingService) SendJoinedConversationMessage(conversationId uuid.UUI
 		return err
 	}
 
-	go s.notificationsService.NotifyAboutMessage(conversationId, message.ID, userId)
+	s.pubsub.Publish(domain.NewMessageSent(conversationId, message.ID, userId))
 
 	return nil
 }
@@ -65,7 +65,7 @@ func (s *messagingService) SendRenamedConversationMessage(conversationId uuid.UU
 		return err
 	}
 
-	go s.notificationsService.NotifyAboutMessage(conversationId, message.ID, userId)
+	s.pubsub.Publish(domain.NewMessageSent(conversationId, message.ID, userId))
 
 	return nil
 }
@@ -79,7 +79,7 @@ func (s *messagingService) SendLeftConversationMessage(conversationId uuid.UUID,
 		return err
 	}
 
-	go s.notificationsService.NotifyAboutMessage(conversationId, message.ID, userId)
+	s.pubsub.Publish(domain.NewMessageSent(conversationId, message.ID, userId))
 
 	return nil
 }

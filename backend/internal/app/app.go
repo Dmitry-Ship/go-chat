@@ -1,6 +1,7 @@
 package app
 
 import (
+	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	ws "GitHub/go-chat/backend/internal/infra/websocket"
 	"GitHub/go-chat/backend/internal/readModel"
@@ -34,10 +35,17 @@ func NewApp(db *gorm.DB, hub ws.Hub) *App {
 	participantRepository := postgres.NewParticipantRepository(db)
 	notificationTopicRepository := postgres.NewNotificationTopicRepository(db)
 
-	notificationsService := services.NewNotificationsService(messagesRepository, notificationTopicRepository, hub)
-	messagingService := services.NewMessagingService(messagesRepository, notificationsService)
-	conversationService := services.NewConversationService(conversationsRepository, participantRepository, messagingService, notificationsService)
+	eventsPubSub := domain.NewPubsub()
+	messagingService := services.NewMessagingService(messagesRepository, eventsPubSub)
+	conversationService := services.NewConversationService(conversationsRepository, participantRepository, eventsPubSub)
 	authService := services.NewAuthService(usersRepository)
+	notificationsService := services.NewNotificationsService(notificationTopicRepository, hub)
+
+	notificationEventHandlers := services.NewNotificationEventHandlers(eventsPubSub, notificationsService, messagesRepository)
+	messagesEventHandlers := services.NewMessagesEventHandlers(eventsPubSub, messagingService)
+
+	go notificationEventHandlers.Run()
+	go messagesEventHandlers.Run()
 
 	return &App{
 		Commands: Commands{
@@ -51,25 +59,5 @@ func NewApp(db *gorm.DB, hub ws.Hub) *App {
 			Conversations: conversationsRepository,
 			Messages:      messagesRepository,
 		},
-	}
-}
-
-func NewCommands(db *gorm.DB, hub ws.Hub) Commands {
-	messagesRepository := postgres.NewMessageRepository(db)
-	usersRepository := postgres.NewUserRepository(db)
-	conversationsRepository := postgres.NewConversationRepository(db)
-	participantRepository := postgres.NewParticipantRepository(db)
-	notificationTopicRepository := postgres.NewNotificationTopicRepository(db)
-
-	notificationsService := services.NewNotificationsService(messagesRepository, notificationTopicRepository, hub)
-	messagingService := services.NewMessagingService(messagesRepository, notificationsService)
-	conversationService := services.NewConversationService(conversationsRepository, participantRepository, messagingService, notificationsService)
-	authService := services.NewAuthService(usersRepository)
-
-	return Commands{
-		ConversationService:  conversationService,
-		AuthService:          authService,
-		NotificationsService: notificationsService,
-		MessagingService:     messagingService,
 	}
 }
