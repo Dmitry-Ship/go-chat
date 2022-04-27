@@ -17,7 +17,7 @@ import (
 
 type NotificationService interface {
 	SubscribeToTopic(topic string, userId uuid.UUID) error
-	BroadcastToTopic(topic string, notification ws.OutgoingNotification)
+	BroadcastToTopic(topic string, notification ws.OutgoingNotification) error
 	UnsubscribeFromTopic(topic string, userId uuid.UUID) error
 	DeleteTopic(topic string) error
 }
@@ -109,18 +109,21 @@ func (s *notificationService) Run() {
 	}
 }
 
-func (s *notificationService) broadcastToUsers(userIDs []uuid.UUID, notification ws.OutgoingNotification) {
+func (s *notificationService) broadcastToUsers(userIDs []uuid.UUID, notification ws.OutgoingNotification) error {
 	message := broadcastMessage{
 		Payload: notification,
 		UserIDs: userIDs,
 	}
 
 	json, err := json.Marshal(message)
+
 	if err != nil {
-		log.Println(err)
+		return err
 	}
 
 	s.redisClient.Publish(ctx, pubsub.ChatChannel, []byte(json))
+
+	return nil
 }
 
 func (s *notificationService) RegisterClient(conn *websocket.Conn, wsHandlers ws.WSHandlers, userID uuid.UUID) error {
@@ -145,15 +148,21 @@ func (s *notificationService) UnsubscribeFromTopic(topic string, userId uuid.UUI
 }
 
 func (s *notificationService) DeleteTopic(topic string) error {
-	return s.notificationTopics.DeleteByTopic(topic)
+	return s.notificationTopics.DeleteAllByTopic(topic)
 }
 
-func (s *notificationService) BroadcastToTopic(topic string, notification ws.OutgoingNotification) {
+func (s *notificationService) BroadcastToTopic(topic string, notification ws.OutgoingNotification) error {
 	userIds, err := s.notificationTopics.GetUserIDsByTopic(topic)
 
 	if err != nil {
-		return
+		return err
 	}
 
-	s.broadcastToUsers(userIds, notification)
+	err = s.broadcastToUsers(userIds, notification)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

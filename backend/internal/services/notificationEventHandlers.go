@@ -44,7 +44,11 @@ func (h *notificationEventHandlers) Run() {
 					NewName:        e.NewName,
 				},
 			}
-			h.notificationsService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
+			err := h.notificationsService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
+
+			if err != nil {
+				log.Printf("Error handling %s event: %v", e.GetName(), err)
+			}
 
 		case event := <-h.pubsub.Subscribe(domain.PublicConversationDeletedName):
 			e, ok := event.(*domain.PublicConversationDeleted)
@@ -63,9 +67,13 @@ func (h *notificationEventHandlers) Run() {
 				},
 			}
 
-			h.notificationsService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
+			err := h.notificationsService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
 
-			err := h.notificationsService.DeleteTopic("conversation:" + e.ConversationID.String())
+			if err != nil {
+				log.Printf("Error handling %s event: %v", e.GetName(), err)
+			}
+
+			err = h.notificationsService.DeleteTopic("conversation:" + e.ConversationID.String())
 
 			if err != nil {
 				log.Printf("Error handling %s event: %v", e.GetName(), err)
@@ -79,7 +87,7 @@ func (h *notificationEventHandlers) Run() {
 				continue
 			}
 
-			messageDTO, err := h.messages.GetMessageByID(e.MessageID, e.UserID)
+			messageDTO, err := h.messages.GetNotificationMessage(e.MessageID, e.UserID)
 
 			if err != nil {
 				log.Println(err)
@@ -91,7 +99,11 @@ func (h *notificationEventHandlers) Run() {
 				Payload: messageDTO,
 			}
 
-			h.notificationsService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
+			err = h.notificationsService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
+
+			if err != nil {
+				log.Printf("Error handling %s event: %v", e.GetName(), err)
+			}
 
 		case event := <-h.pubsub.Subscribe(domain.PublicConversationCreatedName):
 			e, ok := event.(*domain.PublicConversationCreated)

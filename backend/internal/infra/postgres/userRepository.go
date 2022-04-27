@@ -52,7 +52,7 @@ func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
 	return ToUserDomain(&user), err
 }
 
-func (r *userRepository) FindContacts(userID uuid.UUID) ([]*readModel.ContactDTO, error) {
+func (r *userRepository) GetContacts(userID uuid.UUID) ([]*readModel.ContactDTO, error) {
 	users := []*User{}
 	err := r.db.Limit(50).Where("id <> ?", userID).Find(&users).Error
 

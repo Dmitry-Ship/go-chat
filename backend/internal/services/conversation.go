@@ -8,7 +8,7 @@ import (
 
 type ConversationService interface {
 	CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error
-	CreatePrivateConversationIfNotExists(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error)
+	StartPrivateConversation(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error)
 	JoinPublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	LeavePublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	DeleteConversation(id uuid.UUID) error
@@ -33,7 +33,7 @@ func NewConversationService(
 	}
 }
 
-func (s *conversationService) CreatePrivateConversationIfNotExists(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error) {
+func (s *conversationService) StartPrivateConversation(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error) {
 	existingConversationID, err := s.conversations.GetPrivateConversationID(fromUserId, toUserId)
 
 	if err == nil {

@@ -117,7 +117,7 @@ func (r *conversationRepository) GetPublicConversation(id uuid.UUID) (*domain.Pu
 	return toPublicConversationDomain(&conversation, &publicConversation, &participant), nil
 }
 
-func (r *conversationRepository) GetConversationByID(id uuid.UUID, userId uuid.UUID) (*readModel.ConversationFullDTO, error) {
+func (r *conversationRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*readModel.ConversationFullDTO, error) {
 	conversation := Conversation{}
 
 	err := r.db.Where("id = ?", id).First(&conversation).Error

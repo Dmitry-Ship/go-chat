@@ -54,7 +54,7 @@ func (r *messageRepository) StoreRenamedConversationMessage(message *domain.Conv
 	return err
 }
 
-func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, requestUserID uuid.UUID) ([]*readModel.MessageDTO, error) {
+func (r *messageRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID) ([]*readModel.MessageDTO, error) {
 	messages := []*Message{}
 
 	err := r.db.Limit(50).Where("conversation_id = ?", conversationID).Find(&messages).Error
@@ -74,7 +74,7 @@ func (r *messageRepository) FindAllByConversationID(conversationID uuid.UUID, re
 	return dtoMessages, err
 }
 
-func (r *messageRepository) GetMessageByID(messageID uuid.UUID, requestUserID uuid.UUID) (*readModel.MessageDTO, error) {
+func (r *messageRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (*readModel.MessageDTO, error) {
 	message := Message{}
 
 	err := r.db.Where("id = ?", messageID).First(&message).Error

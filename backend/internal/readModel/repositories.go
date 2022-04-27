@@ -5,16 +5,16 @@ import (
 )
 
 type UserQueryRepository interface {
-	FindContacts(userID uuid.UUID) ([]*ContactDTO, error)
+	GetContacts(userID uuid.UUID) ([]*ContactDTO, error)
 	GetUserByID(userID uuid.UUID) (*UserDTO, error)
 }
 
 type ConversationQueryRepository interface {
-	GetConversationByID(id uuid.UUID, userId uuid.UUID) (*ConversationFullDTO, error)
+	GetConversation(id uuid.UUID, userId uuid.UUID) (*ConversationFullDTO, error)
 	GetUserConversations(userId uuid.UUID) ([]*ConversationDTO, error)
 }
 
 type MessageQueryRepository interface {
-	FindAllByConversationID(conversationId uuid.UUID, requestUserId uuid.UUID) ([]*MessageDTO, error)
-	GetMessageByID(messageID uuid.UUID, requestUserID uuid.UUID) (*MessageDTO, error)
+	GetConversationMessages(conversationId uuid.UUID, requestUserId uuid.UUID) ([]*MessageDTO, error)
+	GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (*MessageDTO, error)
 }

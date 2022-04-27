@@ -21,7 +21,7 @@ func (s *CommandController) handleCreatePrivateConversationIfNotExists(w http.Re
 
 	userID, _ := r.Context().Value("userId").(uuid.UUID)
 
-	conversationId, err := s.commands.ConversationService.CreatePrivateConversationIfNotExists(userID, request.ToUserId)
+	conversationId, err := s.commands.ConversationService.StartPrivateConversation(userID, request.ToUserId)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
