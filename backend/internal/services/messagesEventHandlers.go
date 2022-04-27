@@ -8,7 +8,7 @@ import (
 type messagesEventHandlers struct {
 	pubsub               domain.PubSub
 	messagingService     MessagingService
-	notificationsService NotificationsService
+	notificationsService NotificationService
 }
 
 func NewMessagesEventHandlers(pubsub domain.PubSub, messagingService MessagingService) *messagesEventHandlers {

@@ -26,9 +26,10 @@ func NewWSHandlers() *wsHandlers {
 func (s *wsHandlers) HandleNotification(notificationType string, data json.RawMessage, userID uuid.UUID) {
 	if handler, ok := s.messageHandlers[notificationType]; ok {
 		handler(data, userID)
-	} else {
-		log.Printf("No handler for notification type %s", notificationType)
+		return
 	}
+
+	log.Printf("No handler for notification type %s", notificationType)
 }
 
 func (s *wsHandlers) SetWSHandler(notificationType string, handler WSHandler) {

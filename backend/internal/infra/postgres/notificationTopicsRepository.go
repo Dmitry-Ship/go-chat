@@ -46,10 +46,10 @@ func (r *notificationTopicRepository) DeleteByTopic(topic string) error {
 	return err
 }
 
-func (r *notificationTopicRepository) GetAllNotificationTopics(userID uuid.UUID) ([]string, error) {
-	var topics []string
+func (r *notificationTopicRepository) GetUserIDsByTopic(topic string) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
 
-	err := r.db.Model(&UserNotificationTopic{}).Where("user_id = ?", userID).Select("topic").Find(&topics).Error
+	err := r.db.Model(&UserNotificationTopic{}).Where("topic = ?", topic).Select("user_id").Find(&ids).Error
 
-	return topics, err
+	return ids, err
 }

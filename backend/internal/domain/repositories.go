@@ -36,5 +36,5 @@ type NotificationTopicCommandRepository interface {
 	Store(notificationTopic *NotificationTopic) error
 	DeleteByUserIDAndTopic(userId uuid.UUID, topic string) error
 	DeleteByTopic(topic string) error
-	GetAllNotificationTopics(userID uuid.UUID) ([]string, error)
+	GetUserIDsByTopic(topic string) ([]uuid.UUID, error)
 }

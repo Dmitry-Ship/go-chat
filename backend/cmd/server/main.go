@@ -5,7 +5,6 @@ import (
 	"GitHub/go-chat/backend/internal/httpServer"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
-	ws "GitHub/go-chat/backend/internal/infra/websocket"
 	"log"
 	"net/http"
 	"os"
@@ -13,13 +12,11 @@ import (
 
 func main() {
 	redisClient := redisPubsub.GetRedisClient()
-	websocketConnectionsHub := ws.NewHub(redisClient)
-	go websocketConnectionsHub.Run()
 	db := postgres.NewDatabaseConnection()
 	db.RunMigrations()
 	dbConnection := db.GetConnection()
 
-	application := app.NewApp(dbConnection, websocketConnectionsHub)
+	application := app.NewApp(dbConnection, redisClient)
 	queryController := httpServer.NewQueryController(&application.Queries)
 	commandController := httpServer.NewCommandController(&application.Commands)
 	server := httpServer.NewHTTPServer(queryController, commandController)

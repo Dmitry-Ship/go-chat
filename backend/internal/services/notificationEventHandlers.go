@@ -12,10 +12,10 @@ import (
 type notificationEventHandlers struct {
 	pubsub               domain.PubSub
 	messages             readModel.MessageQueryRepository
-	notificationsService NotificationsService
+	notificationsService NotificationService
 }
 
-func NewNotificationEventHandlers(pubsub domain.PubSub, notificationsService NotificationsService, messages readModel.MessageQueryRepository) *notificationEventHandlers {
+func NewNotificationEventHandlers(pubsub domain.PubSub, notificationsService NotificationService, messages readModel.MessageQueryRepository) *notificationEventHandlers {
 	return &notificationEventHandlers{
 		pubsub:               pubsub,
 		messages:             messages,

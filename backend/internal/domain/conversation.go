@@ -52,10 +52,11 @@ func (publicConversation *PublicConversation) Rename(newName string, userId uuid
 	if publicConversation.Data.Owner.UserID == userId {
 		publicConversation.Data.Name = newName
 		publicConversation.Data.Avatar = string(newName[0])
-	} else {
-		return errors.New("user is not owner")
+
+		return nil
 	}
-	return nil
+
+	return errors.New("user is not owner")
 }
 
 type PrivateConversationData struct {

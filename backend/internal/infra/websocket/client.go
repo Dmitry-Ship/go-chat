@@ -17,9 +17,9 @@ type OutgoingNotification struct {
 type Client struct {
 	Id             uuid.UUID
 	connection     *websocket.Conn
-	hub            Hub
+	unregisterChan chan *Client
 	UserID         uuid.UUID
-	sendChannel    chan *OutgoingNotification
+	SendChannel    chan *OutgoingNotification
 	wsHandler      WSHandlers
 	writeWait      time.Duration
 	pongWait       time.Duration
@@ -27,7 +27,7 @@ type Client struct {
 	maxMessageSize int64
 }
 
-func NewClient(conn *websocket.Conn, hub Hub, wsHandler WSHandlers, userID uuid.UUID) *Client {
+func NewClient(conn *websocket.Conn, unregisterChan chan *Client, wsHandler WSHandlers, userID uuid.UUID) *Client {
 	// Time allowed to write a message to the peer.
 	writeWait := 10 * time.Second
 
@@ -42,8 +42,8 @@ func NewClient(conn *websocket.Conn, hub Hub, wsHandler WSHandlers, userID uuid.
 		Id:             uuid.New(),
 		UserID:         userID,
 		connection:     conn,
-		sendChannel:    make(chan *OutgoingNotification, 1024),
-		hub:            hub,
+		SendChannel:    make(chan *OutgoingNotification, 1024),
+		unregisterChan: unregisterChan,
 		wsHandler:      wsHandler,
 		writeWait:      writeWait,
 		pongWait:       pongWait,
@@ -54,7 +54,7 @@ func NewClient(conn *websocket.Conn, hub Hub, wsHandler WSHandlers, userID uuid.
 
 func (c *Client) ReadPump() {
 	defer func() {
-		c.hub.UnregisterClient(c)
+		c.unregisterChan <- c
 		c.connection.Close()
 	}()
 
@@ -99,7 +99,7 @@ func (c *Client) WritePump() {
 
 	for {
 		select {
-		case notification, ok := <-c.sendChannel:
+		case notification, ok := <-c.SendChannel:
 			c.connection.SetWriteDeadline(time.Now().Add(c.writeWait))
 			if !ok {
 				// The conversation closed the channel.
@@ -122,5 +122,5 @@ func (c *Client) WritePump() {
 }
 
 func (c *Client) SendNotification(notification *OutgoingNotification) {
-	c.sendChannel <- notification
+	c.SendChannel <- notification
 }
