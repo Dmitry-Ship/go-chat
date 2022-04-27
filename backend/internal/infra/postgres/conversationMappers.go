@@ -61,6 +61,7 @@ func toConversationPersistence(conversation domain.BaseConversation) *Conversati
 		ID:        conversationBase.ID,
 		Type:      toConversationTypePersistence(conversationBase.Type),
 		CreatedAt: conversationBase.CreatedAt,
+		IsActive:  conversationBase.IsActive,
 	}
 }
 
@@ -91,6 +92,7 @@ func toPublicConversationDomain(conversation *Conversation, publicConversation *
 			ID:        conversation.ID,
 			Type:      conversationTypesMap[conversation.Type],
 			CreatedAt: conversation.CreatedAt,
+			IsActive:  conversation.IsActive,
 		},
 	}
 }

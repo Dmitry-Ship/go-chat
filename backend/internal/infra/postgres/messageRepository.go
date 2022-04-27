@@ -9,12 +9,14 @@ import (
 )
 
 type messageRepository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	pubsub domain.EventPublisher
 }
 
-func NewMessageRepository(db *gorm.DB) *messageRepository {
+func NewMessageRepository(db *gorm.DB, pubsub domain.EventPublisher) *messageRepository {
 	return &messageRepository{
-		db: db,
+		db:     db,
+		pubsub: pubsub,
 	}
 }
 
@@ -27,19 +29,37 @@ func (r *messageRepository) StoreTextMessage(message *domain.TextMessage) error 
 
 	err = r.db.Create(toTextMessagePersistence(*message)).Error
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	message.Raise(r.pubsub)
+
+	return nil
 }
 
 func (r *messageRepository) StoreLeftConversationMessage(message *domain.Message) error {
 	err := r.db.Create(toMessagePersistence(message)).Error
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	message.Raise(r.pubsub)
+
+	return nil
 }
 
 func (r *messageRepository) StoreJoinedConversationMessage(message *domain.Message) error {
 	err := r.db.Create(toMessagePersistence(message)).Error
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	message.Raise(r.pubsub)
+
+	return nil
 }
 
 func (r *messageRepository) StoreRenamedConversationMessage(message *domain.ConversationRenamedMessage) error {
@@ -51,7 +71,13 @@ func (r *messageRepository) StoreRenamedConversationMessage(message *domain.Conv
 
 	err = r.db.Create(toRenameConversationMessagePersistence(*message)).Error
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	message.Raise(r.pubsub)
+
+	return nil
 }
 
 func (r *messageRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID) ([]*readModel.MessageDTO, error) {

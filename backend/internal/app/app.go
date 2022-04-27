@@ -29,15 +29,16 @@ type Queries struct {
 }
 
 func NewApp(db *gorm.DB, redisClient *redis.Client) *App {
-	messagesRepository := postgres.NewMessageRepository(db)
+	eventsPubSub := domain.NewPubsub()
+
+	messagesRepository := postgres.NewMessageRepository(db, eventsPubSub)
 	usersRepository := postgres.NewUserRepository(db)
-	conversationsRepository := postgres.NewConversationRepository(db)
-	participantRepository := postgres.NewParticipantRepository(db)
+	conversationsRepository := postgres.NewConversationRepository(db, eventsPubSub)
+	participantRepository := postgres.NewParticipantRepository(db, eventsPubSub)
 	notificationTopicRepository := postgres.NewNotificationTopicRepository(db)
 
-	eventsPubSub := domain.NewPubsub()
-	messagingService := services.NewMessagingService(messagesRepository, eventsPubSub)
-	conversationService := services.NewConversationService(conversationsRepository, participantRepository, eventsPubSub)
+	messagingService := services.NewMessagingService(messagesRepository)
+	conversationService := services.NewConversationService(conversationsRepository, participantRepository)
 	authService := services.NewAuthService(usersRepository)
 	notificationService := services.NewNotificationService(redisClient, notificationTopicRepository)
 

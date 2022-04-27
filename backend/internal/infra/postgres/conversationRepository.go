@@ -10,12 +10,14 @@ import (
 )
 
 type conversationRepository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	pubsub domain.EventPublisher
 }
 
-func NewConversationRepository(db *gorm.DB) *conversationRepository {
+func NewConversationRepository(db *gorm.DB, pubsub domain.EventPublisher) *conversationRepository {
 	return &conversationRepository{
-		db: db,
+		db:     db,
+		pubsub: pubsub,
 	}
 
 }
@@ -35,7 +37,13 @@ func (r *conversationRepository) StorePublicConversation(conversation *domain.Pu
 
 	err = r.db.Create(toParticipantPersistence(&conversation.Data.Owner)).Error
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	conversation.Raise(r.pubsub)
+
+	return nil
 }
 
 func (r *conversationRepository) UpdatePublicConversation(conversation *domain.PublicConversation) error {
@@ -47,7 +55,13 @@ func (r *conversationRepository) UpdatePublicConversation(conversation *domain.P
 
 	err = r.db.Save(toPublicConversationPersistence(conversation)).Error
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	conversation.Raise(r.pubsub)
+
+	return nil
 }
 
 func (r *conversationRepository) StorePrivateConversation(conversation *domain.PrivateConversation) error {
@@ -75,6 +89,8 @@ func (r *conversationRepository) StorePrivateConversation(conversation *domain.P
 		return err
 	}
 
+	conversation.Raise(r.pubsub)
+
 	return nil
 }
 
@@ -100,7 +116,7 @@ func (r *conversationRepository) GetPublicConversation(id uuid.UUID) (*domain.Pu
 
 	publicConversation := PublicConversation{}
 
-	err = r.db.Where("conversation_id = ?", id).First(&publicConversation).Error
+	err = r.db.Where("conversation_id = ?", id).Where("is_active = ?", true).First(&publicConversation).Error
 
 	if err != nil {
 		return nil, err
@@ -120,7 +136,7 @@ func (r *conversationRepository) GetPublicConversation(id uuid.UUID) (*domain.Pu
 func (r *conversationRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*readModel.ConversationFullDTO, error) {
 	conversation := Conversation{}
 
-	err := r.db.Where("id = ?", id).First(&conversation).Error
+	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
 
 	if err != nil {
 		return nil, err
@@ -129,7 +145,7 @@ func (r *conversationRepository) GetConversation(id uuid.UUID, userId uuid.UUID)
 	hasUserJoined := true
 
 	participant := Participant{}
-	if err := r.db.Where("conversation_id = ?", id).Where("user_id = ?", userId).First(&participant).Error; err != nil {
+	if err := r.db.Where("conversation_id = ?", id).Where("user_id = ?", userId).Where("is_active = ?", true).First(&participant).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			hasUserJoined = false
 		} else {
@@ -180,7 +196,7 @@ func (r *conversationRepository) GetConversation(id uuid.UUID, userId uuid.UUID)
 func (r *conversationRepository) GetUserConversations(userID uuid.UUID) ([]*readModel.ConversationDTO, error) {
 	conversations := []*Conversation{}
 
-	err := r.db.Joins("JOIN participants ON participants.conversation_id = conversations.id").Where("participants.user_id = ?", userID).Find(&conversations).Error
+	err := r.db.Joins("JOIN participants ON participants.conversation_id = conversations.id").Where("conversations.is_active = ?", true).Where("participants.is_active = ?", true).Where("participants.user_id = ?", userID).Find(&conversations).Error
 
 	if err != nil {
 		return nil, err
@@ -231,10 +247,4 @@ func (r *conversationRepository) GetUserConversations(userID uuid.UUID) ([]*read
 	}
 
 	return conversationsDTOs, err
-}
-
-func (r *conversationRepository) Delete(id uuid.UUID) error {
-	err := r.db.Where("id = ?", id).Delete(Conversation{}).Error
-
-	return err
 }

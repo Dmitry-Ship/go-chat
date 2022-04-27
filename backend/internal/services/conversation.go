@@ -11,25 +11,22 @@ type ConversationService interface {
 	StartPrivateConversation(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error)
 	JoinPublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	LeavePublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
-	DeleteConversation(id uuid.UUID) error
+	DeletePublicConversation(id uuid.UUID, userId uuid.UUID) error
 	RenamePublicConversation(conversationId uuid.UUID, userId uuid.UUID, name string) error
 }
 
 type conversationService struct {
 	conversations domain.ConversationCommandRepository
 	participants  domain.ParticipantCommandRepository
-	pubsub        domain.PubSub
 }
 
 func NewConversationService(
 	conversations domain.ConversationCommandRepository,
 	participants domain.ParticipantCommandRepository,
-	pubsub domain.PubSub,
 ) *conversationService {
 	return &conversationService{
 		conversations: conversations,
 		participants:  participants,
-		pubsub:        pubsub,
 	}
 }
 
@@ -50,29 +47,17 @@ func (s *conversationService) StartPrivateConversation(fromUserId uuid.UUID, toU
 		return uuid.Nil, err
 	}
 
-	s.pubsub.Publish(domain.NewPrivateConversationCreated(newConversationID, fromUserId, toUserId))
-
 	return newConversationID, nil
 }
 
 func (s *conversationService) CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error {
 	conversation := domain.NewPublicConversation(id, name, userId)
 
-	s.pubsub.Publish(domain.NewPublicConversationCreated(id, userId))
-
 	return s.conversations.StorePublicConversation(conversation)
 }
 
 func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
-	err := s.participants.Store(domain.NewParticipant(conversationID, userId))
-
-	if err != nil {
-		return err
-	}
-
-	s.pubsub.Publish(domain.NewPublicConversationJoined(conversationID, userId))
-
-	return nil
+	return s.participants.Store(domain.NewJoinedParticipant(conversationID, userId))
 }
 
 func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID, userId uuid.UUID, name string) error {
@@ -88,31 +73,37 @@ func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID,
 		return err
 	}
 
-	err = s.conversations.UpdatePublicConversation(conversation)
-
-	if err != nil {
-		return err
-	}
-
-	s.pubsub.Publish(domain.NewPublicConversationRenamed(conversationID, userId, name))
-
-	return nil
+	return s.conversations.UpdatePublicConversation(conversation)
 }
 
 func (s *conversationService) LeavePublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
-	err := s.participants.DeleteByConversationIDAndUserID(conversationID, userId)
+	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userId)
 
 	if err != nil {
 		return err
 	}
 
-	s.pubsub.Publish(domain.NewPublicConversationLeft(conversationID, userId))
+	err = participant.LeavePublicConversation(conversationID)
 
-	return nil
+	if err != nil {
+		return err
+	}
+
+	return s.participants.Update(participant)
 }
 
-func (s *conversationService) DeleteConversation(id uuid.UUID) error {
-	s.pubsub.Publish(domain.NewPublicConversationDeleted(id))
+func (s *conversationService) DeletePublicConversation(id uuid.UUID, userID uuid.UUID) error {
+	conversation, err := s.conversations.GetPublicConversation(id)
 
-	return s.conversations.Delete(id)
+	if err != nil {
+		return err
+	}
+
+	err = conversation.Delete(userID)
+
+	if err != nil {
+		return err
+	}
+
+	return s.conversations.UpdatePublicConversation(conversation)
 }

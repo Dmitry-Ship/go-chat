@@ -18,6 +18,7 @@ const (
 )
 
 type Message struct {
+	aggregate
 	ID             uuid.UUID
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
@@ -26,13 +27,17 @@ type Message struct {
 }
 
 func newMessage(conversationId uuid.UUID, userID uuid.UUID, messageType string) *Message {
-	return &Message{
+	message := Message{
 		ID:             uuid.New(),
 		ConversationID: conversationId,
 		CreatedAt:      time.Now(),
 		Type:           messageType,
 		UserID:         userID,
 	}
+
+	message.AddEvent(NewMessageSent(conversationId, message.ID, userID))
+
+	return &message
 }
 
 func (m *Message) GetBaseData() *Message {

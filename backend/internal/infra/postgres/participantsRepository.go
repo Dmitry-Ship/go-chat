@@ -8,25 +8,49 @@ import (
 )
 
 type participantRepository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	pubsub domain.EventPublisher
 }
 
-func NewParticipantRepository(db *gorm.DB) *participantRepository {
+func NewParticipantRepository(db *gorm.DB, pubsub domain.EventPublisher) *participantRepository {
 	return &participantRepository{
-		db: db,
+		db:     db,
+		pubsub: pubsub,
 	}
 }
 
 func (r *participantRepository) Store(participant *domain.Participant) error {
 	err := r.db.Create(toParticipantPersistence(participant)).Error
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	participant.Raise(r.pubsub)
+
+	return nil
 }
 
-func (r *participantRepository) DeleteByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) error {
-	participant := Participant{}
+func (r *participantRepository) Update(participant *domain.Participant) error {
+	err := r.db.Save(toParticipantPersistence(participant)).Error
 
-	err := r.db.Where("conversation_id = ?", conversationID).Where("user_id = ?", userID).Delete(participant).Error
+	if err != nil {
+		return err
+	}
 
-	return err
+	participant.Raise(r.pubsub)
+
+	return nil
+}
+
+func (r *participantRepository) GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
+	var participantPersistence Participant
+
+	err := r.db.Where("conversation_id = ? AND user_id = ?", conversationID, userID).First(&participantPersistence).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return toParticipantDomain(&participantPersistence), nil
 }

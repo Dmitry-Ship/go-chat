@@ -18,6 +18,7 @@ func TestNewTextMessage(t *testing.T) {
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
+	assert.Equal(t, message.events[len(message.events)-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
 func TestNewConversationRenamedMessage(t *testing.T) {
@@ -31,6 +32,7 @@ func TestNewConversationRenamedMessage(t *testing.T) {
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
+	assert.Equal(t, message.events[len(message.events)-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
 func TestNewLeftConversationMessage(t *testing.T) {
@@ -42,6 +44,7 @@ func TestNewLeftConversationMessage(t *testing.T) {
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
+	assert.Equal(t, message.events[len(message.events)-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
 func TestNewJoinedConversationMessage(t *testing.T) {
@@ -53,4 +56,5 @@ func TestNewJoinedConversationMessage(t *testing.T) {
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
+	assert.Equal(t, message.events[len(message.events)-1], NewMessageSent(conversationID, message.ID, userID))
 }

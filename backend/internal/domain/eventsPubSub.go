@@ -4,10 +4,8 @@ import (
 	"sync"
 )
 
-type PubSub interface {
+type EventsSubscriber interface {
 	Subscribe(topic string) <-chan DomainEvent
-	Publish(event DomainEvent)
-	Close()
 }
 
 type pubsub struct {

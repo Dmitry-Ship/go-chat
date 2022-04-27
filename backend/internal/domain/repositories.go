@@ -10,7 +10,6 @@ type ConversationCommandRepository interface {
 	UpdatePublicConversation(conversation *PublicConversation) error
 	GetPublicConversation(id uuid.UUID) (*PublicConversation, error)
 	GetPrivateConversationID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
-	Delete(id uuid.UUID) error
 }
 
 type UserCommandRepository interface {
@@ -29,7 +28,8 @@ type MessageCommandRepository interface {
 
 type ParticipantCommandRepository interface {
 	Store(participant *Participant) error
-	DeleteByConversationIDAndUserID(conversationId uuid.UUID, userId uuid.UUID) error
+	GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*Participant, error)
+	Update(participant *Participant) error
 }
 
 type NotificationTopicCommandRepository interface {

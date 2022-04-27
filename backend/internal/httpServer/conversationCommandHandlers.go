@@ -67,6 +67,8 @@ func (s *CommandController) handleDeleteConversation(w http.ResponseWriter, r *h
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
 
+	userID, _ := r.Context().Value("userId").(uuid.UUID)
+
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
@@ -74,7 +76,7 @@ func (s *CommandController) handleDeleteConversation(w http.ResponseWriter, r *h
 		return
 	}
 
-	err = s.commands.ConversationService.DeleteConversation(request.ConversationId)
+	err = s.commands.ConversationService.DeletePublicConversation(request.ConversationId, userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

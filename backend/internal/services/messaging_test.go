@@ -31,28 +31,26 @@ func (m *messagesRepositoryMock) StoreLeftConversationMessage(message *domain.Le
 	return nil
 }
 
-type pubSubMock struct {
-	methodCalled string
-}
+// type pubSubMock struct {
+// 	methodCalled string
+// }
 
-func (m *pubSubMock) Subscribe(topic string) <-chan domain.DomainEvent {
-	m.methodCalled = "Subscribe"
-	return nil
-}
+// func (m *pubSubMock) Subscribe(topic string) <-chan domain.DomainEvent {
+// 	m.methodCalled = "Subscribe"
+// 	return nil
+// }
 
-func (m *pubSubMock) Publish(event domain.DomainEvent) {
-	m.methodCalled = "Publish"
-}
+// func (m *pubSubMock) Publish(event domain.DomainEvent) {
+// 	m.methodCalled = "Publish"
+// }
 
-func (m *pubSubMock) Close() {
-	m.methodCalled = "Close"
-}
+// func (m *pubSubMock) Close() {
+// 	m.methodCalled = "Close"
+// }
 
 func TestNewMessagingService(t *testing.T) {
 	messagesRepository := &messagesRepositoryMock{}
-	pubSub := &pubSubMock{}
-
-	messagingService := NewMessagingService(messagesRepository, pubSub)
+	messagingService := NewMessagingService(messagesRepository)
 
 	if messagingService == nil {
 		t.Error("Expected messagingService to be not nil")
@@ -66,8 +64,7 @@ func TestNewMessagingService(t *testing.T) {
 
 func TestMessagingService_SendTextMessage(t *testing.T) {
 	messagesRepository := &messagesRepositoryMock{}
-	pubSub := &pubSubMock{}
-	messagingService := NewMessagingService(messagesRepository, pubSub)
+	messagingService := NewMessagingService(messagesRepository)
 
 	conversationID := uuid.New()
 	userID := uuid.New()
@@ -85,8 +82,7 @@ func TestMessagingService_SendTextMessage(t *testing.T) {
 
 func TestMessagingService_SendJoinedConversationMessage(t *testing.T) {
 	messagesRepository := &messagesRepositoryMock{}
-	pubSub := &pubSubMock{}
-	messagingService := NewMessagingService(messagesRepository, pubSub)
+	messagingService := NewMessagingService(messagesRepository)
 
 	conversationID := uuid.New()
 	userID := uuid.New()
@@ -100,16 +96,11 @@ func TestMessagingService_SendJoinedConversationMessage(t *testing.T) {
 	if messagesRepository.methodCalled != "StoreJoinedConversationMessage" {
 		t.Error("Expected StoreJoinedConversationMessage to be called")
 	}
-
-	if pubSub.methodCalled != "Publish" {
-		t.Error("Expected Publish to be called")
-	}
 }
 
 func TestMessagingService_SendRenamedConversationMessage(t *testing.T) {
 	messagesRepository := &messagesRepositoryMock{}
-	pubSub := &pubSubMock{}
-	messagingService := NewMessagingService(messagesRepository, pubSub)
+	messagingService := NewMessagingService(messagesRepository)
 
 	conversationID := uuid.New()
 	newName := "new name"
@@ -124,16 +115,11 @@ func TestMessagingService_SendRenamedConversationMessage(t *testing.T) {
 	if messagesRepository.methodCalled != "StoreRenamedConversationMessage" {
 		t.Error("Expected StoreRenamedConversationMessage to be called")
 	}
-
-	if pubSub.methodCalled != "Publish" {
-		t.Error("Expected Publish to be called")
-	}
 }
 
 func TestMessagingService_SendLeftConversationMessage(t *testing.T) {
 	messagesRepository := &messagesRepositoryMock{}
-	pubSub := &pubSubMock{}
-	messagingService := NewMessagingService(messagesRepository, pubSub)
+	messagingService := NewMessagingService(messagesRepository)
 	conversationID := uuid.New()
 	userID := uuid.New()
 
@@ -145,9 +131,5 @@ func TestMessagingService_SendLeftConversationMessage(t *testing.T) {
 
 	if messagesRepository.methodCalled != "StoreLeftConversationMessage" {
 		t.Error("Expected StoreLeftConversationMessage to be called")
-	}
-
-	if pubSub.methodCalled != "Publish" {
-		t.Error("Expected Publish to be called")
 	}
 }

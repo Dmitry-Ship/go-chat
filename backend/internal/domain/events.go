@@ -2,13 +2,15 @@ package domain
 
 import "github.com/google/uuid"
 
-var MessageSentName = "message_sent"
-var PublicConversationCreatedName = "public_conversation_created"
-var PublicConversationDeletedName = "public_conversation_deleted"
-var PublicConversationRenamedName = "public_conversation_renamed"
-var PublicConversationLeftName = "left_public_conversation"
-var PrivateConversationCreatedName = "private_conversation_created"
-var PublicConversationJoinedName = "public_conversation_joined"
+const (
+	MessageSentName                = "message_sent"
+	PrivateConversationCreatedName = "private_conversation_created"
+	PublicConversationCreatedName  = "public_conversation_created"
+	PublicConversationRenamedName  = "public_conversation_renamed"
+	PublicConversationDeletedName  = "public_conversation_deleted"
+	PublicConversationLeftName     = "public_conversation_left"
+	PublicConversationJoinedName   = "public_conversation_joined"
+)
 
 type DomainEvent interface {
 	GetName() string

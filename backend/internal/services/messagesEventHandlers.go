@@ -6,12 +6,12 @@ import (
 )
 
 type messagesEventHandlers struct {
-	pubsub               domain.PubSub
+	pubsub               domain.EventsSubscriber
 	messagingService     MessagingService
 	notificationsService NotificationService
 }
 
-func NewMessagesEventHandlers(pubsub domain.PubSub, messagingService MessagingService) *messagesEventHandlers {
+func NewMessagesEventHandlers(pubsub domain.EventsSubscriber, messagingService MessagingService) *messagesEventHandlers {
 	return &messagesEventHandlers{
 		pubsub:           pubsub,
 		messagingService: messagingService,

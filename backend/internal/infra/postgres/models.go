@@ -10,6 +10,7 @@ type Conversation struct {
 	ID        uuid.UUID `gorm:"type:uuid"`
 	Type      uint8
 	CreatedAt time.Time
+	IsActive  bool
 }
 
 type PublicConversation struct {
@@ -52,6 +53,8 @@ type Participant struct {
 	ConversationID uuid.UUID `gorm:"type:uuid"`
 	UserID         uuid.UUID `gorm:"type:uuid"`
 	CreatedAt      time.Time
+	Type           uint8
+	IsActive       bool
 }
 
 type User struct {

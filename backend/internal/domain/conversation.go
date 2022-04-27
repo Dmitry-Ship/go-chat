@@ -12,9 +12,11 @@ type BaseConversation interface {
 }
 
 type Conversation struct {
+	aggregate
 	ID        uuid.UUID
 	Type      string
 	CreatedAt time.Time
+	IsActive  bool
 }
 
 func (c *Conversation) GetBaseData() *Conversation {
@@ -32,20 +34,37 @@ type PublicConversation struct {
 	Data PublicConversationData
 }
 
+func (publicConversation *PublicConversation) Delete(userID uuid.UUID) error {
+	if publicConversation.Data.Owner.UserID != userID {
+		return errors.New("user is not owner")
+	}
+
+	publicConversation.IsActive = false
+
+	publicConversation.AddEvent(NewPublicConversationDeleted(publicConversation.Conversation.ID))
+
+	return nil
+}
+
 func NewPublicConversation(id uuid.UUID, name string, creatorID uuid.UUID) *PublicConversation {
-	return &PublicConversation{
+	publicConversation := &PublicConversation{
 		Conversation: Conversation{
 			ID:        id,
 			Type:      "public",
 			CreatedAt: time.Now(),
+			IsActive:  true,
 		},
 		Data: PublicConversationData{
 			ID:     uuid.New(),
 			Name:   name,
 			Avatar: string(name[0]),
-			Owner:  *NewParticipant(id, creatorID),
+			Owner:  *NewOwnerParticipant(id, creatorID),
 		},
 	}
+
+	publicConversation.AddEvent(NewPublicConversationCreated(id, creatorID))
+
+	return publicConversation
 }
 
 func (publicConversation *PublicConversation) Rename(newName string, userId uuid.UUID) error {
@@ -53,6 +72,7 @@ func (publicConversation *PublicConversation) Rename(newName string, userId uuid
 		publicConversation.Data.Name = newName
 		publicConversation.Data.Avatar = string(newName[0])
 
+		publicConversation.AddEvent(NewPublicConversationRenamed(publicConversation.ID, userId, newName))
 		return nil
 	}
 
@@ -71,18 +91,23 @@ type PrivateConversation struct {
 }
 
 func NewPrivateConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) *PrivateConversation {
-	return &PrivateConversation{
+	privateConversation := PrivateConversation{
 		Conversation: Conversation{
 			ID:        id,
 			Type:      "private",
 			CreatedAt: time.Now(),
+			IsActive:  true,
 		},
 		Data: PrivateConversationData{
 			ID:       uuid.New(),
-			ToUser:   *NewParticipant(id, to),
-			FromUser: *NewParticipant(id, from),
+			ToUser:   *NewPrivateParticipant(id, to),
+			FromUser: *NewPrivateParticipant(id, from),
 		},
 	}
+
+	privateConversation.AddEvent(NewPrivateConversationCreated(id, to, from))
+
+	return &privateConversation
 }
 
 func (privateConversation *PrivateConversation) GetFromUser() *Participant {
