@@ -36,7 +36,7 @@ export class WSService implements IWSService {
       this.connection = null;
     }
 
-    const connection = new WebSocket(process.env.NEXT_PUBLIC_WS_DOMAIN + "/ws");
+    const connection = new WebSocket("ws:" + location.host + "/ws");
 
     this.updateStatus();
 

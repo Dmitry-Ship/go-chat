@@ -1,11 +1,11 @@
-package httpServer
+package httpHandlers
 
 import (
 	ws "GitHub/go-chat/backend/internal/infra/websocket"
 	"net/http"
 )
 
-func (s *HTTPServer) InitRoutes() {
+func (s *HTTPHandlers) InitRoutes() {
 	wsHandlers := ws.NewWSHandlers()
 	wsHandlers.SetWSHandler("message", s.commandController.handleReceiveWSChatMessage)
 

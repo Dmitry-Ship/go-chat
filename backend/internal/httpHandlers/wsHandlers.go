@@ -1,4 +1,4 @@
-package httpServer
+package httpHandlers
 
 import (
 	ws "GitHub/go-chat/backend/internal/infra/websocket"
@@ -16,7 +16,7 @@ func (s *CommandController) handleOpenWSConnection(wsHandlers ws.WSHandlers) htt
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
-			origin := os.Getenv("API_URL")
+			origin := os.Getenv("CLIENT_ORIGIN")
 
 			return r.Header.Get("Origin") == origin
 		},

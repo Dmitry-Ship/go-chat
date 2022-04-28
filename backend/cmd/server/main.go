@@ -2,29 +2,25 @@ package main
 
 import (
 	"GitHub/go-chat/backend/internal/app"
-	"GitHub/go-chat/backend/internal/httpServer"
+	"GitHub/go-chat/backend/internal/httpHandlers"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
-	"log"
-	"net/http"
-	"os"
+	"GitHub/go-chat/backend/internal/server"
 )
 
 func main() {
 	redisClient := redisPubsub.GetRedisClient()
 	db := postgres.NewDatabaseConnection()
-	db.RunMigrations()
+	db.AutoMigrate()
 	dbConnection := db.GetConnection()
 
 	application := app.NewApp(dbConnection, redisClient)
-	queryController := httpServer.NewQueryController(&application.Queries)
-	commandController := httpServer.NewCommandController(&application.Commands)
-	server := httpServer.NewHTTPServer(queryController, commandController)
-	server.InitRoutes()
 
-	port := os.Getenv("PORT")
+	queryController := httpHandlers.NewQueryController(&application.Queries)
+	commandController := httpHandlers.NewCommandController(&application.Commands)
+	handlers := httpHandlers.NewHTTPHandlers(queryController, commandController)
+	handlers.InitRoutes()
 
-	log.Println("Listening on port " + port)
-
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	server := server.NewGracefulServer()
+	server.Run()
 }

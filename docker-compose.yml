@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  webserver:
+  load_balancer:
     image: nginx:1.21.6-alpine
     ports:
       - 8080:80
@@ -12,7 +12,6 @@ services:
       - frontend
 
   redis:
-    container_name: composeredis
     image: redis:6.2.6-alpine
     restart: always
     ports:
@@ -21,8 +20,7 @@ services:
     volumes:
       - ./cache:/data
 
-  database:
-    container_name: composepostgres
+  postgres:
     image: postgres:14.2-alpine
     ports:
       - ${DB_PORT}:${DB_PORT}
@@ -37,7 +35,7 @@ services:
   api:
     environment:
       - PORT=${API_PORT}
-      - API_URL      
+      - CLIENT_ORIGIN      
       - DB_PORT
       - DB_HOST
       - DB_NAME
@@ -56,9 +54,6 @@ services:
       - redis
 
   frontend:
-    environment:
-      - NEXT_PUBLIC_WS_DOMAIN=${WEBSOCKET_URL}
-      - NEXT_PUBLIC_API_URL=${API_URL}
     restart: always
     build:
       context: ./frontend

@@ -1,4 +1,4 @@
-package httpServer
+package httpHandlers
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 	"os"
 )
 
-func (s *HTTPServer) withHeaders(next http.HandlerFunc) http.HandlerFunc {
+func (s *HTTPHandlers) withHeaders(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		clientURL := os.Getenv("API_URL")
+		clientURL := os.Getenv("CLIENT_ORIGIN")
 
 		w.Header().Set("Access-Control-Allow-Origin", clientURL)
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -25,7 +25,7 @@ func (s *HTTPServer) withHeaders(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (s *HTTPServer) private(next http.HandlerFunc) http.HandlerFunc {
+func (s *HTTPHandlers) private(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken, err := r.Cookie("access_token")
 

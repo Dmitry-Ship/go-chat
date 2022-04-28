@@ -1,4 +1,4 @@
-package httpServer
+package httpHandlers
 
 import (
 	"GitHub/go-chat/backend/internal/readModel"

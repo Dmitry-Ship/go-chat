@@ -34,9 +34,6 @@ jobs:
         run: npm run lint
 
       - name: Build
-        env:
-          NEXT_PUBLIC_WS_DOMAIN: ${{ secrets.WS_DOMAIN }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
         run: docker build --target prod -t $IMAGE_NAME .
 
       # - name: Deploy to Netlify
