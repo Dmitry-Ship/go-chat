@@ -2,6 +2,7 @@ package app
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/domainEventsHandlers"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	"GitHub/go-chat/backend/internal/readModel"
 	"GitHub/go-chat/backend/internal/services"
@@ -42,8 +43,8 @@ func NewApp(db *gorm.DB, redisClient *redis.Client) *App {
 	authService := services.NewAuthService(usersRepository)
 	notificationService := services.NewNotificationService(redisClient, notificationTopicRepository)
 
-	notificationEventHandlers := services.NewNotificationEventHandlers(eventsPubSub, notificationService, messagesRepository)
-	messagesEventHandlers := services.NewMessagesEventHandlers(eventsPubSub, messagingService)
+	notificationEventHandlers := domainEventsHandlers.NewNotificationEventHandlers(eventsPubSub, notificationService, messagesRepository)
+	messagesEventHandlers := domainEventsHandlers.NewMessagesEventHandlers(eventsPubSub, messagingService)
 
 	go notificationEventHandlers.Run()
 	go messagesEventHandlers.Run()

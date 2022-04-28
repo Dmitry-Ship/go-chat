@@ -1,17 +1,18 @@
-package services
+package domainEventsHandlers
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/services"
 	"log"
 )
 
 type messagesEventHandlers struct {
 	pubsub               domain.EventsSubscriber
-	messagingService     MessagingService
-	notificationsService NotificationService
+	messagingService     services.MessagingService
+	notificationsService services.NotificationService
 }
 
-func NewMessagesEventHandlers(pubsub domain.EventsSubscriber, messagingService MessagingService) *messagesEventHandlers {
+func NewMessagesEventHandlers(pubsub domain.EventsSubscriber, messagingService services.MessagingService) *messagesEventHandlers {
 	return &messagesEventHandlers{
 		pubsub:           pubsub,
 		messagingService: messagingService,
