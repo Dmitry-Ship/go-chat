@@ -78,7 +78,9 @@ func TestPrivateConversation_GetFromUser(t *testing.T) {
 	to := uuid.New()
 	from := uuid.New()
 	conversationId := uuid.New()
+
 	conversation := NewPrivateConversation(conversationId, to, from)
+
 	assert.Equal(t, from, conversation.GetFromUser().UserID)
 }
 
@@ -86,7 +88,9 @@ func TestPrivateConversation_GetToUser(t *testing.T) {
 	to := uuid.New()
 	from := uuid.New()
 	conversationId := uuid.New()
+
 	conversation := NewPrivateConversation(conversationId, to, from)
+
 	assert.Equal(t, to, conversation.GetToUser().UserID)
 }
 
@@ -94,7 +98,6 @@ func TestPublicConversation_DeleteSuccess(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
-
 	conversation := NewPublicConversation(conversationId, name, creatorId)
 
 	err := conversation.Delete(creatorId)
@@ -108,7 +111,6 @@ func TestPublicConversation_DeleteFailure(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
-
 	conversation := NewPublicConversation(conversationId, name, creatorId)
 
 	err := conversation.Delete(uuid.New())

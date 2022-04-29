@@ -10,6 +10,7 @@ import (
 func TestNewTextMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
+
 	message := NewTextMessage(conversationID, userID, "content")
 
 	assert.Equal(t, "content", message.Data.Text)
@@ -24,6 +25,7 @@ func TestNewTextMessage(t *testing.T) {
 func TestNewConversationRenamedMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
+
 	message := NewConversationRenamedMessage(conversationID, userID, "new name")
 
 	assert.Equal(t, "new name", message.Data.NewName)
@@ -38,6 +40,7 @@ func TestNewConversationRenamedMessage(t *testing.T) {
 func TestNewLeftConversationMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
+
 	message := NewLeftConversationMessage(conversationID, userID)
 
 	assert.Equal(t, MessageTypeLeftConversation, message.Type)
@@ -50,6 +53,7 @@ func TestNewLeftConversationMessage(t *testing.T) {
 func TestNewJoinedConversationMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
+
 	message := NewJoinedConversationMessage(conversationID, userID)
 
 	assert.Equal(t, MessageTypeJoinedConversation, message.Type)

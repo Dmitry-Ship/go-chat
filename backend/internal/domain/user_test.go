@@ -8,6 +8,7 @@ import (
 
 func TestNewUser(t *testing.T) {
 	user := NewUser("test", "123")
+
 	assert.NotNil(t, user.ID)
 	assert.NotNil(t, user.Avatar)
 	assert.Equal(t, user.Password, "123")
@@ -16,6 +17,8 @@ func TestNewUser(t *testing.T) {
 
 func TestUser_SetRefreshToken(t *testing.T) {
 	user := NewUser("test", "123")
+
 	user.SetRefreshToken("test")
+
 	assert.Equal(t, user.RefreshToken, "test")
 }
