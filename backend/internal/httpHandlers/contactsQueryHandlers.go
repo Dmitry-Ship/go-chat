@@ -16,5 +16,10 @@ func (s *QueryController) handleGetContacts(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	json.NewEncoder(w).Encode(contacts)
+	err = json.NewEncoder(w).Encode(contacts)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

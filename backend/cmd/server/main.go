@@ -11,7 +11,12 @@ import (
 func main() {
 	redisClient := redisPubsub.GetRedisClient()
 	db := postgres.NewDatabaseConnection()
-	db.AutoMigrate()
+	err := db.AutoMigrate()
+
+	if err != nil {
+		panic(err)
+	}
+
 	dbConnection := db.GetConnection()
 
 	application := app.NewApp(dbConnection, redisClient)

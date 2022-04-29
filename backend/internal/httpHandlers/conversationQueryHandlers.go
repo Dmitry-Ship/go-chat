@@ -18,7 +18,12 @@ func (s *QueryController) handleGetConversations(w http.ResponseWriter, r *http.
 		return
 	}
 
-	json.NewEncoder(w).Encode(conversations)
+	err = json.NewEncoder(w).Encode(conversations)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *QueryController) handleGetConversationsMessages(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +52,12 @@ func (s *QueryController) handleGetConversationsMessages(w http.ResponseWriter, 
 		Messages: messages,
 	}
 
-	json.NewEncoder(w).Encode(data)
+	err = json.NewEncoder(w).Encode(data)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *QueryController) handleGetConversation(w http.ResponseWriter, r *http.Request) {
@@ -69,5 +79,10 @@ func (s *QueryController) handleGetConversation(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	json.NewEncoder(w).Encode(conversation)
+	err = json.NewEncoder(w).Encode(conversation)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

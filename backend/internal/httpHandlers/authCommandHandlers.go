@@ -54,7 +54,12 @@ func (s *CommandController) handleLogin(w http.ResponseWriter, r *http.Request) 
 		AccessTokenExpiration: s.commands.AuthService.GetAccessTokenExpiration(),
 	}
 
-	json.NewEncoder(w).Encode(expiration)
+	err = json.NewEncoder(w).Encode(expiration)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *CommandController) handleLogout(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +85,12 @@ func (s *CommandController) handleLogout(w http.ResponseWriter, r *http.Request)
 		MaxAge:   -1,
 	})
 
-	json.NewEncoder(w).Encode("OK")
+	err = json.NewEncoder(w).Encode("OK")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *CommandController) handleSignUp(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +139,12 @@ func (s *CommandController) handleSignUp(w http.ResponseWriter, r *http.Request)
 		AccessTokenExpiration: s.commands.AuthService.GetAccessTokenExpiration(),
 	}
 
-	json.NewEncoder(w).Encode(expiration)
+	err = json.NewEncoder(w).Encode(expiration)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *CommandController) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
@@ -177,5 +192,10 @@ func (s *CommandController) handleRefreshToken(w http.ResponseWriter, r *http.Re
 		AccessTokenExpiration: s.commands.AuthService.GetAccessTokenExpiration(),
 	}
 
-	json.NewEncoder(w).Encode(expiration)
+	err = json.NewEncoder(w).Encode(expiration)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

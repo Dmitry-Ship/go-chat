@@ -34,7 +34,12 @@ func (s *CommandController) handleCreatePrivateConversationIfNotExists(w http.Re
 		ConversationId: conversationId,
 	}
 
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *CommandController) handleCreatePublicConversation(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +64,12 @@ func (s *CommandController) handleCreatePublicConversation(w http.ResponseWriter
 		return
 	}
 
-	json.NewEncoder(w).Encode("OK")
+	err = json.NewEncoder(w).Encode("OK")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *CommandController) handleDeleteConversation(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +93,12 @@ func (s *CommandController) handleDeleteConversation(w http.ResponseWriter, r *h
 		return
 	}
 
-	json.NewEncoder(w).Encode("OK")
+	err = json.NewEncoder(w).Encode("OK")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *CommandController) handleJoinPublicConversation(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +122,12 @@ func (s *CommandController) handleJoinPublicConversation(w http.ResponseWriter, 
 		return
 	}
 
-	json.NewEncoder(w).Encode("OK")
+	err = json.NewEncoder(w).Encode("OK")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *CommandController) handleLeavePublicConversation(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +150,12 @@ func (s *CommandController) handleLeavePublicConversation(w http.ResponseWriter,
 		return
 	}
 
-	json.NewEncoder(w).Encode("OK")
+	err = json.NewEncoder(w).Encode("OK")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *CommandController) handleRenamePublicConversation(w http.ResponseWriter, r *http.Request) {
@@ -154,5 +179,10 @@ func (s *CommandController) handleRenamePublicConversation(w http.ResponseWriter
 		return
 	}
 
-	json.NewEncoder(w).Encode("OK")
+	err = json.NewEncoder(w).Encode("OK")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

@@ -31,11 +31,6 @@ type broadcastMessage struct {
 	UserIDs []uuid.UUID             `json:"user_ids"`
 }
 
-type subscrition struct {
-	userID uuid.UUID
-	Topic  string
-}
-
 type notificationService struct {
 	registerClient     chan *ws.Client
 	unregisterClient   chan *ws.Client

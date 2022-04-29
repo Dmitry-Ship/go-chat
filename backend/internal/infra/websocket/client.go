@@ -59,8 +59,15 @@ func (c *Client) ReadPump() {
 	}()
 
 	c.connection.SetReadLimit(c.maxMessageSize)
-	c.connection.SetReadDeadline(time.Now().Add(c.pongWait))
-	c.connection.SetPongHandler(func(string) error { c.connection.SetReadDeadline(time.Now().Add(c.pongWait)); return nil })
+	err := c.connection.SetReadDeadline(time.Now().Add(c.pongWait))
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	c.connection.SetPongHandler(func(string) error {
+		return c.connection.SetReadDeadline(time.Now().Add(c.pongWait))
+	})
 
 	for {
 		_, message, err := c.connection.ReadMessage()
@@ -100,10 +107,18 @@ func (c *Client) WritePump() {
 	for {
 		select {
 		case notification, ok := <-c.SendChannel:
-			c.connection.SetWriteDeadline(time.Now().Add(c.writeWait))
+			err := c.connection.SetWriteDeadline(time.Now().Add(c.writeWait))
+
+			if err != nil {
+				log.Println(err)
+			}
+
 			if !ok {
 				// The conversation closed the channel.
-				c.connection.WriteMessage(websocket.CloseMessage, []byte{})
+				err := c.connection.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil {
+					log.Println(err)
+				}
 				return
 			}
 
@@ -113,7 +128,10 @@ func (c *Client) WritePump() {
 			}
 
 		case <-ticker.C:
-			c.connection.SetWriteDeadline(time.Now().Add(c.writeWait))
+			if err := c.connection.SetWriteDeadline(time.Now().Add(c.writeWait)); err != nil {
+				return
+			}
+
 			if err := c.connection.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
