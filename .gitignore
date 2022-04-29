@@ -3,6 +3,8 @@ frontend/node_modules
 /.pnp
 .pnp.js
 
+.DS_Store
+
 # testing
 /coverage
 

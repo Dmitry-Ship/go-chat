@@ -8,7 +8,13 @@ import (
 )
 
 func (s *QueryController) handleGetUser(w http.ResponseWriter, r *http.Request) {
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
+
 	user, err := s.queries.Users.GetUserByID(userID)
 
 	if err != nil {

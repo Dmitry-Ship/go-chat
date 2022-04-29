@@ -19,7 +19,12 @@ func (s *CommandController) handleCreatePrivateConversationIfNotExists(w http.Re
 		return
 	}
 
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
 
 	conversationId, err := s.commands.ConversationService.StartPrivateConversation(userID, request.ToUserId)
 
@@ -55,7 +60,12 @@ func (s *CommandController) handleCreatePublicConversation(w http.ResponseWriter
 		return
 	}
 
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
 
 	err = s.commands.ConversationService.CreatePublicConversation(request.ConversationId, request.ConversationName, userID)
 
@@ -77,7 +87,12 @@ func (s *CommandController) handleDeleteConversation(w http.ResponseWriter, r *h
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
 
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
 
 	err := json.NewDecoder(r.Body).Decode(&request)
 
@@ -113,7 +128,11 @@ func (s *CommandController) handleJoinPublicConversation(w http.ResponseWriter, 
 		return
 	}
 
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
 
 	err = s.commands.ConversationService.JoinPublicConversation(request.ConversationId, userID)
 
@@ -131,7 +150,13 @@ func (s *CommandController) handleJoinPublicConversation(w http.ResponseWriter, 
 }
 
 func (s *CommandController) handleLeavePublicConversation(w http.ResponseWriter, r *http.Request) {
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
+
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
@@ -159,7 +184,13 @@ func (s *CommandController) handleLeavePublicConversation(w http.ResponseWriter,
 }
 
 func (s *CommandController) handleRenamePublicConversation(w http.ResponseWriter, r *http.Request) {
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
+
 	request := struct {
 		ConversationId   uuid.UUID `json:"conversation_id"`
 		ConversationName string    `json:"new_name"`

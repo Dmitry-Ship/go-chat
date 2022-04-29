@@ -25,6 +25,8 @@ func (s *HTTPHandlers) withHeaders(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+const userIDKey = "userId"
+
 func (s *HTTPHandlers) private(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken, err := r.Cookie("access_token")
@@ -45,7 +47,7 @@ func (s *HTTPHandlers) private(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "userId", userId)
+		ctx := context.WithValue(r.Context(), userIDKey, userId)
 
 		s.withHeaders(next).ServeHTTP(w, r.WithContext(ctx))
 	})

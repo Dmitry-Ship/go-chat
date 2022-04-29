@@ -32,6 +32,7 @@ type broadcastMessage struct {
 }
 
 type notificationService struct {
+	ctx                context.Context
 	registerClient     chan *ws.Client
 	unregisterClient   chan *ws.Client
 	userClientsMap     map[uuid.UUID]map[uuid.UUID]*ws.Client
@@ -39,10 +40,9 @@ type notificationService struct {
 	notificationTopics domain.NotificationTopicCommandRepository
 }
 
-var ctx = context.Background()
-
-func NewNotificationService(redisClient *redis.Client, notificationTopics domain.NotificationTopicCommandRepository) *notificationService {
+func NewNotificationService(ctx context.Context, redisClient *redis.Client, notificationTopics domain.NotificationTopicCommandRepository) *notificationService {
 	return &notificationService{
+		ctx:                ctx,
 		registerClient:     make(chan *ws.Client),
 		unregisterClient:   make(chan *ws.Client),
 		userClientsMap:     make(map[uuid.UUID]map[uuid.UUID]*ws.Client),
@@ -52,7 +52,7 @@ func NewNotificationService(redisClient *redis.Client, notificationTopics domain
 }
 
 func (s *notificationService) Run() {
-	redisPubsub := s.redisClient.Subscribe(ctx, pubsub.ChatChannel)
+	redisPubsub := s.redisClient.Subscribe(s.ctx, pubsub.ChatChannel)
 	ch := redisPubsub.Channel()
 	defer redisPubsub.Close()
 
@@ -60,7 +60,7 @@ func (s *notificationService) Run() {
 		select {
 		case message := <-ch:
 			if message.Payload == "ping" {
-				s.redisClient.Publish(ctx, pubsub.ChatChannel, "pong")
+				s.redisClient.Publish(s.ctx, pubsub.ChatChannel, "pong")
 				continue
 			}
 
@@ -116,7 +116,7 @@ func (s *notificationService) broadcastToUsers(userIDs []uuid.UUID, notification
 		return err
 	}
 
-	s.redisClient.Publish(ctx, pubsub.ChatChannel, []byte(json))
+	s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json))
 
 	return nil
 }

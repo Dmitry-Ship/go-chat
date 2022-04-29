@@ -63,7 +63,13 @@ func (s *CommandController) handleLogin(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *CommandController) handleLogout(w http.ResponseWriter, r *http.Request) {
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
+
 	err := s.commands.AuthService.Logout(userID)
 
 	if err != nil {

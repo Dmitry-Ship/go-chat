@@ -10,7 +10,13 @@ import (
 )
 
 func (s *QueryController) handleGetConversations(w http.ResponseWriter, r *http.Request) {
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
+
 	conversations, err := s.queries.Conversations.GetUserConversations(userID)
 
 	if err != nil {
@@ -37,7 +43,12 @@ func (s *QueryController) handleGetConversationsMessages(w http.ResponseWriter, 
 		return
 	}
 
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
 
 	messages, err := s.queries.Messages.GetConversationMessages(conversationId, userID)
 
@@ -61,7 +72,13 @@ func (s *QueryController) handleGetConversationsMessages(w http.ResponseWriter, 
 }
 
 func (s *QueryController) handleGetConversation(w http.ResponseWriter, r *http.Request) {
-	userID, _ := r.Context().Value("userId").(uuid.UUID)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
+
 	query := r.URL.Query()
 
 	conversationIdQuery := query.Get("conversation_id")

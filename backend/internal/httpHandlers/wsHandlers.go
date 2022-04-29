@@ -23,7 +23,12 @@ func (s *CommandController) handleOpenWSConnection(wsHandlers ws.WSHandlers) htt
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, _ := r.Context().Value("userId").(uuid.UUID)
+		userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+		if !ok {
+			http.Error(w, "userId not found in context", http.StatusInternalServerError)
+			return
+		}
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {

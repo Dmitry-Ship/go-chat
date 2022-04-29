@@ -6,6 +6,7 @@ import (
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
 	"GitHub/go-chat/backend/internal/server"
+	"context"
 )
 
 func main() {
@@ -19,7 +20,9 @@ func main() {
 
 	dbConnection := db.GetConnection()
 
-	application := app.NewApp(dbConnection, redisClient)
+	ctx := context.Background()
+
+	application := app.NewApp(ctx, dbConnection, redisClient)
 
 	queryController := httpHandlers.NewQueryController(&application.Queries)
 	commandController := httpHandlers.NewCommandController(&application.Commands)
