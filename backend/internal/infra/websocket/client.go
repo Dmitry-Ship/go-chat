@@ -14,59 +14,60 @@ type OutgoingNotification struct {
 	Payload interface{} `json:"data"`
 }
 
-type Client struct {
-	Id             uuid.UUID
-	connection     *websocket.Conn
-	unregisterChan chan *Client
-	UserID         uuid.UUID
-	SendChannel    chan *OutgoingNotification
-	wsHandler      WSHandlers
+type IncomingNotification struct {
+	Type   string
+	Data   json.RawMessage
+	UserID uuid.UUID
+}
+
+type connectionOptions struct {
 	writeWait      time.Duration
 	pongWait       time.Duration
 	pingPeriod     time.Duration
 	maxMessageSize int64
 }
+type client struct {
+	Id                        uuid.UUID
+	connection                *websocket.Conn
+	unregisterChan            chan *client
+	UserID                    uuid.UUID
+	sendChannel               chan *OutgoingNotification
+	incomingNotificationsChan chan *IncomingNotification
+	connectionOptions         connectionOptions
+}
 
-func NewClient(conn *websocket.Conn, unregisterChan chan *Client, wsHandler WSHandlers, userID uuid.UUID) *Client {
-	// Time allowed to write a message to the peer.
-	writeWait := 10 * time.Second
-
-	// Time allowed to read the next pong message from the peer.
-	pongWait := 60 * time.Second
-
-	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod := (pongWait * 9) / 10
-	var maxMessageSize int64 = 512
-
-	return &Client{
-		Id:             uuid.New(),
-		UserID:         userID,
-		connection:     conn,
-		SendChannel:    make(chan *OutgoingNotification, 1024),
-		unregisterChan: unregisterChan,
-		wsHandler:      wsHandler,
-		writeWait:      writeWait,
-		pongWait:       pongWait,
-		pingPeriod:     pingPeriod,
-		maxMessageSize: maxMessageSize,
+func NewClient(conn *websocket.Conn, unregisterChan chan *client, incomingNotificationsChan chan *IncomingNotification, userID uuid.UUID) *client {
+	return &client{
+		Id:                        uuid.New(),
+		UserID:                    userID,
+		connection:                conn,
+		sendChannel:               make(chan *OutgoingNotification, 1024),
+		unregisterChan:            unregisterChan,
+		incomingNotificationsChan: incomingNotificationsChan,
+		connectionOptions: connectionOptions{
+			writeWait:      10 * time.Second,
+			pongWait:       60 * time.Second,
+			pingPeriod:     (60 * time.Second * 9) / 10,
+			maxMessageSize: 512,
+		},
 	}
 }
 
-func (c *Client) ReadPump() {
+func (c *client) ReadPump() {
 	defer func() {
 		c.unregisterChan <- c
 		c.connection.Close()
 	}()
 
-	c.connection.SetReadLimit(c.maxMessageSize)
-	err := c.connection.SetReadDeadline(time.Now().Add(c.pongWait))
+	c.connection.SetReadLimit(c.connectionOptions.maxMessageSize)
+	err := c.connection.SetReadDeadline(time.Now().Add(c.connectionOptions.pongWait))
 
 	if err != nil {
 		log.Println(err)
 	}
 
 	c.connection.SetPongHandler(func(string) error {
-		return c.connection.SetReadDeadline(time.Now().Add(c.pongWait))
+		return c.connection.SetReadDeadline(time.Now().Add(c.connectionOptions.pongWait))
 	})
 
 	for {
@@ -81,24 +82,28 @@ func (c *Client) ReadPump() {
 
 		var data json.RawMessage
 
-		incomingNotification := struct {
+		notification := struct {
 			Type string      `json:"type"`
 			Data interface{} `json:"data"`
 		}{
 			Data: &data,
 		}
 
-		if err := json.Unmarshal(message, &incomingNotification); err != nil {
+		if err := json.Unmarshal(message, &notification); err != nil {
 			log.Println(err)
 			return
 		}
 
-		go c.wsHandler.HandleNotification(incomingNotification.Type, data, c.UserID)
+		c.incomingNotificationsChan <- &IncomingNotification{
+			Type:   notification.Type,
+			Data:   data,
+			UserID: c.UserID,
+		}
 	}
 }
 
-func (c *Client) WritePump() {
-	ticker := time.NewTicker(c.pingPeriod)
+func (c *client) WritePump() {
+	ticker := time.NewTicker(c.connectionOptions.pingPeriod)
 	defer func() {
 		ticker.Stop()
 		c.connection.Close()
@@ -106,8 +111,8 @@ func (c *Client) WritePump() {
 
 	for {
 		select {
-		case notification, ok := <-c.SendChannel:
-			err := c.connection.SetWriteDeadline(time.Now().Add(c.writeWait))
+		case notification, ok := <-c.sendChannel:
+			err := c.connection.SetWriteDeadline(time.Now().Add(c.connectionOptions.writeWait))
 
 			if err != nil {
 				log.Println(err)
@@ -128,7 +133,7 @@ func (c *Client) WritePump() {
 			}
 
 		case <-ticker.C:
-			if err := c.connection.SetWriteDeadline(time.Now().Add(c.writeWait)); err != nil {
+			if err := c.connection.SetWriteDeadline(time.Now().Add(c.connectionOptions.writeWait)); err != nil {
 				return
 			}
 
@@ -139,6 +144,6 @@ func (c *Client) WritePump() {
 	}
 }
 
-func (c *Client) SendNotification(notification *OutgoingNotification) {
-	c.SendChannel <- notification
+func (c *client) SendNotification(notification *OutgoingNotification) {
+	c.sendChannel <- notification
 }

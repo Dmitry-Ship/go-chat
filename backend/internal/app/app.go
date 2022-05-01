@@ -3,11 +3,11 @@ package app
 import (
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra/postgres"
+	ws "GitHub/go-chat/backend/internal/infra/websocket"
 	"GitHub/go-chat/backend/internal/readModel"
 	"GitHub/go-chat/backend/internal/services"
 	"context"
 
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -29,7 +29,7 @@ type Queries struct {
 	Messages      readModel.MessageQueryRepository
 }
 
-func NewApp(ctx context.Context, eventsPubSub domain.EventPublisher, db *gorm.DB, redisClient *redis.Client) *App {
+func NewApp(ctx context.Context, eventsPubSub domain.EventPublisher, db *gorm.DB, connectionsPool ws.ConnectionsPool) *App {
 	messagesRepository := postgres.NewMessageRepository(db, eventsPubSub)
 	usersRepository := postgres.NewUserRepository(db)
 	conversationsRepository := postgres.NewConversationRepository(db, eventsPubSub)
@@ -39,8 +39,7 @@ func NewApp(ctx context.Context, eventsPubSub domain.EventPublisher, db *gorm.DB
 	messagingService := services.NewMessagingService(messagesRepository)
 	conversationService := services.NewConversationService(conversationsRepository, participantRepository)
 	authService := services.NewAuthService(usersRepository)
-	notificationService := services.NewNotificationService(ctx, redisClient, notificationTopicRepository)
-	go notificationService.Run()
+	notificationService := services.NewNotificationService(connectionsPool, notificationTopicRepository)
 
 	return &App{
 		Commands: Commands{

@@ -1,52 +1,38 @@
 package httpHandlers
 
 import (
+	"GitHub/go-chat/backend/internal/app"
 	ws "GitHub/go-chat/backend/internal/infra/websocket"
 	"encoding/json"
 	"log"
-	"net/http"
-	"os"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 )
 
-func (s *CommandController) handleOpenWSConnection(wsHandlers ws.WSHandlers) http.HandlerFunc {
-	var upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			origin := os.Getenv("CLIENT_ORIGIN")
+type wsHandlers struct {
+	incomingNotificationsChan chan *ws.IncomingNotification
+	commands                  *app.Commands
+}
 
-			return r.Header.Get("Origin") == origin
-		},
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
-
-		if !ok {
-			http.Error(w, "userId not found in context", http.StatusInternalServerError)
-			return
-		}
-
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		err = s.commands.NotificationService.RegisterClient(conn, wsHandlers, userID)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
+func NewWSHandlers(commands *app.Commands, incomingNotificationsChan chan *ws.IncomingNotification) *wsHandlers {
+	return &wsHandlers{
+		commands:                  commands,
+		incomingNotificationsChan: incomingNotificationsChan,
 	}
 }
 
-func (s *CommandController) handleReceiveWSChatMessage(data json.RawMessage, userID uuid.UUID) {
+func (s *wsHandlers) Run() {
+	for notification := range s.incomingNotificationsChan {
+		switch notification.Type {
+		case "message":
+			s.handleReceiveWSChatMessage(notification.Data, notification.UserID)
+		default:
+			log.Println("Unknown notification type:", notification.Type)
+		}
+	}
+}
+
+func (s *wsHandlers) handleReceiveWSChatMessage(data json.RawMessage, userID uuid.UUID) {
 	request := struct {
 		Content        string    `json:"content"`
 		ConversationId uuid.UUID `json:"conversation_id"`

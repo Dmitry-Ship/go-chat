@@ -1,15 +1,11 @@
 package httpHandlers
 
 import (
-	ws "GitHub/go-chat/backend/internal/infra/websocket"
 	"net/http"
 )
 
 func (s *HTTPHandlers) InitRoutes() {
-	wsHandlers := ws.NewWSHandlers()
-	wsHandlers.SetWSHandler("message", s.commandController.handleReceiveWSChatMessage)
-
-	http.HandleFunc("/ws", s.private(s.commandController.handleOpenWSConnection(wsHandlers)))
+	http.HandleFunc("/ws", s.private(s.commandController.handleOpenWSConnection()))
 
 	http.HandleFunc("/signup", s.withHeaders(s.commandController.handleSignUp))
 	http.HandleFunc("/login", s.withHeaders(s.commandController.handleLogin))
