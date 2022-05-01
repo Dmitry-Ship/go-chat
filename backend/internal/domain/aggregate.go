@@ -8,7 +8,7 @@ type EventPublisher interface {
 	Publish(event DomainEvent)
 }
 
-func (a *aggregate) Raise(publisher EventPublisher) {
+func (a *aggregate) Dispatch(publisher EventPublisher) {
 	for _, event := range a.events {
 		publisher.Publish(event)
 	}
@@ -20,5 +20,5 @@ func (a *aggregate) AddEvent(event DomainEvent) {
 
 type Aggregate interface {
 	AddEvent(event *DomainEvent)
-	Raise(publisher EventPublisher)
+	Dispatch(publisher EventPublisher)
 }

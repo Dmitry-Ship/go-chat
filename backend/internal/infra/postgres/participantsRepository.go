@@ -26,7 +26,7 @@ func (r *participantRepository) Store(participant *domain.Participant) error {
 		return err
 	}
 
-	participant.Raise(r.pubsub)
+	participant.Dispatch(r.pubsub)
 
 	return nil
 }
@@ -38,7 +38,7 @@ func (r *participantRepository) Update(participant *domain.Participant) error {
 		return err
 	}
 
-	participant.Raise(r.pubsub)
+	participant.Dispatch(r.pubsub)
 
 	return nil
 }

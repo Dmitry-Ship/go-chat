@@ -41,7 +41,7 @@ func (r *conversationRepository) StorePublicConversation(conversation *domain.Pu
 		return err
 	}
 
-	conversation.Raise(r.pubsub)
+	conversation.Dispatch(r.pubsub)
 
 	return nil
 }
@@ -59,7 +59,7 @@ func (r *conversationRepository) UpdatePublicConversation(conversation *domain.P
 		return err
 	}
 
-	conversation.Raise(r.pubsub)
+	conversation.Dispatch(r.pubsub)
 
 	return nil
 }
@@ -89,7 +89,7 @@ func (r *conversationRepository) StorePrivateConversation(conversation *domain.P
 		return err
 	}
 
-	conversation.Raise(r.pubsub)
+	conversation.Dispatch(r.pubsub)
 
 	return nil
 }
@@ -108,7 +108,7 @@ func (r *conversationRepository) GetPrivateConversationID(firstUserId uuid.UUID,
 func (r *conversationRepository) GetPublicConversation(id uuid.UUID) (*domain.PublicConversation, error) {
 	conversation := Conversation{}
 
-	err := r.db.Where("id = ?", id).First(&conversation).Error
+	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
 
 	if err != nil {
 		return nil, err
@@ -116,7 +116,7 @@ func (r *conversationRepository) GetPublicConversation(id uuid.UUID) (*domain.Pu
 
 	publicConversation := PublicConversation{}
 
-	err = r.db.Where("conversation_id = ?", id).Where("is_active = ?", true).First(&publicConversation).Error
+	err = r.db.Where("conversation_id = ?", id).First(&publicConversation).Error
 
 	if err != nil {
 		return nil, err

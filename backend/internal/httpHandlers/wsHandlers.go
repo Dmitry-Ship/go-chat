@@ -36,7 +36,7 @@ func (s *CommandController) handleOpenWSConnection(wsHandlers ws.WSHandlers) htt
 			return
 		}
 
-		err = s.commands.NotificationClientRegister.RegisterClient(conn, wsHandlers, userID)
+		err = s.commands.NotificationService.RegisterClient(conn, wsHandlers, userID)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

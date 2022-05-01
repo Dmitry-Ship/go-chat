@@ -20,9 +20,6 @@ type NotificationService interface {
 	BroadcastToTopic(topic string, notification ws.OutgoingNotification) error
 	UnsubscribeFromTopic(topic string, userId uuid.UUID) error
 	DeleteTopic(topic string) error
-}
-
-type NotificationClientRegister interface {
 	RegisterClient(conn *websocket.Conn, wsHandlers ws.WSHandlers, userID uuid.UUID) error
 }
 
@@ -116,9 +113,7 @@ func (s *notificationService) broadcastToUsers(userIDs []uuid.UUID, notification
 		return err
 	}
 
-	s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json))
-
-	return nil
+	return s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err()
 }
 
 func (s *notificationService) RegisterClient(conn *websocket.Conn, wsHandlers ws.WSHandlers, userID uuid.UUID) error {
@@ -153,11 +148,5 @@ func (s *notificationService) BroadcastToTopic(topic string, notification ws.Out
 		return err
 	}
 
-	err = s.broadcastToUsers(userIds, notification)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.broadcastToUsers(userIds, notification)
 }

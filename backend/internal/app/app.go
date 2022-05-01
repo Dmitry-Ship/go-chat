@@ -2,7 +2,6 @@ package app
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
-	"GitHub/go-chat/backend/internal/domainEventsHandlers"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	"GitHub/go-chat/backend/internal/readModel"
 	"GitHub/go-chat/backend/internal/services"
@@ -18,10 +17,10 @@ type App struct {
 }
 
 type Commands struct {
-	ConversationService        services.ConversationService
-	AuthService                services.AuthService
-	NotificationClientRegister services.NotificationClientRegister
-	MessagingService           services.MessagingService
+	ConversationService services.ConversationService
+	AuthService         services.AuthService
+	NotificationService services.NotificationService
+	MessagingService    services.MessagingService
 }
 
 type Queries struct {
@@ -30,9 +29,7 @@ type Queries struct {
 	Messages      readModel.MessageQueryRepository
 }
 
-func NewApp(ctx context.Context, db *gorm.DB, redisClient *redis.Client) *App {
-	eventsPubSub := domain.NewPubsub()
-
+func NewApp(ctx context.Context, eventsPubSub domain.EventPublisher, db *gorm.DB, redisClient *redis.Client) *App {
 	messagesRepository := postgres.NewMessageRepository(db, eventsPubSub)
 	usersRepository := postgres.NewUserRepository(db)
 	conversationsRepository := postgres.NewConversationRepository(db, eventsPubSub)
@@ -43,20 +40,14 @@ func NewApp(ctx context.Context, db *gorm.DB, redisClient *redis.Client) *App {
 	conversationService := services.NewConversationService(conversationsRepository, participantRepository)
 	authService := services.NewAuthService(usersRepository)
 	notificationService := services.NewNotificationService(ctx, redisClient, notificationTopicRepository)
-
-	notificationEventHandlers := domainEventsHandlers.NewNotificationEventHandlers(eventsPubSub, notificationService, messagesRepository)
-	messagesEventHandlers := domainEventsHandlers.NewMessagesEventHandlers(eventsPubSub, messagingService)
-
-	go notificationEventHandlers.Run()
-	go messagesEventHandlers.Run()
 	go notificationService.Run()
 
 	return &App{
 		Commands: Commands{
-			ConversationService:        conversationService,
-			AuthService:                authService,
-			NotificationClientRegister: notificationService,
-			MessagingService:           messagingService,
+			ConversationService: conversationService,
+			AuthService:         authService,
+			NotificationService: notificationService,
+			MessagingService:    messagingService,
 		},
 		Queries: Queries{
 			Users:         usersRepository,

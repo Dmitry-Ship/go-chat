@@ -33,7 +33,7 @@ func (r *messageRepository) StoreTextMessage(message *domain.TextMessage) error 
 		return err
 	}
 
-	message.Raise(r.pubsub)
+	message.Dispatch(r.pubsub)
 
 	return nil
 }
@@ -45,7 +45,7 @@ func (r *messageRepository) StoreLeftConversationMessage(message *domain.Message
 		return err
 	}
 
-	message.Raise(r.pubsub)
+	message.Dispatch(r.pubsub)
 
 	return nil
 }
@@ -57,7 +57,7 @@ func (r *messageRepository) StoreJoinedConversationMessage(message *domain.Messa
 		return err
 	}
 
-	message.Raise(r.pubsub)
+	message.Dispatch(r.pubsub)
 
 	return nil
 }
@@ -75,7 +75,7 @@ func (r *messageRepository) StoreRenamedConversationMessage(message *domain.Conv
 		return err
 	}
 
-	message.Raise(r.pubsub)
+	message.Dispatch(r.pubsub)
 
 	return nil
 }
