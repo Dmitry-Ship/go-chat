@@ -17,7 +17,7 @@ func (s *QueryController) handleGetConversations(w http.ResponseWriter, r *http.
 		return
 	}
 
-	conversations, err := s.queries.Conversations.GetUserConversations(userID)
+	conversations, err := s.queries.GetUserConversations(userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -50,7 +50,7 @@ func (s *QueryController) handleGetConversationsMessages(w http.ResponseWriter, 
 		return
 	}
 
-	messages, err := s.queries.Messages.GetConversationMessages(conversationId, userID)
+	messages, err := s.queries.GetConversationMessages(conversationId, userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -89,7 +89,7 @@ func (s *QueryController) handleGetConversation(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	conversation, err := s.queries.Conversations.GetConversation(conversationId, userID)
+	conversation, err := s.queries.GetConversation(conversationId, userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)

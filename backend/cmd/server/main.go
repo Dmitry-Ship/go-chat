@@ -23,15 +23,14 @@ func main() {
 
 	dbConnection := db.GetConnection()
 	ctx := context.Background()
-	ps := domain.NewPubsub()
+	domainEventsPubSub := domain.NewPubsub()
 	wsConnectionsPool := ws.NewConnectionsPool(ctx, redisClient)
 
-	application := app.NewApp(ctx, ps, dbConnection, wsConnectionsPool)
-	wsHandlers := httpHandlers.NewWSHandlers(&application.Commands, wsConnectionsPool.IncomingNotifications)
-	queryController := httpHandlers.NewQueryController(&application.Queries)
-	commandController := httpHandlers.NewCommandController(&application.Commands)
-	handlers := httpHandlers.NewHTTPHandlers(queryController, commandController)
-	eventHandlers := domainEventsHandlers.NewEventHandlers(ps, &application.Commands, &application.Queries)
+	app := app.NewApp(ctx, domainEventsPubSub, dbConnection, wsConnectionsPool)
+
+	wsHandlers := httpHandlers.NewWSHandlers(&app.Commands, wsConnectionsPool.IncomingNotifications)
+	handlers := httpHandlers.NewHTTPHandlers(app)
+	eventHandlers := domainEventsHandlers.NewEventHandlers(domainEventsPubSub, app)
 
 	eventHandlers.ListerForEvents()
 	handlers.InitRoutes()

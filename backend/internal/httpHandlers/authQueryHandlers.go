@@ -15,7 +15,7 @@ func (s *QueryController) handleGetUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	user, err := s.queries.Users.GetUserByID(userID)
+	user, err := s.queries.GetUserByID(userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

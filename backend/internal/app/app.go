@@ -13,7 +13,7 @@ import (
 
 type App struct {
 	Commands Commands
-	Queries  Queries
+	Queries  readModel.QueriesRepository
 }
 
 type Commands struct {
@@ -23,12 +23,6 @@ type Commands struct {
 	MessagingService    services.MessagingService
 }
 
-type Queries struct {
-	Users         readModel.UserQueryRepository
-	Conversations readModel.ConversationQueryRepository
-	Messages      readModel.MessageQueryRepository
-}
-
 func NewApp(ctx context.Context, eventsPubSub domain.EventPublisher, db *gorm.DB, connectionsPool ws.ConnectionsPool) *App {
 	messagesRepository := postgres.NewMessageRepository(db, eventsPubSub)
 	usersRepository := postgres.NewUserRepository(db)
@@ -36,22 +30,13 @@ func NewApp(ctx context.Context, eventsPubSub domain.EventPublisher, db *gorm.DB
 	participantRepository := postgres.NewParticipantRepository(db, eventsPubSub)
 	notificationTopicRepository := postgres.NewNotificationTopicRepository(db)
 
-	messagingService := services.NewMessagingService(messagesRepository)
-	conversationService := services.NewConversationService(conversationsRepository, participantRepository)
-	authService := services.NewAuthService(usersRepository)
-	notificationService := services.NewNotificationService(connectionsPool, notificationTopicRepository)
-
 	return &App{
 		Commands: Commands{
-			ConversationService: conversationService,
-			AuthService:         authService,
-			NotificationService: notificationService,
-			MessagingService:    messagingService,
+			ConversationService: services.NewConversationService(conversationsRepository, participantRepository),
+			AuthService:         services.NewAuthService(usersRepository),
+			NotificationService: services.NewNotificationService(connectionsPool, notificationTopicRepository),
+			MessagingService:    services.NewMessagingService(messagesRepository),
 		},
-		Queries: Queries{
-			Users:         usersRepository,
-			Conversations: conversationsRepository,
-			Messages:      messagesRepository,
-		},
+		Queries: postgres.NewQueriesRepository(db),
 	}
 }

@@ -1,14 +1,14 @@
 package httpHandlers
 
 import (
-	"GitHub/go-chat/backend/internal/app"
+	"GitHub/go-chat/backend/internal/readModel"
 )
 
 type QueryController struct {
-	queries *app.Queries
+	queries readModel.QueriesRepository
 }
 
-func NewQueryController(queries *app.Queries) *QueryController {
+func NewQueryController(queries readModel.QueriesRepository) *QueryController {
 	return &QueryController{
 		queries: queries,
 	}

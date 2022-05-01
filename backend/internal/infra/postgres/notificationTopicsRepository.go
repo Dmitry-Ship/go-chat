@@ -27,7 +27,6 @@ func (r *notificationTopicRepository) Store(notificationTopic *domain.Notificati
 	err := r.db.Create(persistence).Error
 
 	return err
-
 }
 
 func (r *notificationTopicRepository) DeleteByUserIDAndTopic(userID uuid.UUID, topic string) error {

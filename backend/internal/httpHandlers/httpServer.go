@@ -1,13 +1,17 @@
 package httpHandlers
 
+import (
+	"GitHub/go-chat/backend/internal/app"
+)
+
 type HTTPHandlers struct {
 	queryController   *QueryController
 	commandController *CommandController
 }
 
-func NewHTTPHandlers(queryController *QueryController, commandController *CommandController) *HTTPHandlers {
+func NewHTTPHandlers(app *app.App) *HTTPHandlers {
 	return &HTTPHandlers{
-		queryController:   queryController,
-		commandController: commandController,
+		queryController:   NewQueryController(app.Queries),
+		commandController: NewCommandController(&app.Commands),
 	}
 }

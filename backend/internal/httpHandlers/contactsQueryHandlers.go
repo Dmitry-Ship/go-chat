@@ -15,7 +15,7 @@ func (s *QueryController) handleGetContacts(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	contacts, err := s.queries.Users.GetContacts(userID)
+	contacts, err := s.queries.GetContacts(userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
