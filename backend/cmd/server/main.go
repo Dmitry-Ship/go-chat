@@ -13,7 +13,8 @@ import (
 )
 
 func main() {
-	redisClient := redisPubsub.GetRedisClient()
+	ctx := context.Background()
+	redisClient := redisPubsub.GetRedisClient(ctx)
 	db := postgres.NewDatabaseConnection()
 	err := db.AutoMigrate()
 
@@ -22,20 +23,20 @@ func main() {
 	}
 
 	dbConnection := db.GetConnection()
-	ctx := context.Background()
 	domainEventsPubSub := domain.NewPubsub()
 	wsConnectionsPool := ws.NewConnectionsPool(ctx, redisClient)
+	go wsConnectionsPool.Run()
 
 	app := app.NewApp(ctx, domainEventsPubSub, dbConnection, wsConnectionsPool)
 
 	wsHandlers := httpHandlers.NewWSHandlers(&app.Commands, wsConnectionsPool.IncomingNotifications)
-	handlers := httpHandlers.NewHTTPHandlers(app)
-	eventHandlers := domainEventsHandlers.NewEventHandlers(domainEventsPubSub, app)
-
-	eventHandlers.ListerForEvents()
-	handlers.InitRoutes()
 	go wsHandlers.Run()
-	go wsConnectionsPool.Run()
+
+	handlers := httpHandlers.NewHTTPHandlers(app)
+	handlers.InitRoutes()
+
+	eventHandlers := domainEventsHandlers.NewEventHandlers(domainEventsPubSub, app)
+	eventHandlers.ListerForEvents()
 
 	server := server.NewGracefulServer()
 	server.Run()

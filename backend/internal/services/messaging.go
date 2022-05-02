@@ -14,11 +14,11 @@ type MessagingService interface {
 }
 
 type messagingService struct {
-	messages domain.MessageCommandRepository
+	messages domain.MessageRepository
 }
 
 func NewMessagingService(
-	messages domain.MessageCommandRepository,
+	messages domain.MessageRepository,
 ) *messagingService {
 	return &messagingService{
 		messages: messages,

@@ -16,13 +16,13 @@ type ConversationService interface {
 }
 
 type conversationService struct {
-	conversations domain.ConversationCommandRepository
-	participants  domain.ParticipantCommandRepository
+	conversations domain.ConversationRepository
+	participants  domain.ParticipantRepository
 }
 
 func NewConversationService(
-	conversations domain.ConversationCommandRepository,
-	participants domain.ParticipantCommandRepository,
+	conversations domain.ConversationRepository,
+	participants domain.ParticipantRepository,
 ) *conversationService {
 	return &conversationService{
 		conversations: conversations,

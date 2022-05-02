@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *CommandController) handleLogin(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleLogin(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		UserName string `json:"username"`
 		Password string `json:"password"`
@@ -62,7 +62,7 @@ func (s *CommandController) handleLogin(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (s *CommandController) handleLogout(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleLogout(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -99,7 +99,7 @@ func (s *CommandController) handleLogout(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (s *CommandController) handleSignUp(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleSignUp(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		UserName string `json:"username"`
 		Password string `json:"password"`
@@ -153,7 +153,7 @@ func (s *CommandController) handleSignUp(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (s *CommandController) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := r.Cookie("refresh_token")
 
 	if err != nil {

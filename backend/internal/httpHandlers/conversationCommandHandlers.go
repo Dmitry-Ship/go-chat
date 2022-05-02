@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *CommandController) handleCreatePrivateConversationIfNotExists(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleCreatePrivateConversationIfNotExists(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ToUserId uuid.UUID `json:"to_user_id"`
 	}{}
@@ -47,7 +47,7 @@ func (s *CommandController) handleCreatePrivateConversationIfNotExists(w http.Re
 	}
 }
 
-func (s *CommandController) handleCreatePublicConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleCreatePublicConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationName string    `json:"conversation_name"`
 		ConversationId   uuid.UUID `json:"conversation_id"`
@@ -82,7 +82,7 @@ func (s *CommandController) handleCreatePublicConversation(w http.ResponseWriter
 	}
 }
 
-func (s *CommandController) handleDeleteConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleDeleteConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
@@ -116,7 +116,7 @@ func (s *CommandController) handleDeleteConversation(w http.ResponseWriter, r *h
 	}
 }
 
-func (s *CommandController) handleJoinPublicConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleJoinPublicConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
@@ -149,7 +149,7 @@ func (s *CommandController) handleJoinPublicConversation(w http.ResponseWriter, 
 	}
 }
 
-func (s *CommandController) handleLeavePublicConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleLeavePublicConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -183,7 +183,7 @@ func (s *CommandController) handleLeavePublicConversation(w http.ResponseWriter,
 	}
 }
 
-func (s *CommandController) handleRenamePublicConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleRenamePublicConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {

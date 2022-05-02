@@ -5,8 +5,8 @@ import (
 )
 
 type HTTPHandlers struct {
-	queryController   *QueryController
-	commandController *CommandController
+	queryController   *queryController
+	commandController *commandController
 }
 
 func NewHTTPHandlers(app *app.App) *HTTPHandlers {

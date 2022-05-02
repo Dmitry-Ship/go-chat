@@ -22,7 +22,7 @@ type Tokens struct {
 }
 
 type authService struct {
-	users                  domain.UserCommandRepository
+	users                  domain.UserRepository
 	refreshTokenExpiration time.Duration
 	accessTokenExpiration  time.Duration
 }
@@ -37,7 +37,7 @@ type AuthService interface {
 	ParseAccessToken(accessTokenString string) (uuid.UUID, error)
 }
 
-func NewAuthService(users domain.UserCommandRepository) *authService {
+func NewAuthService(users domain.UserRepository) *authService {
 	return &authService{
 		users:                  users,
 		refreshTokenExpiration: 24 * 90 * time.Hour,

@@ -8,7 +8,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func GetRedisClient() *redis.Client {
+func GetRedisClient(ctx context.Context) *redis.Client {
 	port := os.Getenv("REDIS_PORT")
 	host := os.Getenv("REDIS_HOST")
 	password := os.Getenv("REDIS_PASSWORD")
@@ -20,7 +20,6 @@ func GetRedisClient() *redis.Client {
 		Password: password,
 		DB:       0,
 	})
-	var ctx = context.Background()
 
 	if _, err := client.Ping(ctx).Result(); err != nil {
 		panic(err)

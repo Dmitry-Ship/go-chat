@@ -35,11 +35,11 @@ type connectionsPool struct {
 func NewConnectionsPool(ctx context.Context, redisClient *redis.Client) *connectionsPool {
 	return &connectionsPool{
 		ctx:                   ctx,
-		registerClient:        make(chan *client),
-		unregisterClient:      make(chan *client),
+		registerClient:        make(chan *client, 1024),
+		unregisterClient:      make(chan *client, 1024),
 		userClientsMap:        make(map[uuid.UUID]map[uuid.UUID]*client),
 		redisClient:           redisClient,
-		IncomingNotifications: make(chan *IncomingNotification),
+		IncomingNotifications: make(chan *IncomingNotification, 1024),
 	}
 }
 

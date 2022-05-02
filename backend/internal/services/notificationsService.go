@@ -23,10 +23,10 @@ type broadcastMessage struct {
 
 type notificationService struct {
 	connectionsPool    ws.ConnectionsPool
-	notificationTopics domain.NotificationTopicCommandRepository
+	notificationTopics domain.NotificationTopicRepository
 }
 
-func NewNotificationService(connectionsPool ws.ConnectionsPool, notificationTopics domain.NotificationTopicCommandRepository) *notificationService {
+func NewNotificationService(connectionsPool ws.ConnectionsPool, notificationTopics domain.NotificationTopicRepository) *notificationService {
 	return &notificationService{
 		connectionsPool:    connectionsPool,
 		notificationTopics: notificationTopics,
