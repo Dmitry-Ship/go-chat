@@ -5,7 +5,6 @@ import (
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/domainEventsHandlers"
 	"GitHub/go-chat/backend/internal/httpHandlers"
-	"GitHub/go-chat/backend/internal/hub"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
 	"GitHub/go-chat/backend/internal/server"
@@ -21,17 +20,15 @@ func main() {
 
 	dbConnection := db.GetConnection()
 	domainEventsPubSub := domain.NewPubsub()
-
-	commands := app.NewCommands(ctx, domainEventsPubSub, redisClient, dbConnection)
-	queries := postgres.NewQueriesRepository(dbConnection)
-
 	activeClients := ws.NewActiveClients()
 
-	broadcaster := hub.NewBroadcaster(ctx, redisClient, activeClients)
-	go broadcaster.Run()
-	clientRegister := hub.NewClientRegister(commands, activeClients)
+	commands := app.NewCommands(ctx, domainEventsPubSub, redisClient, dbConnection, activeClients)
+	queries := postgres.NewQueriesRepository(dbConnection)
 
-	handlers := httpHandlers.NewHTTPHandlers(commands, queries, clientRegister)
+	broadcaster := ws.NewBroadcaster(ctx, redisClient, activeClients)
+	go broadcaster.Run()
+
+	handlers := httpHandlers.NewHTTPHandlers(commands, queries)
 	handlers.InitRoutes()
 
 	eventHandlers := domainEventsHandlers.NewEventHandlers(domainEventsPubSub, commands, queries)

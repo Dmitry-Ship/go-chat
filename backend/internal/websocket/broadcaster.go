@@ -1,4 +1,4 @@
-package hub
+package ws
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"log"
 
 	pubsub "GitHub/go-chat/backend/internal/infra/redis"
-	ws "GitHub/go-chat/backend/internal/websocket"
 
 	"github.com/go-redis/redis/v8"
 
@@ -14,17 +13,17 @@ import (
 )
 
 type BroadcastMessage struct {
-	Payload ws.OutgoingNotification `json:"notification"`
-	UserIDs []uuid.UUID             `json:"user_ids"`
+	Payload OutgoingNotification `json:"notification"`
+	UserIDs []uuid.UUID          `json:"user_ids"`
 }
 
 type broadcaster struct {
 	ctx           context.Context
-	activeClients ws.ActiveClients
+	activeClients ActiveClients
 	redisClient   *redis.Client
 }
 
-func NewBroadcaster(ctx context.Context, redisClient *redis.Client, activeClients ws.ActiveClients) *broadcaster {
+func NewBroadcaster(ctx context.Context, redisClient *redis.Client, activeClients ActiveClients) *broadcaster {
 	return &broadcaster{
 		ctx:           ctx,
 		activeClients: activeClients,

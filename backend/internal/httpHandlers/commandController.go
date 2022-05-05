@@ -2,7 +2,6 @@ package httpHandlers
 
 import (
 	"GitHub/go-chat/backend/internal/app"
-	"GitHub/go-chat/backend/internal/hub"
 	"net/http"
 	"os"
 
@@ -11,14 +10,14 @@ import (
 )
 
 type commandController struct {
-	commands       *app.Commands
-	clientRegister hub.ClientRegister
+	commands   *app.Commands
+	wsHandlers WSHandlers
 }
 
-func NewCommandController(commands *app.Commands, clientRegister hub.ClientRegister) *commandController {
+func NewCommandController(commands *app.Commands) *commandController {
 	return &commandController{
-		commands:       commands,
-		clientRegister: clientRegister,
+		commands:   commands,
+		wsHandlers: NewWSHandlers(commands),
 	}
 }
 
@@ -47,6 +46,6 @@ func (s *commandController) handleOpenWSConnection() http.HandlerFunc {
 			return
 		}
 
-		s.clientRegister.RegisterClient(conn, userID)
+		s.commands.ClientRegister.RegisterClient(conn, userID, s.wsHandlers.HandleNotification)
 	}
 }
