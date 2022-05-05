@@ -37,43 +37,41 @@ func (d *DatabaseConnection) GetConnection() *gorm.DB {
 	return d.connection
 }
 
-func (d *DatabaseConnection) AutoMigrate() error {
+func (d *DatabaseConnection) AutoMigrate() {
 	err := d.connection.AutoMigrate(Message{})
 	if err != nil {
-		return err
+		panic(err)
 	}
 	err = d.connection.AutoMigrate(Conversation{})
 	if err != nil {
-		return err
+		panic(err)
 	}
 	err = d.connection.AutoMigrate(PublicConversation{})
 	if err != nil {
-		return err
+		panic(err)
 	}
 	err = d.connection.AutoMigrate(PrivateConversation{})
 	if err != nil {
-		return err
+		panic(err)
 	}
 	err = d.connection.AutoMigrate(User{})
 	if err != nil {
-		return err
+		panic(err)
 	}
 	err = d.connection.AutoMigrate(Participant{})
 	if err != nil {
-		return err
+		panic(err)
 	}
 	err = d.connection.AutoMigrate(TextMessage{})
 	if err != nil {
-		return err
+		panic(err)
 	}
 	err = d.connection.AutoMigrate(ConversationRenamedMessage{})
 	if err != nil {
-		return err
+		panic(err)
 	}
 	err = d.connection.AutoMigrate(UserNotificationTopic{})
 	if err != nil {
-		return err
+		panic(err)
 	}
-
-	return nil
 }

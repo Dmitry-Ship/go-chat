@@ -5,6 +5,7 @@ import (
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/domainEventsHandlers"
 	"GitHub/go-chat/backend/internal/httpHandlers"
+	"GitHub/go-chat/backend/internal/hub"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
 	"GitHub/go-chat/backend/internal/server"
@@ -16,26 +17,24 @@ func main() {
 	ctx := context.Background()
 	redisClient := redisPubsub.GetRedisClient(ctx)
 	db := postgres.NewDatabaseConnection()
-	err := db.AutoMigrate()
-
-	if err != nil {
-		panic(err)
-	}
+	db.AutoMigrate()
 
 	dbConnection := db.GetConnection()
 	domainEventsPubSub := domain.NewPubsub()
 
-	commands := app.NewCommands(ctx, domainEventsPubSub, dbConnection)
+	commands := app.NewCommands(ctx, domainEventsPubSub, redisClient, dbConnection)
 	queries := postgres.NewQueriesRepository(dbConnection)
 
-	notificationTopicRepository := postgres.NewNotificationTopicRepository(dbConnection)
-	hub := ws.NewHub(ctx, redisClient, commands, notificationTopicRepository)
-	go hub.Run()
+	activeClients := ws.NewActiveClients()
 
-	handlers := httpHandlers.NewHTTPHandlers(commands, queries, hub)
+	broadcaster := hub.NewBroadcaster(ctx, redisClient, activeClients)
+	go broadcaster.Run()
+	clientRegister := hub.NewClientRegister(commands, activeClients)
+
+	handlers := httpHandlers.NewHTTPHandlers(commands, queries, clientRegister)
 	handlers.InitRoutes()
 
-	eventHandlers := domainEventsHandlers.NewEventHandlers(domainEventsPubSub, commands, queries, hub)
+	eventHandlers := domainEventsHandlers.NewEventHandlers(domainEventsPubSub, commands, queries)
 	eventHandlers.ListerForEvents()
 
 	server := server.NewGracefulServer()

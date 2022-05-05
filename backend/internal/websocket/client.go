@@ -14,7 +14,7 @@ type OutgoingNotification struct {
 	Payload interface{} `json:"data"`
 }
 
-type incomingNotification struct {
+type IncomingNotification struct {
 	Type   string
 	Data   json.RawMessage
 	UserID uuid.UUID
@@ -26,18 +26,18 @@ type connectionOptions struct {
 	pingPeriod     time.Duration
 	maxMessageSize int64
 }
-type client struct {
+type Client struct {
 	Id                         uuid.UUID
 	connection                 *websocket.Conn
 	UserID                     uuid.UUID
 	sendChannel                chan *OutgoingNotification
-	handleincomingNotification func(notification *incomingNotification)
-	unregisterClient           func(client *client)
+	handleincomingNotification func(notification *IncomingNotification)
+	unregisterClient           func(client *Client)
 	connectionOptions          connectionOptions
 }
 
-func NewClient(conn *websocket.Conn, unregisterClient func(client *client), handleincomingNotification func(notification *incomingNotification), userID uuid.UUID) *client {
-	return &client{
+func NewClient(conn *websocket.Conn, unregisterClient func(client *Client), handleincomingNotification func(notification *IncomingNotification), userID uuid.UUID) *Client {
+	return &Client{
 		Id:                         uuid.New(),
 		UserID:                     userID,
 		connection:                 conn,
@@ -53,12 +53,12 @@ func NewClient(conn *websocket.Conn, unregisterClient func(client *client), hand
 	}
 }
 
-func (c *client) Listen() {
+func (c *Client) Listen() {
 	go c.writePump()
 	go c.readPump()
 }
 
-func (c *client) readPump() {
+func (c *Client) readPump() {
 	defer func() {
 		go c.unregisterClient(c)
 		c.connection.Close()
@@ -99,7 +99,7 @@ func (c *client) readPump() {
 			return
 		}
 
-		go c.handleincomingNotification(&incomingNotification{
+		go c.handleincomingNotification(&IncomingNotification{
 			Type:   notification.Type,
 			Data:   data,
 			UserID: c.UserID,
@@ -107,7 +107,7 @@ func (c *client) readPump() {
 	}
 }
 
-func (c *client) writePump() {
+func (c *Client) writePump() {
 	ticker := time.NewTicker(c.connectionOptions.pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -149,6 +149,6 @@ func (c *client) writePump() {
 	}
 }
 
-func (c *client) SendNotification(notification *OutgoingNotification) {
+func (c *Client) sendNotification(notification *OutgoingNotification) {
 	c.sendChannel <- notification
 }

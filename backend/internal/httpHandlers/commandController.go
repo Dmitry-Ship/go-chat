@@ -2,10 +2,9 @@ package httpHandlers
 
 import (
 	"GitHub/go-chat/backend/internal/app"
+	"GitHub/go-chat/backend/internal/hub"
 	"net/http"
 	"os"
-
-	ws "GitHub/go-chat/backend/internal/websocket"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -13,10 +12,10 @@ import (
 
 type commandController struct {
 	commands       *app.Commands
-	clientRegister ws.ClientRegister
+	clientRegister hub.ClientRegister
 }
 
-func NewCommandController(commands *app.Commands, clientRegister ws.ClientRegister) *commandController {
+func NewCommandController(commands *app.Commands, clientRegister hub.ClientRegister) *commandController {
 	return &commandController{
 		commands:       commands,
 		clientRegister: clientRegister,
