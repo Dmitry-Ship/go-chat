@@ -7,6 +7,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type ParticipantRepository interface {
+	Store(participant *Participant) error
+	GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*Participant, error)
+	Update(participant *Participant) error
+}
+
 const (
 	ParticipantTypeJoined  = "joined"
 	ParticipantTypePrivate = "private"

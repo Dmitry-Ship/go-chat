@@ -5,17 +5,21 @@ import (
 	"net/http"
 	"os"
 
+	ws "GitHub/go-chat/backend/internal/websocket"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type commandController struct {
-	commands *app.Commands
+	commands       *app.Commands
+	clientRegister ws.ClientRegister
 }
 
-func NewCommandController(commands *app.Commands) *commandController {
+func NewCommandController(commands *app.Commands, clientRegister ws.ClientRegister) *commandController {
 	return &commandController{
-		commands: commands,
+		commands:       commands,
+		clientRegister: clientRegister,
 	}
 }
 
@@ -44,12 +48,6 @@ func (s *commandController) handleOpenWSConnection() http.HandlerFunc {
 			return
 		}
 
-		err = s.commands.NotificationService.RegisterClient(conn, userID)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
+		s.clientRegister.RegisterClient(conn, userID)
 	}
 }

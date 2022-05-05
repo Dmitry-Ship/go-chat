@@ -6,6 +6,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type MessageRepository interface {
+	StoreTextMessage(message *TextMessage) error
+	StoreLeftConversationMessage(message *Message) error
+	StoreJoinedConversationMessage(message *Message) error
+	StoreRenamedConversationMessage(message *ConversationRenamedMessage) error
+}
+
 type BaseMessage interface {
 	GetBaseData() *Message
 }

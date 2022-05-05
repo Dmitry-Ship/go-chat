@@ -6,6 +6,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type UserRepository interface {
+	Store(user *User) error
+	Update(user *User) error
+	GetByID(id uuid.UUID) (*User, error)
+	FindByUsername(username string) (*User, error)
+}
+
 type User struct {
 	ID           uuid.UUID
 	Avatar       string

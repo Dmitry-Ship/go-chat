@@ -7,6 +7,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type ConversationRepository interface {
+	StorePublicConversation(conversation *PublicConversation) error
+	StorePrivateConversation(conversation *PrivateConversation) error
+	UpdatePublicConversation(conversation *PublicConversation) error
+	GetPublicConversation(id uuid.UUID) (*PublicConversation, error)
+	GetPrivateConversationID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
+}
+
 type BaseConversation interface {
 	GetBaseData() *Conversation
 }

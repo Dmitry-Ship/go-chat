@@ -14,7 +14,7 @@ type OutgoingNotification struct {
 	Payload interface{} `json:"data"`
 }
 
-type IncomingNotification struct {
+type incomingNotification struct {
 	Type   string
 	Data   json.RawMessage
 	UserID uuid.UUID
@@ -27,23 +27,23 @@ type connectionOptions struct {
 	maxMessageSize int64
 }
 type client struct {
-	Id                        uuid.UUID
-	connection                *websocket.Conn
-	unregisterChan            chan *client
-	UserID                    uuid.UUID
-	sendChannel               chan *OutgoingNotification
-	incomingNotificationsChan chan *IncomingNotification
-	connectionOptions         connectionOptions
+	Id                         uuid.UUID
+	connection                 *websocket.Conn
+	UserID                     uuid.UUID
+	sendChannel                chan *OutgoingNotification
+	handleincomingNotification func(notification *incomingNotification)
+	unregisterClient           func(client *client)
+	connectionOptions          connectionOptions
 }
 
-func NewClient(conn *websocket.Conn, unregisterChan chan *client, incomingNotificationsChan chan *IncomingNotification, userID uuid.UUID) *client {
+func NewClient(conn *websocket.Conn, unregisterClient func(client *client), handleincomingNotification func(notification *incomingNotification), userID uuid.UUID) *client {
 	return &client{
-		Id:                        uuid.New(),
-		UserID:                    userID,
-		connection:                conn,
-		sendChannel:               make(chan *OutgoingNotification, 1024),
-		unregisterChan:            unregisterChan,
-		incomingNotificationsChan: incomingNotificationsChan,
+		Id:                         uuid.New(),
+		UserID:                     userID,
+		connection:                 conn,
+		sendChannel:                make(chan *OutgoingNotification, 1024),
+		unregisterClient:           unregisterClient,
+		handleincomingNotification: handleincomingNotification,
 		connectionOptions: connectionOptions{
 			writeWait:      10 * time.Second,
 			pongWait:       60 * time.Second,
@@ -53,9 +53,14 @@ func NewClient(conn *websocket.Conn, unregisterChan chan *client, incomingNotifi
 	}
 }
 
-func (c *client) ReadPump() {
+func (c *client) Listen() {
+	go c.writePump()
+	go c.readPump()
+}
+
+func (c *client) readPump() {
 	defer func() {
-		c.unregisterChan <- c
+		go c.unregisterClient(c)
 		c.connection.Close()
 	}()
 
@@ -94,15 +99,15 @@ func (c *client) ReadPump() {
 			return
 		}
 
-		c.incomingNotificationsChan <- &IncomingNotification{
+		go c.handleincomingNotification(&incomingNotification{
 			Type:   notification.Type,
 			Data:   data,
 			UserID: c.UserID,
-		}
+		})
 	}
 }
 
-func (c *client) WritePump() {
+func (c *client) writePump() {
 	ticker := time.NewTicker(c.connectionOptions.pingPeriod)
 	defer func() {
 		ticker.Stop()

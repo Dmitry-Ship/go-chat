@@ -3,24 +3,26 @@ package domainEventsHandlers
 import (
 	"GitHub/go-chat/backend/internal/app"
 	"GitHub/go-chat/backend/internal/domain"
-	ws "GitHub/go-chat/backend/internal/infra/websocket"
 	"GitHub/go-chat/backend/internal/readModel"
+	ws "GitHub/go-chat/backend/internal/websocket"
 	"log"
 
 	"github.com/google/uuid"
 )
 
 type eventHandlers struct {
-	pubsub   domain.EventsSubscriber
-	commands *app.Commands
-	queries  readModel.QueriesRepository
+	pubsub                   domain.EventsSubscriber
+	notificationTopicService ws.NotificationTopicService
+	commands                 *app.Commands
+	queries                  readModel.QueriesRepository
 }
 
-func NewEventHandlers(pubsub domain.EventsSubscriber, app *app.App) *eventHandlers {
+func NewEventHandlers(pubsub domain.EventsSubscriber, commands *app.Commands, queries readModel.QueriesRepository, notificationTopicService ws.NotificationTopicService) *eventHandlers {
 	return &eventHandlers{
-		pubsub:   pubsub,
-		commands: &app.Commands,
-		queries:  app.Queries,
+		pubsub:                   pubsub,
+		commands:                 commands,
+		notificationTopicService: notificationTopicService,
+		queries:                  queries,
 	}
 }
 
@@ -59,7 +61,7 @@ func (h *eventHandlers) HandlePublicConversationRenamed() {
 				NewName:        e.NewName,
 			},
 		}
-		err = h.commands.NotificationService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
+		err = h.notificationTopicService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
 
 		if err != nil {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
@@ -82,7 +84,7 @@ func (h *eventHandlers) HandlePublicConversationLeft() {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
 		}
 
-		err = h.commands.NotificationService.UnsubscribeFromTopic("conversation:"+e.ConversationID.String(), e.UserID)
+		err = h.notificationTopicService.UnsubscribeFromTopic("conversation:"+e.ConversationID.String(), e.UserID)
 
 		if err != nil {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
@@ -105,7 +107,7 @@ func (h *eventHandlers) HandlePublicConversationJoined() {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
 		}
 
-		err = h.commands.NotificationService.SubscribeToTopic("conversation:"+e.ConversationID.String(), e.UserID)
+		err = h.notificationTopicService.SubscribeToTopic("conversation:"+e.ConversationID.String(), e.UserID)
 
 		if err != nil {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
@@ -131,13 +133,13 @@ func (h *eventHandlers) HandlePublicConversationDeleted() {
 			},
 		}
 
-		err := h.commands.NotificationService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
+		err := h.notificationTopicService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
 
 		if err != nil {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
 		}
 
-		err = h.commands.NotificationService.DeleteTopic("conversation:" + e.ConversationID.String())
+		err = h.notificationTopicService.DeleteTopic("conversation:" + e.ConversationID.String())
 
 		if err != nil {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
@@ -166,7 +168,7 @@ func (h *eventHandlers) HandleMessageSent() {
 			Payload: messageDTO,
 		}
 
-		err = h.commands.NotificationService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
+		err = h.notificationTopicService.BroadcastToTopic("conversation:"+e.ConversationID.String(), notification)
 
 		if err != nil {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
@@ -183,7 +185,7 @@ func (h *eventHandlers) HandlePublicConversationCreated() {
 			continue
 		}
 
-		err := h.commands.NotificationService.SubscribeToTopic("conversation:"+e.ConversationID.String(), e.OwnerID)
+		err := h.notificationTopicService.SubscribeToTopic("conversation:"+e.ConversationID.String(), e.OwnerID)
 
 		if err != nil {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
@@ -200,13 +202,13 @@ func (h *eventHandlers) HandlePrivateConversationCreated() {
 			continue
 		}
 
-		err := h.commands.NotificationService.SubscribeToTopic("conversation:"+e.ConversationID.String(), e.FromUserID)
+		err := h.notificationTopicService.SubscribeToTopic("conversation:"+e.ConversationID.String(), e.FromUserID)
 
 		if err != nil {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
 		}
 
-		err = h.commands.NotificationService.SubscribeToTopic("conversation:"+e.ConversationID.String(), e.ToUserID)
+		err = h.notificationTopicService.SubscribeToTopic("conversation:"+e.ConversationID.String(), e.ToUserID)
 
 		if err != nil {
 			log.Printf("Error handling %s event: %v", e.GetName(), err)
