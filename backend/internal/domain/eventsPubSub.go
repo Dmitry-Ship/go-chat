@@ -10,14 +10,14 @@ type EventsSubscriber interface {
 
 type pubsub struct {
 	mu                  sync.RWMutex
-	eventSubscribersMap map[string][]chan DomainEvent
+	topicSubscribersMap map[string][]chan DomainEvent
 	isClosed            bool
 }
 
 func NewPubsub() *pubsub {
 	return &pubsub{
 		mu:                  sync.RWMutex{},
-		eventSubscribersMap: make(map[string][]chan DomainEvent),
+		topicSubscribersMap: make(map[string][]chan DomainEvent),
 	}
 }
 
@@ -25,14 +25,14 @@ func (ps *pubsub) Subscribe(topic string) <-chan DomainEvent {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
-	subscriptionChannel := make(chan DomainEvent, 10)
+	subscriptionChannel := make(chan DomainEvent, 100)
 
-	ps.eventSubscribersMap[topic] = append(ps.eventSubscribersMap[topic], subscriptionChannel)
+	ps.topicSubscribersMap[topic] = append(ps.topicSubscribersMap[topic], subscriptionChannel)
 
 	return subscriptionChannel
 }
 
-func (ps *pubsub) Publish(event DomainEvent) {
+func (ps *pubsub) Publish(topic string, event DomainEvent) {
 	ps.mu.RLock()
 	defer ps.mu.RUnlock()
 
@@ -40,7 +40,7 @@ func (ps *pubsub) Publish(event DomainEvent) {
 		return
 	}
 
-	for _, subscriptionChannel := range ps.eventSubscribersMap[event.GetName()] {
+	for _, subscriptionChannel := range ps.topicSubscribersMap[topic] {
 		go func(subscriptionChannel chan<- DomainEvent) {
 			subscriptionChannel <- event
 		}(subscriptionChannel)
@@ -53,8 +53,8 @@ func (ps *pubsub) Close() {
 
 	if !ps.isClosed {
 		ps.isClosed = true
-		for _, eventGroup := range ps.eventSubscribersMap {
-			for _, subscriberChannel := range eventGroup {
+		for _, topicGroup := range ps.topicSubscribersMap {
+			for _, subscriberChannel := range topicGroup {
 				close(subscriberChannel)
 			}
 		}

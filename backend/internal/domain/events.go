@@ -12,6 +12,8 @@ const (
 	PublicConversationJoinedName   = "public_conversation_joined"
 )
 
+const DomainEventChannel = "domain_event"
+
 type DomainEvent interface {
 	GetName() string
 }

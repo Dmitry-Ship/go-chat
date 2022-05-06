@@ -5,12 +5,12 @@ type aggregate struct {
 }
 
 type EventPublisher interface {
-	Publish(event DomainEvent)
+	Publish(topic string, event DomainEvent)
 }
 
 func (a *aggregate) Dispatch(publisher EventPublisher) {
 	for _, event := range a.events {
-		publisher.Publish(event)
+		publisher.Publish(DomainEventChannel, event)
 	}
 }
 
