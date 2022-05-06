@@ -14,6 +14,9 @@ import (
 
 func main() {
 	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	redisClient := redisPubsub.GetRedisClient(ctx)
 	db := postgres.NewDatabaseConnection()
 	db.AutoMigrate()

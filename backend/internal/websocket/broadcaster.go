@@ -33,12 +33,12 @@ func NewBroadcaster(ctx context.Context, redisClient *redis.Client, activeClient
 
 func (s *broadcaster) Run() {
 	redisPubsub := s.redisClient.Subscribe(s.ctx, pubsub.ChatChannel)
-	ch := redisPubsub.Channel()
+	chatChannel := redisPubsub.Channel()
 	defer redisPubsub.Close()
 
 	for {
 		select {
-		case message := <-ch:
+		case message := <-chatChannel:
 			if message.Payload == "ping" {
 				s.redisClient.Publish(s.ctx, pubsub.ChatChannel, "pong")
 				continue
@@ -56,6 +56,9 @@ func (s *broadcaster) Run() {
 			for _, userID := range bMessage.UserIDs {
 				s.activeClients.SendToUserClients(userID, bMessage.Payload)
 			}
+
+		case <-s.ctx.Done():
+			return
 		}
 	}
 }

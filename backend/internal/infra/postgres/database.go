@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"gorm.io/driver/postgres"
@@ -26,7 +27,7 @@ func NewDatabaseConnection() *DatabaseConnection {
 		panic("⛔️ Could not connect to database")
 	}
 
-	fmt.Println(fmt.Sprintf("💿 Connected to database %s", dbname))
+	log.Println(fmt.Sprintf("💿 Connected to database %s", dbname))
 
 	return &DatabaseConnection{
 		connection: db,

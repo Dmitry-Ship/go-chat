@@ -3,6 +3,7 @@ package pubsub
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/go-redis/redis/v8"
@@ -25,7 +26,7 @@ func GetRedisClient(ctx context.Context) *redis.Client {
 		panic(err)
 	}
 
-	fmt.Println(fmt.Sprintf("📢 Connected to redis %s", options))
+	log.Println(fmt.Sprintf("📢 Connected to redis %s", options))
 
 	return client
 }

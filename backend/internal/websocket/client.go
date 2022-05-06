@@ -117,9 +117,7 @@ func (c *Client) writePump() {
 	for {
 		select {
 		case notification, ok := <-c.sendChannel:
-			err := c.connection.SetWriteDeadline(time.Now().Add(c.connectionOptions.writeWait))
-
-			if err != nil {
+			if err := c.connection.SetWriteDeadline(time.Now().Add(c.connectionOptions.writeWait)); err != nil {
 				log.Println(err)
 			}
 
@@ -133,17 +131,16 @@ func (c *Client) writePump() {
 			}
 
 			if err := c.connection.WriteJSON(notification); err != nil {
-
-				return
+				log.Println(err)
 			}
 
 		case <-ticker.C:
 			if err := c.connection.SetWriteDeadline(time.Now().Add(c.connectionOptions.writeWait)); err != nil {
-				return
+				log.Println(err)
 			}
 
 			if err := c.connection.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
+				log.Println(err)
 			}
 		}
 	}
