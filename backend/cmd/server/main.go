@@ -34,8 +34,8 @@ func main() {
 	handlers := httpHandlers.NewHTTPHandlers(commands, queries)
 	handlers.InitRoutes()
 
-	eventHandlers := domainEventsHandlers.NewEventHandlers(domainEventsPubSub, commands, queries)
-	eventHandlers.ListenForEvents()
+	eventHandlers := domainEventsHandlers.NewEventHandlers(ctx, domainEventsPubSub, commands, queries)
+	go eventHandlers.ListenForEvents()
 
 	server := server.NewGracefulServer()
 	server.Run()
