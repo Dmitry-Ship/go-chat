@@ -1,7 +1,7 @@
 package app
 
 import (
-	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	"GitHub/go-chat/backend/internal/services"
 	ws "GitHub/go-chat/backend/internal/websocket"
@@ -19,11 +19,11 @@ type Commands struct {
 	ClientRegister           services.ClientRegister
 }
 
-func NewCommands(ctx context.Context, eventsPubSub domain.EventPublisher, redisClient *redis.Client, db *gorm.DB, activeClients ws.ActiveClients) *Commands {
-	messagesRepository := postgres.NewMessageRepository(db, eventsPubSub)
+func NewCommands(ctx context.Context, eventPublisher infra.EventPublisher, redisClient *redis.Client, db *gorm.DB, activeClients ws.ActiveClients) *Commands {
+	messagesRepository := postgres.NewMessageRepository(db, eventPublisher)
 	usersRepository := postgres.NewUserRepository(db)
-	conversationsRepository := postgres.NewConversationRepository(db, eventsPubSub)
-	participantRepository := postgres.NewParticipantRepository(db, eventsPubSub)
+	conversationsRepository := postgres.NewConversationRepository(db, eventPublisher)
+	participantRepository := postgres.NewParticipantRepository(db, eventPublisher)
 	notificationTopicRepository := postgres.NewNotificationTopicRepository(db)
 	jwtTokens := services.NewJWTokens()
 

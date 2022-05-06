@@ -2,20 +2,21 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/infra"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type participantRepository struct {
-	db       *gorm.DB
-	eventBus domain.EventPublisher
+	db             *gorm.DB
+	eventPublisher infra.EventPublisher
 }
 
-func NewParticipantRepository(db *gorm.DB, eventBus domain.EventPublisher) *participantRepository {
+func NewParticipantRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *participantRepository {
 	return &participantRepository{
-		db:       db,
-		eventBus: eventBus,
+		db:             db,
+		eventPublisher: eventPublisher,
 	}
 }
 
@@ -26,7 +27,7 @@ func (r *participantRepository) Store(participant *domain.Participant) error {
 		return err
 	}
 
-	participant.Dispatch(r.eventBus)
+	participant.Dispatch(r.eventPublisher)
 
 	return nil
 }
@@ -38,7 +39,7 @@ func (r *participantRepository) Update(participant *domain.Participant) error {
 		return err
 	}
 
-	participant.Dispatch(r.eventBus)
+	participant.Dispatch(r.eventPublisher)
 
 	return nil
 }

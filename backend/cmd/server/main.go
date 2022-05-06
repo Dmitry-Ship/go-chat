@@ -2,9 +2,9 @@ package main
 
 import (
 	"GitHub/go-chat/backend/internal/app"
-	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/domainEventsHandlers"
 	"GitHub/go-chat/backend/internal/httpHandlers"
+	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
 	"GitHub/go-chat/backend/internal/server"
@@ -22,7 +22,9 @@ func main() {
 	db.AutoMigrate()
 
 	dbConnection := db.GetConnection()
-	eventBus := domain.NewEventBus()
+	eventBus := infra.NewEventBus()
+	defer eventBus.Close()
+
 	activeClients := ws.NewActiveClients()
 
 	commands := app.NewCommands(ctx, eventBus, redisClient, dbConnection, activeClients)

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/infra"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -9,10 +10,10 @@ import (
 
 type conversationRepository struct {
 	db             *gorm.DB
-	eventPublisher domain.EventPublisher
+	eventPublisher infra.EventPublisher
 }
 
-func NewConversationRepository(db *gorm.DB, eventPublisher domain.EventPublisher) *conversationRepository {
+func NewConversationRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *conversationRepository {
 	return &conversationRepository{
 		db:             db,
 		eventPublisher: eventPublisher,

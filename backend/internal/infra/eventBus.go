@@ -1,38 +1,47 @@
-package domain
+package infra
 
 import (
 	"sync"
 )
 
+type event struct {
+	Topic string
+	Data  interface{}
+}
+
+type EventPublisher interface {
+	Publish(topic string, data interface{})
+}
+
 type EventsSubscriber interface {
-	Subscribe(topic string) <-chan DomainEvent
+	Subscribe(topic string) <-chan event
 }
 
 type eventBus struct {
 	mu                  sync.RWMutex
-	topicSubscribersMap map[string][]chan DomainEvent
+	topicSubscribersMap map[string][]chan event
 	isClosed            bool
 }
 
 func NewEventBus() *eventBus {
 	return &eventBus{
 		mu:                  sync.RWMutex{},
-		topicSubscribersMap: make(map[string][]chan DomainEvent),
+		topicSubscribersMap: make(map[string][]chan event),
 	}
 }
 
-func (eb *eventBus) Subscribe(topic string) <-chan DomainEvent {
+func (eb *eventBus) Subscribe(topic string) <-chan event {
 	eb.mu.Lock()
 	defer eb.mu.Unlock()
 
-	subscriptionChannel := make(chan DomainEvent, 100)
+	subscriptionChannel := make(chan event, 100)
 
 	eb.topicSubscribersMap[topic] = append(eb.topicSubscribersMap[topic], subscriptionChannel)
 
 	return subscriptionChannel
 }
 
-func (eb *eventBus) Publish(topic string, event DomainEvent) {
+func (eb *eventBus) Publish(topic string, data interface{}) {
 	eb.mu.RLock()
 	defer eb.mu.RUnlock()
 
@@ -41,8 +50,8 @@ func (eb *eventBus) Publish(topic string, event DomainEvent) {
 	}
 
 	for _, subscriptionChannel := range eb.topicSubscribersMap[topic] {
-		go func(subscriptionChannel chan<- DomainEvent) {
-			subscriptionChannel <- event
+		go func(subscriptionChannel chan<- event) {
+			subscriptionChannel <- event{Topic: topic, Data: data}
 		}(subscriptionChannel)
 	}
 }

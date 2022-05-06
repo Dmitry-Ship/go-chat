@@ -3,6 +3,7 @@ package domainEventsHandlers
 import (
 	"GitHub/go-chat/backend/internal/app"
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/readModel"
 	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
@@ -13,12 +14,12 @@ import (
 
 type eventHandlers struct {
 	ctx        context.Context
-	subscriber domain.EventsSubscriber
+	subscriber infra.EventsSubscriber
 	commands   *app.Commands
 	queries    readModel.QueriesRepository
 }
 
-func NewEventHandlers(ctx context.Context, subscriber domain.EventsSubscriber, commands *app.Commands, queries readModel.QueriesRepository) *eventHandlers {
+func NewEventHandlers(ctx context.Context, subscriber infra.EventsSubscriber, commands *app.Commands, queries readModel.QueriesRepository) *eventHandlers {
 	return &eventHandlers{
 		ctx:        ctx,
 		subscriber: subscriber,
@@ -35,7 +36,7 @@ func (h *eventHandlers) ListenForEvents() {
 	for {
 		select {
 		case event := <-h.subscriber.Subscribe(domain.DomainEventChannel):
-			switch e := event.(type) {
+			switch e := event.Data.(type) {
 			case *domain.PublicConversationRenamed:
 				go h.handlePublicConversationRenamed(e)
 			case *domain.PublicConversationLeft:

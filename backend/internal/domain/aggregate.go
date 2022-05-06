@@ -4,11 +4,11 @@ type aggregate struct {
 	events []DomainEvent
 }
 
-type EventPublisher interface {
-	Publish(topic string, event DomainEvent)
+type DomainEventPublisher interface {
+	Publish(topic string, data interface{})
 }
 
-func (a *aggregate) Dispatch(publisher EventPublisher) {
+func (a *aggregate) Dispatch(publisher DomainEventPublisher) {
 	for _, event := range a.events {
 		publisher.Publish(DomainEventChannel, event)
 	}
@@ -20,5 +20,5 @@ func (a *aggregate) AddEvent(event DomainEvent) {
 
 type Aggregate interface {
 	AddEvent(event *DomainEvent)
-	Dispatch(publisher EventPublisher)
+	Dispatch(publisher DomainEventPublisher)
 }

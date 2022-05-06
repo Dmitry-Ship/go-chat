@@ -2,19 +2,20 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/infra"
 
 	"gorm.io/gorm"
 )
 
 type messageRepository struct {
-	db       *gorm.DB
-	eventBus domain.EventPublisher
+	db             *gorm.DB
+	eventPublisher infra.EventPublisher
 }
 
-func NewMessageRepository(db *gorm.DB, eventBus domain.EventPublisher) *messageRepository {
+func NewMessageRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *messageRepository {
 	return &messageRepository{
-		db:       db,
-		eventBus: eventBus,
+		db:             db,
+		eventPublisher: eventPublisher,
 	}
 }
 
@@ -31,7 +32,7 @@ func (r *messageRepository) StoreTextMessage(message *domain.TextMessage) error 
 		return err
 	}
 
-	message.Dispatch(r.eventBus)
+	message.Dispatch(r.eventPublisher)
 
 	return nil
 }
@@ -43,7 +44,7 @@ func (r *messageRepository) StoreLeftConversationMessage(message *domain.Message
 		return err
 	}
 
-	message.Dispatch(r.eventBus)
+	message.Dispatch(r.eventPublisher)
 
 	return nil
 }
@@ -55,7 +56,7 @@ func (r *messageRepository) StoreJoinedConversationMessage(message *domain.Messa
 		return err
 	}
 
-	message.Dispatch(r.eventBus)
+	message.Dispatch(r.eventPublisher)
 
 	return nil
 }
@@ -73,7 +74,7 @@ func (r *messageRepository) StoreRenamedConversationMessage(message *domain.Conv
 		return err
 	}
 
-	message.Dispatch(r.eventBus)
+	message.Dispatch(r.eventPublisher)
 
 	return nil
 }
