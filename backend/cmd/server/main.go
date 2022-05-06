@@ -32,7 +32,7 @@ func main() {
 	handlers.InitRoutes()
 
 	eventHandlers := domainEventsHandlers.NewEventHandlers(domainEventsPubSub, commands, queries)
-	eventHandlers.ListerForEvents()
+	eventHandlers.ListenForEvents()
 
 	server := server.NewGracefulServer()
 	server.Run()

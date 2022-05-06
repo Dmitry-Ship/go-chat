@@ -31,7 +31,7 @@ func (s *commandController) handleLogin(w http.ResponseWriter, r *http.Request) 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "access_token",
 		Value:    tokens.AccessToken,
-		Expires:  time.Now().Add(s.commands.AuthService.GetAccessTokenExpiration()),
+		Expires:  time.Now().Add(tokens.AccessTokenExpiration),
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
@@ -41,7 +41,7 @@ func (s *commandController) handleLogin(w http.ResponseWriter, r *http.Request) 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    tokens.RefreshToken,
-		Expires:  time.Now().Add(s.commands.AuthService.GetRefreshTokenExpiration()),
+		Expires:  time.Now().Add(tokens.RefreshTokenExpiration),
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
@@ -51,7 +51,7 @@ func (s *commandController) handleLogin(w http.ResponseWriter, r *http.Request) 
 	expiration := struct {
 		AccessTokenExpiration time.Duration `json:"access_token_expiration"`
 	}{
-		AccessTokenExpiration: s.commands.AuthService.GetAccessTokenExpiration(),
+		AccessTokenExpiration: tokens.AccessTokenExpiration,
 	}
 
 	err = json.NewEncoder(w).Encode(expiration)
@@ -124,7 +124,7 @@ func (s *commandController) handleSignUp(w http.ResponseWriter, r *http.Request)
 		Value:    tokens.AccessToken,
 		HttpOnly: true,
 		Secure:   true,
-		Expires:  time.Now().Add(s.commands.AuthService.GetAccessTokenExpiration()),
+		Expires:  time.Now().Add(tokens.AccessTokenExpiration),
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	})
@@ -135,14 +135,14 @@ func (s *commandController) handleSignUp(w http.ResponseWriter, r *http.Request)
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
-		Expires:  time.Now().Add(s.commands.AuthService.GetRefreshTokenExpiration()),
+		Expires:  time.Now().Add(tokens.RefreshTokenExpiration),
 		SameSite: http.SameSiteNoneMode,
 	})
 
 	expiration := struct {
 		AccessTokenExpiration time.Duration `json:"access_token_expiration"`
 	}{
-		AccessTokenExpiration: s.commands.AuthService.GetAccessTokenExpiration(),
+		AccessTokenExpiration: tokens.AccessTokenExpiration,
 	}
 
 	err = json.NewEncoder(w).Encode(expiration)
@@ -177,7 +177,7 @@ func (s *commandController) handleRefreshToken(w http.ResponseWriter, r *http.Re
 		Value:    newTokens.AccessToken,
 		HttpOnly: true,
 		Secure:   true,
-		Expires:  time.Now().Add(s.commands.AuthService.GetAccessTokenExpiration()),
+		Expires:  time.Now().Add(newTokens.AccessTokenExpiration),
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	})
@@ -188,14 +188,14 @@ func (s *commandController) handleRefreshToken(w http.ResponseWriter, r *http.Re
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
-		Expires:  time.Now().Add(s.commands.AuthService.GetRefreshTokenExpiration()),
+		Expires:  time.Now().Add(newTokens.RefreshTokenExpiration),
 		SameSite: http.SameSiteNoneMode,
 	})
 
 	expiration := struct {
 		AccessTokenExpiration time.Duration `json:"access_token_expiration"`
 	}{
-		AccessTokenExpiration: s.commands.AuthService.GetAccessTokenExpiration(),
+		AccessTokenExpiration: newTokens.AccessTokenExpiration,
 	}
 
 	err = json.NewEncoder(w).Encode(expiration)

@@ -24,7 +24,7 @@ func NewEventHandlers(pubsub domain.EventsSubscriber, commands *app.Commands, qu
 	}
 }
 
-func (h *eventHandlers) ListerForEvents() {
+func (h *eventHandlers) ListenForEvents() {
 	go h.HandleMessageSent()
 	go h.HandlePublicConversationCreated()
 	go h.HandlePublicConversationRenamed()

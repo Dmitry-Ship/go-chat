@@ -25,10 +25,11 @@ func NewCommands(ctx context.Context, eventsPubSub domain.EventPublisher, redisC
 	conversationsRepository := postgres.NewConversationRepository(db, eventsPubSub)
 	participantRepository := postgres.NewParticipantRepository(db, eventsPubSub)
 	notificationTopicRepository := postgres.NewNotificationTopicRepository(db)
+	jwtTokens := services.NewJWTokens()
 
 	return &Commands{
 		ConversationService:      services.NewConversationService(conversationsRepository, participantRepository),
-		AuthService:              services.NewAuthService(usersRepository),
+		AuthService:              services.NewAuthService(usersRepository, jwtTokens),
 		MessagingService:         services.NewMessagingService(messagesRepository),
 		NotificationTopicService: services.NewNotificationTopicService(ctx, notificationTopicRepository, redisClient),
 		ClientRegister:           services.NewClientRegister(activeClients),
