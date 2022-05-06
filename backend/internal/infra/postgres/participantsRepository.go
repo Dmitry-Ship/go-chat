@@ -8,14 +8,14 @@ import (
 )
 
 type participantRepository struct {
-	db     *gorm.DB
-	pubsub domain.EventPublisher
+	db       *gorm.DB
+	eventBus domain.EventPublisher
 }
 
-func NewParticipantRepository(db *gorm.DB, pubsub domain.EventPublisher) *participantRepository {
+func NewParticipantRepository(db *gorm.DB, eventBus domain.EventPublisher) *participantRepository {
 	return &participantRepository{
-		db:     db,
-		pubsub: pubsub,
+		db:       db,
+		eventBus: eventBus,
 	}
 }
 
@@ -26,7 +26,7 @@ func (r *participantRepository) Store(participant *domain.Participant) error {
 		return err
 	}
 
-	participant.Dispatch(r.pubsub)
+	participant.Dispatch(r.eventBus)
 
 	return nil
 }
@@ -38,7 +38,7 @@ func (r *participantRepository) Update(participant *domain.Participant) error {
 		return err
 	}
 
-	participant.Dispatch(r.pubsub)
+	participant.Dispatch(r.eventBus)
 
 	return nil
 }

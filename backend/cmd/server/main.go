@@ -22,10 +22,10 @@ func main() {
 	db.AutoMigrate()
 
 	dbConnection := db.GetConnection()
-	domainEventsPubSub := domain.NewPubsub()
+	eventBus := domain.NewEventBus()
 	activeClients := ws.NewActiveClients()
 
-	commands := app.NewCommands(ctx, domainEventsPubSub, redisClient, dbConnection, activeClients)
+	commands := app.NewCommands(ctx, eventBus, redisClient, dbConnection, activeClients)
 	queries := postgres.NewQueriesRepository(dbConnection)
 
 	broadcaster := ws.NewBroadcaster(ctx, redisClient, activeClients)
@@ -34,7 +34,7 @@ func main() {
 	handlers := httpHandlers.NewHTTPHandlers(commands, queries)
 	handlers.InitRoutes()
 
-	eventHandlers := domainEventsHandlers.NewEventHandlers(ctx, domainEventsPubSub, commands, queries)
+	eventHandlers := domainEventsHandlers.NewEventHandlers(ctx, eventBus, commands, queries)
 	go eventHandlers.ListenForEvents()
 
 	server := server.NewGracefulServer()

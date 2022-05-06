@@ -8,14 +8,14 @@ import (
 )
 
 type conversationRepository struct {
-	db     *gorm.DB
-	pubsub domain.EventPublisher
+	db             *gorm.DB
+	eventPublisher domain.EventPublisher
 }
 
-func NewConversationRepository(db *gorm.DB, pubsub domain.EventPublisher) *conversationRepository {
+func NewConversationRepository(db *gorm.DB, eventPublisher domain.EventPublisher) *conversationRepository {
 	return &conversationRepository{
-		db:     db,
-		pubsub: pubsub,
+		db:             db,
+		eventPublisher: eventPublisher,
 	}
 
 }
@@ -39,7 +39,7 @@ func (r *conversationRepository) StorePublicConversation(conversation *domain.Pu
 		return err
 	}
 
-	conversation.Dispatch(r.pubsub)
+	conversation.Dispatch(r.eventPublisher)
 
 	return nil
 }
@@ -57,7 +57,7 @@ func (r *conversationRepository) UpdatePublicConversation(conversation *domain.P
 		return err
 	}
 
-	conversation.Dispatch(r.pubsub)
+	conversation.Dispatch(r.eventPublisher)
 
 	return nil
 }
@@ -87,7 +87,7 @@ func (r *conversationRepository) StorePrivateConversation(conversation *domain.P
 		return err
 	}
 
-	conversation.Dispatch(r.pubsub)
+	conversation.Dispatch(r.eventPublisher)
 
 	return nil
 }

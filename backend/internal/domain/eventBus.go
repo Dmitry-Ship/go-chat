@@ -8,52 +8,52 @@ type EventsSubscriber interface {
 	Subscribe(topic string) <-chan DomainEvent
 }
 
-type pubsub struct {
+type eventBus struct {
 	mu                  sync.RWMutex
 	topicSubscribersMap map[string][]chan DomainEvent
 	isClosed            bool
 }
 
-func NewPubsub() *pubsub {
-	return &pubsub{
+func NewEventBus() *eventBus {
+	return &eventBus{
 		mu:                  sync.RWMutex{},
 		topicSubscribersMap: make(map[string][]chan DomainEvent),
 	}
 }
 
-func (ps *pubsub) Subscribe(topic string) <-chan DomainEvent {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
+func (eb *eventBus) Subscribe(topic string) <-chan DomainEvent {
+	eb.mu.Lock()
+	defer eb.mu.Unlock()
 
 	subscriptionChannel := make(chan DomainEvent, 100)
 
-	ps.topicSubscribersMap[topic] = append(ps.topicSubscribersMap[topic], subscriptionChannel)
+	eb.topicSubscribersMap[topic] = append(eb.topicSubscribersMap[topic], subscriptionChannel)
 
 	return subscriptionChannel
 }
 
-func (ps *pubsub) Publish(topic string, event DomainEvent) {
-	ps.mu.RLock()
-	defer ps.mu.RUnlock()
+func (eb *eventBus) Publish(topic string, event DomainEvent) {
+	eb.mu.RLock()
+	defer eb.mu.RUnlock()
 
-	if ps.isClosed {
+	if eb.isClosed {
 		return
 	}
 
-	for _, subscriptionChannel := range ps.topicSubscribersMap[topic] {
+	for _, subscriptionChannel := range eb.topicSubscribersMap[topic] {
 		go func(subscriptionChannel chan<- DomainEvent) {
 			subscriptionChannel <- event
 		}(subscriptionChannel)
 	}
 }
 
-func (ps *pubsub) Close() {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
+func (eb *eventBus) Close() {
+	eb.mu.Lock()
+	defer eb.mu.Unlock()
 
-	if !ps.isClosed {
-		ps.isClosed = true
-		for _, topicGroup := range ps.topicSubscribersMap {
+	if !eb.isClosed {
+		eb.isClosed = true
+		for _, topicGroup := range eb.topicSubscribersMap {
 			for _, subscriberChannel := range topicGroup {
 				close(subscriberChannel)
 			}
