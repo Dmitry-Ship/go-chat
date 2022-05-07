@@ -26,7 +26,7 @@ func (s *commandController) handleCreatePrivateConversationIfNotExists(w http.Re
 		return
 	}
 
-	conversationId, err := s.commands.ConversationService.StartPrivateConversation(userID, request.ToUserId)
+	conversationId, err := s.commands.PrivateConversationService.Start(userID, request.ToUserId)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -67,7 +67,7 @@ func (s *commandController) handleCreatePublicConversation(w http.ResponseWriter
 		return
 	}
 
-	err = s.commands.ConversationService.CreatePublicConversation(request.ConversationId, request.ConversationName, userID)
+	err = s.commands.PublicConversationEditingService.Create(request.ConversationId, request.ConversationName, userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -101,7 +101,7 @@ func (s *commandController) handleDeleteConversation(w http.ResponseWriter, r *h
 		return
 	}
 
-	err = s.commands.ConversationService.DeletePublicConversation(request.ConversationId, userID)
+	err = s.commands.PublicConversationEditingService.Delete(request.ConversationId, userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -134,7 +134,7 @@ func (s *commandController) handleJoinPublicConversation(w http.ResponseWriter, 
 		return
 	}
 
-	err = s.commands.ConversationService.JoinPublicConversation(request.ConversationId, userID)
+	err = s.commands.PublicConversationParticipationService.Join(request.ConversationId, userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -168,7 +168,7 @@ func (s *commandController) handleLeavePublicConversation(w http.ResponseWriter,
 		return
 	}
 
-	err = s.commands.ConversationService.LeavePublicConversation(request.ConversationId, userID)
+	err = s.commands.PublicConversationParticipationService.Leave(request.ConversationId, userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -203,7 +203,7 @@ func (s *commandController) handleRenamePublicConversation(w http.ResponseWriter
 		return
 	}
 
-	err = s.commands.ConversationService.RenamePublicConversation(request.ConversationId, userID, request.ConversationName)
+	err = s.commands.PublicConversationEditingService.Rename(request.ConversationId, userID, request.ConversationName)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

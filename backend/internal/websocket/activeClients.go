@@ -7,38 +7,38 @@ import (
 )
 
 type ActiveClients interface {
-	AddClient(c *Client)
-	RemoveClient(c *Client)
+	AddClient(c *client)
+	RemoveClient(c *client)
 	SendToUserClients(userID uuid.UUID, notification OutgoingNotification)
 }
 
 type activeClients struct {
 	mu             sync.RWMutex
-	userClientsMap map[uuid.UUID]map[uuid.UUID]*Client
+	userClientsMap map[uuid.UUID]map[uuid.UUID]*client
 }
 
 func NewActiveClients() *activeClients {
 	return &activeClients{
-		userClientsMap: make(map[uuid.UUID]map[uuid.UUID]*Client),
+		userClientsMap: make(map[uuid.UUID]map[uuid.UUID]*client),
 		mu:             sync.RWMutex{},
 	}
 }
 
-func (ac *activeClients) AddClient(c *Client) {
+func (ac *activeClients) AddClient(c *client) {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 
 	userClients, ok := ac.userClientsMap[c.UserID]
 
 	if !ok {
-		userClients = make(map[uuid.UUID]*Client)
+		userClients = make(map[uuid.UUID]*client)
 		ac.userClientsMap[c.UserID] = userClients
 	}
 
 	userClients[c.Id] = c
 }
 
-func (ac *activeClients) RemoveClient(c *Client) {
+func (ac *activeClients) RemoveClient(c *client) {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 

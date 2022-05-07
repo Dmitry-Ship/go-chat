@@ -35,7 +35,6 @@ func (s *messagingService) SendJoinedConversationMessage(conversationId uuid.UUI
 	message := domain.NewJoinedConversationMessage(conversationId, userId)
 
 	return s.messages.StoreJoinedConversationMessage(message)
-
 }
 
 func (s *messagingService) SendRenamedConversationMessage(conversationId uuid.UUID, userId uuid.UUID, name string) error {
