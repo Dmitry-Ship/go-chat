@@ -60,7 +60,7 @@ func (c *client) Listen() {
 
 func (c *client) readPump() {
 	defer func() {
-		go c.unregisterClient(c)
+		c.unregisterClient(c)
 		c.connection.Close()
 	}()
 

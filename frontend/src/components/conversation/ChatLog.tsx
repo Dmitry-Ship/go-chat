@@ -5,10 +5,10 @@ import MessageComponent from "./MessageComponent";
 import Loader from "../common/Loader";
 import { useQuery } from "../../api/hooks";
 import { parseMessage } from "../../messages";
-import { useWS } from "../../contexts/WSContext";
+import { useWebSocket } from "../../contexts/WSContext";
 
 const ChatLog: React.FC<{ conversationId: string }> = ({ conversationId }) => {
-  const { onNotification } = useWS();
+  const { onNotification } = useWebSocket();
 
   const [logs, setLogs] = useState<Message[]>([]);
 
@@ -47,29 +47,35 @@ const ChatLog: React.FC<{ conversationId: string }> = ({ conversationId }) => {
         <Loader />
       ) : (
         <>
-          {logs.map((item, i) => {
-            const previous = logs[i - 1];
-            const isFistInAGroup =
-              !previous ||
-              previous?.type !== "text" ||
-              (item.type === "text" && item?.user?.id !== previous?.user.id);
+          {logs.length > 0 ? (
+            logs.map((item, i) => {
+              const previous = logs[i - 1];
+              const isFistInAGroup =
+                !previous ||
+                previous?.type !== "text" ||
+                (item.type === "text" && item?.user?.id !== previous?.user.id);
 
-            const next = logs[i + 1];
+              const next = logs[i + 1];
 
-            const isLastInAGroup =
-              !next ||
-              next?.type !== "text" ||
-              (item.type === "text" && item.user.id !== next?.user.id);
+              const isLastInAGroup =
+                !next ||
+                next?.type !== "text" ||
+                (item.type === "text" && item.user.id !== next?.user.id);
 
-            return (
-              <MessageComponent
-                key={i}
-                message={item}
-                isFistInAGroup={isFistInAGroup}
-                isLastInAGroup={isLastInAGroup}
-              />
-            );
-          })}
+              return (
+                <MessageComponent
+                  key={i}
+                  message={item}
+                  isFistInAGroup={isFistInAGroup}
+                  isLastInAGroup={isLastInAGroup}
+                />
+              );
+            })
+          ) : (
+            <div className={styles.emptyLog}>
+              <p>👋 No messages yet</p>
+            </div>
+          )}
           <div ref={logComponent} />
         </>
       )}

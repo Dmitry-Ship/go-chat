@@ -61,6 +61,18 @@ func (r *messageRepository) StoreJoinedConversationMessage(message *domain.Messa
 	return nil
 }
 
+func (r *messageRepository) StoreInvitedConversationMessage(message *domain.Message) error {
+	err := r.db.Create(toMessagePersistence(message)).Error
+
+	if err != nil {
+		return err
+	}
+
+	message.Dispatch(r.eventPublisher)
+
+	return nil
+}
+
 func (r *messageRepository) StoreRenamedConversationMessage(message *domain.ConversationRenamedMessage) error {
 	err := r.db.Create(toMessagePersistence(message)).Error
 

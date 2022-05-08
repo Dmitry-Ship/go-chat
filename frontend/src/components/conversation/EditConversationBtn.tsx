@@ -3,6 +3,7 @@ import styles from "./EditConversationBtn.module.css";
 import SlideIn from "../common/SlideIn";
 import { makeCommand } from "../../api/fetch";
 import { useRouter } from "next/router";
+import InviteMenu from "./InviteMenu";
 
 const EditConversationBtn: React.FC<{
   joined: boolean;
@@ -62,6 +63,7 @@ const EditConversationBtn: React.FC<{
       <button onClick={() => setIsEditing(true)} className={styles.editButton}>
         ⚙️
       </button>
+
       <SlideIn onClose={handleClose} isOpen={isEditing}>
         <>
           <form className={styles.menuItem} onSubmit={handleRename}>
@@ -77,6 +79,9 @@ const EditConversationBtn: React.FC<{
               Rename
             </button>
           </form>
+
+          <InviteMenu />
+
           <button onClick={handleDelete} className={`btn ${styles.menuItem}`}>
             🗑 Delete
           </button>

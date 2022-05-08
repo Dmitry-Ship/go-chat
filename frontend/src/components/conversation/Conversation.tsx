@@ -5,7 +5,7 @@ import ChatForm from "./ChatForm";
 import ChatLog from "./ChatLog";
 import { useQuery } from "../../api/hooks";
 import EditConversationBtn from "./EditConversationBtn";
-import { useWS } from "../../contexts/WSContext";
+import { useWebSocket } from "../../contexts/WSContext";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import Avatar from "../common/Avatar";
@@ -15,7 +15,7 @@ const Conversation: React.FC = () => {
   const conversationId = router.query.conversationId as string;
   const [conversation, setConversation] = useState<Conversation>();
   const [isJoined, setIsJoined] = useState(false);
-  const { onNotification } = useWS();
+  const { onNotification } = useWebSocket();
 
   useEffect(() => {
     onNotification("conversation_deleted", (event) => {
@@ -25,6 +25,15 @@ const Conversation: React.FC = () => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, router]);
+
+  useEffect(() => {
+    onNotification("conversation_renamed", (event) => {
+      if (conversation && event.data.conversation_id === conversation?.id) {
+        setConversation({ ...conversation, name: event.data.new_name });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation]);
 
   const conversationQuery = useQuery<{
     conversation: Conversation;
@@ -37,15 +46,6 @@ const Conversation: React.FC = () => {
       setIsJoined(conversationQuery.data.joined);
     }
   }, [conversationQuery]);
-
-  useEffect(() => {
-    onNotification("conversation_renamed", (event) => {
-      if (conversation && event.data.conversation_id === conversation?.id) {
-        setConversation({ ...conversation, name: event.data.new_name });
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation]);
 
   return (
     <>

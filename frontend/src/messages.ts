@@ -44,8 +44,17 @@ export const parseMessage = (data: MessageRaw): Message => {
         type: "text",
         isInbound: data.is_inbound,
       };
-
+    case "invited_conversation":
+      return {
+        ...base,
+        text: `${base.user.name} was invited`,
+        type: "invited_conversation",
+      };
     default:
-      throw new Error("Unknown message type");
+      return {
+        ...base,
+        type: "unknown",
+        text: `Unsupported message type`,
+      };
   }
 };

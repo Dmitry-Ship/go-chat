@@ -14,6 +14,11 @@ type JoinedMessage = BaseMessage & {
   text: string;
 };
 
+type InvitedMessage = BaseMessage & {
+  type: "invited_conversation";
+  text: string;
+};
+
 type LeftMessage = BaseMessage & {
   type: "left_conversation";
   text: string;
@@ -23,6 +28,11 @@ type RenamedMessage = BaseMessage & {
   type: "renamed_conversation";
   text: string;
   newName: string;
+};
+
+type UnknownMessage = BaseMessage & {
+  type: "unknown";
+  text: string;
 };
 
 type TextMessage = BaseMessage & {
@@ -46,6 +56,10 @@ type JoinedMessageRaw = baseMessageRaw & {
   type: "joined_conversation";
 };
 
+type InvitedMessageRaw = baseMessageRaw & {
+  type: "invited_conversation";
+};
+
 type LeftMessageRaw = baseMessageRaw & {
   type: "left_conversation";
 };
@@ -63,15 +77,18 @@ type RenamedMessageRaw = baseMessageRaw & {
 
 export type Message =
   | JoinedMessage
+  | InvitedMessage
   | TextMessage
   | LeftMessage
-  | RenamedMessage;
+  | RenamedMessage
+  | UnknownMessage;
 
 export type MessageRaw =
   | LeftMessageRaw
   | TextMessageRaw
   | JoinedMessageRaw
-  | RenamedMessageRaw;
+  | RenamedMessageRaw
+  | InvitedMessageRaw;
 
 export type Conversation = {
   name: string;

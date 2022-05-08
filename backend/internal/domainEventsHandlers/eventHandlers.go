@@ -43,6 +43,8 @@ func (h *eventHandlers) ListenForEvents() {
 				go h.handlePublicConversationLeft(e)
 			case *domain.PublicConversationJoined:
 				go h.handlePublicConversationJoined(e)
+			case *domain.PublicConversationInvited:
+				go h.handlePublicConversationInvited(e)
 			case *domain.MessageSent:
 				go h.handleMessageSent(e)
 			case *domain.PublicConversationCreated:
@@ -102,6 +104,20 @@ func (h *eventHandlers) handlePublicConversationLeft(e *domain.PublicConversatio
 
 func (h *eventHandlers) handlePublicConversationJoined(e *domain.PublicConversationJoined) {
 	err := h.commands.MessagingService.SendJoinedConversationMessage(e.ConversationID, e.UserID)
+
+	if err != nil {
+		h.logHandlerError(err, e)
+	}
+
+	err = h.commands.NotificationTopicService.SubscribeToTopic("conversation:"+e.ConversationID.String(), e.UserID)
+
+	if err != nil {
+		h.logHandlerError(err, e)
+	}
+}
+
+func (h *eventHandlers) handlePublicConversationInvited(e *domain.PublicConversationInvited) {
+	err := h.commands.MessagingService.SendInvitedConversationMessage(e.ConversationID, e.UserID)
 
 	if err != nil {
 		h.logHandlerError(err, e)

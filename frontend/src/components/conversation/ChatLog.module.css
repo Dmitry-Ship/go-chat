@@ -3,3 +3,10 @@
   display: flex;
   flex-direction: column;
 }
+
+.emptyLog {
+  display: flex;
+  margin-top: auto;
+  justify-content: center;
+  color: white;
+}

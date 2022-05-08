@@ -16,6 +16,7 @@ type ParticipantRepository interface {
 const (
 	ParticipantTypeJoined  = "joined"
 	ParticipantTypePrivate = "private"
+	ParticipantTypeInvited = "invited"
 	ParticipantTypeOwner   = "owner"
 )
 
@@ -60,6 +61,13 @@ func NewJoinedParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participa
 
 func NewPrivateParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
 	participant := newParticipant(conversationId, userId, ParticipantTypePrivate)
+	return participant
+}
+
+func NewInvitedParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
+	participant := newParticipant(conversationId, userId, ParticipantTypeInvited)
+
+	participant.AddEvent(NewPublicConversationInvited(conversationId, userId))
 	return participant
 }
 

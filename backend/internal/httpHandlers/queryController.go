@@ -41,6 +41,32 @@ func (s *queryController) handleGetContacts(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+func (s *queryController) handleGetPotentialInvitees(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	conversationIdQuery := query.Get("conversation_id")
+	conversationId, err := uuid.Parse(conversationIdQuery)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	contacts, err := s.queries.GetPotentialInvitees(conversationId)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(contacts)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func (s *queryController) handleGetConversations(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 

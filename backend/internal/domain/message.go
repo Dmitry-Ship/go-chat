@@ -10,6 +10,7 @@ type MessageRepository interface {
 	StoreTextMessage(message *TextMessage) error
 	StoreLeftConversationMessage(message *Message) error
 	StoreJoinedConversationMessage(message *Message) error
+	StoreInvitedConversationMessage(message *Message) error
 	StoreRenamedConversationMessage(message *ConversationRenamedMessage) error
 }
 
@@ -22,6 +23,7 @@ const (
 	MessageTypeRenamedConversation = "renamed_conversation"
 	MessageTypeLeftConversation    = "left_conversation"
 	MessageTypeJoinedConversation  = "joined_conversation"
+	MessageTypeInvitedConversation = "invited_conversation"
 )
 
 type Message struct {
@@ -113,4 +115,10 @@ type JoinedConversationMessage = Message
 
 func NewJoinedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *JoinedConversationMessage {
 	return newMessage(conversationId, userID, MessageTypeJoinedConversation)
+}
+
+type InvitedConversationMessage = Message
+
+func NewInvitedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *InvitedConversationMessage {
+	return newMessage(conversationId, userID, MessageTypeInvitedConversation)
 }

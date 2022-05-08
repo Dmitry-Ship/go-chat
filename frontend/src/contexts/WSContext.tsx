@@ -34,6 +34,6 @@ export const ProvideWS: React.FC = ({ children }) => {
   return <wsContext.Provider value={ws}>{children}</wsContext.Provider>;
 };
 
-export const useWS = () => {
+export const useWebSocket = () => {
   return useContext(wsContext);
 };

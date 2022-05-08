@@ -6,6 +6,7 @@ import (
 
 type userQueryRepository interface {
 	GetContacts(userID uuid.UUID) ([]*ContactDTO, error)
+	GetPotentialInvitees(conversationId uuid.UUID) ([]*ContactDTO, error)
 	GetUserByID(userID uuid.UUID) (*UserDTO, error)
 }
 

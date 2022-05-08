@@ -1,12 +1,29 @@
 .message {
   margin-top: 10px;
+}
+
+
+
+.message:first-child {
+  margin-top: auto;
+}
+
+.textMessage {
   display: flex;
   align-items: flex-end;
   color: rgb(255, 255, 255);
 }
 
-.message:first-child {
-  margin-top: auto;
+.outboundMessage {
+  justify-content: flex-end;
+}
+
+.inboundMessage .messageBubble {
+  background-color: var(--warn-color);
+}
+
+.outboundMessage .messageBubble {
+  background-color: var(--primary-color);
 }
 
 .messageBubble {
@@ -36,17 +53,15 @@
 }
 
 .systemMessage {
+  display: flex;
+  justify-content: center;
+}
+
+.systemMessage span {
+  color: rgb(255, 255, 255);
   background-color: rgba(0, 0, 0, 0.2);
   font-size: small;
   border-radius: var(--br);
-  margin: auto;
   padding: 10px;
-}
-
-.inboundMessage {
-  background-color: var(--warn-color);
-}
-
-.outboundMessage {
-  background-color: var(--primary-color);
+  display: inline-block;
 }

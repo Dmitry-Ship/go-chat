@@ -31,6 +31,20 @@ func (r *queriesRepository) GetContacts(userID uuid.UUID) ([]*readModel.ContactD
 	return dtoContacts, err
 }
 
+func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID) ([]*readModel.ContactDTO, error) {
+	users := []*User{}
+	subQuery := r.db.Select("user_id").Where("conversation_id = ?", conversationID).Table("participants")
+	err := r.db.Where("id NOT IN (?)", subQuery).Limit(50).Find(&users).Error
+
+	dtoContacts := make([]*readModel.ContactDTO, len(users))
+
+	for i, user := range users {
+		dtoContacts[i] = toContactDTO(user)
+	}
+
+	return dtoContacts, err
+}
+
 func (r *queriesRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error) {
 	user := User{}
 	err := r.db.Where("id = ?", id).First(&user).Error
@@ -104,7 +118,8 @@ func (r *queriesRepository) getMessageDTO(message *Message, requestUserID uuid.U
 		return toMessageDTO(message, &user), nil
 	case 3:
 		return toMessageDTO(message, &user), nil
-
+	case 4:
+		return toMessageDTO(message, &user), nil
 	}
 
 	return nil, nil

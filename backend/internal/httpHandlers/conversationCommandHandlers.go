@@ -217,3 +217,38 @@ func (s *commandController) handleRenamePublicConversation(w http.ResponseWriter
 		return
 	}
 }
+
+func (s *commandController) handleInviteToPublicConversation(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	request := struct {
+		ConversationId uuid.UUID `json:"conversation_id"`
+		InviteeId      uuid.UUID `json:"user_id"`
+	}{}
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = s.commands.PublicConversationParticipationService.Invite(request.ConversationId, userID, request.InviteeId)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode("OK")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}

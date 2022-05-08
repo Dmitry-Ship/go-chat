@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

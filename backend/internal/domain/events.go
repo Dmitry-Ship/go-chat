@@ -10,6 +10,7 @@ const (
 	PublicConversationDeletedName  = "public_conversation_deleted"
 	PublicConversationLeftName     = "public_conversation_left"
 	PublicConversationJoinedName   = "public_conversation_joined"
+	PublicConversationInvitedName  = "public_conversation_invited"
 )
 
 const DomainEventChannel = "domain_event"
@@ -118,6 +119,22 @@ func NewPublicConversationJoined(conversationID uuid.UUID, userID uuid.UUID) *Pu
 	return &PublicConversationJoined{
 		domainEvent: domainEvent{
 			name: PublicConversationJoinedName,
+		},
+		ConversationID: conversationID,
+		UserID:         userID,
+	}
+}
+
+type PublicConversationInvited struct {
+	domainEvent
+	ConversationID uuid.UUID
+	UserID         uuid.UUID
+}
+
+func NewPublicConversationInvited(conversationID uuid.UUID, userID uuid.UUID) *PublicConversationInvited {
+	return &PublicConversationInvited{
+		domainEvent: domainEvent{
+			name: PublicConversationInvitedName,
 		},
 		ConversationID: conversationID,
 		UserID:         userID,

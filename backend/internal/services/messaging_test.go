@@ -22,6 +22,11 @@ func (m *messagesRepositoryMock) StoreJoinedConversationMessage(message *domain.
 	return nil
 }
 
+func (m *messagesRepositoryMock) StoreInvitedConversationMessage(message *domain.JoinedConversationMessage) error {
+	m.methodsCalled["StoreInvitedConversationMessage"]++
+	return nil
+}
+
 func (m *messagesRepositoryMock) StoreRenamedConversationMessage(message *domain.ConversationRenamedMessage) error {
 	m.methodsCalled["StoreRenamedConversationMessage"]++
 	return nil
@@ -68,6 +73,20 @@ func TestMessagingService_SendJoinedConversationMessage(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, 1, messagesRepository.methodsCalled["StoreJoinedConversationMessage"])
+}
+
+func TestMessagingService_SendInvitedConversationMessage(t *testing.T) {
+	messagesRepository := &messagesRepositoryMock{
+		methodsCalled: make(map[string]int),
+	}
+	messagingService := NewMessagingService(messagesRepository)
+	conversationID := uuid.New()
+	userID := uuid.New()
+
+	err := messagingService.SendInvitedConversationMessage(conversationID, userID)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 1, messagesRepository.methodsCalled["StoreInvitedConversationMessage"])
 }
 
 func TestMessagingService_SendRenamedConversationMessage(t *testing.T) {

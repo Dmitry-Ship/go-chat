@@ -12,6 +12,7 @@ var messageTypesMap = map[uint8]string{
 	1: domain.MessageTypeRenamedConversation,
 	2: domain.MessageTypeLeftConversation,
 	3: domain.MessageTypeJoinedConversation,
+	4: domain.MessageTypeInvitedConversation,
 }
 
 func toMessageTypePersistence(messageType string) uint8 {

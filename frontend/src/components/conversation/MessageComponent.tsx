@@ -2,12 +2,19 @@ import React from "react";
 import styles from "./MessageComponent.module.css";
 import { Message } from "../../types/coreTypes";
 import Avatar from "../common/Avatar";
+import UserInfoSlideIn from "./UserInfoSlideIn";
 
 const MessageComponent: React.FC<{
   message: Message;
   isFistInAGroup: boolean;
   isLastInAGroup: boolean;
 }> = ({ message, isFistInAGroup, isLastInAGroup }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const toggleUserInfo = () => {
+    setIsOpen(!isOpen);
+  };
+
   const date = new Date(message.createdAt);
   const time = `${date.getHours()}:${date.getMinutes()}`;
 
@@ -17,28 +24,42 @@ const MessageComponent: React.FC<{
         switch (message.type) {
           case "text":
             return (
-              <>
-                <div className={styles.avatarColumn}>
-                  {isLastInAGroup && <Avatar src={message.user.avatar} />}
-                </div>
+              <div
+                className={`${
+                  message.isInbound
+                    ? styles.inboundMessage
+                    : styles.outboundMessage
+                } ${styles.textMessage}`}
+              >
+                <UserInfoSlideIn
+                  toggleUserInfo={toggleUserInfo}
+                  user={message.user}
+                  isOpen={isOpen}
+                />
+                {message.isInbound && (
+                  <div className={styles.avatarColumn} onClick={toggleUserInfo}>
+                    {isLastInAGroup && <Avatar src={message.user.avatar} />}
+                  </div>
+                )}
 
-                <div
-                  className={`${
-                    message.isInbound
-                      ? styles.inboundMessage
-                      : styles.outboundMessage
-                  } ${styles.messageBubble}`}
-                >
-                  {isFistInAGroup && (
-                    <div className={styles.userName}>{message.user.name}</div>
+                <div className={styles.messageBubble}>
+                  {message.isInbound && isFistInAGroup && (
+                    <div className={styles.userName} onClick={toggleUserInfo}>
+                      {message.user.name}
+                    </div>
                   )}
+
                   {message.text}
                   <div className={styles.time}>{time}</div>
                 </div>
-              </>
+              </div>
             );
           default:
-            return <div className={styles.systemMessage}>{message.text}</div>;
+            return (
+              <div className={styles.systemMessage}>
+                <span>{message.text}</span>
+              </div>
+            );
         }
       })()}
     </div>

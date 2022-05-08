@@ -9,6 +9,7 @@ import (
 type MessagingService interface {
 	SendTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
 	SendJoinedConversationMessage(conversationId uuid.UUID, userId uuid.UUID) error
+	SendInvitedConversationMessage(conversationId uuid.UUID, userId uuid.UUID) error
 	SendRenamedConversationMessage(conversationId uuid.UUID, userId uuid.UUID, name string) error
 	SendLeftConversationMessage(conversationId uuid.UUID, userId uuid.UUID) error
 }
@@ -35,6 +36,12 @@ func (s *messagingService) SendJoinedConversationMessage(conversationId uuid.UUI
 	message := domain.NewJoinedConversationMessage(conversationId, userId)
 
 	return s.messages.StoreJoinedConversationMessage(message)
+}
+
+func (s *messagingService) SendInvitedConversationMessage(conversationId uuid.UUID, userId uuid.UUID) error {
+	message := domain.NewInvitedConversationMessage(conversationId, userId)
+
+	return s.messages.StoreInvitedConversationMessage(message)
 }
 
 func (s *messagingService) SendRenamedConversationMessage(conversationId uuid.UUID, userId uuid.UUID, name string) error {

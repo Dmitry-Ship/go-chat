@@ -9,6 +9,7 @@ import (
 type PublicConversationParticipationService interface {
 	Join(conversationId uuid.UUID, userId uuid.UUID) error
 	Leave(conversationId uuid.UUID, userId uuid.UUID) error
+	Invite(conversationId uuid.UUID, userId uuid.UUID, inviteeID uuid.UUID) error
 }
 
 type publicConversationParticipationService struct {
@@ -41,4 +42,10 @@ func (s *publicConversationParticipationService) Leave(conversationID uuid.UUID,
 	}
 
 	return s.participants.Update(participant)
+}
+
+func (s *publicConversationParticipationService) Invite(conversationID uuid.UUID, userId uuid.UUID, inviteeID uuid.UUID) error {
+	newParticipant := domain.NewInvitedParticipant(conversationID, inviteeID)
+
+	return s.participants.Store(newParticipant)
 }

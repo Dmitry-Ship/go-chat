@@ -1,4 +1,6 @@
+import { useRouter } from "next/router";
 import React from "react";
+import { makeCommand } from "../../api/fetch";
 import { useQuery } from "../../api/hooks";
 import { Contact } from "../../types/coreTypes";
 import Loader from "../common/Loader";
@@ -7,6 +9,24 @@ import styles from "./ContactsList.module.css";
 
 function ContactsList() {
   const response = useQuery<Contact[]>(`/getContacts`);
+
+  const router = useRouter();
+  const handleClick =
+    (id: string) =>
+    async (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+      e.preventDefault();
+
+      const result = await makeCommand(
+        "/createPrivateConversationIfNotExists",
+        {
+          to_user_id: id,
+        }
+      );
+
+      if (result.status) {
+        router.push(`/conversations/${result.data.conversation_id}`);
+      }
+    };
 
   return (
     <>
@@ -20,7 +40,11 @@ function ContactsList() {
               return <Loader />;
             case "done":
               return response.data?.map((user, i) => (
-                <ContactItem key={i} contact={user} />
+                <ContactItem
+                  key={i}
+                  onClick={handleClick(user.id)}
+                  contact={user}
+                />
               ));
             default:
               return null;
