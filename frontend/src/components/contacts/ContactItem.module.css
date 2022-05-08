@@ -1,7 +1,6 @@
 .contact {
   margin-bottom: 20px;
-  /* background-color: var(--warn-color); */
-  border: 1px solid var(--accent-color);
+  background-color: var(--warn-color);
   height: 80px;
   display: flex;
   padding: 20px;

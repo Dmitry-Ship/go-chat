@@ -13,5 +13,5 @@
 }
 
 .active {
-  border: 1px solid var(--accent-color);
+  background-color: var(--primary-color);
 }

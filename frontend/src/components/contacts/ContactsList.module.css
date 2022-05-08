@@ -1,5 +1,4 @@
 .list {
-  background: var(--tertiary-color);
   display: flex;
   flex-direction: column;
 }

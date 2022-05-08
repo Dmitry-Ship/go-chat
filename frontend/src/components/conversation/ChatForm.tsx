@@ -50,7 +50,7 @@ const ChatForm: React.FC<{
                 type="submit"
                 className={styles.submitBtn}
               >
-                ⬆️
+                👌
               </button>
             </form>
           ) : (

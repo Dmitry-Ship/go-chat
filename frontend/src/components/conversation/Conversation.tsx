@@ -51,7 +51,7 @@ const Conversation: React.FC = () => {
     <>
       <header className={`header header-for-scrollable`}>
         <Link href="/">
-          <a className={styles.backButton}>⏪</a>
+          <a className={styles.backButton}>👈</a>
         </Link>
         <div className={styles.conversationInfo}>
           <Avatar src={conversation?.avatar || ""} />
