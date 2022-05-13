@@ -27,7 +27,7 @@ func NewDatabaseConnection() *DatabaseConnection {
 		panic("⛔️ Could not connect to database")
 	}
 
-	log.Println(fmt.Sprintf("💿 Connected to database %s", dbname))
+	log.Printf("💿 Connected to database %s", dbname)
 
 	return &DatabaseConnection{
 		connection: db,

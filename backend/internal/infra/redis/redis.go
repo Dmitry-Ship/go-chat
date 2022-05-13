@@ -26,7 +26,7 @@ func GetRedisClient(ctx context.Context) *redis.Client {
 		panic(err)
 	}
 
-	log.Println(fmt.Sprintf("📢 Connected to redis %s", options))
+	log.Printf("📢 Connected to redis %s", options)
 
 	return client
 }

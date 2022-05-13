@@ -13,12 +13,13 @@ import (
 
 type BroadcastMessage struct {
 	Payload ws.OutgoingNotification `json:"notification"`
-	UserIDs []uuid.UUID             `json:"user_ids"`
+	UserID  uuid.UUID               `json:"user_id"`
 }
 
 type NotificationTopicService interface {
 	SubscribeToTopic(topic string, userId uuid.UUID) error
-	BroadcastToTopic(topic string, notification ws.OutgoingNotification) error
+	GetReceivers(topic string) ([]uuid.UUID, error)
+	SendToUser(userID uuid.UUID, notification ws.OutgoingNotification) error
 	UnsubscribeFromTopic(topic string, userId uuid.UUID) error
 	DeleteTopic(topic string) error
 }
@@ -55,16 +56,14 @@ func (s *notificationTopicService) DeleteTopic(topic string) error {
 	return s.notificationTopics.DeleteAllByTopic(topic)
 }
 
-func (s *notificationTopicService) BroadcastToTopic(topic string, notification ws.OutgoingNotification) error {
-	userIds, err := s.notificationTopics.GetUserIDsByTopic(topic)
+func (s *notificationTopicService) GetReceivers(topic string) ([]uuid.UUID, error) {
+	return s.notificationTopics.GetUserIDsByTopic(topic)
+}
 
-	if err != nil {
-		return err
-	}
-
+func (s *notificationTopicService) SendToUser(userID uuid.UUID, notification ws.OutgoingNotification) error {
 	message := BroadcastMessage{
 		Payload: notification,
-		UserIDs: userIds,
+		UserID:  userID,
 	}
 
 	json, err := json.Marshal(message)

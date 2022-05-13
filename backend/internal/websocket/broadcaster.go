@@ -14,7 +14,7 @@ import (
 
 type BroadcastMessage struct {
 	Payload OutgoingNotification `json:"notification"`
-	UserIDs []uuid.UUID          `json:"user_ids"`
+	UserID  uuid.UUID            `json:"user_id"`
 }
 
 type broadcaster struct {
@@ -53,9 +53,7 @@ func (s *broadcaster) Run() {
 				continue
 			}
 
-			for _, userID := range bMessage.UserIDs {
-				s.activeClients.SendToUserClients(userID, bMessage.Payload)
-			}
+			s.activeClients.SendToUserClients(bMessage.UserID, bMessage.Payload)
 
 		case <-s.ctx.Done():
 			return

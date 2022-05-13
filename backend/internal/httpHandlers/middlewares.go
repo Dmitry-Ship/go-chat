@@ -25,7 +25,9 @@ func (s *HTTPHandlers) withHeaders(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-const userIDKey = "userId"
+type userIDKeyType string
+
+const userIDKey userIDKeyType = "userId"
 
 func (s *HTTPHandlers) private(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

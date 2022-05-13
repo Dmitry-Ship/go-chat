@@ -8,6 +8,7 @@ import (
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
 	"GitHub/go-chat/backend/internal/server"
+	"GitHub/go-chat/backend/internal/services"
 	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
 )
@@ -26,17 +27,23 @@ func main() {
 
 	activeClients := ws.NewActiveClients()
 
-	commands := app.NewCommands(ctx, eventBus, redisClient, dbConnection, activeClients)
+	commands := app.NewCommands(ctx, eventBus, dbConnection, activeClients)
 	queries := postgres.NewQueriesRepository(dbConnection)
-
-	broadcaster := ws.NewBroadcaster(ctx, redisClient, activeClients)
-	go broadcaster.Run()
 
 	handlers := httpHandlers.NewHTTPHandlers(commands, queries)
 	handlers.InitRoutes()
 
-	eventHandlers := domainEventsHandlers.NewEventHandlers(ctx, eventBus, commands, queries)
-	go eventHandlers.ListenForEvents()
+	notificationTopicRepository := postgres.NewNotificationTopicRepository(dbConnection)
+	notificationTopicService := services.NewNotificationTopicService(ctx, notificationTopicRepository, redisClient)
+
+	messageEventHandlers := domainEventsHandlers.NewMessageEventHandlers(ctx, eventBus, commands)
+	notificationsEventHandlers := domainEventsHandlers.NewNotificationsEventHandlers(ctx, eventBus, notificationTopicService, queries)
+
+	go messageEventHandlers.ListenForEvents()
+	go notificationsEventHandlers.ListenForEvents()
+
+	broadcaster := ws.NewBroadcaster(ctx, redisClient, activeClients)
+	go broadcaster.Run()
 
 	server := server.NewGracefulServer()
 	server.Run()
