@@ -1,12 +1,22 @@
 import React from "react";
 import { Conversation } from "../../types/coreTypes";
-import { useQuery } from "../../api/hooks";
+import { usePaginatedQuery } from "../../api/hooks";
 import NewConversationBtn from "./NewConversationBtn";
 import Loader from "../common/Loader";
 import ConversationItem from "./ConversationItem";
 
 function Conversations() {
-  const response = useQuery<Conversation[]>("/getConversations");
+  const [conversationsQuery, , loadNext] =
+    usePaginatedQuery<Conversation>("/getConversations");
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    if (
+      e.currentTarget.scrollHeight - e.currentTarget.scrollTop ===
+      e.currentTarget.clientHeight
+    ) {
+      loadNext();
+    }
+  };
 
   return (
     <>
@@ -15,17 +25,17 @@ function Conversations() {
         <NewConversationBtn />
       </header>
       <section className="wrap">
-        <div className={`scrollable-content`}>
+        <div className={`scrollable-content`} onScroll={handleScroll}>
           {(() => {
-            switch (response.status) {
+            switch (conversationsQuery.status) {
               case "fetching":
                 return <Loader />;
               case "done": {
-                return response.data?.length === 0 ? (
+                return conversationsQuery.items.length === 0 ? (
                   <NewConversationBtn />
                 ) : (
                   <>
-                    {response.data?.map((conversation, i) => (
+                    {conversationsQuery.items?.map((conversation, i) => (
                       <ConversationItem key={i} conversation={conversation} />
                     ))}
                   </>

@@ -18,9 +18,31 @@ func NewQueriesRepository(db *gorm.DB) *queriesRepository {
 	}
 }
 
-func (r *queriesRepository) GetContacts(userID uuid.UUID) ([]*readModel.ContactDTO, error) {
+func (r *queriesRepository) paginate(paginationInfo readModel.PaginationInfo) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		page := paginationInfo.GetPage()
+
+		if page == 0 {
+			page = 1
+		}
+
+		pageSize := paginationInfo.GetPageSize()
+
+		switch {
+		case pageSize > 100:
+			pageSize = 100
+		case pageSize <= 0:
+			pageSize = 50
+		}
+
+		offset := (page - 1) * pageSize
+		return db.Offset(offset).Limit(pageSize)
+	}
+}
+
+func (r *queriesRepository) GetContacts(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
 	users := []*User{}
-	err := r.db.Limit(50).Where("id <> ?", userID).Find(&users).Error
+	err := r.db.Scopes(r.paginate(paginationInfo)).Where("id <> ?", userID).Find(&users).Error
 
 	dtoContacts := make([]*readModel.ContactDTO, len(users))
 
@@ -31,10 +53,86 @@ func (r *queriesRepository) GetContacts(userID uuid.UUID) ([]*readModel.ContactD
 	return dtoContacts, err
 }
 
-func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID) ([]*readModel.ContactDTO, error) {
+func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.MessageDTO, error) {
+	messages := []*Message{}
+
+	err := r.db.Scopes(r.paginate(paginationInfo)).Order("created_at desc").Where("conversation_id = ?", conversationID).Find(&messages).Error
+
+	dtoMessages := make([]*readModel.MessageDTO, len(messages))
+
+	for i, message := range messages {
+		msgDTO, err := r.getMessageDTO(message, requestUserID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		dtoMessages[i] = msgDTO
+	}
+
+	return dtoMessages, err
+}
+
+func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ConversationDTO, error) {
+	conversations := []*Conversation{}
+
+	err := r.db.Scopes(r.paginate(paginationInfo)).Joins("JOIN participants ON participants.conversation_id = conversations.id").Where("conversations.is_active = ?", true).Where("participants.is_active = ?", true).Where("participants.user_id = ?", userID).Find(&conversations).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	conversationsDTOs := make([]*readModel.ConversationDTO, len(conversations))
+
+	for i, conversation := range conversations {
+		switch conversation.Type {
+		case 0:
+			publicConversation := PublicConversation{}
+
+			err = r.db.Where("conversation_id = ?", conversation.ID).First(&publicConversation).Error
+
+			if err != nil {
+				return nil, err
+			}
+
+			conversationsDTOs[i] = toPublicConversationDTO(conversation, publicConversation.Avatar, publicConversation.Name)
+
+		case 1:
+			privateConversation := PrivateConversation{}
+
+			err = r.db.Where("conversation_id = ?", conversation.ID).First(&privateConversation).Error
+
+			if err != nil {
+				return nil, err
+			}
+
+			user := User{}
+
+			oppositeUserId := privateConversation.FromUserID
+			if privateConversation.FromUserID == userID {
+				oppositeUserId = privateConversation.ToUserID
+			}
+
+			err = r.db.Where("id = ?", oppositeUserId).First(&user).Error
+
+			if err != nil {
+				return nil, err
+			}
+
+			conversationsDTOs[i] = toPrivateConversationDTO(conversation, &user)
+		default:
+			return nil, errors.New("unsupported conversation type")
+		}
+
+	}
+
+	return conversationsDTOs, err
+}
+
+func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
 	users := []*User{}
 	subQuery := r.db.Select("user_id").Where("conversation_id = ?", conversationID).Table("participants")
-	err := r.db.Where("id NOT IN (?)", subQuery).Limit(50).Find(&users).Error
+	err := r.db.Scopes(r.paginate(paginationInfo)).Where("id NOT IN (?)", subQuery).Find(&users).Error
 
 	dtoContacts := make([]*readModel.ContactDTO, len(users))
 
@@ -50,26 +148,6 @@ func (r *queriesRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error
 	err := r.db.Where("id = ?", id).First(&user).Error
 
 	return toUserDTO(&user), err
-}
-
-func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID) ([]*readModel.MessageDTO, error) {
-	messages := []*Message{}
-
-	err := r.db.Limit(50).Where("conversation_id = ?", conversationID).Find(&messages).Error
-
-	dtoMessages := make([]*readModel.MessageDTO, len(messages))
-
-	for i, message := range messages {
-		msgDTO, err := r.getMessageDTO(message, requestUserID)
-
-		if err != nil {
-			return nil, err
-		}
-
-		dtoMessages[i] = msgDTO
-	}
-
-	return dtoMessages, err
 }
 
 func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (*readModel.MessageDTO, error) {
@@ -183,60 +261,4 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*re
 	default:
 		return nil, errors.New("unsupported conversation type")
 	}
-}
-
-func (r *queriesRepository) GetUserConversations(userID uuid.UUID) ([]*readModel.ConversationDTO, error) {
-	conversations := []*Conversation{}
-
-	err := r.db.Joins("JOIN participants ON participants.conversation_id = conversations.id").Where("conversations.is_active = ?", true).Where("participants.is_active = ?", true).Where("participants.user_id = ?", userID).Find(&conversations).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	conversationsDTOs := make([]*readModel.ConversationDTO, len(conversations))
-
-	for i, conversation := range conversations {
-		switch conversation.Type {
-		case 0:
-			publicConversation := PublicConversation{}
-
-			err = r.db.Where("conversation_id = ?", conversation.ID).First(&publicConversation).Error
-
-			if err != nil {
-				return nil, err
-			}
-
-			conversationsDTOs[i] = toPublicConversationDTO(conversation, publicConversation.Avatar, publicConversation.Name)
-
-		case 1:
-			privateConversation := PrivateConversation{}
-
-			err = r.db.Where("conversation_id = ?", conversation.ID).First(&privateConversation).Error
-
-			if err != nil {
-				return nil, err
-			}
-
-			user := User{}
-
-			oppositeUserId := privateConversation.FromUserID
-			if privateConversation.FromUserID == userID {
-				oppositeUserId = privateConversation.ToUserID
-			}
-
-			err = r.db.Where("id = ?", oppositeUserId).First(&user).Error
-
-			if err != nil {
-				return nil, err
-			}
-
-			conversationsDTOs[i] = toPrivateConversationDTO(conversation, &user)
-		default:
-			return nil, errors.New("unsupported conversation type")
-		}
-
-	}
-
-	return conversationsDTOs, err
 }

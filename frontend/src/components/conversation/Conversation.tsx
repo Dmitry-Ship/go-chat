@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Conversation } from "../../types/coreTypes";
 import styles from "./Conversation.module.css";
 import ChatForm from "./ChatForm";
@@ -9,13 +9,17 @@ import { useWebSocket } from "../../contexts/WSContext";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import Avatar from "../common/Avatar";
+import Loader from "../common/Loader";
 
 const Conversation: React.FC = () => {
   const router = useRouter();
   const conversationId = router.query.conversationId as string;
-  const [conversation, setConversation] = useState<Conversation>();
-  const [isJoined, setIsJoined] = useState(false);
   const { onNotification } = useWebSocket();
+
+  const [conversationQuery, updateConversation] = useQuery<{
+    conversation: Conversation;
+    joined: boolean;
+  }>(`/getConversation?conversation_id=${conversationId}`);
 
   useEffect(() => {
     onNotification("conversation_deleted", (event) => {
@@ -26,26 +30,38 @@ const Conversation: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, router]);
 
+  const setIsJoined = (isJoined: boolean) => {
+    updateConversation({
+      joined: isJoined,
+    });
+  };
+
   useEffect(() => {
     onNotification("conversation_renamed", (event) => {
-      if (conversation && event.data.conversation_id === conversation?.id) {
-        setConversation({ ...conversation, name: event.data.new_name });
+      if (
+        conversationQuery.status === "done" &&
+        event.data.conversation_id === conversationQuery.data.conversation.id
+      ) {
+        updateConversation({
+          conversation: {
+            ...conversationQuery.data.conversation,
+            name: event.data.new_name,
+          },
+        });
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation]);
-
-  const conversationQuery = useQuery<{
-    conversation: Conversation;
-    joined: boolean;
-  }>(`/getConversation?conversation_id=${conversationId}`);
-
-  useEffect(() => {
-    if (conversationQuery.status === "done" && conversationQuery.data) {
-      setConversation(conversationQuery.data.conversation);
-      setIsJoined(conversationQuery.data.joined);
-    }
   }, [conversationQuery]);
+
+  if (conversationQuery.status === "fetching") {
+    return <Loader />;
+  }
+
+  if (conversationQuery.status === "error") {
+    return <div>Error</div>;
+  }
+
+  const conversation = conversationQuery.data.conversation;
 
   return (
     <>
@@ -54,13 +70,13 @@ const Conversation: React.FC = () => {
           <a className={styles.backButton}>👈</a>
         </Link>
         <div className={styles.conversationInfo}>
-          <Avatar src={conversation?.avatar || ""} />
-          <h3 className={styles.conversationName}>{conversation?.name}</h3>
+          <Avatar src={conversation.avatar} />
+          <h3 className={styles.conversationName}>{conversation.name}</h3>
         </div>
         {conversation?.type === "public" ? (
           <EditConversationBtn
             conversationId={conversationId}
-            joined={isJoined}
+            joined={conversationQuery.data.joined}
             onLeave={() => setIsJoined(false)}
           />
         ) : (
@@ -73,8 +89,8 @@ const Conversation: React.FC = () => {
 
         <ChatForm
           conversationId={conversationId}
-          loading={conversationQuery.status === "fetching"}
-          joined={isJoined}
+          loading={false}
+          joined={conversationQuery.data.joined}
           onJoin={() => setIsJoined(true)}
         />
       </section>

@@ -1,61 +1,63 @@
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./ChatLog.module.css";
-import { Message, MessageRaw } from "../../types/coreTypes";
+import { MessageRaw } from "../../types/coreTypes";
 import MessageComponent from "./MessageComponent";
 import Loader from "../common/Loader";
-import { useQuery } from "../../api/hooks";
+import { usePaginatedQuery } from "../../api/hooks";
 import { parseMessage } from "../../messages";
 import { useWebSocket } from "../../contexts/WSContext";
 
 const ChatLog: React.FC<{ conversationId: string }> = ({ conversationId }) => {
   const { onNotification } = useWebSocket();
+  const [lastScrollHeight, setLastScrollHeight] = useState<number>(0);
 
-  const [logs, setLogs] = useState<Message[]>([]);
+  const [messagesQuery, append, loadNext] = usePaginatedQuery<MessageRaw>(
+    `/getConversationsMessages?conversation_id=${conversationId}`,
+    true
+  );
 
-  const appendLog = (items: Message[]) => {
-    setLogs((oldLogs) => [...oldLogs, ...items]);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const currentScroll =
+      (containerRef.current?.scrollHeight || 0) - lastScrollHeight;
+
+    containerRef.current?.scrollTo(0, currentScroll);
+  }, [messagesQuery.items.length]);
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    if (e.currentTarget.scrollTop === 0) {
+      setLastScrollHeight(e.currentTarget.scrollHeight);
+      loadNext();
+    }
   };
-
-  const messagesQuery = useQuery<{
-    messages: MessageRaw[];
-  }>(`/getConversationsMessages?conversation_id=${conversationId}`);
-
-  useEffect(() => {
-    if (messagesQuery.status === "done" && messagesQuery.data) {
-      appendLog(messagesQuery.data.messages?.map((m) => parseMessage(m)));
-    }
-  }, [messagesQuery]);
-
-  const logComponent = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (logs.length > 0) {
-      logComponent.current?.scrollIntoView();
-    }
-  }, [logs]);
 
   useEffect(() => {
     onNotification("message", (event) => {
-      appendLog([parseMessage(event.data)]);
+      append([event.data]);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <main className={`${styles.log} scrollable-content`}>
+    <main
+      className={`${styles.log} scrollable-content`}
+      onScroll={handleScroll}
+      ref={containerRef}
+    >
       {messagesQuery.status === "fetching" ? (
         <Loader />
       ) : (
         <>
-          {logs.length > 0 ? (
-            logs.map((item, i) => {
-              const previous = logs[i - 1];
+          {messagesQuery.items.length > 0 ? (
+            messagesQuery.items.map(parseMessage).map((item, i) => {
+              const previous = messagesQuery.items[i - 1];
               const isFistInAGroup =
                 !previous ||
                 previous?.type !== "text" ||
                 (item.type === "text" && item?.user?.id !== previous?.user.id);
 
-              const next = logs[i + 1];
+              const next = messagesQuery.items[i + 1];
 
               const isLastInAGroup =
                 !next ||
@@ -76,7 +78,6 @@ const ChatLog: React.FC<{ conversationId: string }> = ({ conversationId }) => {
               <p>👋 No messages yet</p>
             </div>
           )}
-          <div ref={logComponent} />
         </>
       )}
     </main>

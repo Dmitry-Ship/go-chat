@@ -26,7 +26,14 @@ func (s *queryController) handleGetContacts(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	contacts, err := s.queries.GetContacts(userID)
+	paginationInfo, ok := r.Context().Value(paginationKey).(pagination)
+
+	if !ok {
+		http.Error(w, "pagination info not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	contacts, err := s.queries.GetContacts(userID, paginationInfo)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -52,7 +59,14 @@ func (s *queryController) handleGetPotentialInvitees(w http.ResponseWriter, r *h
 		return
 	}
 
-	contacts, err := s.queries.GetPotentialInvitees(conversationId)
+	paginationInfo, ok := r.Context().Value(paginationKey).(pagination)
+
+	if !ok {
+		http.Error(w, "pagination info not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	contacts, err := s.queries.GetPotentialInvitees(conversationId, paginationInfo)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -75,7 +89,14 @@ func (s *queryController) handleGetConversations(w http.ResponseWriter, r *http.
 		return
 	}
 
-	conversations, err := s.queries.GetUserConversations(userID)
+	paginationInfo, ok := r.Context().Value(paginationKey).(pagination)
+
+	if !ok {
+		http.Error(w, "pagination info not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	conversations, err := s.queries.GetUserConversations(userID, paginationInfo)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -108,20 +129,21 @@ func (s *queryController) handleGetConversationsMessages(w http.ResponseWriter, 
 		return
 	}
 
-	messages, err := s.queries.GetConversationMessages(conversationId, userID)
+	paginationInfo, ok := r.Context().Value(paginationKey).(pagination)
+
+	if !ok {
+		http.Error(w, "pagination info not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	messages, err := s.queries.GetConversationMessages(conversationId, userID, paginationInfo)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	data := struct {
-		Messages []*readModel.MessageDTO `json:"messages"`
-	}{
-		Messages: messages,
-	}
-
-	err = json.NewEncoder(w).Encode(data)
+	err = json.NewEncoder(w).Encode(messages)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

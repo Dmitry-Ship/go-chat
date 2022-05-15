@@ -13,11 +13,11 @@ func (s *HTTPHandlers) InitRoutes() {
 	http.HandleFunc("/logout", s.private(s.commandController.handleLogout))
 
 	http.HandleFunc("/getUser", s.private(s.queryController.handleGetUser))
-	http.HandleFunc("/getConversations", s.private(s.queryController.handleGetConversations))
-	http.HandleFunc("/getContacts", s.private(s.queryController.handleGetContacts))
-	http.HandleFunc("/getPotentialInvitees", s.private(s.queryController.handleGetPotentialInvitees))
+	http.HandleFunc("/getConversations", s.private(s.paginate(s.queryController.handleGetConversations)))
+	http.HandleFunc("/getContacts", s.private(s.paginate(s.queryController.handleGetContacts)))
+	http.HandleFunc("/getPotentialInvitees", s.private(s.paginate(s.queryController.handleGetPotentialInvitees)))
 	http.HandleFunc("/getConversation", s.private(s.queryController.handleGetConversation))
-	http.HandleFunc("/getConversationsMessages", s.private(s.queryController.handleGetConversationsMessages))
+	http.HandleFunc("/getConversationsMessages", s.private(s.paginate(s.queryController.handleGetConversationsMessages)))
 
 	http.HandleFunc("/createConversation", s.private(s.commandController.handleCreatePublicConversation))
 	http.HandleFunc("/createPrivateConversationIfNotExists", s.private(s.commandController.handleCreatePrivateConversationIfNotExists))

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 func (s *HTTPHandlers) withHeaders(next http.HandlerFunc) http.HandlerFunc {
@@ -50,6 +51,41 @@ func (s *HTTPHandlers) private(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := context.WithValue(r.Context(), userIDKey, userId)
+
+		s.withHeaders(next).ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+type paginationKeyType string
+
+const paginationKey paginationKeyType = "pagination"
+
+type pagination struct {
+	page     int
+	pageSize int
+}
+
+func (p pagination) GetPage() int {
+	return p.page
+}
+
+func (p pagination) GetPageSize() int {
+	return p.pageSize
+}
+
+func (s *HTTPHandlers) paginate(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+
+		page, _ := strconv.Atoi(query.Get("page"))
+		pageSize, _ := strconv.Atoi(query.Get("page_size"))
+
+		p := pagination{
+			page:     page,
+			pageSize: pageSize,
+		}
+
+		ctx := context.WithValue(r.Context(), paginationKey, p)
 
 		s.withHeaders(next).ServeHTTP(w, r.WithContext(ctx))
 	})

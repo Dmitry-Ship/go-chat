@@ -14,7 +14,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   return (
     <Link href={"conversations/" + conversation.id}>
       <a className={`${styles.conversation} rounded`}>
-        <Avatar src={conversation.avatar} size={55} />
+        <Avatar src={conversation.avatar} size={65} />
         <h3 className={styles.conversationName}>{conversation.name}</h3>
       </a>
     </Link>

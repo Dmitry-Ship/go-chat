@@ -13,7 +13,7 @@ type ContactItemProps = {
 const ContactItem: React.FC<ContactItemProps> = ({ contact, onClick }) => {
   return (
     <a onClick={onClick} className={`${styles.contact} rounded`}>
-      <Avatar src={contact.avatar} size={55} />
+      <Avatar src={contact.avatar} size={65} />
       <h3 className={styles.contactName}>{contact.name}</h3>
     </a>
   );

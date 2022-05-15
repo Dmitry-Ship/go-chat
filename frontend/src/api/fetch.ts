@@ -36,6 +36,21 @@ export const makeQuery = async (
   }
 };
 
+export const makePaginatedQuery = async (
+  url: string,
+  page: number,
+  pageSize = 50
+): Promise<{ status: boolean; data: any; nextPage: number }> => {
+  const paginationParams =
+    (url.includes("?") ? "&" : "?") + "page=" + page + "&page_size=" + pageSize;
+
+  const result = await makeQuery(url + paginationParams);
+
+  const nextPage = result.data.status ? page + 1 : page;
+
+  return { ...result, nextPage };
+};
+
 export const makeCommand = async (
   url: string,
   body?: Record<string, any>

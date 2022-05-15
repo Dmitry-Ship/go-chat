@@ -80,7 +80,7 @@ code {
   border-radius: 20px;
   margin: var(--bar-height) 10px;
   height: calc(var(--vh) * 100 - var(--bar-height) * 2);
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .btn {

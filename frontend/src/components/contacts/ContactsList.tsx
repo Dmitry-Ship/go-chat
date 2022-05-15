@@ -1,14 +1,24 @@
 import { useRouter } from "next/router";
 import React from "react";
 import { makeCommand } from "../../api/fetch";
-import { useQuery } from "../../api/hooks";
+import { usePaginatedQuery } from "../../api/hooks";
 import { Contact } from "../../types/coreTypes";
 import Loader from "../common/Loader";
 import ContactItem from "./ContactItem";
 import styles from "./ContactsList.module.css";
 
 function ContactsList() {
-  const response = useQuery<Contact[]>(`/getContacts`);
+  const [contactsQuery, , loadNext] =
+    usePaginatedQuery<Contact>("/getContacts");
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    if (
+      e.currentTarget.scrollHeight - e.currentTarget.scrollTop ===
+      e.currentTarget.clientHeight
+    ) {
+      loadNext();
+    }
+  };
 
   const router = useRouter();
   const handleClick =
@@ -33,13 +43,16 @@ function ContactsList() {
       <header className={`header header-for-scrollable`}>
         <h2>Contacts</h2>
       </header>
-      <main className={`${styles.list} scrollable-content`}>
+      <main
+        className={`${styles.list} scrollable-content`}
+        onScroll={handleScroll}
+      >
         {(() => {
-          switch (response.status) {
+          switch (contactsQuery.status) {
             case "fetching":
               return <Loader />;
             case "done":
-              return response.data?.map((user, i) => (
+              return contactsQuery.items?.map((user, i) => (
                 <ContactItem
                   key={i}
                   onClick={handleClick(user.id)}

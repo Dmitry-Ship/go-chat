@@ -1,34 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styles from "./EditConversationBtn.module.css";
 import SlideIn from "../common/SlideIn";
-import { makeCommand, makeQuery } from "../../api/fetch";
+import { makeCommand } from "../../api/fetch";
 import { Contact } from "../../types/coreTypes";
 import ContactItem from "../contacts/ContactItem";
 import { useRouter } from "next/router";
+import { useQueryOnDemand } from "../../api/hooks";
+import Loader from "../common/Loader";
 
 const InviteMenu: React.FC<{}> = () => {
   const [isInviteMenuOpen, setIsInviteMenuOpen] = useState(false);
-  const [contacts, setContacts] = useState<Contact[]>([]);
   const router = useRouter();
   const conversationId = router.query.conversationId as string;
-  const handleToggleInviteMenu = async () => {
+  const [response, load] = useQueryOnDemand<Contact[]>(
+    `/getPotentialInvitees?conversation_id=${conversationId}`
+  );
+
+  const handleToggleInviteMenu = () => {
+    load();
     setIsInviteMenuOpen(!isInviteMenuOpen);
   };
-
-  useEffect(() => {
-    const queryContacts = async () => {
-      const response = await makeQuery(
-        `/getPotentialInvitees?conversation_id=${conversationId}`
-      );
-      if (response.status) {
-        setContacts(response.data);
-      }
-    };
-
-    if (isInviteMenuOpen) {
-      queryContacts();
-    }
-  }, [isInviteMenuOpen, conversationId]);
 
   const handleClick =
     (id: string) =>
@@ -53,17 +44,30 @@ const InviteMenu: React.FC<{}> = () => {
         🤙 Invite
       </button>
       <SlideIn onClose={handleToggleInviteMenu} isOpen={isInviteMenuOpen}>
-        {contacts.length > 0 ? (
-          contacts.map((contact, i) => (
-            <ContactItem
-              key={i}
-              onClick={handleClick(contact.id)}
-              contact={contact}
-            />
-          ))
-        ) : (
-          <h3>No contacts to invite</h3>
-        )}
+        {(() => {
+          switch (response.status) {
+            case "fetching":
+              return <Loader />;
+            case "done":
+              return (
+                <>
+                  {response.data.length > 0 ? (
+                    response.data.map((contact, i) => (
+                      <ContactItem
+                        key={i}
+                        onClick={handleClick(contact.id)}
+                        contact={contact}
+                      />
+                    ))
+                  ) : (
+                    <h3>No contacts to invite</h3>
+                  )}
+                </>
+              );
+            default:
+              return null;
+          }
+        })()}
       </SlideIn>
     </>
   );
