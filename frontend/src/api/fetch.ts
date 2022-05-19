@@ -1,21 +1,28 @@
-const returnResult = async (response: Response) => {
+type FetchResult = {
+  status: boolean;
+  data: any;
+  error: string | null;
+};
+
+const returnResult = async (response: Response): Promise<FetchResult> => {
+  const data = await response.json();
+
   if (response.ok) {
-    const data = await response.json();
     return {
       status: true,
       data,
+      error: null,
     };
   } else {
     return {
       status: false,
       data: null,
+      error: data.error,
     };
   }
 };
 
-export const makeQuery = async (
-  url: string
-): Promise<{ status: boolean; data: any }> => {
+export const makeQuery = async (url: string): Promise<FetchResult> => {
   url = "/api" + url;
   try {
     const result = await fetch(url, {
@@ -32,6 +39,8 @@ export const makeQuery = async (
     return {
       status: false,
       data: null,
+      // @ts-ignore
+      error: error.message,
     };
   }
 };
@@ -46,7 +55,7 @@ export const makePaginatedQuery = async (
 
   const result = await makeQuery(url + paginationParams);
 
-  const nextPage = result.data.status ? page + 1 : page;
+  const nextPage = result.data?.status ? page + 1 : page;
 
   return { ...result, nextPage };
 };
@@ -54,7 +63,7 @@ export const makePaginatedQuery = async (
 export const makeCommand = async (
   url: string,
   body?: Record<string, any>
-): Promise<{ status: boolean; data: any }> => {
+): Promise<FetchResult> => {
   url = "/api" + url;
   try {
     const result = await fetch(url, {
@@ -72,6 +81,8 @@ export const makeCommand = async (
     return {
       status: false,
       data: null,
+      // @ts-ignore
+      error: error.message || null,
     };
   }
 };

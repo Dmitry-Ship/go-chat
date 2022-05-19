@@ -36,14 +36,14 @@ func (s *queryController) handleGetContacts(w http.ResponseWriter, r *http.Reque
 	contacts, err := s.queries.GetContacts(userID, paginationInfo)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(contacts)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -55,7 +55,7 @@ func (s *queryController) handleGetPotentialInvitees(w http.ResponseWriter, r *h
 	conversationId, err := uuid.Parse(conversationIdQuery)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -69,14 +69,14 @@ func (s *queryController) handleGetPotentialInvitees(w http.ResponseWriter, r *h
 	contacts, err := s.queries.GetPotentialInvitees(conversationId, paginationInfo)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(contacts)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -99,14 +99,14 @@ func (s *queryController) handleGetConversations(w http.ResponseWriter, r *http.
 	conversations, err := s.queries.GetUserConversations(userID, paginationInfo)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(conversations)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -118,7 +118,7 @@ func (s *queryController) handleGetConversationsMessages(w http.ResponseWriter, 
 	conversationId, err := uuid.Parse(conversationIdQuery)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -139,14 +139,14 @@ func (s *queryController) handleGetConversationsMessages(w http.ResponseWriter, 
 	messages, err := s.queries.GetConversationMessages(conversationId, userID, paginationInfo)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(messages)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -165,7 +165,7 @@ func (s *queryController) handleGetConversation(w http.ResponseWriter, r *http.R
 	conversationId, err := uuid.Parse(conversationIdQuery)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -179,7 +179,7 @@ func (s *queryController) handleGetConversation(w http.ResponseWriter, r *http.R
 	err = json.NewEncoder(w).Encode(conversation)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -195,14 +195,14 @@ func (s *queryController) handleGetUser(w http.ResponseWriter, r *http.Request) 
 	user, err := s.queries.GetUserByID(userID)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(user)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }

@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import React from "react";
-import { makeCommand } from "../../api/fetch";
 import { usePaginatedQuery } from "../../api/hooks";
+import { useAPI } from "../../contexts/apiContext";
 import { Contact } from "../../types/coreTypes";
 import Loader from "../common/Loader";
 import ContactItem from "./ContactItem";
@@ -21,6 +21,8 @@ function ContactsList() {
   };
 
   const router = useRouter();
+
+  const { makeCommand } = useAPI();
   const handleClick =
     (id: string) =>
     async (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { makePaginatedQuery, makeQuery } from "./fetch";
+import { useAPI } from "../contexts/apiContext";
 
 type Response<T> =
   | { status: "fetching" }
@@ -12,6 +12,8 @@ export const useQuery = <T,>(
   const [response, setResponse] = useState<Response<T>>({
     status: "fetching",
   });
+
+  const { makeQuery } = useAPI();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,6 +42,8 @@ export const useQueryOnDemand = <T,>(
   const [response, setResponse] = useState<Response<T>>({
     status: "fetching",
   });
+
+  const { makeQuery } = useAPI();
 
   return [
     response,
@@ -73,6 +77,8 @@ export const usePaginatedQuery = <T,>(
     status: "fetching",
     items: [],
   });
+
+  const { makePaginatedQuery } = useAPI();
 
   useEffect(() => {
     const fetchData = async (url: string, page: number) => {

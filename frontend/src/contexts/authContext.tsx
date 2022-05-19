@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { AuthenticationService, IAuthenticationService } from "../auth";
 import { User } from "../types/coreTypes";
+import { useAPI } from "./apiContext";
 
 type auth = {
   user: null | User;
@@ -17,6 +18,7 @@ export const useProvideAuth = (
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isChecking, setIsChecking] = useState<boolean>(true);
   const [user, setUser] = useState<User | null>(null);
+  const { setError } = useAPI();
 
   authenticationService.onLogin(() => {
     setIsAuthenticated(true);
@@ -28,6 +30,8 @@ export const useProvideAuth = (
     setIsChecking(false);
     setUser(null);
   });
+
+  authenticationService.onError(setError);
 
   useEffect(() => {
     const getUser = async () => {

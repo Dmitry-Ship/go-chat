@@ -1,9 +1,9 @@
 import React, { FormEvent, useEffect, useState } from "react";
 import styles from "./EditConversationBtn.module.css";
 import SlideIn from "../common/SlideIn";
-import { makeCommand } from "../../api/fetch";
 import { useRouter } from "next/router";
 import InviteMenu from "./InviteMenu";
+import { useAPI } from "../../contexts/apiContext";
 
 const EditConversationBtn: React.FC<{
   joined: boolean;
@@ -13,6 +13,7 @@ const EditConversationBtn: React.FC<{
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState("");
   const router = useRouter();
+  const { makeCommand } = useAPI();
 
   const handleClose = () => {
     setIsEditing(false);

@@ -1,15 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { makeCommand } from "../../api/fetch";
 import styles from "./NewConversationBtn.module.css";
 import SlideIn from "../common/SlideIn";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/router";
+import { useAPI } from "../../contexts/apiContext";
 
 function NewConversationBtn() {
   const [isCreating, setIsCreating] = useState(false);
   const [conversationName, setConversationName] = useState("");
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
+  const { makeCommand } = useAPI();
 
   useEffect(() => {
     if (isCreating) {

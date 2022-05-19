@@ -42,7 +42,7 @@ func (s *commandController) handleOpenWSConnection() http.HandlerFunc {
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			returnError(w, http.StatusInternalServerError, err)
 			return
 		}
 

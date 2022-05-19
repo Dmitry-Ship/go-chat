@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import styles from "./EditConversationBtn.module.css";
 import SlideIn from "../common/SlideIn";
-import { makeCommand } from "../../api/fetch";
 import { Contact } from "../../types/coreTypes";
 import ContactItem from "../contacts/ContactItem";
 import { useRouter } from "next/router";
 import { useQueryOnDemand } from "../../api/hooks";
 import Loader from "../common/Loader";
+import { useAPI } from "../../contexts/apiContext";
 
 const InviteMenu: React.FC<{}> = () => {
   const [isInviteMenuOpen, setIsInviteMenuOpen] = useState(false);
@@ -15,6 +15,8 @@ const InviteMenu: React.FC<{}> = () => {
   const [response, load] = useQueryOnDemand<Contact[]>(
     `/getPotentialInvitees?conversation_id=${conversationId}`
   );
+
+  const { makeCommand } = useAPI();
 
   const handleToggleInviteMenu = () => {
     load();

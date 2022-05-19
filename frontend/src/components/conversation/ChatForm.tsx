@@ -2,7 +2,7 @@ import React, { FormEvent, useState } from "react";
 import styles from "./ChatForm.module.css";
 import Loader from "../common/Loader";
 import { useWebSocket } from "../../contexts/WSContext";
-import { makeCommand } from "../../api/fetch";
+import { useAPI } from "../../contexts/apiContext";
 
 const ChatForm: React.FC<{
   loading: boolean;
@@ -13,6 +13,7 @@ const ChatForm: React.FC<{
   const [message, setMessage] = useState<string>("");
 
   const { sendNotification } = useWebSocket();
+  const { makeCommand } = useAPI();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

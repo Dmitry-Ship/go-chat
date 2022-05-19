@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./UserInfoSlideIn.module.css";
 import Avatar from "../common/Avatar";
 import SlideIn from "../common/SlideIn";
-import { makeCommand } from "../../api/fetch";
+import { useAPI } from "../../contexts/apiContext";
 
 const UserInfoSlideIn: React.FC<{
   user: {
@@ -13,6 +13,8 @@ const UserInfoSlideIn: React.FC<{
   isOpen: boolean;
   toggleUserInfo: () => void;
 }> = ({ user, toggleUserInfo, isOpen }) => {
+  const { makeCommand } = useAPI();
+
   const handleClick = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {

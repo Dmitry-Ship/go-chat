@@ -7,16 +7,19 @@ export interface IAuthenticationService {
   logout(): Promise<void>;
   onLogin(callback: () => void): void;
   onLogout(callback: () => void): void;
+  onError(callback: (error: string) => void): void;
   fetchUser(): Promise<User>;
   rotateTokens(): NodeJS.Timeout;
 }
 export class AuthenticationService implements IAuthenticationService {
   private onLoginCallback: () => void;
   private onLogoutCallback: () => void;
+  private onErrorCallback: (error: string) => void;
 
   constructor() {
     this.onLoginCallback = () => {};
     this.onLogoutCallback = () => {};
+    this.onErrorCallback = (error: string) => {};
   }
 
   onLogin = (callback: () => void) => {
@@ -27,11 +30,17 @@ export class AuthenticationService implements IAuthenticationService {
     this.onLogoutCallback = callback;
   };
 
+  onError = (callback: (error: string) => void) => {
+    this.onErrorCallback = callback;
+  };
+
   logout = async () => {
     const result = await makeCommand("/logout");
 
     if (result.status) {
       this.onLogoutCallback();
+    } else {
+      this.onErrorCallback(result.error || "Unknown error");
     }
   };
 
@@ -43,6 +52,8 @@ export class AuthenticationService implements IAuthenticationService {
 
     if (result.status) {
       this.onLoginCallback();
+    } else {
+      this.onErrorCallback(result.error || "Unknown error");
     }
   };
 
@@ -54,6 +65,8 @@ export class AuthenticationService implements IAuthenticationService {
 
     if (result.status) {
       this.onLoginCallback();
+    } else {
+      this.onErrorCallback(result.error || "Unknown error");
     }
   };
 
@@ -83,6 +96,8 @@ export class AuthenticationService implements IAuthenticationService {
     if (getUserResult.status) {
       return getUserResult.data;
     }
+
+    this.onErrorCallback(getUserResult.error || "Unknown error");
 
     return null;
   };

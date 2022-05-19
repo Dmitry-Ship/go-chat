@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { ConnectionState, IWSService, WSService } from "../api/ws";
+import { ConnectionState, WSService } from "../api/ws";
 
 type ws = {
   status: ConnectionState;
@@ -7,33 +7,26 @@ type ws = {
   onNotification: (event: string, cb: (msg: any) => void) => void;
 };
 
-export const useProvideWS = (wsService: IWSService): ws => {
+const wsContext = createContext<ws | null>(null);
+
+export const ProvideWS: React.FC = ({ children }) => {
+  const wsService = WSService.getInstance();
+
   const [status, setStatus] = useState<ConnectionState>(
     ConnectionState.CONNECTING
   );
 
   wsService.setOnUpdateStatus(setStatus);
 
-  return {
+  const value = {
     status,
     sendNotification: wsService.send,
     onNotification: wsService.onNotification,
   };
-};
 
-const wsContext = createContext<ws>({
-  status: 0,
-  sendNotification: () => {},
-  onNotification: () => {},
-});
-
-export const ProvideWS: React.FC = ({ children }) => {
-  const wsService = WSService.getInstance();
-
-  const ws = useProvideWS(wsService);
-  return <wsContext.Provider value={ws}>{children}</wsContext.Provider>;
+  return <wsContext.Provider value={value}>{children}</wsContext.Provider>;
 };
 
 export const useWebSocket = () => {
-  return useContext(wsContext);
+  return useContext(wsContext) as ws;
 };

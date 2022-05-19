@@ -2,6 +2,7 @@ package httpHandlers
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
@@ -89,4 +90,19 @@ func (s *HTTPHandlers) paginate(next http.HandlerFunc) http.HandlerFunc {
 
 		s.withHeaders(next).ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func returnError(w http.ResponseWriter, code int, err error) {
+	w.WriteHeader(code)
+	errorResponse := struct {
+		Error string `json:"error"`
+	}{
+		Error: err.Error(),
+	}
+
+	err = json.NewEncoder(w).Encode(errorResponse)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

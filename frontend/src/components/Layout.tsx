@@ -2,6 +2,8 @@ import React, { useEffect } from "react";
 import styles from "./Layout.module.css";
 import { ProvideAuth } from "../contexts/authContext";
 import AuthLayout from "./common/AuthLayout";
+import { ProvideAPI } from "../contexts/apiContext";
+import ErrorAlert from "./ErrorAlert";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useEffect(() => {
@@ -14,11 +16,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, []);
 
   return (
-    <ProvideAuth>
-      <AuthLayout>
-        <div className={styles.app}>{children}</div>
-      </AuthLayout>
-    </ProvideAuth>
+    <ProvideAPI>
+      <ErrorAlert />
+      <ProvideAuth>
+        <AuthLayout>
+          <div className={styles.app}>{children}</div>
+        </AuthLayout>
+      </ProvideAuth>
+    </ProvideAPI>
   );
 };
 

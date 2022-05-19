@@ -17,14 +17,14 @@ func (s *commandController) handleLogin(w http.ResponseWriter, r *http.Request) 
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	tokens, err := s.commands.AuthService.Login(request.UserName, request.Password)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		returnError(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (s *commandController) handleLogout(w http.ResponseWriter, r *http.Request)
 	err := s.commands.AuthService.Logout(userID)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -108,14 +108,14 @@ func (s *commandController) handleSignUp(w http.ResponseWriter, r *http.Request)
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	tokens, err := s.commands.AuthService.SignUp(request.UserName, request.Password)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -158,17 +158,18 @@ func (s *commandController) handleRefreshToken(w http.ResponseWriter, r *http.Re
 
 	if err != nil {
 		if err == http.ErrNoCookie {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			returnError(w, http.StatusUnauthorized, err)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	newTokens, err := s.commands.AuthService.RotateTokens(refreshToken.Value)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		returnError(w, http.StatusUnauthorized, err)
 		return
 	}
 

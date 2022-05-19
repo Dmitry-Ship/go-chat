@@ -15,7 +15,7 @@ func (s *commandController) handleCreatePrivateConversationIfNotExists(w http.Re
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -29,7 +29,7 @@ func (s *commandController) handleCreatePrivateConversationIfNotExists(w http.Re
 	conversationId, err := s.commands.PrivateConversationService.Start(userID, request.ToUserId)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -42,7 +42,7 @@ func (s *commandController) handleCreatePrivateConversationIfNotExists(w http.Re
 	err = json.NewEncoder(w).Encode(response)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -56,7 +56,7 @@ func (s *commandController) handleCreatePublicConversation(w http.ResponseWriter
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -70,14 +70,14 @@ func (s *commandController) handleCreatePublicConversation(w http.ResponseWriter
 	err = s.commands.PublicConversationEditingService.Create(request.ConversationId, request.ConversationName, userID)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode("OK")
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -97,21 +97,21 @@ func (s *commandController) handleDeleteConversation(w http.ResponseWriter, r *h
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	err = s.commands.PublicConversationEditingService.Delete(request.ConversationId, userID)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode("OK")
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -124,7 +124,7 @@ func (s *commandController) handleJoinPublicConversation(w http.ResponseWriter, 
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -137,14 +137,14 @@ func (s *commandController) handleJoinPublicConversation(w http.ResponseWriter, 
 	err = s.commands.PublicConversationParticipationService.Join(request.ConversationId, userID)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode("OK")
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -164,21 +164,21 @@ func (s *commandController) handleLeavePublicConversation(w http.ResponseWriter,
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	err = s.commands.PublicConversationParticipationService.Leave(request.ConversationId, userID)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode("OK")
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -199,21 +199,21 @@ func (s *commandController) handleRenamePublicConversation(w http.ResponseWriter
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	err = s.commands.PublicConversationEditingService.Rename(request.ConversationId, userID, request.ConversationName)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode("OK")
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -234,21 +234,21 @@ func (s *commandController) handleInviteToPublicConversation(w http.ResponseWrit
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	err = s.commands.PublicConversationParticipationService.Invite(request.ConversationId, userID, request.InviteeId)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode("OK")
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
