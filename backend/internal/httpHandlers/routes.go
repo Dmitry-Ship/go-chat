@@ -18,6 +18,7 @@ func (s *HTTPHandlers) InitRoutes() {
 	http.HandleFunc("/getPotentialInvitees", s.private(s.paginate(s.queryController.handleGetPotentialInvitees)))
 	http.HandleFunc("/getConversation", s.private(s.queryController.handleGetConversation))
 	http.HandleFunc("/getConversationsMessages", s.private(s.paginate(s.queryController.handleGetConversationsMessages)))
+	http.HandleFunc("/getParticipants", s.private(s.paginate(s.queryController.handleGetParticipants)))
 
 	http.HandleFunc("/createConversation", s.private(s.commandController.handleCreatePublicConversation))
 	http.HandleFunc("/createPrivateConversationIfNotExists", s.private(s.commandController.handleCreatePrivateConversationIfNotExists))

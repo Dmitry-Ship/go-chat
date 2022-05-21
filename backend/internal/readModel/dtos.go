@@ -15,8 +15,9 @@ type ConversationDTO struct {
 }
 
 type ConversationFullDTO struct {
-	Conversation ConversationDTO `json:"conversation"`
-	HasJoined    bool            `json:"joined"`
+	Conversation      ConversationDTO `json:"conversation"`
+	HasJoined         bool            `json:"joined"`
+	ParticipantsCount int64           `json:"participants_count"`
 }
 
 type UserDTO struct {

@@ -48,10 +48,11 @@ func toPrivateConversationDTO(conversation *Conversation, user *User) *readModel
 	return dto
 }
 
-func toConversationFullDTO(conversation *Conversation, avatar string, name string, hasJoined bool) *readModel.ConversationFullDTO {
+func toConversationFullDTO(conversation *Conversation, avatar string, name string, hasJoined bool, participantsCount int64) *readModel.ConversationFullDTO {
 	return &readModel.ConversationFullDTO{
-		Conversation: *toPublicConversationDTO(conversation, avatar, name),
-		HasJoined:    hasJoined,
+		Conversation:      *toPublicConversationDTO(conversation, avatar, name),
+		HasJoined:         hasJoined,
+		ParticipantsCount: participantsCount,
 	}
 }
 

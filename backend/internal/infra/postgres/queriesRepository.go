@@ -143,6 +143,23 @@ func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, pagin
 	return dtoContacts, err
 }
 
+func (r *queriesRepository) GetParticipants(conversationID uuid.UUID, userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
+	users := []*User{}
+
+	err := r.db.Scopes(r.paginate(paginationInfo)).
+		Joins("left join participants on participants.user_id = users.id").
+		Where("participants.conversation_id", conversationID).
+		Where("users.id <> ?", userID).Find(&users).Error
+
+	dtoContacts := make([]*readModel.ContactDTO, len(users))
+
+	for i, user := range users {
+		dtoContacts[i] = toContactDTO(user)
+	}
+
+	return dtoContacts, err
+}
+
 func (r *queriesRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error) {
 	user := User{}
 	err := r.db.Where("id = ?", id).First(&user).Error
@@ -223,6 +240,14 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*re
 		}
 	}
 
+	var participantsCount int64
+
+	err = r.db.Model(&Participant{}).Where("conversation_id = ?", id).Where("is_active = ?", true).Count(&participantsCount).Error
+
+	if err != nil {
+		return nil, err
+	}
+
 	switch conversation.Type {
 	case 0:
 		publicConversation := PublicConversation{}
@@ -233,7 +258,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*re
 			return nil, err
 		}
 
-		return toConversationFullDTO(&conversation, publicConversation.Avatar, publicConversation.Name, hasUserJoined), nil
+		return toConversationFullDTO(&conversation, publicConversation.Avatar, publicConversation.Name, hasUserJoined, participantsCount), nil
 	case 1:
 		privateConversation := PrivateConversation{}
 
@@ -257,7 +282,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*re
 			return nil, err
 		}
 
-		return toConversationFullDTO(&conversation, user.Avatar, user.Name, hasUserJoined), nil
+		return toConversationFullDTO(&conversation, user.Avatar, user.Name, hasUserJoined, participantsCount), nil
 	default:
 		return nil, errors.New("unsupported conversation type")
 	}

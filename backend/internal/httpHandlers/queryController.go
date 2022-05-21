@@ -184,6 +184,46 @@ func (s *queryController) handleGetConversation(w http.ResponseWriter, r *http.R
 	}
 }
 
+func (s *queryController) handleGetParticipants(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	conversationIdQuery := query.Get("conversation_id")
+	conversationId, err := uuid.Parse(conversationIdQuery)
+
+	if err != nil {
+		returnError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	paginationInfo, ok := r.Context().Value(paginationKey).(pagination)
+
+	if !ok {
+		http.Error(w, "pagination info not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	contacts, err := s.queries.GetParticipants(conversationId, userID, paginationInfo)
+
+	if err != nil {
+		returnError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(contacts)
+
+	if err != nil {
+		returnError(w, http.StatusInternalServerError, err)
+		return
+	}
+}
+
 func (s *queryController) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 

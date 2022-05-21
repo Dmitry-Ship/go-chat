@@ -10,6 +10,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import Avatar from "../common/Avatar";
 import Loader from "../common/Loader";
+import ParticipantsList from "./ParticipantsList";
 
 const Conversation: React.FC = () => {
   const router = useRouter();
@@ -19,6 +20,7 @@ const Conversation: React.FC = () => {
   const [conversationQuery, updateConversation] = useQuery<{
     conversation: Conversation;
     joined: boolean;
+    participants_count: number;
   }>(`/getConversation?conversation_id=${conversationId}`);
 
   useEffect(() => {
@@ -70,8 +72,16 @@ const Conversation: React.FC = () => {
           <a className={styles.backButton}>👈</a>
         </Link>
         <div className={styles.conversationInfo}>
-          <Avatar src={conversation.avatar} />
-          <h3 className={styles.conversationName}>{conversation.name}</h3>
+          <div className={styles.conversationPublicInfo}>
+            <Avatar src={conversation.avatar} />
+            <h3 className={styles.conversationName}>{conversation.name}</h3>
+          </div>
+
+          {conversation?.type === "public" && (
+            <ParticipantsList
+              participantsCount={conversationQuery.data.participants_count}
+            />
+          )}
         </div>
         {conversation?.type === "public" ? (
           <EditConversationBtn

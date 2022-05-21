@@ -54,13 +54,14 @@ func TestToConversationFullDTO(t *testing.T) {
 		Type:      0,
 	}
 
-	dto := toConversationFullDTO(conversation, "avatar", "name", true)
+	dto := toConversationFullDTO(conversation, "avatar", "name", true, 1)
 
 	assert.Equal(t, dto.Conversation.ID, conversation.ID)
 	assert.Equal(t, dto.Conversation.CreatedAt, conversation.CreatedAt)
 	assert.Equal(t, dto.Conversation.Type, "public")
 	assert.Equal(t, dto.Conversation.Avatar, "avatar")
 	assert.Equal(t, dto.Conversation.Name, "name")
+	assert.Equal(t, dto.ParticipantsCount, int64(1))
 	assert.Equal(t, dto.HasJoined, true)
 }
 

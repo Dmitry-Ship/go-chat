@@ -5,9 +5,16 @@
 
 .conversationInfo {
   display: flex;
+  flex-direction: column;
   align-items: center;
+}
+
+.conversationPublicInfo {
+  display: flex;
+  align-items: baseline;
 }
 
 .conversationName {
   margin-left: 10px;
+  margin-bottom: 0;
 }
