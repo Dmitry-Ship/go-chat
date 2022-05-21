@@ -69,7 +69,7 @@ func NewPublicConversation(id uuid.UUID, name string, creatorID uuid.UUID) *Publ
 			ID:     uuid.New(),
 			Name:   name,
 			Avatar: string(name[0]),
-			Owner:  *NewOwnerParticipant(id, creatorID),
+			Owner:  *NewParticipant(id, creatorID),
 		},
 	}
 
@@ -111,8 +111,8 @@ func NewPrivateConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) *Private
 		},
 		Data: PrivateConversationData{
 			ID:       uuid.New(),
-			ToUser:   *NewPrivateParticipant(id, to),
-			FromUser: *NewPrivateParticipant(id, from),
+			ToUser:   *NewParticipant(id, to),
+			FromUser: *NewParticipant(id, from),
 		},
 	}
 

@@ -13,20 +13,12 @@ type ParticipantRepository interface {
 	Update(participant *Participant) error
 }
 
-const (
-	ParticipantTypeJoined  = "joined"
-	ParticipantTypePrivate = "private"
-	ParticipantTypeInvited = "invited"
-	ParticipantTypeOwner   = "owner"
-)
-
 type Participant struct {
 	aggregate
 	ID             uuid.UUID
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
 	CreatedAt      time.Time
-	Type           string
 	IsActive       bool
 }
 
@@ -34,40 +26,29 @@ type ParticipantLeaver interface {
 	LeavePublicConversation(conversationID uuid.UUID) error
 }
 
-func newParticipant(conversationId uuid.UUID, userId uuid.UUID, participantType string) *Participant {
+func NewParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
 	return &Participant{
 		ID:             uuid.New(),
 		ConversationID: conversationId,
 		UserID:         userId,
 		CreatedAt:      time.Now(),
-		Type:           participantType,
 		IsActive:       true,
 	}
 }
 
-func NewOwnerParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
-	participant := newParticipant(conversationId, userId, ParticipantTypeOwner)
-
-	return participant
-}
-
 func NewJoinedParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
-	participant := newParticipant(conversationId, userId, ParticipantTypeJoined)
+	participant := NewParticipant(conversationId, userId)
 
 	participant.AddEvent(NewPublicConversationJoined(conversationId, userId))
 
 	return participant
 }
 
-func NewPrivateParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
-	participant := newParticipant(conversationId, userId, ParticipantTypePrivate)
-	return participant
-}
-
 func NewInvitedParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
-	participant := newParticipant(conversationId, userId, ParticipantTypeInvited)
+	participant := NewParticipant(conversationId, userId)
 
 	participant.AddEvent(NewPublicConversationInvited(conversationId, userId))
+
 	return participant
 }
 

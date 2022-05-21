@@ -53,7 +53,6 @@ type Participant struct {
 	ConversationID uuid.UUID `gorm:"type:uuid"`
 	UserID         uuid.UUID `gorm:"type:uuid"`
 	CreatedAt      time.Time
-	Type           uint8
 	IsActive       bool
 }
 
