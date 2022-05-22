@@ -2,9 +2,6 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
-	"GitHub/go-chat/backend/internal/readModel"
-
-	"github.com/google/uuid"
 )
 
 var messageTypesMap = map[uint8]string{
@@ -23,32 +20,6 @@ func toMessageTypePersistence(messageType string) uint8 {
 	}
 
 	return 0
-}
-
-func toMessageDTO(message *Message, user *User) *readModel.MessageDTO {
-	messageDTO := readModel.MessageDTO{
-		ID:        message.ID,
-		CreatedAt: message.CreatedAt,
-		Type:      messageTypesMap[message.Type],
-		User:      toUserDTO(user),
-	}
-
-	return &messageDTO
-}
-
-func ToTextMessageDTO(message *Message, user *User, text string, requestUserID uuid.UUID) *readModel.MessageDTO {
-	messageDTO := toMessageDTO(message, user)
-	messageDTO.IsInbound = user.ID != requestUserID
-	messageDTO.Text = text
-
-	return messageDTO
-}
-
-func toConversationRenamedMessageDTO(message *Message, user *User, newName string) *readModel.MessageDTO {
-	messageDTO := toMessageDTO(message, user)
-	messageDTO.NewConversationName = newName
-
-	return messageDTO
 }
 
 func toMessagePersistence(message domain.BaseMessage) *Message {

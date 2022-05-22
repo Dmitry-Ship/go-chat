@@ -17,11 +17,12 @@ const Conversation: React.FC = () => {
   const conversationId = router.query.conversationId as string;
   const { onNotification } = useWebSocket();
 
-  const [conversationQuery, updateConversation] = useQuery<{
-    conversation: Conversation;
-    joined: boolean;
-    participants_count: number;
-  }>(`/getConversation?conversation_id=${conversationId}`);
+  const [conversationQuery, updateConversation] = useQuery<
+    Conversation & {
+      joined: boolean;
+      participants_count: number;
+    }
+  >(`/getConversation?conversation_id=${conversationId}`);
 
   useEffect(() => {
     onNotification("conversation_deleted", (event) => {
@@ -42,11 +43,11 @@ const Conversation: React.FC = () => {
     onNotification("conversation_renamed", (event) => {
       if (
         conversationQuery.status === "done" &&
-        event.data.conversation_id === conversationQuery.data.conversation.id
+        event.data.conversation_id === conversationQuery.data.id
       ) {
         updateConversation({
           conversation: {
-            ...conversationQuery.data.conversation,
+            ...conversationQuery.data,
             name: event.data.new_name,
           },
         });
@@ -63,7 +64,7 @@ const Conversation: React.FC = () => {
     return <div>Error</div>;
   }
 
-  const conversation = conversationQuery.data.conversation;
+  const conversation = conversationQuery.data;
 
   return (
     <>

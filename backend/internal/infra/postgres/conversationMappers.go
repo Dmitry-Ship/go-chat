@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
-	"GitHub/go-chat/backend/internal/readModel"
 )
 
 var conversationTypesMap = map[uint8]string{
@@ -18,42 +17,6 @@ func toConversationTypePersistence(conversationType string) uint8 {
 	}
 
 	return 0
-}
-
-func toConversationDTO(conversation *Conversation) *readModel.ConversationDTO {
-	dto := readModel.ConversationDTO{
-		ID:        conversation.ID,
-		CreatedAt: conversation.CreatedAt,
-		Type:      conversationTypesMap[conversation.Type],
-	}
-
-	return &dto
-}
-
-func toPublicConversationDTO(conversation *Conversation, avatar string, name string) *readModel.ConversationDTO {
-	dto := toConversationDTO(conversation)
-
-	dto.Avatar = avatar
-	dto.Name = name
-
-	return dto
-}
-
-func toPrivateConversationDTO(conversation *Conversation, user *User) *readModel.ConversationDTO {
-	dto := toConversationDTO(conversation)
-
-	dto.Avatar = user.Avatar
-	dto.Name = user.Name
-
-	return dto
-}
-
-func toConversationFullDTO(conversation *Conversation, avatar string, name string, hasJoined bool, participantsCount int64) *readModel.ConversationFullDTO {
-	return &readModel.ConversationFullDTO{
-		Conversation:      *toPublicConversationDTO(conversation, avatar, name),
-		HasJoined:         hasJoined,
-		ParticipantsCount: participantsCount,
-	}
 }
 
 func toConversationPersistence(conversation domain.BaseConversation) *Conversation {

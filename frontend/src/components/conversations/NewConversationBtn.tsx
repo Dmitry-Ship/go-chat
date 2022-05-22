@@ -36,7 +36,7 @@ function NewConversationBtn() {
   return (
     <div>
       <button className={"btn"} onClick={() => setIsCreating(true)}>
-        + 💬
+        + New
       </button>
       <SlideIn isOpen={isCreating} onClose={() => setIsCreating(false)}>
         <form className={styles.form} onSubmit={handleCreate}>

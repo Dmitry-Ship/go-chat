@@ -9,62 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestToPublicConversationDTO(t *testing.T) {
-	conversation := &Conversation{
-		ID:        uuid.New(),
-		CreatedAt: time.Now(),
-		Type:      0,
-	}
-
-	dto := toPublicConversationDTO(conversation, "avatar", "name")
-
-	assert.Equal(t, dto.ID, conversation.ID)
-	assert.Equal(t, dto.CreatedAt, conversation.CreatedAt)
-	assert.Equal(t, dto.Type, "public")
-	assert.Equal(t, dto.Avatar, "avatar")
-	assert.Equal(t, dto.Name, "name")
-}
-
-func TestToPrivateConversationDTO(t *testing.T) {
-	conversation := &Conversation{
-		ID:        uuid.New(),
-		CreatedAt: time.Now(),
-		Type:      1,
-	}
-	user := &User{
-		ID:        uuid.New(),
-		CreatedAt: time.Now(),
-		Avatar:    "avatar",
-		Name:      "name",
-	}
-
-	dto := toPrivateConversationDTO(conversation, user)
-
-	assert.Equal(t, dto.ID, conversation.ID)
-	assert.Equal(t, dto.CreatedAt, conversation.CreatedAt)
-	assert.Equal(t, dto.Type, "private")
-	assert.Equal(t, dto.Avatar, "avatar")
-	assert.Equal(t, dto.Name, "name")
-}
-
-func TestToConversationFullDTO(t *testing.T) {
-	conversation := &Conversation{
-		ID:        uuid.New(),
-		CreatedAt: time.Now(),
-		Type:      0,
-	}
-
-	dto := toConversationFullDTO(conversation, "avatar", "name", true, 1)
-
-	assert.Equal(t, dto.Conversation.ID, conversation.ID)
-	assert.Equal(t, dto.Conversation.CreatedAt, conversation.CreatedAt)
-	assert.Equal(t, dto.Conversation.Type, "public")
-	assert.Equal(t, dto.Conversation.Avatar, "avatar")
-	assert.Equal(t, dto.Conversation.Name, "name")
-	assert.Equal(t, dto.ParticipantsCount, int64(1))
-	assert.Equal(t, dto.HasJoined, true)
-}
-
 func TestToPublicConversationPersistence(t *testing.T) {
 	conversation := domain.NewPublicConversation(uuid.New(), "cool room", uuid.New())
 

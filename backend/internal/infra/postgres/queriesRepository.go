@@ -41,192 +41,164 @@ func (r *queriesRepository) paginate(paginationInfo readModel.PaginationInfo) fu
 }
 
 func (r *queriesRepository) GetContacts(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
-	users := []*User{}
-	err := r.db.Scopes(r.paginate(paginationInfo)).Where("id <> ?", userID).Find(&users).Error
+	users := []*readModel.ContactDTO{}
 
-	dtoContacts := make([]*readModel.ContactDTO, len(users))
+	err := r.db.Scopes(r.paginate(paginationInfo)).Model(&User{}).Where("id <> ?", userID).Find(&users).Error
 
-	for i, user := range users {
-		dtoContacts[i] = toContactDTO(user)
-	}
-
-	return dtoContacts, err
-}
-
-func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.MessageDTO, error) {
-	messages := []*Message{}
-
-	err := r.db.Scopes(r.paginate(paginationInfo)).Order("created_at desc").Where("conversation_id = ?", conversationID).Find(&messages).Error
-
-	dtoMessages := make([]*readModel.MessageDTO, len(messages))
-
-	for i, message := range messages {
-		msgDTO, err := r.getMessageDTO(message, requestUserID)
-
-		if err != nil {
-			return nil, err
-		}
-
-		dtoMessages[i] = msgDTO
-	}
-
-	return dtoMessages, err
-}
-
-func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ConversationDTO, error) {
-	conversations := []*Conversation{}
-
-	err := r.db.Scopes(r.paginate(paginationInfo)).Joins("JOIN participants ON participants.conversation_id = conversations.id").Where("conversations.is_active = ?", true).Where("participants.is_active = ?", true).Where("participants.user_id = ?", userID).Find(&conversations).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	conversationsDTOs := make([]*readModel.ConversationDTO, len(conversations))
-
-	for i, conversation := range conversations {
-		switch conversation.Type {
-		case 0:
-			publicConversation := PublicConversation{}
-
-			err = r.db.Where("conversation_id = ?", conversation.ID).First(&publicConversation).Error
-
-			if err != nil {
-				return nil, err
-			}
-
-			conversationsDTOs[i] = toPublicConversationDTO(conversation, publicConversation.Avatar, publicConversation.Name)
-
-		case 1:
-			privateConversation := PrivateConversation{}
-
-			err = r.db.Where("conversation_id = ?", conversation.ID).First(&privateConversation).Error
-
-			if err != nil {
-				return nil, err
-			}
-
-			user := User{}
-
-			oppositeUserId := privateConversation.FromUserID
-			if privateConversation.FromUserID == userID {
-				oppositeUserId = privateConversation.ToUserID
-			}
-
-			err = r.db.Where("id = ?", oppositeUserId).First(&user).Error
-
-			if err != nil {
-				return nil, err
-			}
-
-			conversationsDTOs[i] = toPrivateConversationDTO(conversation, &user)
-		default:
-			return nil, errors.New("unsupported conversation type")
-		}
-
-	}
-
-	return conversationsDTOs, err
-}
-
-func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
-	users := []*User{}
-	subQuery := r.db.Select("user_id").Where("conversation_id = ?", conversationID).Table("participants")
-	err := r.db.Scopes(r.paginate(paginationInfo)).Where("id NOT IN (?)", subQuery).Find(&users).Error
-
-	dtoContacts := make([]*readModel.ContactDTO, len(users))
-
-	for i, user := range users {
-		dtoContacts[i] = toContactDTO(user)
-	}
-
-	return dtoContacts, err
+	return users, err
 }
 
 func (r *queriesRepository) GetParticipants(conversationID uuid.UUID, userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
-	users := []*User{}
+	users := []*readModel.ContactDTO{}
 
 	err := r.db.Scopes(r.paginate(paginationInfo)).
+		Model(&User{}).
 		Joins("left join participants on participants.user_id = users.id").
 		Where("participants.conversation_id", conversationID).
-		Where("users.id <> ?", userID).Find(&users).Error
+		Where("users.id <> ?", userID).
+		Find(&users).Error
 
-	dtoContacts := make([]*readModel.ContactDTO, len(users))
+	return users, err
+}
 
-	for i, user := range users {
-		dtoContacts[i] = toContactDTO(user)
-	}
+func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
+	users := []*readModel.ContactDTO{}
 
-	return dtoContacts, err
+	subQuery := r.db.Select("user_id").Where("conversation_id = ?", conversationID).Table("participants")
+	err := r.db.Scopes(r.paginate(paginationInfo)).Model(&User{}).Where("id NOT IN (?)", subQuery).Find(&users).Error
+
+	return users, err
 }
 
 func (r *queriesRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error) {
-	user := User{}
-	err := r.db.Where("id = ?", id).First(&user).Error
+	user := &readModel.UserDTO{}
 
-	return toUserDTO(&user), err
+	err := r.db.Model(&User{}).Where("id = ?", id).First(&user).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.MessageDTO, error) {
+	messages := []*readModel.MessageDTO{}
+
+	err := r.db.Scopes(r.paginate(paginationInfo)).
+		Model(&Message{}).
+		Select(
+			"messages.id", "messages.type as persistence_type", "messages.created_at", "text_messages.text",
+			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
+			"conversation_renamed_messages.new_name",
+		).
+		Joins("LEFT JOIN conversation_renamed_messages ON messages.id = conversation_renamed_messages.message_id").
+		Joins("LEFT JOIN users ON messages.user_id = users.id").
+		Joins("LEFT JOIN text_messages ON messages.id = text_messages.message_id").
+		Where("messages.conversation_id = ?", conversationID).
+		Order("messages.created_at asc").
+		Find(&messages).Error
+
+	for _, message := range messages {
+		message.User = &readModel.UserDTO{
+			ID:     message.UserID,
+			Avatar: message.UserAvatar,
+			Name:   message.UserName,
+		}
+		message.Type = messageTypesMap[message.PersistenceType]
+		message.IsInbound = message.UserID != requestUserID
+	}
+
+	return messages, err
 }
 
 func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (*readModel.MessageDTO, error) {
-	message := Message{}
+	message := &readModel.MessageDTO{}
 
-	err := r.db.Where("id = ?", messageID).First(&message).Error
+	err := r.db.Model(&Message{}).
+		Select(
+			"messages.id", "messages.type as persistence_type", "messages.created_at", "text_messages.text",
+			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
+			"conversation_renamed_messages.new_name",
+		).
+		Joins("LEFT JOIN conversation_renamed_messages ON messages.id = conversation_renamed_messages.message_id").
+		Joins("LEFT JOIN users ON messages.user_id = users.id").
+		Joins("LEFT JOIN text_messages ON messages.id = text_messages.message_id").
+		Where("messages.id = ?", messageID).
+		Find(&message).Error
 
-	if err != nil {
-		return nil, err
+	message.User = &readModel.UserDTO{
+		ID:     message.UserID,
+		Avatar: message.UserAvatar,
+		Name:   message.UserName,
 	}
+	message.Type = messageTypesMap[message.PersistenceType]
+	message.IsInbound = message.UserID != requestUserID
 
-	return r.getMessageDTO(&message, requestUserID)
+	return message, err
 }
 
-func (r *queriesRepository) getMessageDTO(message *Message, requestUserID uuid.UUID) (*readModel.MessageDTO, error) {
-	user := User{}
+func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ConversationDTO, error) {
+	conversations := []*readModel.ConversationDTO{}
 
-	err := r.db.Where("id = ?", message.UserID).First(&user).Error
+	err := r.db.Scopes(r.paginate(paginationInfo)).
+		Model(&Conversation{}).
+		Select(
+			"conversations.id", "conversations.created_at", "conversations.type",
+			"public_conversations.avatar", "public_conversations.name",
+			"private_conversations.from_user_id", "private_conversations.to_user_id",
+			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
+		).
+		Joins("LEFT JOIN public_conversations ON public_conversations.conversation_id = conversations.id").
+		Joins("LEFT JOIN private_conversations ON private_conversations.conversation_id = conversations.id").
+		Joins("LEFT JOIN participants ON participants.conversation_id = conversations.id").
+		Joins("LEFT JOIN users ON private_conversations.from_user_id = users.id OR private_conversations.to_user_id = users.id").
+		Where("users.id IS NULL OR users.id <> ?", userID).
+		Where("conversations.is_active = ?", true).
+		Where("participants.is_active = ?", true).
+		Where("participants.user_id = ?", userID).
+		Find(&conversations).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	switch message.Type {
-	case 0:
-		textMessage := TextMessage{}
-
-		err = r.db.Where("message_id = ?", message.ID).First(&textMessage).Error
-
-		if err != nil {
-			return nil, err
+	for _, conversation := range conversations {
+		if conversation.Type == 1 {
+			conversation.Avatar = conversation.UserAvatar
+			conversation.Name = conversation.UserName
 		}
-
-		return ToTextMessageDTO(message, &user, textMessage.Text, requestUserID), nil
-	case 1:
-		conversationRenamedMessage := ConversationRenamedMessage{}
-
-		err = r.db.Where("message_id = ?", message.ID).First(&conversationRenamedMessage).Error
-
-		if err != nil {
-			return nil, err
-		}
-
-		return toConversationRenamedMessageDTO(message, &user, conversationRenamedMessage.NewName), nil
-	case 2:
-		return toMessageDTO(message, &user), nil
-	case 3:
-		return toMessageDTO(message, &user), nil
-	case 4:
-		return toMessageDTO(message, &user), nil
 	}
 
-	return nil, nil
+	return conversations, nil
 }
 
 func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*readModel.ConversationFullDTO, error) {
-	conversation := Conversation{}
+	conversation := readModel.ConversationFullDTO{}
 
-	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
+	err := r.db.Model(&Conversation{}).
+		Select(
+			"conversations.id", "conversations.created_at", "conversations.type as persistence_type",
+			"public_conversations.avatar", "public_conversations.name",
+			"private_conversations.from_user_id", "private_conversations.to_user_id",
+			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
+		).
+		Joins("LEFT JOIN public_conversations ON public_conversations.conversation_id = conversations.id").
+		Joins("LEFT JOIN private_conversations ON private_conversations.conversation_id = conversations.id").
+		Joins("LEFT JOIN users ON private_conversations.from_user_id = users.id OR private_conversations.to_user_id = users.id").
+		Where("users.id IS NULL OR users.id <> ?", userId).
+		Where("conversations.is_active = ?", true).
+		Find(&conversation).Error
 
 	if err != nil {
 		return nil, err
+	}
+
+	conversation.Type = conversationTypesMap[conversation.PersistenceType]
+
+	if conversation.PersistenceType == 1 {
+		conversation.Avatar = conversation.UserAvatar
+		conversation.Name = conversation.UserName
 	}
 
 	hasUserJoined := true
@@ -248,42 +220,8 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*re
 		return nil, err
 	}
 
-	switch conversation.Type {
-	case 0:
-		publicConversation := PublicConversation{}
+	conversation.HasJoined = hasUserJoined
+	conversation.ParticipantsCount = participantsCount
 
-		err = r.db.Where("conversation_id = ?", id).First(&publicConversation).Error
-
-		if err != nil {
-			return nil, err
-		}
-
-		return toConversationFullDTO(&conversation, publicConversation.Avatar, publicConversation.Name, hasUserJoined, participantsCount), nil
-	case 1:
-		privateConversation := PrivateConversation{}
-
-		err = r.db.Where("conversation_id = ?", conversation.ID).First(&privateConversation).Error
-
-		if err != nil {
-			return nil, err
-		}
-
-		user := User{}
-
-		oppositeUserId := privateConversation.FromUserID
-
-		if privateConversation.FromUserID == userId {
-			oppositeUserId = privateConversation.ToUserID
-		}
-
-		err = r.db.Where("id = ?", oppositeUserId).First(&user).Error
-
-		if err != nil {
-			return nil, err
-		}
-
-		return toConversationFullDTO(&conversation, user.Avatar, user.Name, hasUserJoined, participantsCount), nil
-	default:
-		return nil, errors.New("unsupported conversation type")
-	}
+	return &conversation, nil
 }

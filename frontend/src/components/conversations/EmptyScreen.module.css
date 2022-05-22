@@ -1,0 +1,11 @@
+.wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+}
+
+
