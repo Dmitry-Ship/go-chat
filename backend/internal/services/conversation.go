@@ -12,7 +12,7 @@ type ConversationService interface {
 	RenameGroupConversation(conversationId uuid.UUID, userId uuid.UUID, name string) error
 	JoinGroupConversation(conversationId uuid.UUID, userId uuid.UUID) error
 	LeaveGroupConversation(conversationId uuid.UUID, userId uuid.UUID) error
-	InviteToGroupConversation(conversationId uuid.UUID, userId uuid.UUID, inviteeID uuid.UUID) error
+	InviteToGroupConversation(conversationId uuid.UUID, inviteeID uuid.UUID) error
 	StartDirectConversation(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error)
 	SendDirectTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
 	SendGroupTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
@@ -172,7 +172,19 @@ func (s *conversationService) SendLeftConversationMessage(conversationId uuid.UU
 }
 
 func (s *conversationService) JoinGroupConversation(conversationID uuid.UUID, userId uuid.UUID) error {
-	return s.participants.Store(domain.NewJoinedParticipant(conversationID, userId))
+	conversation, err := s.groupConversations.GetByID(conversationID)
+
+	if err != nil {
+		return err
+	}
+
+	participant, err := conversation.Join(userId)
+
+	if err != nil {
+		return err
+	}
+
+	return s.participants.Store(participant)
 }
 
 func (s *conversationService) LeaveGroupConversation(conversationID uuid.UUID, userId uuid.UUID) error {
@@ -191,8 +203,18 @@ func (s *conversationService) LeaveGroupConversation(conversationID uuid.UUID, u
 	return s.participants.Update(participant)
 }
 
-func (s *conversationService) InviteToGroupConversation(conversationID uuid.UUID, userId uuid.UUID, inviteeID uuid.UUID) error {
-	newParticipant := domain.NewInvitedParticipant(conversationID, inviteeID)
+func (s *conversationService) InviteToGroupConversation(conversationID uuid.UUID, inviteeID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(conversationID)
 
-	return s.participants.Store(newParticipant)
+	if err != nil {
+		return err
+	}
+
+	participant, err := conversation.Invite(inviteeID)
+
+	if err != nil {
+		return err
+	}
+
+	return s.participants.Store(participant)
 }

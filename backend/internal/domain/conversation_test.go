@@ -141,3 +141,66 @@ func TestGroupConversation_DeleteFailure(t *testing.T) {
 	assert.Equal(t, true, conversation.IsActive)
 	assert.Equal(t, conversation.events[len(conversation.events)-1], NewGroupConversationCreated(conversationId, creatorId))
 }
+
+func TestGroupConversation_JoinSuccess(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+	userId := uuid.New()
+
+	participant, err := conversation.Join(userId)
+
+	assert.Nil(t, err)
+	assert.Equal(t, conversationId, participant.ConversationID)
+	assert.Equal(t, userId, participant.UserID)
+	assert.NotNil(t, participant.ID)
+	assert.NotNil(t, participant.CreatedAt)
+	assert.Equal(t, participant.IsActive, true)
+	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationJoined(conversationId, userId))
+}
+
+func TestGroupConversation_JoinFailure(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+	userId := uuid.New()
+
+	conversation.Delete(creatorId)
+
+	_, err := conversation.Join(userId)
+
+	assert.Equal(t, err.Error(), "conversation is not active")
+}
+
+func TestGroupConversation_InviteSuccess(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+	userId := uuid.New()
+
+	participant, err := conversation.Invite(userId)
+
+	assert.Nil(t, err)
+	assert.Equal(t, conversationId, participant.ConversationID)
+	assert.Equal(t, userId, participant.UserID)
+	assert.NotNil(t, participant.ID)
+	assert.NotNil(t, participant.CreatedAt)
+	assert.Equal(t, participant.IsActive, true)
+	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationInvited(conversationId, userId))
+}
+
+func TestGroupConversation_InviteFailure(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+	userId := uuid.New()
+	conversation.Delete(creatorId)
+
+	_, err := conversation.Invite(userId)
+
+	assert.Equal(t, err.Error(), "conversation is not active")
+}

@@ -219,13 +219,6 @@ func (s *commandController) handleRenameGroupConversation(w http.ResponseWriter,
 }
 
 func (s *commandController) handleInviteToGroupConversation(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
-
-	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
-		return
-	}
-
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 		InviteeId      uuid.UUID `json:"user_id"`
@@ -238,7 +231,7 @@ func (s *commandController) handleInviteToGroupConversation(w http.ResponseWrite
 		return
 	}
 
-	err = s.commands.ConversationService.InviteToGroupConversation(request.ConversationId, userID, request.InviteeId)
+	err = s.commands.ConversationService.InviteToGroupConversation(request.ConversationId, request.InviteeId)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)

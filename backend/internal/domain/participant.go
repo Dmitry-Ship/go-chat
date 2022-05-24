@@ -36,22 +36,6 @@ func NewParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
 	}
 }
 
-func NewJoinedParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
-	participant := NewParticipant(conversationId, userId)
-
-	participant.AddEvent(NewGroupConversationJoined(conversationId, userId))
-
-	return participant
-}
-
-func NewInvitedParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
-	participant := NewParticipant(conversationId, userId)
-
-	participant.AddEvent(NewGroupConversationInvited(conversationId, userId))
-
-	return participant
-}
-
 func (participant *Participant) LeaveGroupConversation(conversationID uuid.UUID) error {
 	if participant.ConversationID != conversationID {
 		return errors.New("participant is not in conversation")

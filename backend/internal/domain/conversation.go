@@ -109,6 +109,30 @@ func (groupConversation *GroupConversation) SendTextMessage(text string, partici
 	return message, nil
 }
 
+func (groupConversation *GroupConversation) Join(userID uuid.UUID) (*Participant, error) {
+	if groupConversation.Conversation.IsActive == false {
+		return nil, errors.New("conversation is not active")
+	}
+
+	participant := NewParticipant(groupConversation.ID, userID)
+
+	participant.AddEvent(NewGroupConversationJoined(groupConversation.ID, userID))
+
+	return participant, nil
+}
+
+func (groupConversation *GroupConversation) Invite(inviteeID uuid.UUID) (*Participant, error) {
+	if groupConversation.Conversation.IsActive == false {
+		return nil, errors.New("conversation is not active")
+	}
+
+	participant := NewParticipant(groupConversation.ID, inviteeID)
+
+	participant.AddEvent(NewGroupConversationInvited(groupConversation.ID, inviteeID))
+
+	return participant, nil
+}
+
 type DirectConversationData struct {
 	ID       uuid.UUID
 	ToUser   Participant
