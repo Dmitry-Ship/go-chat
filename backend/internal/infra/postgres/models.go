@@ -13,7 +13,7 @@ type Conversation struct {
 	IsActive  bool
 }
 
-type PublicConversation struct {
+type GroupConversation struct {
 	ID             uuid.UUID `gorm:"type:uuid"`
 	Name           string
 	Avatar         string
@@ -21,7 +21,7 @@ type PublicConversation struct {
 	OwnerID        uuid.UUID `gorm:"type:uuid"`
 }
 
-type PrivateConversation struct {
+type DirectConversation struct {
 	ID             uuid.UUID `gorm:"type:uuid"`
 	FromUserID     uuid.UUID `gorm:"type:uuid"`
 	ToUserID       uuid.UUID `gorm:"type:uuid"`

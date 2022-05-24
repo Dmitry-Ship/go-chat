@@ -8,53 +8,53 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type publicConversationRepositoryMock struct {
-	publicConversationOwnerID uuid.UUID
-	methodsCalled             map[string]int
+type groupConversationRepositoryMock struct {
+	groupConversationOwnerID uuid.UUID
+	methodsCalled            map[string]int
 }
 
-func (m *publicConversationRepositoryMock) Store(conversation *domain.PublicConversation) error {
-	m.methodsCalled["StorePublicConversation"]++
+func (m *groupConversationRepositoryMock) Store(conversation *domain.GroupConversation) error {
+	m.methodsCalled["StoreGroupConversation"]++
 	return nil
 }
 
-func (m *publicConversationRepositoryMock) Update(conversation *domain.PublicConversation) error {
-	m.methodsCalled["UpdatePublicConversation"]++
+func (m *groupConversationRepositoryMock) Update(conversation *domain.GroupConversation) error {
+	m.methodsCalled["UpdateGroupConversation"]++
 	return nil
 }
 
-func (m *publicConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.PublicConversation, error) {
-	m.methodsCalled["GetPublicConversation"]++
+func (m *groupConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.GroupConversation, error) {
+	m.methodsCalled["GetGroupConversation"]++
 
-	conversation, err := domain.NewPublicConversation(id, "cool room", m.publicConversationOwnerID)
+	conversation, err := domain.NewGroupConversation(id, "cool room", m.groupConversationOwnerID)
 
 	return conversation, err
 }
 
-type privateConversationRepositoryMock struct {
+type directConversationRepositoryMock struct {
 	methodsCalled map[string]int
 }
 
-func (m *privateConversationRepositoryMock) Store(conversation *domain.PrivateConversation) error {
-	m.methodsCalled["StorePrivateConversation"]++
+func (m *directConversationRepositoryMock) Store(conversation *domain.DirectConversation) error {
+	m.methodsCalled["StoreDirectConversation"]++
 	return nil
 }
 
-func (m *privateConversationRepositoryMock) Update(conversation *domain.PrivateConversation) error {
-	m.methodsCalled["UpdatePrivateConversation"]++
+func (m *directConversationRepositoryMock) Update(conversation *domain.DirectConversation) error {
+	m.methodsCalled["UpdateDirectConversation"]++
 	return nil
 }
 
-func (m *privateConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.PrivateConversation, error) {
-	m.methodsCalled["GetPrivateConversation"]++
+func (m *directConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.DirectConversation, error) {
+	m.methodsCalled["GetDirectConversation"]++
 
-	conversation, err := domain.NewPrivateConversation(id, uuid.New(), uuid.New())
+	conversation, err := domain.NewDirectConversation(id, uuid.New(), uuid.New())
 
 	return conversation, err
 }
 
-func (m *privateConversationRepositoryMock) GetID(fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error) {
-	m.methodsCalled["GetPrivateConversationID"]++
+func (m *directConversationRepositoryMock) GetID(fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error) {
+	m.methodsCalled["GetDirectConversationID"]++
 
 	return uuid.New(), nil
 }
@@ -107,11 +107,11 @@ func (m *participantsRepositoryMock) GetByConversationIDAndUserID(conversationID
 	return domain.NewJoinedParticipant(conversationID, userID), nil
 }
 
-func TestCreatePublicConversation(t *testing.T) {
-	publicConversationRepository := &publicConversationRepositoryMock{
+func TestCreateGroupConversation(t *testing.T) {
+	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	privateConversationRepository := &privateConversationRepositoryMock{
+	directConversationRepository := &directConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
 	messagesRepository := &messagesRepositoryMock{
@@ -120,19 +120,19 @@ func TestCreatePublicConversation(t *testing.T) {
 	participantsRepository := &participantsRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	conversationService := NewConversationService(publicConversationRepository, privateConversationRepository, participantsRepository, messagesRepository)
+	conversationService := NewConversationService(groupConversationRepository, directConversationRepository, participantsRepository, messagesRepository)
 
-	err := conversationService.CreatePublicConversation(uuid.New(), "test", uuid.New())
+	err := conversationService.CreateGroupConversation(uuid.New(), "test", uuid.New())
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, publicConversationRepository.methodsCalled["StorePublicConversation"])
+	assert.Equal(t, 1, groupConversationRepository.methodsCalled["StoreGroupConversation"])
 }
 
-func TestRenamePublicConversation(t *testing.T) {
-	publicConversationRepository := &publicConversationRepositoryMock{
+func TestRenameGroupConversation(t *testing.T) {
+	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	privateConversationRepository := &privateConversationRepositoryMock{
+	directConversationRepository := &directConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
 	messagesRepository := &messagesRepositoryMock{
@@ -141,19 +141,19 @@ func TestRenamePublicConversation(t *testing.T) {
 	participantsRepository := &participantsRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	conversationService := NewConversationService(publicConversationRepository, privateConversationRepository, participantsRepository, messagesRepository)
+	conversationService := NewConversationService(groupConversationRepository, directConversationRepository, participantsRepository, messagesRepository)
 
-	err := conversationService.RenamePublicConversation(uuid.New(), publicConversationRepository.publicConversationOwnerID, "test")
+	err := conversationService.RenameGroupConversation(uuid.New(), groupConversationRepository.groupConversationOwnerID, "test")
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, publicConversationRepository.methodsCalled["UpdatePublicConversation"])
+	assert.Equal(t, 1, groupConversationRepository.methodsCalled["UpdateGroupConversation"])
 }
 
-func TestDeletePublicConversation(t *testing.T) {
-	publicConversationRepository := &publicConversationRepositoryMock{
+func TestDeleteGroupConversation(t *testing.T) {
+	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	privateConversationRepository := &privateConversationRepositoryMock{
+	directConversationRepository := &directConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
 	messagesRepository := &messagesRepositoryMock{
@@ -162,19 +162,19 @@ func TestDeletePublicConversation(t *testing.T) {
 	participantsRepository := &participantsRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	conversationService := NewConversationService(publicConversationRepository, privateConversationRepository, participantsRepository, messagesRepository)
+	conversationService := NewConversationService(groupConversationRepository, directConversationRepository, participantsRepository, messagesRepository)
 
-	err := conversationService.DeletePublicConversation(uuid.New(), publicConversationRepository.publicConversationOwnerID)
+	err := conversationService.DeleteGroupConversation(uuid.New(), groupConversationRepository.groupConversationOwnerID)
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, publicConversationRepository.methodsCalled["UpdatePublicConversation"])
+	assert.Equal(t, 1, groupConversationRepository.methodsCalled["UpdateGroupConversation"])
 }
 
 func TestSendTextMessage(t *testing.T) {
-	publicConversationRepository := &publicConversationRepositoryMock{
+	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	privateConversationRepository := &privateConversationRepositoryMock{
+	directConversationRepository := &directConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
 	messagesRepository := &messagesRepositoryMock{
@@ -183,12 +183,12 @@ func TestSendTextMessage(t *testing.T) {
 	participantsRepository := &participantsRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	conversationService := NewConversationService(publicConversationRepository, privateConversationRepository, participantsRepository, messagesRepository)
+	conversationService := NewConversationService(groupConversationRepository, directConversationRepository, participantsRepository, messagesRepository)
 
 	conversationID := uuid.New()
 	userID := uuid.New()
 
-	err := conversationService.SendPublicTextMessage("test", conversationID, userID)
+	err := conversationService.SendGroupTextMessage("test", conversationID, userID)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 1, messagesRepository.methodsCalled["StoreTextMessage"])
@@ -196,10 +196,10 @@ func TestSendTextMessage(t *testing.T) {
 }
 
 func TestSendJoinedConversationMessage(t *testing.T) {
-	publicConversationRepository := &publicConversationRepositoryMock{
+	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	privateConversationRepository := &privateConversationRepositoryMock{
+	directConversationRepository := &directConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
 	messagesRepository := &messagesRepositoryMock{
@@ -208,7 +208,7 @@ func TestSendJoinedConversationMessage(t *testing.T) {
 	participantsRepository := &participantsRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	conversationService := NewConversationService(publicConversationRepository, privateConversationRepository, participantsRepository, messagesRepository)
+	conversationService := NewConversationService(groupConversationRepository, directConversationRepository, participantsRepository, messagesRepository)
 	conversationID := uuid.New()
 	userID := uuid.New()
 
@@ -219,10 +219,10 @@ func TestSendJoinedConversationMessage(t *testing.T) {
 }
 
 func TestSendInvitedConversationMessage(t *testing.T) {
-	publicConversationRepository := &publicConversationRepositoryMock{
+	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	privateConversationRepository := &privateConversationRepositoryMock{
+	directConversationRepository := &directConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
 	messagesRepository := &messagesRepositoryMock{
@@ -231,7 +231,7 @@ func TestSendInvitedConversationMessage(t *testing.T) {
 	participantsRepository := &participantsRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	conversationService := NewConversationService(publicConversationRepository, privateConversationRepository, participantsRepository, messagesRepository)
+	conversationService := NewConversationService(groupConversationRepository, directConversationRepository, participantsRepository, messagesRepository)
 	conversationID := uuid.New()
 	userID := uuid.New()
 
@@ -242,10 +242,10 @@ func TestSendInvitedConversationMessage(t *testing.T) {
 }
 
 func TestSendRenamedConversationMessage(t *testing.T) {
-	publicConversationRepository := &publicConversationRepositoryMock{
+	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	privateConversationRepository := &privateConversationRepositoryMock{
+	directConversationRepository := &directConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
 	messagesRepository := &messagesRepositoryMock{
@@ -254,7 +254,7 @@ func TestSendRenamedConversationMessage(t *testing.T) {
 	participantsRepository := &participantsRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	conversationService := NewConversationService(publicConversationRepository, privateConversationRepository, participantsRepository, messagesRepository)
+	conversationService := NewConversationService(groupConversationRepository, directConversationRepository, participantsRepository, messagesRepository)
 	conversationID := uuid.New()
 	newName := "new name"
 	userID := uuid.New()
@@ -266,10 +266,10 @@ func TestSendRenamedConversationMessage(t *testing.T) {
 }
 
 func TestSendLeftConversationMessage(t *testing.T) {
-	publicConversationRepository := &publicConversationRepositoryMock{
+	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	privateConversationRepository := &privateConversationRepositoryMock{
+	directConversationRepository := &directConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
 	messagesRepository := &messagesRepositoryMock{
@@ -278,7 +278,7 @@ func TestSendLeftConversationMessage(t *testing.T) {
 	participantsRepository := &participantsRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	conversationService := NewConversationService(publicConversationRepository, privateConversationRepository, participantsRepository, messagesRepository)
+	conversationService := NewConversationService(groupConversationRepository, directConversationRepository, participantsRepository, messagesRepository)
 	conversationID := uuid.New()
 	userID := uuid.New()
 
@@ -288,11 +288,11 @@ func TestSendLeftConversationMessage(t *testing.T) {
 	assert.Equal(t, 1, messagesRepository.methodsCalled["StoreLeftConversationMessage"])
 }
 
-func TestJoinPublicConversation(t *testing.T) {
-	publicConversationRepository := &publicConversationRepositoryMock{
+func TestJoinGroupConversation(t *testing.T) {
+	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	privateConversationRepository := &privateConversationRepositoryMock{
+	directConversationRepository := &directConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
 	messagesRepository := &messagesRepositoryMock{
@@ -301,19 +301,19 @@ func TestJoinPublicConversation(t *testing.T) {
 	participantsRepository := &participantsRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	conversationService := NewConversationService(publicConversationRepository, privateConversationRepository, participantsRepository, messagesRepository)
+	conversationService := NewConversationService(groupConversationRepository, directConversationRepository, participantsRepository, messagesRepository)
 
-	err := conversationService.JoinPublicConversation(uuid.New(), uuid.New())
+	err := conversationService.JoinGroupConversation(uuid.New(), uuid.New())
 
 	assert.Nil(t, err)
 	assert.Equal(t, 1, participantsRepository.methodsCalled["Store"])
 }
 
-func TestLeavePublicConversation(t *testing.T) {
-	publicConversationRepository := &publicConversationRepositoryMock{
+func TestLeaveGroupConversation(t *testing.T) {
+	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	privateConversationRepository := &privateConversationRepositoryMock{
+	directConversationRepository := &directConversationRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
 	messagesRepository := &messagesRepositoryMock{
@@ -322,10 +322,10 @@ func TestLeavePublicConversation(t *testing.T) {
 	participantsRepository := &participantsRepositoryMock{
 		methodsCalled: make(map[string]int),
 	}
-	conversationService := NewConversationService(publicConversationRepository, privateConversationRepository, participantsRepository, messagesRepository)
+	conversationService := NewConversationService(groupConversationRepository, directConversationRepository, participantsRepository, messagesRepository)
 	userID := uuid.New()
 
-	err := conversationService.LeavePublicConversation(uuid.New(), userID)
+	err := conversationService.LeaveGroupConversation(uuid.New(), userID)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 1, participantsRepository.methodsCalled["Update"])

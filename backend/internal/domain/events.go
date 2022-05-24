@@ -3,14 +3,14 @@ package domain
 import "github.com/google/uuid"
 
 const (
-	MessageSentName                = "message_sent"
-	PrivateConversationCreatedName = "private_conversation_created"
-	PublicConversationCreatedName  = "public_conversation_created"
-	PublicConversationRenamedName  = "public_conversation_renamed"
-	PublicConversationDeletedName  = "public_conversation_deleted"
-	PublicConversationLeftName     = "public_conversation_left"
-	PublicConversationJoinedName   = "public_conversation_joined"
-	PublicConversationInvitedName  = "public_conversation_invited"
+	MessageSentName               = "message_sent"
+	DirectConversationCreatedName = "direct_conversation_created"
+	GroupConversationCreatedName  = "group_conversation_created"
+	GroupConversationRenamedName  = "group_conversation_renamed"
+	GroupConversationDeletedName  = "group_conversation_deleted"
+	GroupConversationLeftName     = "group_conversation_left"
+	GroupConversationJoinedName   = "group_conversation_joined"
+	GroupConversationInvitedName  = "group_conversation_invited"
 )
 
 const DomainEventChannel = "domain_event"
@@ -45,31 +45,31 @@ func NewMessageSent(conversationID uuid.UUID, messageID uuid.UUID, userID uuid.U
 	}
 }
 
-type PublicConversationDeleted struct {
+type GroupConversationDeleted struct {
 	domainEvent
 	ConversationID uuid.UUID
 }
 
-func NewPublicConversationDeleted(conversationID uuid.UUID) *PublicConversationDeleted {
-	return &PublicConversationDeleted{
+func NewGroupConversationDeleted(conversationID uuid.UUID) *GroupConversationDeleted {
+	return &GroupConversationDeleted{
 		domainEvent: domainEvent{
-			name: PublicConversationDeletedName,
+			name: GroupConversationDeletedName,
 		},
 		ConversationID: conversationID,
 	}
 }
 
-type PublicConversationRenamed struct {
+type GroupConversationRenamed struct {
 	domainEvent
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
 	NewName        string
 }
 
-func NewPublicConversationRenamed(conversationID uuid.UUID, userID uuid.UUID, newName string) *PublicConversationRenamed {
-	return &PublicConversationRenamed{
+func NewGroupConversationRenamed(conversationID uuid.UUID, userID uuid.UUID, newName string) *GroupConversationRenamed {
+	return &GroupConversationRenamed{
 		domainEvent: domainEvent{
-			name: PublicConversationRenamedName,
+			name: GroupConversationRenamedName,
 		},
 		ConversationID: conversationID,
 		UserID:         userID,
@@ -77,81 +77,81 @@ func NewPublicConversationRenamed(conversationID uuid.UUID, userID uuid.UUID, ne
 	}
 }
 
-type PublicConversationCreated struct {
+type GroupConversationCreated struct {
 	domainEvent
 	ConversationID uuid.UUID
 	OwnerID        uuid.UUID
 }
 
-func NewPublicConversationCreated(conversationID uuid.UUID, ownerId uuid.UUID) *PublicConversationCreated {
-	return &PublicConversationCreated{
+func NewGroupConversationCreated(conversationID uuid.UUID, ownerId uuid.UUID) *GroupConversationCreated {
+	return &GroupConversationCreated{
 		domainEvent: domainEvent{
-			name: PublicConversationCreatedName,
+			name: GroupConversationCreatedName,
 		},
 		ConversationID: conversationID,
 		OwnerID:        ownerId,
 	}
 }
 
-type PublicConversationLeft struct {
+type GroupConversationLeft struct {
 	domainEvent
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
 }
 
-func NewPublicConversationLeft(conversationID uuid.UUID, userID uuid.UUID) *PublicConversationLeft {
-	return &PublicConversationLeft{
+func NewGroupConversationLeft(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationLeft {
+	return &GroupConversationLeft{
 		domainEvent: domainEvent{
-			name: PublicConversationLeftName,
+			name: GroupConversationLeftName,
 		},
 		ConversationID: conversationID,
 		UserID:         userID,
 	}
 }
 
-type PublicConversationJoined struct {
+type GroupConversationJoined struct {
 	domainEvent
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
 }
 
-func NewPublicConversationJoined(conversationID uuid.UUID, userID uuid.UUID) *PublicConversationJoined {
-	return &PublicConversationJoined{
+func NewGroupConversationJoined(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationJoined {
+	return &GroupConversationJoined{
 		domainEvent: domainEvent{
-			name: PublicConversationJoinedName,
+			name: GroupConversationJoinedName,
 		},
 		ConversationID: conversationID,
 		UserID:         userID,
 	}
 }
 
-type PublicConversationInvited struct {
+type GroupConversationInvited struct {
 	domainEvent
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
 }
 
-func NewPublicConversationInvited(conversationID uuid.UUID, userID uuid.UUID) *PublicConversationInvited {
-	return &PublicConversationInvited{
+func NewGroupConversationInvited(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationInvited {
+	return &GroupConversationInvited{
 		domainEvent: domainEvent{
-			name: PublicConversationInvitedName,
+			name: GroupConversationInvitedName,
 		},
 		ConversationID: conversationID,
 		UserID:         userID,
 	}
 }
 
-type PrivateConversationCreated struct {
+type DirectConversationCreated struct {
 	domainEvent
 	ConversationID uuid.UUID
 	ToUserID       uuid.UUID
 	FromUserID     uuid.UUID
 }
 
-func NewPrivateConversationCreated(conversationID uuid.UUID, toUserID uuid.UUID, fromUserID uuid.UUID) *PrivateConversationCreated {
-	return &PrivateConversationCreated{
+func NewDirectConversationCreated(conversationID uuid.UUID, toUserID uuid.UUID, fromUserID uuid.UUID) *DirectConversationCreated {
+	return &DirectConversationCreated{
 		domainEvent: domainEvent{
-			name: PrivateConversationCreatedName,
+			name: DirectConversationCreatedName,
 		},
 		ConversationID: conversationID,
 		ToUserID:       toUserID,

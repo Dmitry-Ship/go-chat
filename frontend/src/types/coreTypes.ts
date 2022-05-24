@@ -94,7 +94,7 @@ export type Conversation = {
   name: string;
   avatar: string;
   id: string;
-  type: "private" | "public";
+  type: "direct" | "group";
 };
 
 export type Contact = {

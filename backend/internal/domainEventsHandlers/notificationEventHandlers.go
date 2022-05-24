@@ -37,23 +37,23 @@ func (h *notificationsEventHandlers) ListenForEvents() {
 		select {
 		case event := <-h.subscriber.Subscribe(domain.DomainEventChannel):
 			switch e := event.Data.(type) {
-			case *domain.PublicConversationRenamed:
+			case *domain.GroupConversationRenamed:
 				go h.sendRenamedConversationNotification(e)
-			case *domain.PublicConversationLeft:
+			case *domain.GroupConversationLeft:
 				go h.unsubscribeFromConversation(e)
-			case *domain.PublicConversationJoined:
+			case *domain.GroupConversationJoined:
 				go h.subscribeToConversationNotifications(e.ConversationID, e.UserID)
-			case *domain.PublicConversationInvited:
+			case *domain.GroupConversationInvited:
 				go h.subscribeToConversationNotifications(e.ConversationID, e.UserID)
 			case *domain.MessageSent:
 				go h.sendMessageNotification(e)
-			case *domain.PublicConversationCreated:
+			case *domain.GroupConversationCreated:
 				go h.subscribeToConversationNotifications(e.ConversationID, e.OwnerID)
-			case *domain.PrivateConversationCreated:
+			case *domain.DirectConversationCreated:
 				go h.subscribeToConversationNotifications(e.ConversationID, e.FromUserID)
 				go h.subscribeToConversationNotifications(e.ConversationID, e.ToUserID)
-			case *domain.PublicConversationDeleted:
-				go h.sendPublicConversationDeletedNotification(e)
+			case *domain.GroupConversationDeleted:
+				go h.sendGroupConversationDeletedNotification(e)
 				go h.deleteConversationTopic(e)
 			}
 
@@ -63,7 +63,7 @@ func (h *notificationsEventHandlers) ListenForEvents() {
 	}
 }
 
-func (h *notificationsEventHandlers) unsubscribeFromConversation(e *domain.PublicConversationLeft) {
+func (h *notificationsEventHandlers) unsubscribeFromConversation(e *domain.GroupConversationLeft) {
 	err := h.notificationTopicService.UnsubscribeFromTopic("conversation:"+e.ConversationID.String(), e.UserID)
 
 	if err != nil {
@@ -71,7 +71,7 @@ func (h *notificationsEventHandlers) unsubscribeFromConversation(e *domain.Publi
 	}
 }
 
-func (h *notificationsEventHandlers) deleteConversationTopic(e *domain.PublicConversationDeleted) {
+func (h *notificationsEventHandlers) deleteConversationTopic(e *domain.GroupConversationDeleted) {
 	err := h.notificationTopicService.DeleteTopic("conversation:" + e.ConversationID.String())
 
 	if err != nil {
@@ -87,7 +87,7 @@ func (h *notificationsEventHandlers) subscribeToConversationNotifications(conver
 	}
 }
 
-func (h *notificationsEventHandlers) sendPublicConversationDeletedNotification(e *domain.PublicConversationDeleted) {
+func (h *notificationsEventHandlers) sendGroupConversationDeletedNotification(e *domain.GroupConversationDeleted) {
 	ids, err := h.notificationTopicService.GetReceivers("conversation:" + e.ConversationID.String())
 
 	if err != nil {
@@ -113,7 +113,7 @@ func (h *notificationsEventHandlers) sendPublicConversationDeletedNotification(e
 	}
 }
 
-func (h *notificationsEventHandlers) sendRenamedConversationNotification(e *domain.PublicConversationRenamed) {
+func (h *notificationsEventHandlers) sendRenamedConversationNotification(e *domain.GroupConversationRenamed) {
 	ids, err := h.notificationTopicService.GetReceivers("conversation:" + e.ConversationID.String())
 
 	if err != nil {

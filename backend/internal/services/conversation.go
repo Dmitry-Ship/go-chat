@@ -7,15 +7,15 @@ import (
 )
 
 type ConversationService interface {
-	CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error
-	DeletePublicConversation(id uuid.UUID, userId uuid.UUID) error
-	RenamePublicConversation(conversationId uuid.UUID, userId uuid.UUID, name string) error
-	JoinPublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
-	LeavePublicConversation(conversationId uuid.UUID, userId uuid.UUID) error
-	InviteToPublicConversation(conversationId uuid.UUID, userId uuid.UUID, inviteeID uuid.UUID) error
-	StartPrivateConversation(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error)
-	SendPrivateTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
-	SendPublicTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
+	CreateGroupConversation(id uuid.UUID, name string, userId uuid.UUID) error
+	DeleteGroupConversation(id uuid.UUID, userId uuid.UUID) error
+	RenameGroupConversation(conversationId uuid.UUID, userId uuid.UUID, name string) error
+	JoinGroupConversation(conversationId uuid.UUID, userId uuid.UUID) error
+	LeaveGroupConversation(conversationId uuid.UUID, userId uuid.UUID) error
+	InviteToGroupConversation(conversationId uuid.UUID, userId uuid.UUID, inviteeID uuid.UUID) error
+	StartDirectConversation(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error)
+	SendDirectTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
+	SendGroupTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error
 	SendJoinedConversationMessage(conversationId uuid.UUID, userId uuid.UUID) error
 	SendInvitedConversationMessage(conversationId uuid.UUID, userId uuid.UUID) error
 	SendRenamedConversationMessage(conversationId uuid.UUID, userId uuid.UUID, name string) error
@@ -23,38 +23,38 @@ type ConversationService interface {
 }
 
 type conversationService struct {
-	publicConversations  domain.PublicConversationRepository
-	privateConversations domain.PrivateConversationRepository
-	participants         domain.ParticipantRepository
-	messages             domain.MessageRepository
+	groupConversations  domain.GroupConversationRepository
+	directConversations domain.DirectConversationRepository
+	participants        domain.ParticipantRepository
+	messages            domain.MessageRepository
 }
 
 func NewConversationService(
-	publicConversations domain.PublicConversationRepository,
-	privateConversations domain.PrivateConversationRepository,
+	groupConversations domain.GroupConversationRepository,
+	directConversations domain.DirectConversationRepository,
 	participants domain.ParticipantRepository,
 	messages domain.MessageRepository,
 ) *conversationService {
 	return &conversationService{
-		publicConversations:  publicConversations,
-		privateConversations: privateConversations,
-		participants:         participants,
-		messages:             messages,
+		groupConversations:  groupConversations,
+		directConversations: directConversations,
+		participants:        participants,
+		messages:            messages,
 	}
 }
 
-func (s *conversationService) CreatePublicConversation(id uuid.UUID, name string, userId uuid.UUID) error {
-	conversation, err := domain.NewPublicConversation(id, name, userId)
+func (s *conversationService) CreateGroupConversation(id uuid.UUID, name string, userId uuid.UUID) error {
+	conversation, err := domain.NewGroupConversation(id, name, userId)
 
 	if err != nil {
 		return err
 	}
 
-	return s.publicConversations.Store(conversation)
+	return s.groupConversations.Store(conversation)
 }
 
-func (s *conversationService) StartPrivateConversation(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error) {
-	existingConversationID, err := s.privateConversations.GetID(fromUserId, toUserId)
+func (s *conversationService) StartDirectConversation(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error) {
+	existingConversationID, err := s.directConversations.GetID(fromUserId, toUserId)
 
 	if err == nil {
 		return existingConversationID, nil
@@ -62,13 +62,13 @@ func (s *conversationService) StartPrivateConversation(fromUserId uuid.UUID, toU
 
 	newConversationID := uuid.New()
 
-	conversation, err := domain.NewPrivateConversation(newConversationID, toUserId, fromUserId)
+	conversation, err := domain.NewDirectConversation(newConversationID, toUserId, fromUserId)
 
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	err = s.privateConversations.Store(conversation)
+	err = s.directConversations.Store(conversation)
 
 	if err != nil {
 		return uuid.Nil, err
@@ -77,8 +77,8 @@ func (s *conversationService) StartPrivateConversation(fromUserId uuid.UUID, toU
 	return newConversationID, nil
 }
 
-func (s *conversationService) DeletePublicConversation(id uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.publicConversations.GetByID(id)
+func (s *conversationService) DeleteGroupConversation(id uuid.UUID, userID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(id)
 
 	if err != nil {
 		return err
@@ -90,11 +90,11 @@ func (s *conversationService) DeletePublicConversation(id uuid.UUID, userID uuid
 		return err
 	}
 
-	return s.publicConversations.Update(conversation)
+	return s.groupConversations.Update(conversation)
 }
 
-func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID, userId uuid.UUID, name string) error {
-	conversation, err := s.publicConversations.GetByID(conversationID)
+func (s *conversationService) RenameGroupConversation(conversationID uuid.UUID, userId uuid.UUID, name string) error {
+	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
 		return err
@@ -106,11 +106,11 @@ func (s *conversationService) RenamePublicConversation(conversationID uuid.UUID,
 		return err
 	}
 
-	return s.publicConversations.Update(conversation)
+	return s.groupConversations.Update(conversation)
 }
 
-func (s *conversationService) SendPrivateTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
-	conversation, err := s.privateConversations.GetByID(conversationId)
+func (s *conversationService) SendDirectTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
+	conversation, err := s.directConversations.GetByID(conversationId)
 
 	if err != nil {
 		return err
@@ -125,8 +125,8 @@ func (s *conversationService) SendPrivateTextMessage(messageText string, convers
 	return s.messages.StoreTextMessage(message)
 }
 
-func (s *conversationService) SendPublicTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
-	conversation, err := s.publicConversations.GetByID(conversationId)
+func (s *conversationService) SendGroupTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(conversationId)
 
 	if err != nil {
 		return err
@@ -171,18 +171,18 @@ func (s *conversationService) SendLeftConversationMessage(conversationId uuid.UU
 	return s.messages.StoreLeftConversationMessage(message)
 }
 
-func (s *conversationService) JoinPublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
+func (s *conversationService) JoinGroupConversation(conversationID uuid.UUID, userId uuid.UUID) error {
 	return s.participants.Store(domain.NewJoinedParticipant(conversationID, userId))
 }
 
-func (s *conversationService) LeavePublicConversation(conversationID uuid.UUID, userId uuid.UUID) error {
+func (s *conversationService) LeaveGroupConversation(conversationID uuid.UUID, userId uuid.UUID) error {
 	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userId)
 
 	if err != nil {
 		return err
 	}
 
-	err = participant.LeavePublicConversation(conversationID)
+	err = participant.LeaveGroupConversation(conversationID)
 
 	if err != nil {
 		return err
@@ -191,7 +191,7 @@ func (s *conversationService) LeavePublicConversation(conversationID uuid.UUID, 
 	return s.participants.Update(participant)
 }
 
-func (s *conversationService) InviteToPublicConversation(conversationID uuid.UUID, userId uuid.UUID, inviteeID uuid.UUID) error {
+func (s *conversationService) InviteToGroupConversation(conversationID uuid.UUID, userId uuid.UUID, inviteeID uuid.UUID) error {
 	newParticipant := domain.NewInvitedParticipant(conversationID, inviteeID)
 
 	return s.participants.Store(newParticipant)

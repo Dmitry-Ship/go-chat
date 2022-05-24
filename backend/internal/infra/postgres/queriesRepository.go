@@ -144,14 +144,14 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 		Model(&Conversation{}).
 		Select(
 			"conversations.id", "conversations.created_at", "conversations.type",
-			"public_conversations.avatar", "public_conversations.name",
-			"private_conversations.from_user_id", "private_conversations.to_user_id",
+			"group_conversations.avatar", "group_conversations.name",
+			"direct_conversations.from_user_id", "direct_conversations.to_user_id",
 			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
 		).
-		Joins("LEFT JOIN public_conversations ON public_conversations.conversation_id = conversations.id").
-		Joins("LEFT JOIN private_conversations ON private_conversations.conversation_id = conversations.id").
+		Joins("LEFT JOIN group_conversations ON group_conversations.conversation_id = conversations.id").
+		Joins("LEFT JOIN direct_conversations ON direct_conversations.conversation_id = conversations.id").
 		Joins("LEFT JOIN participants ON participants.conversation_id = conversations.id").
-		Joins("LEFT JOIN users ON private_conversations.from_user_id = users.id OR private_conversations.to_user_id = users.id").
+		Joins("LEFT JOIN users ON direct_conversations.from_user_id = users.id OR direct_conversations.to_user_id = users.id").
 		Where("users.id IS NULL OR users.id <> ?", userID).
 		Where("conversations.is_active = ?", true).
 		Where("participants.is_active = ?", true).
@@ -178,13 +178,13 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*re
 	err := r.db.Model(&Conversation{}).
 		Select(
 			"conversations.id", "conversations.created_at", "conversations.type as persistence_type",
-			"public_conversations.avatar", "public_conversations.name",
-			"private_conversations.from_user_id", "private_conversations.to_user_id",
+			"group_conversations.avatar", "group_conversations.name",
+			"direct_conversations.from_user_id", "direct_conversations.to_user_id",
 			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
 		).
-		Joins("LEFT JOIN public_conversations ON public_conversations.conversation_id = conversations.id").
-		Joins("LEFT JOIN private_conversations ON private_conversations.conversation_id = conversations.id").
-		Joins("LEFT JOIN users ON private_conversations.from_user_id = users.id OR private_conversations.to_user_id = users.id").
+		Joins("LEFT JOIN group_conversations ON group_conversations.conversation_id = conversations.id").
+		Joins("LEFT JOIN direct_conversations ON direct_conversations.conversation_id = conversations.id").
+		Joins("LEFT JOIN users ON direct_conversations.from_user_id = users.id OR direct_conversations.to_user_id = users.id").
 		Where("users.id IS NULL OR users.id <> ?", userId).
 		Where("conversations.is_active = ?", true).
 		Where("conversations.id = ?", id).

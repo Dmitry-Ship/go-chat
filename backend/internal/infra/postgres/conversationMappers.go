@@ -5,8 +5,8 @@ import (
 )
 
 var conversationTypesMap = map[uint8]string{
-	0: "public",
-	1: "private",
+	0: "group",
+	1: "direct",
 }
 
 func toConversationTypePersistence(conversationType string) uint8 {
@@ -29,8 +29,8 @@ func toConversationPersistence(conversation domain.BaseConversation) *Conversati
 	}
 }
 
-func toPublicConversationPersistence(conversation *domain.PublicConversation) *PublicConversation {
-	return &PublicConversation{
+func toGroupConversationPersistence(conversation *domain.GroupConversation) *GroupConversation {
+	return &GroupConversation{
 		ID:             conversation.Data.ID,
 		ConversationID: conversation.ID,
 		Name:           conversation.Data.Name,
@@ -39,16 +39,16 @@ func toPublicConversationPersistence(conversation *domain.PublicConversation) *P
 	}
 }
 
-func toPublicConversationDomain(conversation *Conversation, publicConversation *PublicConversation, participant *Participant) *domain.PublicConversation {
-	return &domain.PublicConversation{
-		Data: domain.PublicConversationData{
-			ID:     publicConversation.ID,
-			Name:   publicConversation.Name,
-			Avatar: publicConversation.Avatar,
+func toGroupConversationDomain(conversation *Conversation, groupConversation *GroupConversation, participant *Participant) *domain.GroupConversation {
+	return &domain.GroupConversation{
+		Data: domain.GroupConversationData{
+			ID:     groupConversation.ID,
+			Name:   groupConversation.Name,
+			Avatar: groupConversation.Avatar,
 			Owner: domain.Participant{
 				UserID:         participant.UserID,
 				ID:             participant.ID,
-				ConversationID: publicConversation.ConversationID,
+				ConversationID: groupConversation.ConversationID,
 				CreatedAt:      participant.CreatedAt,
 			},
 		},
@@ -61,20 +61,20 @@ func toPublicConversationDomain(conversation *Conversation, publicConversation *
 	}
 }
 
-func toPrivateConversationDomain(conversation *Conversation, privateConversation *PrivateConversation, toUser *Participant, fromUser *Participant) *domain.PrivateConversation {
-	return &domain.PrivateConversation{
-		Data: domain.PrivateConversationData{
-			ID: privateConversation.ID,
+func toDirectConversationDomain(conversation *Conversation, directConversation *DirectConversation, toUser *Participant, fromUser *Participant) *domain.DirectConversation {
+	return &domain.DirectConversation{
+		Data: domain.DirectConversationData{
+			ID: directConversation.ID,
 			ToUser: domain.Participant{
 				UserID:         toUser.UserID,
 				ID:             toUser.ID,
-				ConversationID: privateConversation.ConversationID,
+				ConversationID: directConversation.ConversationID,
 				CreatedAt:      toUser.CreatedAt,
 			},
 			FromUser: domain.Participant{
 				UserID:         fromUser.UserID,
 				ID:             fromUser.ID,
-				ConversationID: privateConversation.ConversationID,
+				ConversationID: directConversation.ConversationID,
 				CreatedAt:      fromUser.CreatedAt,
 			},
 		},
@@ -87,8 +87,8 @@ func toPrivateConversationDomain(conversation *Conversation, privateConversation
 	}
 }
 
-func toPrivateConversationPersistence(conversation *domain.PrivateConversation) *PrivateConversation {
-	return &PrivateConversation{
+func toDirectConversationPersistence(conversation *domain.DirectConversation) *DirectConversation {
+	return &DirectConversation{
 		ID:             conversation.Data.ID,
 		ConversationID: conversation.ID,
 		FromUserID:     conversation.Data.FromUser.UserID,

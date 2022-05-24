@@ -23,7 +23,7 @@ type Participant struct {
 }
 
 type ParticipantLeaver interface {
-	LeavePublicConversation(conversationID uuid.UUID) error
+	LeaveGroupConversation(conversationID uuid.UUID) error
 }
 
 func NewParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
@@ -39,7 +39,7 @@ func NewParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
 func NewJoinedParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
 	participant := NewParticipant(conversationId, userId)
 
-	participant.AddEvent(NewPublicConversationJoined(conversationId, userId))
+	participant.AddEvent(NewGroupConversationJoined(conversationId, userId))
 
 	return participant
 }
@@ -47,12 +47,12 @@ func NewJoinedParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participa
 func NewInvitedParticipant(conversationId uuid.UUID, userId uuid.UUID) *Participant {
 	participant := NewParticipant(conversationId, userId)
 
-	participant.AddEvent(NewPublicConversationInvited(conversationId, userId))
+	participant.AddEvent(NewGroupConversationInvited(conversationId, userId))
 
 	return participant
 }
 
-func (participant *Participant) LeavePublicConversation(conversationID uuid.UUID) error {
+func (participant *Participant) LeaveGroupConversation(conversationID uuid.UUID) error {
 	if participant.ConversationID != conversationID {
 		return errors.New("participant is not in conversation")
 	}
@@ -61,7 +61,7 @@ func (participant *Participant) LeavePublicConversation(conversationID uuid.UUID
 		return errors.New("participant is already left")
 	}
 
-	participant.AddEvent(NewPublicConversationLeft(conversationID, participant.UserID))
+	participant.AddEvent(NewGroupConversationLeft(conversationID, participant.UserID))
 
 	return nil
 }

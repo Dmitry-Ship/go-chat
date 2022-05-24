@@ -19,13 +19,13 @@ type Commands struct {
 func NewCommands(ctx context.Context, eventPublisher infra.EventPublisher, db *gorm.DB, activeClients ws.ActiveClients) *Commands {
 	messagesRepository := postgres.NewMessageRepository(db, eventPublisher)
 	usersRepository := postgres.NewUserRepository(db)
-	publicConversationsRepository := postgres.NewPublicConversationRepository(db, eventPublisher)
-	privateConversationsRepository := postgres.NewPrivateConversationRepository(db, eventPublisher)
+	groupConversationsRepository := postgres.NewGroupConversationRepository(db, eventPublisher)
+	directConversationsRepository := postgres.NewDirectConversationRepository(db, eventPublisher)
 	participantRepository := postgres.NewParticipantRepository(db, eventPublisher)
 	jwtTokens := services.NewJWTokens()
 
 	return &Commands{
-		ConversationService: services.NewConversationService(publicConversationsRepository, privateConversationsRepository, participantRepository, messagesRepository),
+		ConversationService: services.NewConversationService(groupConversationsRepository, directConversationsRepository, participantRepository, messagesRepository),
 		AuthService:         services.NewAuthService(usersRepository, jwtTokens),
 		ClientRegister:      services.NewClientRegister(activeClients),
 	}

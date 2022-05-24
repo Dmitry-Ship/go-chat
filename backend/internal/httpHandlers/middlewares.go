@@ -31,7 +31,7 @@ type userIDKeyType string
 
 const userIDKey userIDKeyType = "userId"
 
-func (s *HTTPHandlers) private(next http.HandlerFunc) http.HandlerFunc {
+func (s *HTTPHandlers) direct(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken, err := r.Cookie("access_token")
 

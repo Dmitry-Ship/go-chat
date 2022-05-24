@@ -7,7 +7,7 @@ import { useAPI } from "../../contexts/apiContext";
 const ChatForm: React.FC<{
   loading: boolean;
   joined: boolean;
-  conversationType: "public" | "private";
+  conversationType: "group" | "direct";
   conversationId: string;
   onJoin: () => void;
 }> = ({ loading, joined, onJoin, conversationId, conversationType }) => {
@@ -20,7 +20,7 @@ const ChatForm: React.FC<{
     e.preventDefault();
 
     const notification =
-      conversationType === "public" ? "public_message" : "private_message";
+      conversationType === "group" ? "group_message" : "direct_message";
 
     sendNotification(notification, {
       content: message,

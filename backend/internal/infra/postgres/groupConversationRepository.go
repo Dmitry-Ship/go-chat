@@ -8,26 +8,26 @@ import (
 	"gorm.io/gorm"
 )
 
-type publicConversationRepository struct {
+type groupConversationRepository struct {
 	db             *gorm.DB
 	eventPublisher infra.EventPublisher
 }
 
-func NewPublicConversationRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *publicConversationRepository {
-	return &publicConversationRepository{
+func NewGroupConversationRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *groupConversationRepository {
+	return &groupConversationRepository{
 		db:             db,
 		eventPublisher: eventPublisher,
 	}
 }
 
-func (r *publicConversationRepository) Store(conversation *domain.PublicConversation) error {
+func (r *groupConversationRepository) Store(conversation *domain.GroupConversation) error {
 	err := r.db.Create(toConversationPersistence(conversation)).Error
 
 	if err != nil {
 		return err
 	}
 
-	err = r.db.Create(toPublicConversationPersistence(conversation)).Error
+	err = r.db.Create(toGroupConversationPersistence(conversation)).Error
 
 	if err != nil {
 		return err
@@ -44,14 +44,14 @@ func (r *publicConversationRepository) Store(conversation *domain.PublicConversa
 	return nil
 }
 
-func (r *publicConversationRepository) Update(conversation *domain.PublicConversation) error {
+func (r *groupConversationRepository) Update(conversation *domain.GroupConversation) error {
 	err := r.db.Save(toConversationPersistence(conversation)).Error
 
 	if err != nil {
 		return err
 	}
 
-	err = r.db.Save(toPublicConversationPersistence(conversation)).Error
+	err = r.db.Save(toGroupConversationPersistence(conversation)).Error
 
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (r *publicConversationRepository) Update(conversation *domain.PublicConvers
 	return nil
 }
 
-func (r *publicConversationRepository) GetByID(id uuid.UUID) (*domain.PublicConversation, error) {
+func (r *groupConversationRepository) GetByID(id uuid.UUID) (*domain.GroupConversation, error) {
 	conversation := Conversation{}
 
 	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
@@ -71,9 +71,9 @@ func (r *publicConversationRepository) GetByID(id uuid.UUID) (*domain.PublicConv
 		return nil, err
 	}
 
-	publicConversation := PublicConversation{}
+	groupConversation := GroupConversation{}
 
-	err = r.db.Where("conversation_id = ?", id).First(&publicConversation).Error
+	err = r.db.Where("conversation_id = ?", id).First(&groupConversation).Error
 
 	if err != nil {
 		return nil, err
@@ -81,11 +81,11 @@ func (r *publicConversationRepository) GetByID(id uuid.UUID) (*domain.PublicConv
 
 	participant := Participant{}
 
-	err = r.db.Where("conversation_id = ? AND user_id = ?", id, publicConversation.OwnerID).First(&participant).Error
+	err = r.db.Where("conversation_id = ? AND user_id = ?", id, groupConversation.OwnerID).First(&participant).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	return toPublicConversationDomain(&conversation, &publicConversation, &participant), nil
+	return toGroupConversationDomain(&conversation, &groupConversation, &participant), nil
 }

@@ -31,14 +31,14 @@ func (h *messageEventHandlers) ListenForEvents() {
 		select {
 		case event := <-h.subscriber.Subscribe(domain.DomainEventChannel):
 			switch e := event.Data.(type) {
-			case *domain.PublicConversationRenamed:
+			case *domain.GroupConversationRenamed:
 				go h.sendRenamedConversationMessage(e)
-			case *domain.PublicConversationLeft:
-				go h.sendPublicConversationLeftMessage(e)
-			case *domain.PublicConversationJoined:
-				go h.sendPublicConversationJoinedMessage(e)
-			case *domain.PublicConversationInvited:
-				go h.sendPublicConversationInvitedMessage(e)
+			case *domain.GroupConversationLeft:
+				go h.sendGroupConversationLeftMessage(e)
+			case *domain.GroupConversationJoined:
+				go h.sendGroupConversationJoinedMessage(e)
+			case *domain.GroupConversationInvited:
+				go h.sendGroupConversationInvitedMessage(e)
 			}
 
 		case <-h.ctx.Done():
@@ -47,7 +47,7 @@ func (h *messageEventHandlers) ListenForEvents() {
 	}
 }
 
-func (h *messageEventHandlers) sendRenamedConversationMessage(e *domain.PublicConversationRenamed) {
+func (h *messageEventHandlers) sendRenamedConversationMessage(e *domain.GroupConversationRenamed) {
 	err := h.commands.ConversationService.SendRenamedConversationMessage(e.ConversationID, e.UserID, e.NewName)
 
 	if err != nil {
@@ -55,7 +55,7 @@ func (h *messageEventHandlers) sendRenamedConversationMessage(e *domain.PublicCo
 	}
 }
 
-func (h *messageEventHandlers) sendPublicConversationLeftMessage(e *domain.PublicConversationLeft) {
+func (h *messageEventHandlers) sendGroupConversationLeftMessage(e *domain.GroupConversationLeft) {
 	err := h.commands.ConversationService.SendLeftConversationMessage(e.ConversationID, e.UserID)
 
 	if err != nil {
@@ -64,7 +64,7 @@ func (h *messageEventHandlers) sendPublicConversationLeftMessage(e *domain.Publi
 	}
 }
 
-func (h *messageEventHandlers) sendPublicConversationJoinedMessage(e *domain.PublicConversationJoined) {
+func (h *messageEventHandlers) sendGroupConversationJoinedMessage(e *domain.GroupConversationJoined) {
 	err := h.commands.ConversationService.SendJoinedConversationMessage(e.ConversationID, e.UserID)
 
 	if err != nil {
@@ -72,7 +72,7 @@ func (h *messageEventHandlers) sendPublicConversationJoinedMessage(e *domain.Pub
 	}
 }
 
-func (h *messageEventHandlers) sendPublicConversationInvitedMessage(e *domain.PublicConversationInvited) {
+func (h *messageEventHandlers) sendGroupConversationInvitedMessage(e *domain.GroupConversationInvited) {
 	err := h.commands.ConversationService.SendInvitedConversationMessage(e.ConversationID, e.UserID)
 
 	if err != nil {

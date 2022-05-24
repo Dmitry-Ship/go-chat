@@ -71,18 +71,18 @@ const Conversation: React.FC = () => {
           <a className={styles.backButton}>👈</a>
         </Link>
         <div className={styles.conversationInfo}>
-          <div className={styles.conversationPublicInfo}>
+          <div className={styles.conversationGroupInfo}>
             <Avatar src={conversation.avatar} />
             <h3 className={styles.conversationName}>{conversation.name}</h3>
           </div>
 
-          {conversation?.type === "public" && (
+          {conversation?.type === "group" && (
             <ParticipantsList
               participantsCount={conversationQuery.data.participants_count}
             />
           )}
         </div>
-        {conversation?.type === "public" ? (
+        {conversation?.type === "group" ? (
           <EditConversationBtn
             conversationId={conversationId}
             joined={conversationQuery.data.joined}

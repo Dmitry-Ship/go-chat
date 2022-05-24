@@ -20,7 +20,7 @@ const UserInfoSlideIn: React.FC<{
   ) => {
     e.preventDefault();
 
-    const result = await makeCommand("/createPrivateConversationIfNotExists", {
+    const result = await makeCommand("/createDirectConversationIfNotExists", {
       to_user_id: user.id,
     });
 

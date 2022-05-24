@@ -28,12 +28,9 @@ function ContactsList() {
     async (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
       e.preventDefault();
 
-      const result = await makeCommand(
-        "/createPrivateConversationIfNotExists",
-        {
-          to_user_id: id,
-        }
-      );
+      const result = await makeCommand("/createDirectConversationIfNotExists", {
+        to_user_id: id,
+      });
 
       if (result.status) {
         router.push(`/conversations/${result.data.conversation_id}`);

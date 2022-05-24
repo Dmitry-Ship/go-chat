@@ -7,16 +7,16 @@ import (
 	"github.com/google/uuid"
 )
 
-type PrivateConversationRepository interface {
-	Store(conversation *PrivateConversation) error
+type DirectConversationRepository interface {
+	Store(conversation *DirectConversation) error
 	GetID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
-	GetByID(id uuid.UUID) (*PrivateConversation, error)
+	GetByID(id uuid.UUID) (*DirectConversation, error)
 }
 
-type PublicConversationRepository interface {
-	Store(conversation *PublicConversation) error
-	Update(conversation *PublicConversation) error
-	GetByID(id uuid.UUID) (*PublicConversation, error)
+type GroupConversationRepository interface {
+	Store(conversation *GroupConversation) error
+	Update(conversation *GroupConversation) error
+	GetByID(id uuid.UUID) (*GroupConversation, error)
 }
 
 type BaseConversation interface {
@@ -35,42 +35,42 @@ func (c *Conversation) GetBaseData() *Conversation {
 	return c
 }
 
-type PublicConversationData struct {
+type GroupConversationData struct {
 	ID     uuid.UUID
 	Name   string
 	Avatar string
 	Owner  Participant
 }
-type PublicConversation struct {
+type GroupConversation struct {
 	Conversation
-	Data PublicConversationData
+	Data GroupConversationData
 }
 
-func (publicConversation *PublicConversation) Delete(userID uuid.UUID) error {
-	if publicConversation.Data.Owner.UserID != userID {
+func (groupConversation *GroupConversation) Delete(userID uuid.UUID) error {
+	if groupConversation.Data.Owner.UserID != userID {
 		return errors.New("user is not owner")
 	}
 
-	publicConversation.IsActive = false
+	groupConversation.IsActive = false
 
-	publicConversation.AddEvent(NewPublicConversationDeleted(publicConversation.Conversation.ID))
+	groupConversation.AddEvent(NewGroupConversationDeleted(groupConversation.Conversation.ID))
 
 	return nil
 }
 
-func NewPublicConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*PublicConversation, error) {
+func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*GroupConversation, error) {
 	if name == "" {
 		return nil, errors.New("name is empty")
 	}
 
-	publicConversation := &PublicConversation{
+	groupConversation := &GroupConversation{
 		Conversation: Conversation{
 			ID:        id,
-			Type:      "public",
+			Type:      "group",
 			CreatedAt: time.Now(),
 			IsActive:  true,
 		},
-		Data: PublicConversationData{
+		Data: GroupConversationData{
 			ID:     uuid.New(),
 			Name:   name,
 			Avatar: string(name[0]),
@@ -78,29 +78,29 @@ func NewPublicConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*Pub
 		},
 	}
 
-	publicConversation.AddEvent(NewPublicConversationCreated(id, creatorID))
+	groupConversation.AddEvent(NewGroupConversationCreated(id, creatorID))
 
-	return publicConversation, nil
+	return groupConversation, nil
 }
 
-func (publicConversation *PublicConversation) Rename(newName string, userId uuid.UUID) error {
-	if publicConversation.Data.Owner.UserID == userId {
-		publicConversation.Data.Name = newName
-		publicConversation.Data.Avatar = string(newName[0])
+func (groupConversation *GroupConversation) Rename(newName string, userId uuid.UUID) error {
+	if groupConversation.Data.Owner.UserID == userId {
+		groupConversation.Data.Name = newName
+		groupConversation.Data.Avatar = string(newName[0])
 
-		publicConversation.AddEvent(NewPublicConversationRenamed(publicConversation.ID, userId, newName))
+		groupConversation.AddEvent(NewGroupConversationRenamed(groupConversation.ID, userId, newName))
 		return nil
 	}
 
 	return errors.New("user is not owner")
 }
 
-func (publicConversation *PublicConversation) SendTextMessage(text string, participant *Participant) (*TextMessage, error) {
-	if participant.ConversationID != publicConversation.Conversation.ID {
+func (groupConversation *GroupConversation) SendTextMessage(text string, participant *Participant) (*TextMessage, error) {
+	if participant.ConversationID != groupConversation.Conversation.ID {
 		return nil, errors.New("user is not participant")
 	}
 
-	message, err := NewTextMessage(publicConversation.Conversation.ID, participant.UserID, text)
+	message, err := NewTextMessage(groupConversation.Conversation.ID, participant.UserID, text)
 
 	if err != nil {
 		return nil, err
@@ -109,55 +109,55 @@ func (publicConversation *PublicConversation) SendTextMessage(text string, parti
 	return message, nil
 }
 
-type PrivateConversationData struct {
+type DirectConversationData struct {
 	ID       uuid.UUID
 	ToUser   Participant
 	FromUser Participant
 }
 
-type PrivateConversation struct {
+type DirectConversation struct {
 	Conversation
-	Data PrivateConversationData
+	Data DirectConversationData
 }
 
-func NewPrivateConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*PrivateConversation, error) {
+func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectConversation, error) {
 	if to == from {
 		return nil, errors.New("cannot chat with yourself")
 	}
 
-	privateConversation := PrivateConversation{
+	directConversation := DirectConversation{
 		Conversation: Conversation{
 			ID:        id,
-			Type:      "private",
+			Type:      "direct",
 			CreatedAt: time.Now(),
 			IsActive:  true,
 		},
-		Data: PrivateConversationData{
+		Data: DirectConversationData{
 			ID:       uuid.New(),
 			ToUser:   *NewParticipant(id, to),
 			FromUser: *NewParticipant(id, from),
 		},
 	}
 
-	privateConversation.AddEvent(NewPrivateConversationCreated(id, to, from))
+	directConversation.AddEvent(NewDirectConversationCreated(id, to, from))
 
-	return &privateConversation, nil
+	return &directConversation, nil
 }
 
-func (privateConversation *PrivateConversation) GetFromUser() *Participant {
-	return &privateConversation.Data.FromUser
+func (directConversation *DirectConversation) GetFromUser() *Participant {
+	return &directConversation.Data.FromUser
 }
 
-func (privateConversation *PrivateConversation) GetToUser() *Participant {
-	return &privateConversation.Data.ToUser
+func (directConversation *DirectConversation) GetToUser() *Participant {
+	return &directConversation.Data.ToUser
 }
 
-func (privateConversation *PrivateConversation) SendTextMessage(text string, userID uuid.UUID) (*TextMessage, error) {
-	if privateConversation.Data.ToUser.UserID != userID && privateConversation.Data.FromUser.UserID != userID {
+func (directConversation *DirectConversation) SendTextMessage(text string, userID uuid.UUID) (*TextMessage, error) {
+	if directConversation.Data.ToUser.UserID != userID && directConversation.Data.FromUser.UserID != userID {
 		return nil, errors.New("user is not participant")
 	}
 
-	message, err := NewTextMessage(privateConversation.ID, userID, text)
+	message, err := NewTextMessage(directConversation.ID, userID, text)
 
 	if err != nil {
 		return nil, err

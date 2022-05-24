@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *commandController) handleCreatePrivateConversationIfNotExists(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleCreateDirectConversationIfNotExists(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ToUserId uuid.UUID `json:"to_user_id"`
 	}{}
@@ -26,7 +26,7 @@ func (s *commandController) handleCreatePrivateConversationIfNotExists(w http.Re
 		return
 	}
 
-	conversationId, err := s.commands.ConversationService.StartPrivateConversation(userID, request.ToUserId)
+	conversationId, err := s.commands.ConversationService.StartDirectConversation(userID, request.ToUserId)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -47,7 +47,7 @@ func (s *commandController) handleCreatePrivateConversationIfNotExists(w http.Re
 	}
 }
 
-func (s *commandController) handleCreatePublicConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleCreateGroupConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationName string    `json:"conversation_name"`
 		ConversationId   uuid.UUID `json:"conversation_id"`
@@ -67,7 +67,7 @@ func (s *commandController) handleCreatePublicConversation(w http.ResponseWriter
 		return
 	}
 
-	err = s.commands.ConversationService.CreatePublicConversation(request.ConversationId, request.ConversationName, userID)
+	err = s.commands.ConversationService.CreateGroupConversation(request.ConversationId, request.ConversationName, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -101,7 +101,7 @@ func (s *commandController) handleDeleteConversation(w http.ResponseWriter, r *h
 		return
 	}
 
-	err = s.commands.ConversationService.DeletePublicConversation(request.ConversationId, userID)
+	err = s.commands.ConversationService.DeleteGroupConversation(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -116,7 +116,7 @@ func (s *commandController) handleDeleteConversation(w http.ResponseWriter, r *h
 	}
 }
 
-func (s *commandController) handleJoinPublicConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleJoinGroupConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
@@ -134,7 +134,7 @@ func (s *commandController) handleJoinPublicConversation(w http.ResponseWriter, 
 		return
 	}
 
-	err = s.commands.ConversationService.JoinPublicConversation(request.ConversationId, userID)
+	err = s.commands.ConversationService.JoinGroupConversation(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -149,7 +149,7 @@ func (s *commandController) handleJoinPublicConversation(w http.ResponseWriter, 
 	}
 }
 
-func (s *commandController) handleLeavePublicConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleLeaveGroupConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -168,7 +168,7 @@ func (s *commandController) handleLeavePublicConversation(w http.ResponseWriter,
 		return
 	}
 
-	err = s.commands.ConversationService.LeavePublicConversation(request.ConversationId, userID)
+	err = s.commands.ConversationService.LeaveGroupConversation(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -183,7 +183,7 @@ func (s *commandController) handleLeavePublicConversation(w http.ResponseWriter,
 	}
 }
 
-func (s *commandController) handleRenamePublicConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleRenameGroupConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -203,7 +203,7 @@ func (s *commandController) handleRenamePublicConversation(w http.ResponseWriter
 		return
 	}
 
-	err = s.commands.ConversationService.RenamePublicConversation(request.ConversationId, userID, request.ConversationName)
+	err = s.commands.ConversationService.RenameGroupConversation(request.ConversationId, userID, request.ConversationName)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -218,7 +218,7 @@ func (s *commandController) handleRenamePublicConversation(w http.ResponseWriter
 	}
 }
 
-func (s *commandController) handleInviteToPublicConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandController) handleInviteToGroupConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -238,7 +238,7 @@ func (s *commandController) handleInviteToPublicConversation(w http.ResponseWrit
 		return
 	}
 
-	err = s.commands.ConversationService.InviteToPublicConversation(request.ConversationId, userID, request.InviteeId)
+	err = s.commands.ConversationService.InviteToGroupConversation(request.ConversationId, userID, request.InviteeId)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)

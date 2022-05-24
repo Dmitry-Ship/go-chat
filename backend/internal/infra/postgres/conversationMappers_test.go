@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestToPublicConversationPersistence(t *testing.T) {
-	conversation, _ := domain.NewPublicConversation(uuid.New(), "cool room", uuid.New())
+func TestToGroupConversationPersistence(t *testing.T) {
+	conversation, _ := domain.NewGroupConversation(uuid.New(), "cool room", uuid.New())
 
-	persistence := toPublicConversationPersistence(conversation)
+	persistence := toGroupConversationPersistence(conversation)
 
 	assert.Equal(t, persistence.ID, conversation.Data.ID)
 	assert.Equal(t, persistence.ConversationID, conversation.GetBaseData().ID)
@@ -21,11 +21,11 @@ func TestToPublicConversationPersistence(t *testing.T) {
 	assert.Equal(t, persistence.OwnerID, conversation.Data.Owner.UserID)
 }
 
-func TestToPublicConversationDomain(t *testing.T) {
+func TestToGroupConversationDomain(t *testing.T) {
 	conversationId := uuid.New()
 	userId := uuid.New()
 
-	publicConversation := &PublicConversation{
+	groupConversation := &GroupConversation{
 		ID:             uuid.New(),
 		ConversationID: conversationId,
 		Name:           "cool room",
@@ -45,19 +45,19 @@ func TestToPublicConversationDomain(t *testing.T) {
 		UserID:         userId,
 	}
 
-	domain := toPublicConversationDomain(conversation, publicConversation, participant)
+	domain := toGroupConversationDomain(conversation, groupConversation, participant)
 
-	assert.Equal(t, domain.Data.ID, publicConversation.ID)
-	assert.Equal(t, domain.GetBaseData().ID, publicConversation.ConversationID)
-	assert.Equal(t, domain.Data.Name, publicConversation.Name)
-	assert.Equal(t, domain.Data.Avatar, publicConversation.Avatar)
-	assert.Equal(t, domain.Data.Owner.UserID, publicConversation.OwnerID)
+	assert.Equal(t, domain.Data.ID, groupConversation.ID)
+	assert.Equal(t, domain.GetBaseData().ID, groupConversation.ConversationID)
+	assert.Equal(t, domain.Data.Name, groupConversation.Name)
+	assert.Equal(t, domain.Data.Avatar, groupConversation.Avatar)
+	assert.Equal(t, domain.Data.Owner.UserID, groupConversation.OwnerID)
 }
 
-func TestToPrivateConversationPersistence(t *testing.T) {
-	conversation, _ := domain.NewPrivateConversation(uuid.New(), uuid.New(), uuid.New())
+func TestToDirectConversationPersistence(t *testing.T) {
+	conversation, _ := domain.NewDirectConversation(uuid.New(), uuid.New(), uuid.New())
 
-	persistence := toPrivateConversationPersistence(conversation)
+	persistence := toDirectConversationPersistence(conversation)
 
 	assert.Equal(t, persistence.ID, conversation.Data.ID)
 	assert.Equal(t, persistence.ConversationID, conversation.GetBaseData().ID)

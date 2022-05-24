@@ -26,16 +26,16 @@ func NewWSHandlers(commands *app.Commands) *wsHandlers {
 
 func (s *wsHandlers) HandleNotification(notification *ws.IncomingNotification) {
 	switch notification.Type {
-	case "public_message":
-		s.handleReceiveWSPublicChatMessage(notification.Data, notification.UserID)
-	case "private_message":
-		s.handleReceiveWSPrivateChatMessage(notification.Data, notification.UserID)
+	case "group_message":
+		s.handleReceiveWSGroupChatMessage(notification.Data, notification.UserID)
+	case "direct_message":
+		s.handleReceiveWSDirectChatMessage(notification.Data, notification.UserID)
 	default:
 		log.Println("Unknown notification type:", notification.Type)
 	}
 }
 
-func (s *wsHandlers) handleReceiveWSPublicChatMessage(data json.RawMessage, userID uuid.UUID) {
+func (s *wsHandlers) handleReceiveWSGroupChatMessage(data json.RawMessage, userID uuid.UUID) {
 	request := struct {
 		Content        string    `json:"content"`
 		ConversationId uuid.UUID `json:"conversation_id"`
@@ -46,7 +46,7 @@ func (s *wsHandlers) handleReceiveWSPublicChatMessage(data json.RawMessage, user
 		return
 	}
 
-	err := s.commands.ConversationService.SendPublicTextMessage(request.Content, request.ConversationId, userID)
+	err := s.commands.ConversationService.SendGroupTextMessage(request.Content, request.ConversationId, userID)
 
 	if err != nil {
 		log.Println(err)
@@ -54,7 +54,7 @@ func (s *wsHandlers) handleReceiveWSPublicChatMessage(data json.RawMessage, user
 	}
 }
 
-func (s *wsHandlers) handleReceiveWSPrivateChatMessage(data json.RawMessage, userID uuid.UUID) {
+func (s *wsHandlers) handleReceiveWSDirectChatMessage(data json.RawMessage, userID uuid.UUID) {
 	request := struct {
 		Content        string    `json:"content"`
 		ConversationId uuid.UUID `json:"conversation_id"`
@@ -65,7 +65,7 @@ func (s *wsHandlers) handleReceiveWSPrivateChatMessage(data json.RawMessage, use
 		return
 	}
 
-	err := s.commands.ConversationService.SendPrivateTextMessage(request.Content, request.ConversationId, userID)
+	err := s.commands.ConversationService.SendDirectTextMessage(request.Content, request.ConversationId, userID)
 
 	if err != nil {
 		log.Println(err)

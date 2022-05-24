@@ -21,14 +21,14 @@ func NewConversationRepository(db *gorm.DB, eventPublisher infra.EventPublisher)
 
 }
 
-func (r *conversationRepository) StorePublicConversation(conversation *domain.PublicConversation) error {
+func (r *conversationRepository) StoreGroupConversation(conversation *domain.GroupConversation) error {
 	err := r.db.Create(toConversationPersistence(conversation)).Error
 
 	if err != nil {
 		return err
 	}
 
-	err = r.db.Create(toPublicConversationPersistence(conversation)).Error
+	err = r.db.Create(toGroupConversationPersistence(conversation)).Error
 
 	if err != nil {
 		return err
@@ -45,14 +45,14 @@ func (r *conversationRepository) StorePublicConversation(conversation *domain.Pu
 	return nil
 }
 
-func (r *conversationRepository) UpdatePublicConversation(conversation *domain.PublicConversation) error {
+func (r *conversationRepository) UpdateGroupConversation(conversation *domain.GroupConversation) error {
 	err := r.db.Save(toConversationPersistence(conversation)).Error
 
 	if err != nil {
 		return err
 	}
 
-	err = r.db.Save(toPublicConversationPersistence(conversation)).Error
+	err = r.db.Save(toGroupConversationPersistence(conversation)).Error
 
 	if err != nil {
 		return err
@@ -63,14 +63,14 @@ func (r *conversationRepository) UpdatePublicConversation(conversation *domain.P
 	return nil
 }
 
-func (r *conversationRepository) StorePrivateConversation(conversation *domain.PrivateConversation) error {
+func (r *conversationRepository) StoreDirectConversation(conversation *domain.DirectConversation) error {
 	err := r.db.Create(toConversationPersistence(conversation)).Error
 
 	if err != nil {
 		return err
 	}
 
-	err = r.db.Create(toPrivateConversationPersistence(conversation)).Error
+	err = r.db.Create(toDirectConversationPersistence(conversation)).Error
 
 	if err != nil {
 		return err
@@ -93,18 +93,18 @@ func (r *conversationRepository) StorePrivateConversation(conversation *domain.P
 	return nil
 }
 
-func (r *conversationRepository) GetPrivateConversationID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {
-	privateConversation := PrivateConversation{}
-	err := r.db.Where("to_user_id = ? AND from_user_id = ?", firstUserId, secondUserID).Or("to_user_id = ? AND from_user_id = ?", secondUserID, firstUserId).First(&privateConversation).Error
+func (r *conversationRepository) GetDirectConversationID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {
+	directConversation := DirectConversation{}
+	err := r.db.Where("to_user_id = ? AND from_user_id = ?", firstUserId, secondUserID).Or("to_user_id = ? AND from_user_id = ?", secondUserID, firstUserId).First(&directConversation).Error
 
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	return privateConversation.ConversationID, nil
+	return directConversation.ConversationID, nil
 }
 
-func (r *conversationRepository) GetPublicConversation(id uuid.UUID) (*domain.PublicConversation, error) {
+func (r *conversationRepository) GetGroupConversation(id uuid.UUID) (*domain.GroupConversation, error) {
 	conversation := Conversation{}
 
 	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
@@ -113,9 +113,9 @@ func (r *conversationRepository) GetPublicConversation(id uuid.UUID) (*domain.Pu
 		return nil, err
 	}
 
-	publicConversation := PublicConversation{}
+	groupConversation := GroupConversation{}
 
-	err = r.db.Where("conversation_id = ?", id).First(&publicConversation).Error
+	err = r.db.Where("conversation_id = ?", id).First(&groupConversation).Error
 
 	if err != nil {
 		return nil, err
@@ -123,11 +123,11 @@ func (r *conversationRepository) GetPublicConversation(id uuid.UUID) (*domain.Pu
 
 	participant := Participant{}
 
-	err = r.db.Where("conversation_id = ? AND user_id = ?", id, publicConversation.OwnerID).First(&participant).Error
+	err = r.db.Where("conversation_id = ? AND user_id = ?", id, groupConversation.OwnerID).First(&participant).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	return toPublicConversationDomain(&conversation, &publicConversation, &participant), nil
+	return toGroupConversationDomain(&conversation, &groupConversation, &participant), nil
 }

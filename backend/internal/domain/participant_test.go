@@ -31,7 +31,7 @@ func TestNewJoinedParticipant(t *testing.T) {
 	assert.NotNil(t, participant.ID)
 	assert.NotNil(t, participant.CreatedAt)
 	assert.Equal(t, participant.IsActive, true)
-	assert.Equal(t, participant.events[len(participant.events)-1], NewPublicConversationJoined(conversationID, userID))
+	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationJoined(conversationID, userID))
 }
 
 func TestNewInvitedParticipant(t *testing.T) {
@@ -45,16 +45,16 @@ func TestNewInvitedParticipant(t *testing.T) {
 	assert.NotNil(t, participant.ID)
 	assert.NotNil(t, participant.CreatedAt)
 	assert.Equal(t, participant.IsActive, true)
-	assert.Equal(t, participant.events[len(participant.events)-1], NewPublicConversationInvited(conversationID, userID))
+	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationInvited(conversationID, userID))
 }
 
-func TestLeavePublicConversation(t *testing.T) {
+func TestLeaveGroupConversation(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
 	participant := NewParticipant(conversationID, userID)
 
-	err := participant.LeavePublicConversation(conversationID)
+	err := participant.LeaveGroupConversation(conversationID)
 
 	assert.Nil(t, err)
-	assert.Equal(t, participant.events[len(participant.events)-1], NewPublicConversationLeft(conversationID, userID))
+	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationLeft(conversationID, userID))
 }
