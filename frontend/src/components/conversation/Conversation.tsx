@@ -98,6 +98,7 @@ const Conversation: React.FC = () => {
 
         <ChatForm
           conversationId={conversationId}
+          conversationType={conversation.type}
           loading={false}
           joined={conversationQuery.data.joined}
           onJoin={() => setIsJoined(true)}

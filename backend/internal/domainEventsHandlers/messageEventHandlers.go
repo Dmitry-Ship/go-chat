@@ -48,7 +48,7 @@ func (h *messageEventHandlers) ListenForEvents() {
 }
 
 func (h *messageEventHandlers) sendRenamedConversationMessage(e *domain.PublicConversationRenamed) {
-	err := h.commands.MessagingService.SendRenamedConversationMessage(e.ConversationID, e.UserID, e.NewName)
+	err := h.commands.ConversationService.SendRenamedConversationMessage(e.ConversationID, e.UserID, e.NewName)
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -56,7 +56,7 @@ func (h *messageEventHandlers) sendRenamedConversationMessage(e *domain.PublicCo
 }
 
 func (h *messageEventHandlers) sendPublicConversationLeftMessage(e *domain.PublicConversationLeft) {
-	err := h.commands.MessagingService.SendLeftConversationMessage(e.ConversationID, e.UserID)
+	err := h.commands.ConversationService.SendLeftConversationMessage(e.ConversationID, e.UserID)
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -65,7 +65,7 @@ func (h *messageEventHandlers) sendPublicConversationLeftMessage(e *domain.Publi
 }
 
 func (h *messageEventHandlers) sendPublicConversationJoinedMessage(e *domain.PublicConversationJoined) {
-	err := h.commands.MessagingService.SendJoinedConversationMessage(e.ConversationID, e.UserID)
+	err := h.commands.ConversationService.SendJoinedConversationMessage(e.ConversationID, e.UserID)
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -73,7 +73,7 @@ func (h *messageEventHandlers) sendPublicConversationJoinedMessage(e *domain.Pub
 }
 
 func (h *messageEventHandlers) sendPublicConversationInvitedMessage(e *domain.PublicConversationInvited) {
-	err := h.commands.MessagingService.SendInvitedConversationMessage(e.ConversationID, e.UserID)
+	err := h.commands.ConversationService.SendInvitedConversationMessage(e.ConversationID, e.UserID)
 
 	if err != nil {
 		h.logHandlerError(err)

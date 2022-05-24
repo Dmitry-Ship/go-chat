@@ -10,6 +10,7 @@ import (
 type PrivateConversationRepository interface {
 	Store(conversation *PrivateConversation) error
 	GetID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
+	GetByID(id uuid.UUID) (*PrivateConversation, error)
 }
 
 type PublicConversationRepository interface {
@@ -94,6 +95,20 @@ func (publicConversation *PublicConversation) Rename(newName string, userId uuid
 	return errors.New("user is not owner")
 }
 
+func (publicConversation *PublicConversation) SendTextMessage(text string, participant *Participant) (*TextMessage, error) {
+	if participant.ConversationID != publicConversation.Conversation.ID {
+		return nil, errors.New("user is not participant")
+	}
+
+	message, err := NewTextMessage(publicConversation.Conversation.ID, participant.UserID, text)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return message, nil
+}
+
 type PrivateConversationData struct {
 	ID       uuid.UUID
 	ToUser   Participant
@@ -135,4 +150,18 @@ func (privateConversation *PrivateConversation) GetFromUser() *Participant {
 
 func (privateConversation *PrivateConversation) GetToUser() *Participant {
 	return &privateConversation.Data.ToUser
+}
+
+func (privateConversation *PrivateConversation) SendTextMessage(text string, userID uuid.UUID) (*TextMessage, error) {
+	if privateConversation.Data.ToUser.UserID != userID && privateConversation.Data.FromUser.UserID != userID {
+		return nil, errors.New("user is not participant")
+	}
+
+	message, err := NewTextMessage(privateConversation.ID, userID, text)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return message, nil
 }

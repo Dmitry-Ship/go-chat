@@ -61,6 +61,32 @@ func toPublicConversationDomain(conversation *Conversation, publicConversation *
 	}
 }
 
+func toPrivateConversationDomain(conversation *Conversation, privateConversation *PrivateConversation, toUser *Participant, fromUser *Participant) *domain.PrivateConversation {
+	return &domain.PrivateConversation{
+		Data: domain.PrivateConversationData{
+			ID: privateConversation.ID,
+			ToUser: domain.Participant{
+				UserID:         toUser.UserID,
+				ID:             toUser.ID,
+				ConversationID: privateConversation.ConversationID,
+				CreatedAt:      toUser.CreatedAt,
+			},
+			FromUser: domain.Participant{
+				UserID:         fromUser.UserID,
+				ID:             fromUser.ID,
+				ConversationID: privateConversation.ConversationID,
+				CreatedAt:      fromUser.CreatedAt,
+			},
+		},
+		Conversation: domain.Conversation{
+			ID:        conversation.ID,
+			Type:      conversationTypesMap[conversation.Type],
+			CreatedAt: conversation.CreatedAt,
+			IsActive:  conversation.IsActive,
+		},
+	}
+}
+
 func toPrivateConversationPersistence(conversation *domain.PrivateConversation) *PrivateConversation {
 	return &PrivateConversation{
 		ID:             conversation.Data.ID,

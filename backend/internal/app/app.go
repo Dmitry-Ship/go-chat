@@ -11,12 +11,9 @@ import (
 )
 
 type Commands struct {
-	PrivateConversationService             services.PrivateConversationService
-	PublicConversationEditingService       services.PublicConversationEditingService
-	PublicConversationParticipationService services.PublicConversationParticipationService
-	AuthService                            services.AuthService
-	MessagingService                       services.MessagingService
-	ClientRegister                         services.ClientRegister
+	ConversationService services.ConversationService
+	AuthService         services.AuthService
+	ClientRegister      services.ClientRegister
 }
 
 func NewCommands(ctx context.Context, eventPublisher infra.EventPublisher, db *gorm.DB, activeClients ws.ActiveClients) *Commands {
@@ -28,11 +25,8 @@ func NewCommands(ctx context.Context, eventPublisher infra.EventPublisher, db *g
 	jwtTokens := services.NewJWTokens()
 
 	return &Commands{
-		PrivateConversationService:             services.NewPrivateConversationService(privateConversationsRepository),
-		PublicConversationEditingService:       services.NewPublicConversationEditingService(publicConversationsRepository),
-		PublicConversationParticipationService: services.NewPublicConversationParticipationService(participantRepository),
-		AuthService:                            services.NewAuthService(usersRepository, jwtTokens),
-		MessagingService:                       services.NewMessagingService(messagesRepository),
-		ClientRegister:                         services.NewClientRegister(activeClients),
+		ConversationService: services.NewConversationService(publicConversationsRepository, privateConversationsRepository, participantRepository, messagesRepository),
+		AuthService:         services.NewAuthService(usersRepository, jwtTokens),
+		ClientRegister:      services.NewClientRegister(activeClients),
 	}
 }

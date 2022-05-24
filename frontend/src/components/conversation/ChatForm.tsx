@@ -7,9 +7,10 @@ import { useAPI } from "../../contexts/apiContext";
 const ChatForm: React.FC<{
   loading: boolean;
   joined: boolean;
+  conversationType: "public" | "private";
   conversationId: string;
   onJoin: () => void;
-}> = ({ loading, joined, onJoin, conversationId }) => {
+}> = ({ loading, joined, onJoin, conversationId, conversationType }) => {
   const [message, setMessage] = useState<string>("");
 
   const { sendNotification } = useWebSocket();
@@ -18,7 +19,10 @@ const ChatForm: React.FC<{
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    sendNotification("message", {
+    const notification =
+      conversationType === "public" ? "public_message" : "private_message";
+
+    sendNotification(notification, {
       content: message,
       conversation_id: conversationId,
     });

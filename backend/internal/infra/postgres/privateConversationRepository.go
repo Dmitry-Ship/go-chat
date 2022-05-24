@@ -18,7 +18,42 @@ func NewPrivateConversationRepository(db *gorm.DB, eventPublisher infra.EventPub
 		db:             db,
 		eventPublisher: eventPublisher,
 	}
+}
 
+func (r *privateConversationRepository) GetByID(id uuid.UUID) (*domain.PrivateConversation, error) {
+	conversation := Conversation{}
+
+	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	privateConversation := PrivateConversation{}
+
+	err = r.db.Where("conversation_id = ?", id).First(&privateConversation).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	toUser := Participant{}
+
+	err = r.db.Where("conversation_id = ? AND user_id = ?", id, privateConversation.ToUserID).First(&toUser).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	fromUser := Participant{}
+
+	err = r.db.Where("conversation_id = ? AND user_id = ?", id, privateConversation.FromUserID).First(&fromUser).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return toPrivateConversationDomain(&conversation, &privateConversation, &toUser, &fromUser), nil
 }
 
 func (r *privateConversationRepository) Store(conversation *domain.PrivateConversation) error {
