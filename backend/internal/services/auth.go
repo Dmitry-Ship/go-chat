@@ -35,7 +35,7 @@ func (a *authService) Login(username string, password string) (tokens, error) {
 		return tokens{}, err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(user.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
 	if err != nil {
 		return tokens{}, errors.New("password is incorrect")
