@@ -148,25 +148,65 @@ func (s *conversationService) SendGroupTextMessage(messageText string, conversat
 }
 
 func (s *conversationService) SendJoinedConversationMessage(conversationId uuid.UUID, userId uuid.UUID) error {
-	message := domain.NewJoinedConversationMessage(conversationId, userId)
+	conversation, err := s.groupConversations.GetByID(conversationId)
+
+	if err != nil {
+		return err
+	}
+
+	message, err := conversation.SendJoinedConversationMessage(conversationId, userId)
+
+	if err != nil {
+		return err
+	}
 
 	return s.messages.StoreJoinedConversationMessage(message)
 }
 
 func (s *conversationService) SendInvitedConversationMessage(conversationId uuid.UUID, userId uuid.UUID) error {
-	message := domain.NewInvitedConversationMessage(conversationId, userId)
+	conversation, err := s.groupConversations.GetByID(conversationId)
+
+	if err != nil {
+		return err
+	}
+
+	message, err := conversation.SendInvitedConversationMessage(conversationId, userId)
+
+	if err != nil {
+		return err
+	}
 
 	return s.messages.StoreInvitedConversationMessage(message)
 }
 
 func (s *conversationService) SendRenamedConversationMessage(conversationId uuid.UUID, userId uuid.UUID, name string) error {
-	message := domain.NewConversationRenamedMessage(conversationId, userId, name)
+	conversation, err := s.groupConversations.GetByID(conversationId)
+
+	if err != nil {
+		return err
+	}
+
+	message, err := conversation.SendRenamedConversationMessage(conversationId, userId, name)
+
+	if err != nil {
+		return err
+	}
 
 	return s.messages.StoreRenamedConversationMessage(message)
 }
 
 func (s *conversationService) SendLeftConversationMessage(conversationId uuid.UUID, userId uuid.UUID) error {
-	message := domain.NewLeftConversationMessage(conversationId, userId)
+	conversation, err := s.groupConversations.GetByID(conversationId)
+
+	if err != nil {
+		return err
+	}
+
+	message, err := conversation.SendLeftConversationMessage(conversationId, userId)
+
+	if err != nil {
+		return err
+	}
 
 	return s.messages.StoreLeftConversationMessage(message)
 }

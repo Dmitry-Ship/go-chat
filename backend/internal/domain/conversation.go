@@ -7,18 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type DirectConversationRepository interface {
-	Store(conversation *DirectConversation) error
-	GetID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
-	GetByID(id uuid.UUID) (*DirectConversation, error)
-}
-
-type GroupConversationRepository interface {
-	Store(conversation *GroupConversation) error
-	Update(conversation *GroupConversation) error
-	GetByID(id uuid.UUID) (*GroupConversation, error)
-}
-
 type BaseConversation interface {
 	GetBaseData() *Conversation
 }
@@ -33,6 +21,12 @@ type Conversation struct {
 
 func (c *Conversation) GetBaseData() *Conversation {
 	return c
+}
+
+type GroupConversationRepository interface {
+	Store(conversation *GroupConversation) error
+	Update(conversation *GroupConversation) error
+	GetByID(id uuid.UUID) (*GroupConversation, error)
 }
 
 type GroupConversationData struct {
@@ -96,11 +90,15 @@ func (groupConversation *GroupConversation) Rename(newName string, userId uuid.U
 }
 
 func (groupConversation *GroupConversation) SendTextMessage(text string, participant *Participant) (*TextMessage, error) {
+	if !groupConversation.Conversation.IsActive {
+		return nil, errors.New("conversation is not active")
+	}
+
 	if participant.ConversationID != groupConversation.Conversation.ID {
 		return nil, errors.New("user is not participant")
 	}
 
-	message, err := NewTextMessage(groupConversation.Conversation.ID, participant.UserID, text)
+	message, err := newTextMessage(groupConversation.Conversation.ID, participant.UserID, text)
 
 	if err != nil {
 		return nil, err
@@ -110,7 +108,7 @@ func (groupConversation *GroupConversation) SendTextMessage(text string, partici
 }
 
 func (groupConversation *GroupConversation) Join(userID uuid.UUID) (*Participant, error) {
-	if groupConversation.Conversation.IsActive == false {
+	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
 
@@ -122,8 +120,12 @@ func (groupConversation *GroupConversation) Join(userID uuid.UUID) (*Participant
 }
 
 func (groupConversation *GroupConversation) Invite(inviteeID uuid.UUID) (*Participant, error) {
-	if groupConversation.Conversation.IsActive == false {
+	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
+	}
+
+	if groupConversation.Data.Owner.UserID == inviteeID {
+		return nil, errors.New("user is owner")
 	}
 
 	participant := NewParticipant(groupConversation.ID, inviteeID)
@@ -131,6 +133,52 @@ func (groupConversation *GroupConversation) Invite(inviteeID uuid.UUID) (*Partic
 	participant.AddEvent(NewGroupConversationInvited(groupConversation.ID, inviteeID))
 
 	return participant, nil
+}
+
+func (groupConversation *GroupConversation) SendJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*JoinedConversationMessage, error) {
+	if !groupConversation.Conversation.IsActive {
+		return nil, errors.New("conversation is not active")
+	}
+
+	message := newJoinedConversationMessage(conversationID, userID)
+
+	return message, nil
+}
+
+func (groupConversation *GroupConversation) SendInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*InvitedConversationMessage, error) {
+	if !groupConversation.Conversation.IsActive {
+		return nil, errors.New("conversation is not active")
+	}
+
+	message := newInvitedConversationMessage(conversationID, userID)
+
+	return message, nil
+}
+
+func (groupConversation *GroupConversation) SendRenamedConversationMessage(conversationID uuid.UUID, userID uuid.UUID, newName string) (*ConversationRenamedMessage, error) {
+	if !groupConversation.Conversation.IsActive {
+		return nil, errors.New("conversation is not active")
+	}
+
+	message := newConversationRenamedMessage(conversationID, userID, newName)
+
+	return message, nil
+}
+
+func (groupConversation *GroupConversation) SendLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*LeftConversationMessage, error) {
+	if !groupConversation.Conversation.IsActive {
+		return nil, errors.New("conversation is not active")
+	}
+
+	message := newLeftConversationMessage(conversationID, userID)
+
+	return message, nil
+}
+
+type DirectConversationRepository interface {
+	Store(conversation *DirectConversation) error
+	GetID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
+	GetByID(id uuid.UUID) (*DirectConversation, error)
 }
 
 type DirectConversationData struct {
@@ -181,7 +229,7 @@ func (directConversation *DirectConversation) SendTextMessage(text string, userI
 		return nil, errors.New("user is not participant")
 	}
 
-	message, err := NewTextMessage(directConversation.ID, userID, text)
+	message, err := newTextMessage(directConversation.ID, userID, text)
 
 	if err != nil {
 		return nil, err

@@ -24,6 +24,10 @@ func NewNotificationTopic(topic string, userID uuid.UUID) (*NotificationTopic, e
 		return nil, errors.New("topic is empty")
 	}
 
+	if len(topic) > 100 {
+		return nil, errors.New("topic is too long")
+	}
+
 	return &NotificationTopic{
 		ID:     uuid.New(),
 		Name:   topic,

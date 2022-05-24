@@ -22,6 +22,18 @@ func TestNewUserEmptyUsername(t *testing.T) {
 	assert.Equal(t, err.Error(), "username is empty")
 }
 
+func TestNewUserLongUsername(t *testing.T) {
+	name := ""
+
+	for i := 0; i < 101; i++ {
+		name += "a"
+	}
+
+	_, err := NewUser(name, "123")
+
+	assert.Equal(t, err.Error(), "username is too long")
+}
+
 func TestNewUserEmptyPassword(t *testing.T) {
 	_, err := NewUser("test", "")
 

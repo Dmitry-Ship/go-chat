@@ -37,7 +37,7 @@ func TestNewGroupConversationEmptyName(t *testing.T) {
 	assert.Equal(t, "name is empty", err.Error())
 }
 
-func TestRenameSuccess(t *testing.T) {
+func TestRename(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
@@ -50,7 +50,99 @@ func TestRenameSuccess(t *testing.T) {
 	assert.Equal(t, conversation.events[len(conversation.events)-1], NewGroupConversationRenamed(conversationId, creatorId, "new name"))
 }
 
-func TestRenameFailure(t *testing.T) {
+func TestSendTextMessage(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+	participant := NewParticipant(conversationId, creatorId)
+
+	message, err := conversation.SendTextMessage("new message", participant)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "new message", message.Data.Text)
+	assert.Equal(t, conversationId, message.ConversationID)
+	assert.Equal(t, "text", message.Type)
+}
+
+func TestSendTextMessageUserNotParticipant(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+	participant := NewParticipant(uuid.New(), uuid.New())
+
+	_, err := conversation.SendTextMessage("new message", participant)
+
+	assert.Equal(t, "user is not participant", err.Error())
+}
+
+func TestSendTextMessageNotActive(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+	participant := NewParticipant(conversationId, creatorId)
+	_ = conversation.Delete(creatorId)
+
+	_, err := conversation.SendTextMessage("new message", participant)
+
+	assert.Equal(t, "conversation is not active", err.Error())
+}
+
+func TestSendJoinedConversationMessage(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+
+	message, err := conversation.SendJoinedConversationMessage(conversationId, creatorId)
+
+	assert.Nil(t, err)
+	assert.Equal(t, conversationId, message.ConversationID)
+	assert.Equal(t, "joined_conversation", message.Type)
+}
+
+func TestSendInvitedConversationMessage(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+
+	message, err := conversation.SendInvitedConversationMessage(conversationId, creatorId)
+
+	assert.Nil(t, err)
+	assert.Equal(t, conversationId, message.ConversationID)
+	assert.Equal(t, "invited_conversation", message.Type)
+}
+
+func TestSendRenamedConversationMessage(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+
+	message, err := conversation.SendRenamedConversationMessage(conversationId, creatorId, "new name")
+
+	assert.Nil(t, err)
+	assert.Equal(t, conversationId, message.ConversationID)
+	assert.Equal(t, "renamed_conversation", message.Type)
+}
+
+func TestSendLeftConversationMessage(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+
+	message, err := conversation.SendLeftConversationMessage(conversationId, creatorId)
+
+	assert.Nil(t, err)
+	assert.Equal(t, conversationId, message.ConversationID)
+	assert.Equal(t, "left_conversation", message.Type)
+}
+
+func TestRenameNotOwner(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
@@ -95,7 +187,7 @@ func TestNewDirectConversationWithOneself(t *testing.T) {
 	assert.Equal(t, err.Error(), "cannot chat with yourself")
 }
 
-func TestDirectConversation_GetFromUser(t *testing.T) {
+func TestGetFromUser(t *testing.T) {
 	to := uuid.New()
 	from := uuid.New()
 	conversationId := uuid.New()
@@ -105,7 +197,7 @@ func TestDirectConversation_GetFromUser(t *testing.T) {
 	assert.Equal(t, from, conversation.GetFromUser().UserID)
 }
 
-func TestDirectConversation_GetToUser(t *testing.T) {
+func TestGetToUser(t *testing.T) {
 	to := uuid.New()
 	from := uuid.New()
 	conversationId := uuid.New()
@@ -115,7 +207,7 @@ func TestDirectConversation_GetToUser(t *testing.T) {
 	assert.Equal(t, to, conversation.GetToUser().UserID)
 }
 
-func TestGroupConversation_DeleteSuccess(t *testing.T) {
+func TestDelete(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
@@ -128,7 +220,7 @@ func TestGroupConversation_DeleteSuccess(t *testing.T) {
 	assert.Equal(t, conversation.events[len(conversation.events)-1], NewGroupConversationDeleted(conversation.ID))
 }
 
-func TestGroupConversation_DeleteFailure(t *testing.T) {
+func TestDeleteNotOwner(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
@@ -142,7 +234,7 @@ func TestGroupConversation_DeleteFailure(t *testing.T) {
 	assert.Equal(t, conversation.events[len(conversation.events)-1], NewGroupConversationCreated(conversationId, creatorId))
 }
 
-func TestGroupConversation_JoinSuccess(t *testing.T) {
+func TestJoin(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
@@ -160,21 +252,21 @@ func TestGroupConversation_JoinSuccess(t *testing.T) {
 	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationJoined(conversationId, userId))
 }
 
-func TestGroupConversation_JoinFailure(t *testing.T) {
+func TestJoinNotActive(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
 	userId := uuid.New()
 
-	conversation.Delete(creatorId)
+	_ = conversation.Delete(creatorId)
 
 	_, err := conversation.Join(userId)
 
 	assert.Equal(t, err.Error(), "conversation is not active")
 }
 
-func TestGroupConversation_InviteSuccess(t *testing.T) {
+func TestInvite(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
@@ -192,15 +284,26 @@ func TestGroupConversation_InviteSuccess(t *testing.T) {
 	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationInvited(conversationId, userId))
 }
 
-func TestGroupConversation_InviteFailure(t *testing.T) {
+func TestInviteNotActive(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
 	userId := uuid.New()
-	conversation.Delete(creatorId)
+	_ = conversation.Delete(creatorId)
 
 	_, err := conversation.Invite(userId)
 
 	assert.Equal(t, err.Error(), "conversation is not active")
+}
+
+func TestInviteOwner(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+
+	_, err := conversation.Invite(creatorId)
+
+	assert.Equal(t, err.Error(), "user is owner")
 }

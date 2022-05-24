@@ -64,9 +64,13 @@ type TextMessage struct {
 	Data TextMessageData
 }
 
-func NewTextMessage(conversationId uuid.UUID, userID uuid.UUID, text string) (*TextMessage, error) {
+func newTextMessage(conversationId uuid.UUID, userID uuid.UUID, text string) (*TextMessage, error) {
 	if text == "" {
 		return nil, errors.New("text is empty")
+	}
+
+	if len(text) > 1000 {
+		return nil, errors.New("text is too long")
 	}
 
 	baseMessage := newMessage(conversationId, userID, MessageTypeText)
@@ -94,7 +98,7 @@ type ConversationRenamedMessage struct {
 	Data conversationRenamedMessageData
 }
 
-func NewConversationRenamedMessage(conversationId uuid.UUID, userID uuid.UUID, newName string) *ConversationRenamedMessage {
+func newConversationRenamedMessage(conversationId uuid.UUID, userID uuid.UUID, newName string) *ConversationRenamedMessage {
 	baseMessage := newMessage(conversationId, userID, MessageTypeRenamedConversation)
 	return &ConversationRenamedMessage{
 		Message: *baseMessage,
@@ -112,18 +116,18 @@ func (crm *ConversationRenamedMessage) GetConversationRenamedMessage() *conversa
 
 type LeftConversationMessage = Message
 
-func NewLeftConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *LeftConversationMessage {
+func newLeftConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *LeftConversationMessage {
 	return newMessage(conversationId, userID, MessageTypeLeftConversation)
 }
 
 type JoinedConversationMessage = Message
 
-func NewJoinedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *JoinedConversationMessage {
+func newJoinedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *JoinedConversationMessage {
 	return newMessage(conversationId, userID, MessageTypeJoinedConversation)
 }
 
 type InvitedConversationMessage = Message
 
-func NewInvitedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *InvitedConversationMessage {
+func newInvitedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) *InvitedConversationMessage {
 	return newMessage(conversationId, userID, MessageTypeInvitedConversation)
 }

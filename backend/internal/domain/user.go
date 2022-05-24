@@ -24,9 +24,12 @@ type User struct {
 }
 
 func NewUser(username string, password string) (*User, error) {
-
 	if username == "" {
 		return nil, errors.New("username is empty")
+	}
+
+	if len(username) > 100 {
+		return nil, errors.New("username is too long")
 	}
 
 	if password == "" {

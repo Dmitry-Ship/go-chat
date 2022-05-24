@@ -27,3 +27,16 @@ func TestNewNotificationTopicEmptyTopic(t *testing.T) {
 
 	assert.Equal(t, "topic is empty", err.Error())
 }
+
+func TestNewNotificationTopicLongTopic(t *testing.T) {
+	name := ""
+
+	for i := 0; i < 101; i++ {
+		name += "a"
+	}
+	userID := uuid.New()
+
+	_, err := NewNotificationTopic(name, userID)
+
+	assert.Equal(t, "topic is too long", err.Error())
+}
