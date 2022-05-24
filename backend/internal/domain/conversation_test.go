@@ -239,17 +239,17 @@ func TestJoin(t *testing.T) {
 	conversationId := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
-	userId := uuid.New()
+	userID := uuid.New()
 
-	participant, err := conversation.Join(userId)
+	participant, err := conversation.Join(userID)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationId, participant.ConversationID)
-	assert.Equal(t, userId, participant.UserID)
+	assert.Equal(t, userID, participant.UserID)
 	assert.NotNil(t, participant.ID)
 	assert.NotNil(t, participant.CreatedAt)
 	assert.Equal(t, participant.IsActive, true)
-	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationJoined(conversationId, userId))
+	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationJoined(conversationId, userID))
 }
 
 func TestJoinNotActive(t *testing.T) {
@@ -257,11 +257,11 @@ func TestJoinNotActive(t *testing.T) {
 	conversationId := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
-	userId := uuid.New()
+	userID := uuid.New()
 
 	_ = conversation.Delete(creatorId)
 
-	_, err := conversation.Join(userId)
+	_, err := conversation.Join(userID)
 
 	assert.Equal(t, err.Error(), "conversation is not active")
 }
@@ -271,17 +271,18 @@ func TestInvite(t *testing.T) {
 	conversationId := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
-	userId := uuid.New()
+	userID := uuid.New()
+	inviteeId := uuid.New()
 
-	participant, err := conversation.Invite(userId)
+	participant, err := conversation.Invite(userID, inviteeId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationId, participant.ConversationID)
-	assert.Equal(t, userId, participant.UserID)
+	assert.Equal(t, inviteeId, participant.UserID)
 	assert.NotNil(t, participant.ID)
 	assert.NotNil(t, participant.CreatedAt)
 	assert.Equal(t, participant.IsActive, true)
-	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationInvited(conversationId, userId))
+	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationInvited(conversationId, userID, inviteeId))
 }
 
 func TestInviteNotActive(t *testing.T) {
@@ -289,10 +290,12 @@ func TestInviteNotActive(t *testing.T) {
 	conversationId := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
-	userId := uuid.New()
+	userID := uuid.New()
+	inviteeId := uuid.New()
+
 	_ = conversation.Delete(creatorId)
 
-	_, err := conversation.Invite(userId)
+	_, err := conversation.Invite(userID, inviteeId)
 
 	assert.Equal(t, err.Error(), "conversation is not active")
 }
@@ -303,7 +306,19 @@ func TestInviteOwner(t *testing.T) {
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
 
-	_, err := conversation.Invite(creatorId)
+	_, err := conversation.Invite(uuid.New(), creatorId)
 
 	assert.Equal(t, err.Error(), "user is owner")
+}
+
+func TestInviteSelf(t *testing.T) {
+	name := "test"
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationId, name, creatorId)
+	inviteeId := uuid.New()
+
+	_, err := conversation.Invite(inviteeId, inviteeId)
+
+	assert.Equal(t, err.Error(), "cannot invite yourself")
 }

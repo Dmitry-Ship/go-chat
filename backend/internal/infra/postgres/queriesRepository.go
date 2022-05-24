@@ -172,7 +172,7 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 	return conversations, nil
 }
 
-func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*readModel.ConversationFullDTO, error) {
+func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*readModel.ConversationFullDTO, error) {
 	conversation := readModel.ConversationFullDTO{}
 
 	err := r.db.Model(&Conversation{}).
@@ -185,7 +185,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*re
 		Joins("LEFT JOIN group_conversations ON group_conversations.conversation_id = conversations.id").
 		Joins("LEFT JOIN direct_conversations ON direct_conversations.conversation_id = conversations.id").
 		Joins("LEFT JOIN users ON direct_conversations.from_user_id = users.id OR direct_conversations.to_user_id = users.id").
-		Where("users.id IS NULL OR users.id <> ?", userId).
+		Where("users.id IS NULL OR users.id <> ?", userID).
 		Where("conversations.is_active = ?", true).
 		Where("conversations.id = ?", id).
 		Find(&conversation).Error
@@ -204,7 +204,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*re
 	hasUserJoined := true
 
 	participant := Participant{}
-	if err := r.db.Where("conversation_id = ?", id).Where("user_id = ?", userId).Where("is_active = ?", true).First(&participant).Error; err != nil {
+	if err := r.db.Where("conversation_id = ?", id).Where("user_id = ?", userID).Where("is_active = ?", true).First(&participant).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			hasUserJoined = false
 		} else {

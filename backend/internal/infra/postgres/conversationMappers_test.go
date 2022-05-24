@@ -23,14 +23,14 @@ func TestToGroupConversationPersistence(t *testing.T) {
 
 func TestToGroupConversationDomain(t *testing.T) {
 	conversationId := uuid.New()
-	userId := uuid.New()
+	userID := uuid.New()
 
 	groupConversation := &GroupConversation{
 		ID:             uuid.New(),
 		ConversationID: conversationId,
 		Name:           "cool room",
 		Avatar:         "avatar",
-		OwnerID:        userId,
+		OwnerID:        userID,
 	}
 
 	conversation := &Conversation{
@@ -42,7 +42,7 @@ func TestToGroupConversationDomain(t *testing.T) {
 	participant := &Participant{
 		ID:             uuid.New(),
 		ConversationID: conversationId,
-		UserID:         userId,
+		UserID:         userID,
 	}
 
 	domain := toGroupConversationDomain(conversation, groupConversation, participant)

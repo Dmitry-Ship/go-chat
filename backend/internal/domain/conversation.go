@@ -77,12 +77,12 @@ func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*Grou
 	return groupConversation, nil
 }
 
-func (groupConversation *GroupConversation) Rename(newName string, userId uuid.UUID) error {
-	if groupConversation.Data.Owner.UserID == userId {
+func (groupConversation *GroupConversation) Rename(newName string, userID uuid.UUID) error {
+	if groupConversation.Data.Owner.UserID == userID {
 		groupConversation.Data.Name = newName
 		groupConversation.Data.Avatar = string(newName[0])
 
-		groupConversation.AddEvent(NewGroupConversationRenamed(groupConversation.ID, userId, newName))
+		groupConversation.AddEvent(NewGroupConversationRenamed(groupConversation.ID, userID, newName))
 		return nil
 	}
 
@@ -119,7 +119,7 @@ func (groupConversation *GroupConversation) Join(userID uuid.UUID) (*Participant
 	return participant, nil
 }
 
-func (groupConversation *GroupConversation) Invite(inviteeID uuid.UUID) (*Participant, error) {
+func (groupConversation *GroupConversation) Invite(userID uuid.UUID, inviteeID uuid.UUID) (*Participant, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
@@ -128,9 +128,13 @@ func (groupConversation *GroupConversation) Invite(inviteeID uuid.UUID) (*Partic
 		return nil, errors.New("user is owner")
 	}
 
+	if userID == inviteeID {
+		return nil, errors.New("cannot invite yourself")
+	}
+
 	participant := NewParticipant(groupConversation.ID, inviteeID)
 
-	participant.AddEvent(NewGroupConversationInvited(groupConversation.ID, inviteeID))
+	participant.AddEvent(NewGroupConversationInvited(groupConversation.ID, userID, inviteeID))
 
 	return participant, nil
 }

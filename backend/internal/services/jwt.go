@@ -148,9 +148,9 @@ func (a *jwTokens) ParseRefreshToken(tokenString string) (uuid.UUID, error) {
 	}
 
 	if token.Valid {
-		userId := token.Claims.(*tokenClaims).UserID
+		userID := token.Claims.(*tokenClaims).UserID
 
-		return userId, nil
+		return userID, nil
 	}
 
 	return uuid.Nil, err

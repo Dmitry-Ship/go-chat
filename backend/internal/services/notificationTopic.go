@@ -17,10 +17,10 @@ type BroadcastMessage struct {
 }
 
 type NotificationTopicService interface {
-	SubscribeToTopic(topic string, userId uuid.UUID) error
+	SubscribeToTopic(topic string, userID uuid.UUID) error
 	GetReceivers(topic string) ([]uuid.UUID, error)
 	SendToUser(userID uuid.UUID, notification ws.OutgoingNotification) error
-	UnsubscribeFromTopic(topic string, userId uuid.UUID) error
+	UnsubscribeFromTopic(topic string, userID uuid.UUID) error
 	DeleteTopic(topic string) error
 }
 
@@ -42,8 +42,8 @@ func NewNotificationTopicService(
 	}
 }
 
-func (s *notificationTopicService) SubscribeToTopic(topic string, userId uuid.UUID) error {
-	notificationTopic, err := domain.NewNotificationTopic(topic, userId)
+func (s *notificationTopicService) SubscribeToTopic(topic string, userID uuid.UUID) error {
+	notificationTopic, err := domain.NewNotificationTopic(topic, userID)
 
 	if err != nil {
 		return err
@@ -52,8 +52,8 @@ func (s *notificationTopicService) SubscribeToTopic(topic string, userId uuid.UU
 	return s.notificationTopics.Store(notificationTopic)
 }
 
-func (s *notificationTopicService) UnsubscribeFromTopic(topic string, userId uuid.UUID) error {
-	return s.notificationTopics.DeleteByUserIDAndTopic(userId, topic)
+func (s *notificationTopicService) UnsubscribeFromTopic(topic string, userID uuid.UUID) error {
+	return s.notificationTopics.DeleteByUserIDAndTopic(userID, topic)
 }
 
 func (s *notificationTopicService) DeleteTopic(topic string) error {

@@ -44,14 +44,14 @@ func (s *HTTPHandlers) direct(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		userId, err := s.commandController.commands.AuthService.ParseAccessToken(accessToken.Value)
+		userID, err := s.commandController.commands.AuthService.ParseAccessToken(accessToken.Value)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), userIDKey, userId)
+		ctx := context.WithValue(r.Context(), userIDKey, userID)
 
 		s.withHeaders(next).ServeHTTP(w, r.WithContext(ctx))
 	})

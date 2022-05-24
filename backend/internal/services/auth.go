@@ -15,7 +15,7 @@ type authService struct {
 
 type AuthService interface {
 	Login(username string, password string) (tokens, error)
-	Logout(userId uuid.UUID) error
+	Logout(userID uuid.UUID) error
 	SignUp(username string, password string) (tokens, error)
 	RotateTokens(refreshTokenString string) (tokens, error)
 	ParseAccessToken(accessTokenString string) (uuid.UUID, error)
@@ -44,8 +44,8 @@ func (a *authService) Login(username string, password string) (tokens, error) {
 	return a.createAndSetTokens(user)
 }
 
-func (a *authService) Logout(userId uuid.UUID) error {
-	user, err := a.users.GetByID(userId)
+func (a *authService) Logout(userID uuid.UUID) error {
+	user, err := a.users.GetByID(userID)
 
 	if err != nil {
 		return err
@@ -91,13 +91,13 @@ func (a *authService) SignUp(username string, password string) (tokens, error) {
 }
 
 func (a *authService) RotateTokens(refreshTokenString string) (tokens, error) {
-	userId, err := a.jwTokens.ParseRefreshToken(refreshTokenString)
+	userID, err := a.jwTokens.ParseRefreshToken(refreshTokenString)
 
 	if err != nil {
 		return tokens{}, err
 	}
 
-	user, err := a.users.GetByID(userId)
+	user, err := a.users.GetByID(userID)
 
 	if err != nil {
 		return tokens{}, err

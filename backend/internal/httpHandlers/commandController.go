@@ -36,7 +36,7 @@ func (s *commandController) handleOpenWSConnection() http.HandlerFunc {
 		userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 		if !ok {
-			http.Error(w, "userId not found in context", http.StatusInternalServerError)
+			http.Error(w, "userID not found in context", http.StatusInternalServerError)
 			return
 		}
 

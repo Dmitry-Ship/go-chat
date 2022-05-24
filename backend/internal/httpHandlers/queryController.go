@@ -22,7 +22,7 @@ func (s *queryController) handleGetContacts(w http.ResponseWriter, r *http.Reque
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -85,7 +85,7 @@ func (s *queryController) handleGetConversations(w http.ResponseWriter, r *http.
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (s *queryController) handleGetConversationsMessages(w http.ResponseWriter, 
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -155,7 +155,7 @@ func (s *queryController) handleGetConversation(w http.ResponseWriter, r *http.R
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -198,7 +198,7 @@ func (s *queryController) handleGetParticipants(w http.ResponseWriter, r *http.R
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -228,7 +228,7 @@ func (s *queryController) handleGetUser(w http.ResponseWriter, r *http.Request) 
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 

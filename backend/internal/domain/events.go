@@ -129,15 +129,17 @@ type GroupConversationInvited struct {
 	domainEvent
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
+	InvitedBy      uuid.UUID
 }
 
-func NewGroupConversationInvited(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationInvited {
+func NewGroupConversationInvited(conversationID uuid.UUID, userID uuid.UUID, invitee uuid.UUID) *GroupConversationInvited {
 	return &GroupConversationInvited{
 		domainEvent: domainEvent{
 			name: GroupConversationInvitedName,
 		},
 		ConversationID: conversationID,
-		UserID:         userID,
+		UserID:         invitee,
+		InvitedBy:      userID,
 	}
 }
 

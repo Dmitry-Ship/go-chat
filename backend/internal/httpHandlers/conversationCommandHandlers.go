@@ -22,7 +22,7 @@ func (s *commandController) handleCreateDirectConversationIfNotExists(w http.Res
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (s *commandController) handleCreateGroupConversation(w http.ResponseWriter,
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -90,7 +90,7 @@ func (s *commandController) handleDeleteConversation(w http.ResponseWriter, r *h
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -130,7 +130,7 @@ func (s *commandController) handleJoinGroupConversation(w http.ResponseWriter, r
 
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (s *commandController) handleLeaveGroupConversation(w http.ResponseWriter, 
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -187,7 +187,7 @@ func (s *commandController) handleRenameGroupConversation(w http.ResponseWriter,
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "userId not found in context", http.StatusInternalServerError)
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
 		return
 	}
 
@@ -219,6 +219,13 @@ func (s *commandController) handleRenameGroupConversation(w http.ResponseWriter,
 }
 
 func (s *commandController) handleInviteToGroupConversation(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
+		return
+	}
+
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 		InviteeId      uuid.UUID `json:"user_id"`
@@ -231,7 +238,7 @@ func (s *commandController) handleInviteToGroupConversation(w http.ResponseWrite
 		return
 	}
 
-	err = s.commands.ConversationService.InviteToGroupConversation(request.ConversationId, request.InviteeId)
+	err = s.commands.ConversationService.InviteToGroupConversation(request.ConversationId, userID, request.InviteeId)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
