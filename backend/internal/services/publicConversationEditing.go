@@ -25,7 +25,11 @@ func NewPublicConversationEditingService(
 }
 
 func (s *publicConversationEditingService) Create(id uuid.UUID, name string, userId uuid.UUID) error {
-	conversation := domain.NewPublicConversation(id, name, userId)
+	conversation, err := domain.NewPublicConversation(id, name, userId)
+
+	if err != nil {
+		return err
+	}
 
 	return s.conversations.Store(conversation)
 }

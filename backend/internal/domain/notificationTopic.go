@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 )
 
@@ -17,10 +19,14 @@ type NotificationTopic struct {
 	UserID uuid.UUID
 }
 
-func NewNotificationTopic(name string, userID uuid.UUID) *NotificationTopic {
+func NewNotificationTopic(topic string, userID uuid.UUID) (*NotificationTopic, error) {
+	if topic == "" {
+		return nil, errors.New("topic is empty")
+	}
+
 	return &NotificationTopic{
 		ID:     uuid.New(),
-		Name:   name,
+		Name:   topic,
 		UserID: userID,
-	}
+	}, nil
 }

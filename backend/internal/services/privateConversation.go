@@ -31,7 +31,11 @@ func (s *privateConversationService) Start(fromUserId uuid.UUID, toUserId uuid.U
 
 	newConversationID := uuid.New()
 
-	conversation := domain.NewPrivateConversation(newConversationID, toUserId, fromUserId)
+	conversation, err := domain.NewPrivateConversation(newConversationID, toUserId, fromUserId)
+
+	if err != nil {
+		return uuid.Nil, err
+	}
 
 	err = s.conversations.Store(conversation)
 

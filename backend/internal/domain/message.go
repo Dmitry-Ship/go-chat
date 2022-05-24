@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,7 +64,11 @@ type TextMessage struct {
 	Data TextMessageData
 }
 
-func NewTextMessage(conversationId uuid.UUID, userID uuid.UUID, text string) *TextMessage {
+func NewTextMessage(conversationId uuid.UUID, userID uuid.UUID, text string) (*TextMessage, error) {
+	if text == "" {
+		return nil, errors.New("text is empty")
+	}
+
 	baseMessage := newMessage(conversationId, userID, MessageTypeText)
 
 	return &TextMessage{
@@ -72,7 +77,7 @@ func NewTextMessage(conversationId uuid.UUID, userID uuid.UUID, text string) *Te
 			ID:   uuid.New(),
 			Text: text,
 		},
-	}
+	}, nil
 }
 
 func (tm *TextMessage) GetTextMessageData() TextMessageData {

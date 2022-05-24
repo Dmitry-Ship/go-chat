@@ -27,7 +27,11 @@ func NewMessagingService(
 }
 
 func (s *messagingService) SendTextMessage(messageText string, conversationId uuid.UUID, userId uuid.UUID) error {
-	message := domain.NewTextMessage(conversationId, userId, messageText)
+	message, err := domain.NewTextMessage(conversationId, userId, messageText)
+
+	if err != nil {
+		return err
+	}
 
 	return s.messages.StoreTextMessage(message)
 }

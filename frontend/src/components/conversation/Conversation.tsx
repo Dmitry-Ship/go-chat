@@ -46,10 +46,8 @@ const Conversation: React.FC = () => {
         event.data.conversation_id === conversationQuery.data.id
       ) {
         updateConversation({
-          conversation: {
-            ...conversationQuery.data,
-            name: event.data.new_name,
-          },
+          ...conversationQuery.data,
+          name: event.data.new_name,
         });
       }
     });

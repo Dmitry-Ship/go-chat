@@ -43,7 +43,11 @@ func NewNotificationTopicService(
 }
 
 func (s *notificationTopicService) SubscribeToTopic(topic string, userId uuid.UUID) error {
-	notificationTopic := domain.NewNotificationTopic(topic, userId)
+	notificationTopic, err := domain.NewNotificationTopic(topic, userId)
+
+	if err != nil {
+		return err
+	}
 
 	return s.notificationTopics.Store(notificationTopic)
 }

@@ -39,6 +39,15 @@ func (d *DatabaseConnection) GetConnection() *gorm.DB {
 }
 
 func (d *DatabaseConnection) AutoMigrate() {
+	// d.connection.Migrator().DropTable(&User{})
+	// d.connection.Migrator().DropTable(&PublicConversation{})
+	// d.connection.Migrator().DropTable(&PrivateConversation{})
+	// d.connection.Migrator().DropTable(&Participant{})
+	// d.connection.Migrator().DropTable(&Message{})
+	// d.connection.Migrator().DropTable(&Conversation{})
+	// d.connection.Migrator().DropTable(&UserNotificationTopic{})
+	// d.connection.Migrator().DropTable(&ConversationRenamedMessage{})
+
 	err := d.connection.AutoMigrate(Message{})
 	if err != nil {
 		panic(err)

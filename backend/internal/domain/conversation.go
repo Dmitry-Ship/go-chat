@@ -57,7 +57,11 @@ func (publicConversation *PublicConversation) Delete(userID uuid.UUID) error {
 	return nil
 }
 
-func NewPublicConversation(id uuid.UUID, name string, creatorID uuid.UUID) *PublicConversation {
+func NewPublicConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*PublicConversation, error) {
+	if name == "" {
+		return nil, errors.New("name is empty")
+	}
+
 	publicConversation := &PublicConversation{
 		Conversation: Conversation{
 			ID:        id,
@@ -75,7 +79,7 @@ func NewPublicConversation(id uuid.UUID, name string, creatorID uuid.UUID) *Publ
 
 	publicConversation.AddEvent(NewPublicConversationCreated(id, creatorID))
 
-	return publicConversation
+	return publicConversation, nil
 }
 
 func (publicConversation *PublicConversation) Rename(newName string, userId uuid.UUID) error {
@@ -101,7 +105,11 @@ type PrivateConversation struct {
 	Data PrivateConversationData
 }
 
-func NewPrivateConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) *PrivateConversation {
+func NewPrivateConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*PrivateConversation, error) {
+	if to == from {
+		return nil, errors.New("cannot chat with yourself")
+	}
+
 	privateConversation := PrivateConversation{
 		Conversation: Conversation{
 			ID:        id,
@@ -118,7 +126,7 @@ func NewPrivateConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) *Private
 
 	privateConversation.AddEvent(NewPrivateConversationCreated(id, to, from))
 
-	return &privateConversation
+	return &privateConversation, nil
 }
 
 func (privateConversation *PrivateConversation) GetFromUser() *Participant {

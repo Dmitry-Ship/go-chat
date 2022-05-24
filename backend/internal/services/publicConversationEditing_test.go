@@ -25,7 +25,10 @@ func (m *pubicConversationRepositoryMock) Update(conversation *domain.PublicConv
 
 func (m *pubicConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.PublicConversation, error) {
 	m.methodsCalled["GetPublicConversation"]++
-	return domain.NewPublicConversation(id, "cool room", m.publicConversationOwnerID), nil
+
+	conversation, err := domain.NewPublicConversation(id, "cool room", m.publicConversationOwnerID)
+
+	return conversation, err
 }
 
 func TestCreatePublicConversation(t *testing.T) {

@@ -55,7 +55,6 @@ func (r *queriesRepository) GetParticipants(conversationID uuid.UUID, userID uui
 		Model(&User{}).
 		Joins("left join participants on participants.user_id = users.id").
 		Where("participants.conversation_id", conversationID).
-		Where("users.id <> ?", userID).
 		Find(&users).Error
 
 	return users, err
@@ -188,6 +187,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userId uuid.UUID) (*re
 		Joins("LEFT JOIN users ON private_conversations.from_user_id = users.id OR private_conversations.to_user_id = users.id").
 		Where("users.id IS NULL OR users.id <> ?", userId).
 		Where("conversations.is_active = ?", true).
+		Where("conversations.id = ?", id).
 		Find(&conversation).Error
 
 	if err != nil {

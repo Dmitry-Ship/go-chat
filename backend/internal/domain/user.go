@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,14 +23,27 @@ type User struct {
 	RefreshToken string
 }
 
-func NewUser(username string, password string) *User {
+func NewUser(username string, password string) (*User, error) {
+
+	if username == "" {
+		return nil, errors.New("username is empty")
+	}
+
+	if password == "" {
+		return nil, errors.New("password is empty")
+	}
+
+	if len(password) < 8 {
+		return nil, errors.New("password is too short")
+	}
+
 	return &User{
 		ID:        uuid.New(),
 		Avatar:    string(username[0]),
 		CreatedAt: time.Now(),
 		Name:      username,
 		Password:  password,
-	}
+	}, nil
 }
 
 func (u *User) SetRefreshToken(refreshToken string) {

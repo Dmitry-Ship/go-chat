@@ -74,7 +74,29 @@ func (p pagination) GetPageSize() int {
 	return p.pageSize
 }
 
-func (s *HTTPHandlers) paginate(next http.HandlerFunc) http.HandlerFunc {
+func (s *HTTPHandlers) Get(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *HTTPHandlers) Post(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *HTTPHandlers) GetPaginated(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
@@ -88,7 +110,7 @@ func (s *HTTPHandlers) paginate(next http.HandlerFunc) http.HandlerFunc {
 
 		ctx := context.WithValue(r.Context(), paginationKey, p)
 
-		s.withHeaders(next).ServeHTTP(w, r.WithContext(ctx))
+		s.withHeaders(s.Get(next)).ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

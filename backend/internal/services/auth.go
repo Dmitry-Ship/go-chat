@@ -67,7 +67,11 @@ func (a *authService) SignUp(username string, password string) (tokens, error) {
 
 	hashedPassword := string(bytes)
 
-	user := domain.NewUser(username, hashedPassword)
+	user, err := domain.NewUser(username, hashedPassword)
+
+	if err != nil {
+		return tokens{}, err
+	}
 
 	newTokens, err := a.jwTokens.CreateTokens(user.ID)
 

@@ -10,7 +10,7 @@ import (
 )
 
 func TestToPublicConversationPersistence(t *testing.T) {
-	conversation := domain.NewPublicConversation(uuid.New(), "cool room", uuid.New())
+	conversation, _ := domain.NewPublicConversation(uuid.New(), "cool room", uuid.New())
 
 	persistence := toPublicConversationPersistence(conversation)
 
@@ -55,7 +55,7 @@ func TestToPublicConversationDomain(t *testing.T) {
 }
 
 func TestToPrivateConversationPersistence(t *testing.T) {
-	conversation := domain.NewPrivateConversation(uuid.New(), uuid.New(), uuid.New())
+	conversation, _ := domain.NewPrivateConversation(uuid.New(), uuid.New(), uuid.New())
 
 	persistence := toPrivateConversationPersistence(conversation)
 

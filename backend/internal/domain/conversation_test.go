@@ -12,7 +12,7 @@ func TestNewPublicConversation(t *testing.T) {
 	conversationId := uuid.New()
 	creatorId := uuid.New()
 
-	conversation := NewPublicConversation(conversationId, name, creatorId)
+	conversation, err := NewPublicConversation(conversationId, name, creatorId)
 
 	assert.Equal(t, conversation.ID, conversationId)
 	assert.Equal(t, name, conversation.Data.Name)
@@ -24,13 +24,24 @@ func TestNewPublicConversation(t *testing.T) {
 	assert.NotNil(t, conversation.Data.Owner.ID)
 	assert.Equal(t, conversation.IsActive, true)
 	assert.Equal(t, conversation.events[len(conversation.events)-1], NewPublicConversationCreated(conversationId, creatorId))
+	assert.Nil(t, err)
+}
+
+func TestNewPublicConversationEmptyName(t *testing.T) {
+	name := ""
+	conversationId := uuid.New()
+	creatorId := uuid.New()
+
+	_, err := NewPublicConversation(conversationId, name, creatorId)
+
+	assert.Equal(t, "name is empty", err.Error())
 }
 
 func TestRenameSuccess(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
-	conversation := NewPublicConversation(conversationId, name, creatorId)
+	conversation, _ := NewPublicConversation(conversationId, name, creatorId)
 
 	err := conversation.Rename("new name", creatorId)
 
@@ -43,7 +54,7 @@ func TestRenameFailure(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
-	conversation := NewPublicConversation(conversationId, name, creatorId)
+	conversation, _ := NewPublicConversation(conversationId, name, creatorId)
 
 	err := conversation.Rename("new name", uuid.New())
 
@@ -58,7 +69,7 @@ func TestNewPrivateConversation(t *testing.T) {
 	from := uuid.New()
 	conversationId := uuid.New()
 
-	conversation := NewPrivateConversation(conversationId, to, from)
+	conversation, err := NewPrivateConversation(conversationId, to, from)
 
 	assert.Equal(t, conversation.ID, conversationId)
 	assert.Equal(t, to, conversation.Data.ToUser.UserID)
@@ -72,6 +83,16 @@ func TestNewPrivateConversation(t *testing.T) {
 	assert.Equal(t, conversation.Type, "private")
 	assert.Equal(t, true, conversation.IsActive)
 	assert.Equal(t, conversation.events[len(conversation.events)-1], NewPrivateConversationCreated(conversationId, to, from))
+	assert.Nil(t, err)
+}
+
+func TestNewPrivateConversationWithOneself(t *testing.T) {
+	to := uuid.New()
+	conversationId := uuid.New()
+
+	_, err := NewPrivateConversation(conversationId, to, to)
+
+	assert.Equal(t, err.Error(), "cannot chat with yourself")
 }
 
 func TestPrivateConversation_GetFromUser(t *testing.T) {
@@ -79,7 +100,7 @@ func TestPrivateConversation_GetFromUser(t *testing.T) {
 	from := uuid.New()
 	conversationId := uuid.New()
 
-	conversation := NewPrivateConversation(conversationId, to, from)
+	conversation, _ := NewPrivateConversation(conversationId, to, from)
 
 	assert.Equal(t, from, conversation.GetFromUser().UserID)
 }
@@ -89,7 +110,7 @@ func TestPrivateConversation_GetToUser(t *testing.T) {
 	from := uuid.New()
 	conversationId := uuid.New()
 
-	conversation := NewPrivateConversation(conversationId, to, from)
+	conversation, _ := NewPrivateConversation(conversationId, to, from)
 
 	assert.Equal(t, to, conversation.GetToUser().UserID)
 }
@@ -98,7 +119,7 @@ func TestPublicConversation_DeleteSuccess(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
-	conversation := NewPublicConversation(conversationId, name, creatorId)
+	conversation, _ := NewPublicConversation(conversationId, name, creatorId)
 
 	err := conversation.Delete(creatorId)
 
@@ -111,7 +132,7 @@ func TestPublicConversation_DeleteFailure(t *testing.T) {
 	name := "test"
 	conversationId := uuid.New()
 	creatorId := uuid.New()
-	conversation := NewPublicConversation(conversationId, name, creatorId)
+	conversation, _ := NewPublicConversation(conversationId, name, creatorId)
 
 	err := conversation.Delete(uuid.New())
 
