@@ -46,6 +46,6 @@ func (s *commandController) handleOpenWSConnection() http.HandlerFunc {
 			return
 		}
 
-		s.commands.ClientRegister.RegisterClient(conn, userID, s.wsHandlers.HandleNotification)
+		s.commands.ClientsService.RegisterClient(conn, userID, s.wsHandlers.HandleNotification)
 	}
 }

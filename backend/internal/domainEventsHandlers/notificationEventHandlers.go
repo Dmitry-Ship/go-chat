@@ -1,10 +1,10 @@
 package domainEventsHandlers
 
 import (
+	"GitHub/go-chat/backend/internal/app"
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/readModel"
-	"GitHub/go-chat/backend/internal/services"
 	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
 	"log"
@@ -13,18 +13,18 @@ import (
 )
 
 type notificationsEventHandlers struct {
-	ctx                      context.Context
-	subscriber               infra.EventsSubscriber
-	notificationTopicService services.NotificationTopicService
-	queries                  readModel.QueriesRepository
+	ctx        context.Context
+	subscriber infra.EventsSubscriber
+	commands   *app.Commands
+	queries    readModel.QueriesRepository
 }
 
-func NewNotificationsEventHandlers(ctx context.Context, subscriber infra.EventsSubscriber, notificationTopicService services.NotificationTopicService, queries readModel.QueriesRepository) *notificationsEventHandlers {
+func NewNotificationsEventHandlers(ctx context.Context, subscriber infra.EventsSubscriber, commands *app.Commands, queries readModel.QueriesRepository) *notificationsEventHandlers {
 	return &notificationsEventHandlers{
-		ctx:                      ctx,
-		subscriber:               subscriber,
-		notificationTopicService: notificationTopicService,
-		queries:                  queries,
+		ctx:        ctx,
+		subscriber: subscriber,
+		commands:   commands,
+		queries:    queries,
 	}
 }
 
@@ -64,7 +64,7 @@ func (h *notificationsEventHandlers) ListenForEvents() {
 }
 
 func (h *notificationsEventHandlers) unsubscribeFromConversation(e *domain.GroupConversationLeft) {
-	err := h.notificationTopicService.UnsubscribeFromTopic("conversation:"+e.ConversationID.String(), e.UserID)
+	err := h.commands.NotificationService.UnsubscribeFromTopic("conversation:"+e.ConversationID.String(), e.UserID)
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -72,7 +72,7 @@ func (h *notificationsEventHandlers) unsubscribeFromConversation(e *domain.Group
 }
 
 func (h *notificationsEventHandlers) deleteConversationTopic(e *domain.GroupConversationDeleted) {
-	err := h.notificationTopicService.DeleteTopic("conversation:" + e.ConversationID.String())
+	err := h.commands.NotificationService.DeleteTopic("conversation:" + e.ConversationID.String())
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -80,7 +80,7 @@ func (h *notificationsEventHandlers) deleteConversationTopic(e *domain.GroupConv
 }
 
 func (h *notificationsEventHandlers) subscribeToConversationNotifications(conversationId uuid.UUID, userID uuid.UUID) {
-	err := h.notificationTopicService.SubscribeToTopic("conversation:"+conversationId.String(), userID)
+	err := h.commands.NotificationService.SubscribeToTopic("conversation:"+conversationId.String(), userID)
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -88,7 +88,7 @@ func (h *notificationsEventHandlers) subscribeToConversationNotifications(conver
 }
 
 func (h *notificationsEventHandlers) sendGroupConversationDeletedNotification(e *domain.GroupConversationDeleted) {
-	ids, err := h.notificationTopicService.GetReceivers("conversation:" + e.ConversationID.String())
+	ids, err := h.commands.NotificationService.GetReceivers("conversation:" + e.ConversationID.String())
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -105,7 +105,7 @@ func (h *notificationsEventHandlers) sendGroupConversationDeletedNotification(e 
 			},
 		}
 
-		err := h.notificationTopicService.SendToUser(id, notification)
+		err := h.commands.NotificationService.SendToUser(id, notification)
 
 		if err != nil {
 			h.logHandlerError(err)
@@ -114,7 +114,7 @@ func (h *notificationsEventHandlers) sendGroupConversationDeletedNotification(e 
 }
 
 func (h *notificationsEventHandlers) sendRenamedConversationNotification(e *domain.GroupConversationRenamed) {
-	ids, err := h.notificationTopicService.GetReceivers("conversation:" + e.ConversationID.String())
+	ids, err := h.commands.NotificationService.GetReceivers("conversation:" + e.ConversationID.String())
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -133,7 +133,7 @@ func (h *notificationsEventHandlers) sendRenamedConversationNotification(e *doma
 			},
 		}
 
-		err := h.notificationTopicService.SendToUser(id, notification)
+		err := h.commands.NotificationService.SendToUser(id, notification)
 
 		if err != nil {
 			h.logHandlerError(err)
@@ -142,7 +142,7 @@ func (h *notificationsEventHandlers) sendRenamedConversationNotification(e *doma
 }
 
 func (h *notificationsEventHandlers) sendMessageNotification(e *domain.MessageSent) {
-	ids, err := h.notificationTopicService.GetReceivers("conversation:" + e.ConversationID.String())
+	ids, err := h.commands.NotificationService.GetReceivers("conversation:" + e.ConversationID.String())
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -162,7 +162,7 @@ func (h *notificationsEventHandlers) sendMessageNotification(e *domain.MessageSe
 			Payload: messageDTO,
 		}
 
-		err = h.notificationTopicService.SendToUser(id, notification)
+		err = h.commands.NotificationService.SendToUser(id, notification)
 
 		if err != nil {
 			h.logHandlerError(err)
