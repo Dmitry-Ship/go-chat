@@ -8,30 +8,11 @@ import (
 	"strconv"
 )
 
-func (s *HTTPHandlers) withHeaders(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		clientURL := os.Getenv("CLIENT_ORIGIN")
-
-		w.Header().Set("Access-Control-Allow-Origin", clientURL)
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
-		w.Header().Set("Content-Type", "application/json")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	}
-}
-
 type userIDKeyType string
 
 const userIDKey userIDKeyType = "userId"
 
-func (s *HTTPHandlers) direct(next http.HandlerFunc) http.HandlerFunc {
+func (s *HTTPHandlers) private(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken, err := r.Cookie("access_token")
 
@@ -53,7 +34,7 @@ func (s *HTTPHandlers) direct(next http.HandlerFunc) http.HandlerFunc {
 
 		ctx := context.WithValue(r.Context(), userIDKey, userID)
 
-		s.withHeaders(next).ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -74,21 +55,41 @@ func (p pagination) GetPageSize() int {
 	return p.pageSize
 }
 
-func (s *HTTPHandlers) Get(next http.HandlerFunc) http.HandlerFunc {
+func (s *HTTPHandlers) get(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
+		clientURL := os.Getenv("CLIENT_ORIGIN")
+		w.Header().Set("Access-Control-Allow-Origin", clientURL)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
+		w.Header().Set("Access-Control-Allow-Methods", "GET")
+		w.Header().Set("Content-Type", "application/json")
+
 		next.ServeHTTP(w, r)
 	})
 }
 
-func (s *HTTPHandlers) Post(next http.HandlerFunc) http.HandlerFunc {
+func (s *HTTPHandlers) post(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		clientURL := os.Getenv("CLIENT_ORIGIN")
+
+		w.Header().Set("Access-Control-Allow-Origin", clientURL)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		w.Header().Set("Content-Type", "application/json")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 
@@ -96,7 +97,7 @@ func (s *HTTPHandlers) Post(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (s *HTTPHandlers) GetPaginated(next http.HandlerFunc) http.HandlerFunc {
+func (s *HTTPHandlers) getPaginated(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
@@ -110,7 +111,7 @@ func (s *HTTPHandlers) GetPaginated(next http.HandlerFunc) http.HandlerFunc {
 
 		ctx := context.WithValue(r.Context(), paginationKey, p)
 
-		s.withHeaders(s.Get(next)).ServeHTTP(w, r.WithContext(ctx))
+		s.get(next).ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
