@@ -7,14 +7,14 @@ import (
 	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
+	"GitHub/go-chat/backend/internal/readModel"
 	"GitHub/go-chat/backend/internal/server"
 	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
 )
 
-func main() {
+func createInfra() (context.Context, *app.Commands, readModel.QueriesRepository, infra.EventsSubscriber, func()) {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	redisClient := redisPubsub.GetRedisClient(ctx)
 	db := postgres.NewDatabaseConnection()
@@ -22,12 +22,24 @@ func main() {
 
 	dbConnection := db.GetConnection()
 	eventBus := infra.NewEventBus()
-	defer eventBus.Close()
 
 	activeClients := ws.NewActiveClients()
 
 	commands := app.NewCommands(ctx, eventBus, dbConnection, activeClients, redisClient)
 	queries := postgres.NewQueriesRepository(dbConnection)
+
+	done := func() {
+		cancel()
+		redisClient.Close()
+		eventBus.Close()
+	}
+
+	return ctx, commands, queries, eventBus, done
+}
+
+func main() {
+	ctx, commands, queries, eventBus, done := createInfra()
+	defer done()
 
 	handlers := httpHandlers.NewHTTPHandlers(commands, queries)
 	handlers.InitRoutes()
