@@ -14,9 +14,7 @@ func (s *commandHandlers) handleLogin(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}{}
 
-	err := json.NewDecoder(r.Body).Decode(&request)
-
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		returnError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -54,9 +52,7 @@ func (s *commandHandlers) handleLogin(w http.ResponseWriter, r *http.Request) {
 		AccessTokenExpiration: tokens.AccessTokenExpiration,
 	}
 
-	err = json.NewEncoder(w).Encode(expiration)
-
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(expiration); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -70,9 +66,7 @@ func (s *commandHandlers) handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.commands.AuthService.Logout(userID)
-
-	if err != nil {
+	if err := s.commands.AuthService.Logout(userID); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -91,9 +85,7 @@ func (s *commandHandlers) handleLogout(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 	})
 
-	err = json.NewEncoder(w).Encode("OK")
-
-	if err != nil {
+	if err := json.NewEncoder(w).Encode("OK"); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -105,9 +97,7 @@ func (s *commandHandlers) handleSignUp(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}{}
 
-	err := json.NewDecoder(r.Body).Decode(&request)
-
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		returnError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -145,9 +135,7 @@ func (s *commandHandlers) handleSignUp(w http.ResponseWriter, r *http.Request) {
 		AccessTokenExpiration: tokens.AccessTokenExpiration,
 	}
 
-	err = json.NewEncoder(w).Encode(expiration)
-
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(expiration); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -199,9 +187,7 @@ func (s *commandHandlers) handleRefreshToken(w http.ResponseWriter, r *http.Requ
 		AccessTokenExpiration: newTokens.AccessTokenExpiration,
 	}
 
-	err = json.NewEncoder(w).Encode(expiration)
-
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(expiration); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

@@ -12,9 +12,7 @@ func (s *commandHandlers) handleStartDirectConversation(w http.ResponseWriter, r
 		ToUserID uuid.UUID `json:"to_user_id"`
 	}{}
 
-	err := json.NewDecoder(r.Body).Decode(&request)
-
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		returnError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -39,9 +37,7 @@ func (s *commandHandlers) handleStartDirectConversation(w http.ResponseWriter, r
 		ConversationId: conversationID,
 	}
 
-	err = json.NewEncoder(w).Encode(response)
-
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -53,9 +49,7 @@ func (s *commandHandlers) handleCreateGroupConversation(w http.ResponseWriter, r
 		ConversationId   uuid.UUID `json:"conversation_id"`
 	}{}
 
-	err := json.NewDecoder(r.Body).Decode(&request)
-
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		returnError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -67,16 +61,14 @@ func (s *commandHandlers) handleCreateGroupConversation(w http.ResponseWriter, r
 		return
 	}
 
-	err = s.commands.ConversationService.CreateGroupConversation(request.ConversationId, request.ConversationName, userID)
+	err := s.commands.ConversationService.CreateGroupConversation(request.ConversationId, request.ConversationName, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode("OK")
-
-	if err != nil {
+	if err = json.NewEncoder(w).Encode("OK"); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -94,23 +86,19 @@ func (s *commandHandlers) handleDeleteConversation(w http.ResponseWriter, r *htt
 		return
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&request)
-
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	err = s.commands.ConversationService.DeleteGroupConversation(request.ConversationId, userID)
+	err := s.commands.ConversationService.DeleteGroupConversation(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode("OK")
-
-	if err != nil {
+	if err = json.NewEncoder(w).Encode("OK"); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -121,9 +109,7 @@ func (s *commandHandlers) handleJoinGroupConversation(w http.ResponseWriter, r *
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
 
-	err := json.NewDecoder(r.Body).Decode(&request)
-
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		returnError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -134,16 +120,14 @@ func (s *commandHandlers) handleJoinGroupConversation(w http.ResponseWriter, r *
 		return
 	}
 
-	err = s.commands.ConversationService.JoinGroupConversation(request.ConversationId, userID)
+	err := s.commands.ConversationService.JoinGroupConversation(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode("OK")
-
-	if err != nil {
+	if err = json.NewEncoder(w).Encode("OK"); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -161,23 +145,19 @@ func (s *commandHandlers) handleLeaveGroupConversation(w http.ResponseWriter, r 
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
 
-	err := json.NewDecoder(r.Body).Decode(&request)
-
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	err = s.commands.ConversationService.LeaveGroupConversation(request.ConversationId, userID)
+	err := s.commands.ConversationService.LeaveGroupConversation(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode("OK")
-
-	if err != nil {
+	if err = json.NewEncoder(w).Encode("OK"); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -196,23 +176,19 @@ func (s *commandHandlers) handleRenameGroupConversation(w http.ResponseWriter, r
 		ConversationName string    `json:"new_name"`
 	}{}
 
-	err := json.NewDecoder(r.Body).Decode(&request)
-
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	err = s.commands.ConversationService.RenameGroupConversation(request.ConversationId, userID, request.ConversationName)
+	err := s.commands.ConversationService.RenameGroupConversation(request.ConversationId, userID, request.ConversationName)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode("OK")
-
-	if err != nil {
+	if err = json.NewEncoder(w).Encode("OK"); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -231,23 +207,19 @@ func (s *commandHandlers) handleInviteToGroupConversation(w http.ResponseWriter,
 		InviteeId      uuid.UUID `json:"user_id"`
 	}{}
 
-	err := json.NewDecoder(r.Body).Decode(&request)
-
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	err = s.commands.ConversationService.InviteToGroupConversation(request.ConversationId, userID, request.InviteeId)
+	err := s.commands.ConversationService.InviteToGroupConversation(request.ConversationId, userID, request.InviteeId)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode("OK")
-
-	if err != nil {
+	if err = json.NewEncoder(w).Encode("OK"); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}

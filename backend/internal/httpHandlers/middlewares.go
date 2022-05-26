@@ -123,9 +123,8 @@ func returnError(w http.ResponseWriter, code int, err error) {
 		Error: err.Error(),
 	}
 
-	err = json.NewEncoder(w).Encode(errorResponse)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err = json.NewEncoder(w).Encode(errorResponse); err != nil {
+		returnError(w, http.StatusInternalServerError, err)
+		return
 	}
 }

@@ -81,9 +81,7 @@ func (a *authService) SignUp(username string, password string) (tokens, error) {
 
 	user.SetRefreshToken(newTokens.RefreshToken)
 
-	err = a.users.Store(user)
-
-	if err != nil {
+	if err = a.users.Store(user); err != nil {
 		return tokens{}, err
 	}
 
@@ -119,9 +117,7 @@ func (a *authService) createAndSetTokens(user *domain.User) (tokens, error) {
 
 	user.SetRefreshToken(newTokens.RefreshToken)
 
-	err = a.users.Update(user)
-
-	if err != nil {
+	if err = a.users.Update(user); err != nil {
 		return tokens{}, err
 	}
 

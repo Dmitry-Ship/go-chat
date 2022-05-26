@@ -68,9 +68,7 @@ func (s *conversationService) StartDirectConversation(fromUserID uuid.UUID, toUs
 		return uuid.Nil, err
 	}
 
-	err = s.directConversations.Store(conversation)
-
-	if err != nil {
+	if err = s.directConversations.Store(conversation); err != nil {
 		return uuid.Nil, err
 	}
 
@@ -84,9 +82,7 @@ func (s *conversationService) DeleteGroupConversation(id uuid.UUID, userID uuid.
 		return err
 	}
 
-	err = conversation.Delete(userID)
-
-	if err != nil {
+	if err = conversation.Delete(userID); err != nil {
 		return err
 	}
 
@@ -100,9 +96,7 @@ func (s *conversationService) RenameGroupConversation(conversationID uuid.UUID, 
 		return err
 	}
 
-	err = conversation.Rename(name, userID)
-
-	if err != nil {
+	if err = conversation.Rename(name, userID); err != nil {
 		return err
 	}
 

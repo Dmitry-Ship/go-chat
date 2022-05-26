@@ -54,9 +54,7 @@ func (s *clientsService) Run() {
 
 			var bMessage BroadcastMessage
 
-			err := json.Unmarshal([]byte(message.Payload), &bMessage)
-
-			if err != nil {
+			if err := json.Unmarshal([]byte(message.Payload), &bMessage); err != nil {
 				log.Println(err)
 				continue
 			}
