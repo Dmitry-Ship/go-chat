@@ -38,13 +38,16 @@ func (h *notificationsEventHandlers) ListenForEvents() {
 		case event := <-h.subscriber.Subscribe(domain.DomainEventChannel):
 			switch e := event.Data.(type) {
 			case *domain.GroupConversationRenamed:
-				go h.sendRenamedConversationNotification(e)
+				go h.sendUpdatedConversationNotification(e.ConversationID)
 			case *domain.GroupConversationLeft:
 				go h.unsubscribeFromConversation(e)
+				go h.sendUpdatedConversationNotification(e.ConversationID)
 			case *domain.GroupConversationJoined:
 				go h.subscribeToConversationNotifications(e.ConversationID, e.UserID)
+				go h.sendUpdatedConversationNotification(e.ConversationID)
 			case *domain.GroupConversationInvited:
 				go h.subscribeToConversationNotifications(e.ConversationID, e.UserID)
+				go h.sendUpdatedConversationNotification(e.ConversationID)
 			case *domain.MessageSent:
 				go h.sendMessageNotification(e)
 			case *domain.GroupConversationCreated:
@@ -113,8 +116,8 @@ func (h *notificationsEventHandlers) sendGroupConversationDeletedNotification(e 
 	}
 }
 
-func (h *notificationsEventHandlers) sendRenamedConversationNotification(e *domain.GroupConversationRenamed) {
-	ids, err := h.commands.NotificationService.GetReceivers("conversation:" + e.ConversationID.String())
+func (h *notificationsEventHandlers) sendUpdatedConversationNotification(conversationId uuid.UUID) {
+	ids, err := h.commands.NotificationService.GetReceivers("conversation:" + conversationId.String())
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -122,18 +125,19 @@ func (h *notificationsEventHandlers) sendRenamedConversationNotification(e *doma
 	}
 
 	for _, id := range ids {
-		notification := ws.OutgoingNotification{
-			Type: "conversation_renamed",
-			Payload: struct {
-				ConversationId uuid.UUID `json:"conversation_id"`
-				NewName        string    `json:"new_name"`
-			}{
-				ConversationId: e.ConversationID,
-				NewName:        e.NewName,
-			},
+		conversation, err := h.queries.GetConversation(conversationId, id)
+
+		if err != nil {
+			h.logHandlerError(err)
+			return
 		}
 
-		err := h.commands.NotificationService.SendToUser(id, notification)
+		notification := ws.OutgoingNotification{
+			Type:    "conversation_updated",
+			Payload: conversation,
+		}
+
+		err = h.commands.NotificationService.SendToUser(id, notification)
 
 		if err != nil {
 			h.logHandlerError(err)

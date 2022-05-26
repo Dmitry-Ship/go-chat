@@ -40,17 +40,18 @@ const Conversation: React.FC = () => {
   };
 
   useEffect(() => {
-    onNotification("conversation_renamed", (event) => {
+    onNotification("conversation_updated", (event) => {
       if (
         conversationQuery.status === "done" &&
-        event.data.conversation_id === conversationQuery.data.id
+        event.data.id === conversationQuery.data.id
       ) {
         updateConversation({
           ...conversationQuery.data,
-          name: event.data.new_name,
+          ...event.data,
         });
       }
     });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationQuery]);
 

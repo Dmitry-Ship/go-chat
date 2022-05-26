@@ -98,6 +98,10 @@ func (groupConversation *GroupConversation) SendTextMessage(text string, partici
 		return nil, errors.New("user is not participant")
 	}
 
+	if !participant.IsActive {
+		return nil, errors.New("user is not participant")
+	}
+
 	message, err := newTextMessage(groupConversation.Conversation.ID, participant.UserID, text)
 
 	if err != nil {

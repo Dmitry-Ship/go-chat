@@ -54,11 +54,23 @@ func (r *queriesRepository) GetParticipants(conversationID uuid.UUID, userID uui
 
 	err := r.db.Scopes(r.paginate(paginationInfo)).
 		Model(&User{}).
-		Joins("left join participants on participants.user_id = users.id").
-		Where("participants.conversation_id", conversationID).
+		Joins("LEFT JOIN participants on participants.user_id = users.id").
+		Where("participants.conversation_id = ?", conversationID).
+		Where("participants.is_active = ?", true).
 		Find(&users).Error
 
 	return users, err
+}
+
+func (r *queriesRepository) GetParticipantsCount(conversationID uuid.UUID) (int64, error) {
+	var count int64
+
+	err := r.db.Model(&Participant{}).
+		Where("participants.conversation_id = ?", conversationID).
+		Where("participants.is_active = ?", true).
+		Count(&count).Error
+
+	return count, err
 }
 
 func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {

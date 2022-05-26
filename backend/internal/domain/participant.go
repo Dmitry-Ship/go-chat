@@ -45,6 +45,8 @@ func (participant *Participant) LeaveGroupConversation(conversationID uuid.UUID)
 		return errors.New("participant is already left")
 	}
 
+	participant.IsActive = false
+
 	participant.AddEvent(NewGroupConversationLeft(conversationID, participant.UserID))
 
 	return nil

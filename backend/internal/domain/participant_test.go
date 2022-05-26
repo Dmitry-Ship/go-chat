@@ -28,5 +28,6 @@ func TestLeaveGroupConversation(t *testing.T) {
 	err := participant.LeaveGroupConversation(conversationID)
 
 	assert.Nil(t, err)
+	assert.Equal(t, participant.IsActive, false)
 	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationLeft(conversationID, userID))
 }
