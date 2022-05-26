@@ -14,17 +14,17 @@ type groupConversationRepositoryMock struct {
 }
 
 func (m *groupConversationRepositoryMock) Store(conversation *domain.GroupConversation) error {
-	m.methodsCalled["StoreGroupConversation"]++
+	m.methodsCalled["Store"]++
 	return nil
 }
 
 func (m *groupConversationRepositoryMock) Update(conversation *domain.GroupConversation) error {
-	m.methodsCalled["UpdateGroupConversation"]++
+	m.methodsCalled["Update"]++
 	return nil
 }
 
 func (m *groupConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.GroupConversation, error) {
-	m.methodsCalled["GetGroupConversation"]++
+	m.methodsCalled["GetByID"]++
 
 	conversation, err := domain.NewGroupConversation(id, "cool room", m.groupConversationOwnerID)
 
@@ -36,17 +36,17 @@ type directConversationRepositoryMock struct {
 }
 
 func (m *directConversationRepositoryMock) Store(conversation *domain.DirectConversation) error {
-	m.methodsCalled["StoreDirectConversation"]++
+	m.methodsCalled["Store"]++
 	return nil
 }
 
 func (m *directConversationRepositoryMock) Update(conversation *domain.DirectConversation) error {
-	m.methodsCalled["UpdateDirectConversation"]++
+	m.methodsCalled["Update"]++
 	return nil
 }
 
 func (m *directConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.DirectConversation, error) {
-	m.methodsCalled["GetDirectConversation"]++
+	m.methodsCalled["GetByID"]++
 
 	conversation, err := domain.NewDirectConversation(id, uuid.New(), uuid.New())
 
@@ -54,7 +54,7 @@ func (m *directConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.Direct
 }
 
 func (m *directConversationRepositoryMock) GetID(fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error) {
-	m.methodsCalled["GetDirectConversationID"]++
+	m.methodsCalled["GetID"]++
 
 	return uuid.New(), nil
 }
@@ -125,7 +125,7 @@ func TestCreateGroupConversation(t *testing.T) {
 	err := conversationService.CreateGroupConversation(uuid.New(), "test", uuid.New())
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, groupConversationRepository.methodsCalled["StoreGroupConversation"])
+	assert.Equal(t, 1, groupConversationRepository.methodsCalled["Store"])
 }
 
 func TestRenameGroupConversation(t *testing.T) {
@@ -146,7 +146,7 @@ func TestRenameGroupConversation(t *testing.T) {
 	err := conversationService.RenameGroupConversation(uuid.New(), groupConversationRepository.groupConversationOwnerID, "test")
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, groupConversationRepository.methodsCalled["UpdateGroupConversation"])
+	assert.Equal(t, 1, groupConversationRepository.methodsCalled["Update"])
 }
 
 func TestDeleteGroupConversation(t *testing.T) {
@@ -167,7 +167,7 @@ func TestDeleteGroupConversation(t *testing.T) {
 	err := conversationService.DeleteGroupConversation(uuid.New(), groupConversationRepository.groupConversationOwnerID)
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, groupConversationRepository.methodsCalled["UpdateGroupConversation"])
+	assert.Equal(t, 1, groupConversationRepository.methodsCalled["Update"])
 }
 
 func TestSendTextMessage(t *testing.T) {
