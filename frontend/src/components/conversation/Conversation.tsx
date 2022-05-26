@@ -21,6 +21,7 @@ const Conversation: React.FC = () => {
     Conversation & {
       joined: boolean;
       participants_count: number;
+      is_owner: boolean;
     }
   >(`/getConversation?conversation_id=${conversationId}`);
 
@@ -85,8 +86,7 @@ const Conversation: React.FC = () => {
         </div>
         {conversation?.type === "group" ? (
           <EditConversationBtn
-            conversationId={conversationId}
-            joined={conversationQuery.data.joined}
+            conversation={conversationQuery.data}
             onLeave={() => setIsJoined(false)}
           />
         ) : (

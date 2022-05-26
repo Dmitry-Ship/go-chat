@@ -19,8 +19,9 @@ type ConversationFullDTO struct {
 	Avatar            string    `json:"avatar"`
 	CreatedAt         time.Time `json:"created_at"`
 	Type              string    `json:"type"`
-	HasJoined         bool      `json:"joined"`
-	ParticipantsCount int64     `json:"participants_count"`
+	HasJoined         bool      `json:"joined,omitempty"`
+	ParticipantsCount int64     `json:"participants_count,omitempty"`
+	IsOwner           bool      `json:"is_owner,omitempty"`
 }
 
 type UserDTO struct {

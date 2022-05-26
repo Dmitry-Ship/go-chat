@@ -251,6 +251,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 		Avatar     string
 		CreatedAt  time.Time
 		Type       uint8
+		OwnerID    uuid.UUID
 		UserID     uuid.UUID
 		UserAvatar string
 		UserName   string
@@ -261,7 +262,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 	err := r.db.Model(&Conversation{}).
 		Select(
 			"conversations.id", "conversations.created_at", "conversations.type as type",
-			"group_conversations.avatar", "group_conversations.name",
+			"group_conversations.avatar", "group_conversations.name", "group_conversations.owner_id",
 			"direct_conversations.from_user_id", "direct_conversations.to_user_id",
 			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
 		).
@@ -289,6 +290,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 	} else {
 		conversationDTO.Avatar = conversation.Avatar
 		conversationDTO.Name = conversation.Name
+		conversationDTO.IsOwner = conversation.OwnerID == userID
 	}
 
 	hasUserJoined := true

@@ -4,14 +4,18 @@ import SlideIn from "../common/SlideIn";
 import { useRouter } from "next/router";
 import InviteMenu from "./InviteMenu";
 import { useAPI } from "../../contexts/apiContext";
+import { Conversation } from "../../types/coreTypes";
 
 const EditConversationBtn: React.FC<{
-  joined: boolean;
+  conversation: Conversation & {
+    joined: boolean;
+    participants_count: number;
+    is_owner: boolean;
+  };
   onLeave: () => void;
-  conversationId: string;
-}> = ({ joined, onLeave, conversationId }) => {
+}> = ({ onLeave, conversation }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [newName, setNewName] = useState(conversation.name);
   const router = useRouter();
   const { makeCommand } = useAPI();
 
@@ -21,7 +25,7 @@ const EditConversationBtn: React.FC<{
 
   const handleLeave = async () => {
     await makeCommand("/leaveConversation", {
-      conversation_id: conversationId,
+      conversation_id: conversation.id,
     });
     onLeave();
     router.push("/");
@@ -30,7 +34,7 @@ const EditConversationBtn: React.FC<{
 
   const handleDelete = async () => {
     const result = await makeCommand("/deleteConversation", {
-      conversation_id: conversationId,
+      conversation_id: conversation.id,
     });
 
     if (result.status) {
@@ -42,7 +46,7 @@ const EditConversationBtn: React.FC<{
   const handleRename = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const result = await makeCommand("/renameConversation", {
-      conversation_id: conversationId,
+      conversation_id: conversation.id,
       new_name: newName,
     });
 
@@ -50,14 +54,14 @@ const EditConversationBtn: React.FC<{
       setIsEditing(false);
     }
 
-    setNewName("");
+    setNewName(conversation.name);
   };
 
   useEffect(() => {
     if (!isEditing) {
-      setNewName("");
+      setNewName(conversation.name);
     }
-  }, [isEditing]);
+  }, [isEditing, conversation.name]);
 
   return (
     <>
@@ -67,26 +71,33 @@ const EditConversationBtn: React.FC<{
 
       <SlideIn onClose={handleClose} isOpen={isEditing}>
         <>
-          <form className={styles.menuItem} onSubmit={handleRename}>
-            <input
-              type="text"
-              placeholder="New name"
-              size={32}
-              className={`${styles.menuItem} input`}
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <button type="submit" disabled={!newName} className={`btn`}>
-              Rename
-            </button>
-          </form>
+          {conversation.is_owner && (
+            <>
+              <form className={styles.menuItem} onSubmit={handleRename}>
+                <input
+                  type="text"
+                  placeholder="New name"
+                  size={32}
+                  className={`${styles.menuItem} input`}
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                />
+                <button type="submit" disabled={!newName} className={`btn`}>
+                  Rename
+                </button>
+              </form>
+              <button
+                onClick={handleDelete}
+                className={`btn ${styles.menuItem}`}
+              >
+                🗑 Delete
+              </button>
+            </>
+          )}
 
           <InviteMenu />
 
-          <button onClick={handleDelete} className={`btn ${styles.menuItem}`}>
-            🗑 Delete
-          </button>
-          {joined && (
+          {conversation.joined && (
             <button onClick={handleLeave} className={`btn ${styles.menuItem}`}>
               ✌️ Leave
             </button>
