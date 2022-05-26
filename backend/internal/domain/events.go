@@ -50,7 +50,7 @@ type GroupConversationDeleted struct {
 	ConversationID uuid.UUID
 }
 
-func NewGroupConversationDeleted(conversationID uuid.UUID) *GroupConversationDeleted {
+func newGroupConversationDeletedEvent(conversationID uuid.UUID) *GroupConversationDeleted {
 	return &GroupConversationDeleted{
 		domainEvent: domainEvent{
 			name: GroupConversationDeletedName,
@@ -66,7 +66,7 @@ type GroupConversationRenamed struct {
 	NewName        string
 }
 
-func NewGroupConversationRenamed(conversationID uuid.UUID, userID uuid.UUID, newName string) *GroupConversationRenamed {
+func newGroupConversationRenamedEvent(conversationID uuid.UUID, userID uuid.UUID, newName string) *GroupConversationRenamed {
 	return &GroupConversationRenamed{
 		domainEvent: domainEvent{
 			name: GroupConversationRenamedName,
@@ -83,7 +83,7 @@ type GroupConversationCreated struct {
 	OwnerID        uuid.UUID
 }
 
-func NewGroupConversationCreated(conversationID uuid.UUID, ownerId uuid.UUID) *GroupConversationCreated {
+func newGroupConversationCreatedEvent(conversationID uuid.UUID, ownerId uuid.UUID) *GroupConversationCreated {
 	return &GroupConversationCreated{
 		domainEvent: domainEvent{
 			name: GroupConversationCreatedName,
@@ -99,7 +99,7 @@ type GroupConversationLeft struct {
 	UserID         uuid.UUID
 }
 
-func NewGroupConversationLeft(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationLeft {
+func newGroupConversationLeftEvent(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationLeft {
 	return &GroupConversationLeft{
 		domainEvent: domainEvent{
 			name: GroupConversationLeftName,
@@ -115,7 +115,7 @@ type GroupConversationJoined struct {
 	UserID         uuid.UUID
 }
 
-func NewGroupConversationJoined(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationJoined {
+func newGroupConversationJoinedEvent(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationJoined {
 	return &GroupConversationJoined{
 		domainEvent: domainEvent{
 			name: GroupConversationJoinedName,
@@ -132,7 +132,7 @@ type GroupConversationInvited struct {
 	InvitedBy      uuid.UUID
 }
 
-func NewGroupConversationInvited(conversationID uuid.UUID, userID uuid.UUID, invitee uuid.UUID) *GroupConversationInvited {
+func newGroupConversationInvitedEvent(conversationID uuid.UUID, userID uuid.UUID, invitee uuid.UUID) *GroupConversationInvited {
 	return &GroupConversationInvited{
 		domainEvent: domainEvent{
 			name: GroupConversationInvitedName,
@@ -150,7 +150,7 @@ type DirectConversationCreated struct {
 	FromUserID     uuid.UUID
 }
 
-func NewDirectConversationCreated(conversationID uuid.UUID, toUserID uuid.UUID, fromUserID uuid.UUID) *DirectConversationCreated {
+func newDirectConversationCreatedEvent(conversationID uuid.UUID, toUserID uuid.UUID, fromUserID uuid.UUID) *DirectConversationCreated {
 	return &DirectConversationCreated{
 		domainEvent: domainEvent{
 			name: DirectConversationCreatedName,

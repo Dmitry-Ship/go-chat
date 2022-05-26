@@ -47,7 +47,7 @@ func (participant *Participant) LeaveGroupConversation(conversationID uuid.UUID)
 
 	participant.IsActive = false
 
-	participant.AddEvent(NewGroupConversationLeft(conversationID, participant.UserID))
+	participant.AddEvent(newGroupConversationLeftEvent(conversationID, participant.UserID))
 
 	return nil
 }

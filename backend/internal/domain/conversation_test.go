@@ -23,7 +23,7 @@ func TestNewGroupConversation(t *testing.T) {
 	assert.NotNil(t, conversation.Data.Owner.CreatedAt)
 	assert.NotNil(t, conversation.Data.Owner.ID)
 	assert.Equal(t, conversation.IsActive, true)
-	assert.Equal(t, conversation.events[len(conversation.events)-1], NewGroupConversationCreated(conversationId, creatorId))
+	assert.Equal(t, conversation.GetEvents()[len(conversation.events)-1], newGroupConversationCreatedEvent(conversationId, creatorId))
 	assert.Nil(t, err)
 }
 
@@ -47,7 +47,7 @@ func TestRename(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, "new name", conversation.Data.Name)
-	assert.Equal(t, conversation.events[len(conversation.events)-1], NewGroupConversationRenamed(conversationId, creatorId, "new name"))
+	assert.Equal(t, conversation.GetEvents()[len(conversation.events)-1], newGroupConversationRenamedEvent(conversationId, creatorId, "new name"))
 }
 
 func TestSendTextMessage(t *testing.T) {
@@ -153,7 +153,7 @@ func TestRenameNotOwner(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, "user is not owner", err.Error())
 	assert.Equal(t, name, conversation.Data.Name)
-	assert.Equal(t, conversation.events[len(conversation.events)-1], NewGroupConversationCreated(conversationId, creatorId))
+	assert.Equal(t, conversation.GetEvents()[len(conversation.events)-1], newGroupConversationCreatedEvent(conversationId, creatorId))
 }
 
 func TestNewDirectConversation(t *testing.T) {
@@ -174,7 +174,7 @@ func TestNewDirectConversation(t *testing.T) {
 	assert.NotNil(t, conversation.Data.ToUser.ID)
 	assert.Equal(t, conversation.Type, "direct")
 	assert.Equal(t, true, conversation.IsActive)
-	assert.Equal(t, conversation.events[len(conversation.events)-1], NewDirectConversationCreated(conversationId, to, from))
+	assert.Equal(t, conversation.GetEvents()[len(conversation.events)-1], newDirectConversationCreatedEvent(conversationId, to, from))
 	assert.Nil(t, err)
 }
 
@@ -217,7 +217,7 @@ func TestDelete(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, false, conversation.IsActive)
-	assert.Equal(t, conversation.events[len(conversation.events)-1], NewGroupConversationDeleted(conversation.ID))
+	assert.Equal(t, conversation.GetEvents()[len(conversation.events)-1], newGroupConversationDeletedEvent(conversation.ID))
 }
 
 func TestDeleteNotOwner(t *testing.T) {
@@ -231,7 +231,7 @@ func TestDeleteNotOwner(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, "user is not owner", err.Error())
 	assert.Equal(t, true, conversation.IsActive)
-	assert.Equal(t, conversation.events[len(conversation.events)-1], NewGroupConversationCreated(conversationId, creatorId))
+	assert.Equal(t, conversation.GetEvents()[len(conversation.events)-1], newGroupConversationCreatedEvent(conversationId, creatorId))
 }
 
 func TestJoin(t *testing.T) {
@@ -249,7 +249,7 @@ func TestJoin(t *testing.T) {
 	assert.NotNil(t, participant.ID)
 	assert.NotNil(t, participant.CreatedAt)
 	assert.Equal(t, participant.IsActive, true)
-	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationJoined(conversationId, userID))
+	assert.Equal(t, participant.GetEvents()[len(participant.events)-1], newGroupConversationJoinedEvent(conversationId, userID))
 }
 
 func TestJoinNotActive(t *testing.T) {
@@ -282,7 +282,7 @@ func TestInvite(t *testing.T) {
 	assert.NotNil(t, participant.ID)
 	assert.NotNil(t, participant.CreatedAt)
 	assert.Equal(t, participant.IsActive, true)
-	assert.Equal(t, participant.events[len(participant.events)-1], NewGroupConversationInvited(conversationId, userID, inviteeId))
+	assert.Equal(t, participant.GetEvents()[len(participant.events)-1], newGroupConversationInvitedEvent(conversationId, userID, inviteeId))
 }
 
 func TestInviteNotActive(t *testing.T) {

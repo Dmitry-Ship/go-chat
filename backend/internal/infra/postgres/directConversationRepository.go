@@ -9,14 +9,12 @@ import (
 )
 
 type directConversationRepository struct {
-	db             *gorm.DB
-	eventPublisher infra.EventPublisher
+	repository
 }
 
 func NewDirectConversationRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *directConversationRepository {
 	return &directConversationRepository{
-		db:             db,
-		eventPublisher: eventPublisher,
+		repository: *newRepository(db, eventPublisher),
 	}
 }
 
@@ -94,7 +92,7 @@ func (r *directConversationRepository) Store(conversation *domain.DirectConversa
 		return err
 	}
 
-	conversation.Dispatch(r.eventPublisher)
+	r.dispatchEvents(conversation)
 
 	return nil
 }

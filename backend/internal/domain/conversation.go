@@ -47,7 +47,7 @@ func (groupConversation *GroupConversation) Delete(userID uuid.UUID) error {
 
 	groupConversation.IsActive = false
 
-	groupConversation.AddEvent(NewGroupConversationDeleted(groupConversation.Conversation.ID))
+	groupConversation.AddEvent(newGroupConversationDeletedEvent(groupConversation.Conversation.ID))
 
 	return nil
 }
@@ -72,7 +72,7 @@ func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*Grou
 		},
 	}
 
-	groupConversation.AddEvent(NewGroupConversationCreated(id, creatorID))
+	groupConversation.AddEvent(newGroupConversationCreatedEvent(id, creatorID))
 
 	return groupConversation, nil
 }
@@ -82,7 +82,7 @@ func (groupConversation *GroupConversation) Rename(newName string, userID uuid.U
 		groupConversation.Data.Name = newName
 		groupConversation.Data.Avatar = string(newName[0])
 
-		groupConversation.AddEvent(NewGroupConversationRenamed(groupConversation.ID, userID, newName))
+		groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.ID, userID, newName))
 		return nil
 	}
 
@@ -118,7 +118,7 @@ func (groupConversation *GroupConversation) Join(userID uuid.UUID) (*Participant
 
 	participant := NewParticipant(groupConversation.ID, userID)
 
-	participant.AddEvent(NewGroupConversationJoined(groupConversation.ID, userID))
+	participant.AddEvent(newGroupConversationJoinedEvent(groupConversation.ID, userID))
 
 	return participant, nil
 }
@@ -138,7 +138,7 @@ func (groupConversation *GroupConversation) Invite(userID uuid.UUID, inviteeID u
 
 	participant := NewParticipant(groupConversation.ID, inviteeID)
 
-	participant.AddEvent(NewGroupConversationInvited(groupConversation.ID, userID, inviteeID))
+	participant.AddEvent(newGroupConversationInvitedEvent(groupConversation.ID, userID, inviteeID))
 
 	return participant, nil
 }
@@ -219,7 +219,7 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 		},
 	}
 
-	directConversation.AddEvent(NewDirectConversationCreated(id, to, from))
+	directConversation.AddEvent(newDirectConversationCreatedEvent(id, to, from))
 
 	return &directConversation, nil
 }

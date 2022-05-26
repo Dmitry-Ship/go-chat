@@ -9,14 +9,12 @@ import (
 )
 
 type groupConversationRepository struct {
-	db             *gorm.DB
-	eventPublisher infra.EventPublisher
+	repository
 }
 
 func NewGroupConversationRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *groupConversationRepository {
 	return &groupConversationRepository{
-		db:             db,
-		eventPublisher: eventPublisher,
+		repository: *newRepository(db, eventPublisher),
 	}
 }
 
@@ -52,7 +50,7 @@ func (r *groupConversationRepository) Store(conversation *domain.GroupConversati
 		return err
 	}
 
-	conversation.Dispatch(r.eventPublisher)
+	r.dispatchEvents(conversation)
 
 	return nil
 }
@@ -85,7 +83,7 @@ func (r *groupConversationRepository) Update(conversation *domain.GroupConversat
 		return err
 	}
 
-	conversation.Dispatch(r.eventPublisher)
+	r.dispatchEvents(conversation)
 
 	return nil
 }

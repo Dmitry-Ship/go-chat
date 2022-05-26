@@ -8,14 +8,12 @@ import (
 )
 
 type messageRepository struct {
-	db             *gorm.DB
-	eventPublisher infra.EventPublisher
+	repository
 }
 
 func NewMessageRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *messageRepository {
 	return &messageRepository{
-		db:             db,
-		eventPublisher: eventPublisher,
+		repository: *newRepository(db, eventPublisher),
 	}
 }
 
@@ -47,7 +45,7 @@ func (r *messageRepository) StoreTextMessage(message *domain.TextMessage) error 
 		return err
 	}
 
-	message.Dispatch(r.eventPublisher)
+	r.dispatchEvents(message)
 
 	return nil
 }
@@ -59,7 +57,7 @@ func (r *messageRepository) StoreLeftConversationMessage(message *domain.Message
 		return err
 	}
 
-	message.Dispatch(r.eventPublisher)
+	r.dispatchEvents(message)
 
 	return nil
 }
@@ -71,7 +69,7 @@ func (r *messageRepository) StoreJoinedConversationMessage(message *domain.Messa
 		return err
 	}
 
-	message.Dispatch(r.eventPublisher)
+	r.dispatchEvents(message)
 
 	return nil
 }
@@ -83,7 +81,7 @@ func (r *messageRepository) StoreInvitedConversationMessage(message *domain.Mess
 		return err
 	}
 
-	message.Dispatch(r.eventPublisher)
+	r.dispatchEvents(message)
 
 	return nil
 }
@@ -116,7 +114,7 @@ func (r *messageRepository) StoreRenamedConversationMessage(message *domain.Conv
 		return err
 	}
 
-	message.Dispatch(r.eventPublisher)
+	r.dispatchEvents(message)
 
 	return nil
 }
