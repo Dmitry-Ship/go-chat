@@ -1,60 +1,39 @@
 package server
 
 import (
+	"GitHub/go-chat/backend/internal/app"
+	"GitHub/go-chat/backend/internal/domainEventsHandlers"
+	"GitHub/go-chat/backend/internal/httpHandlers"
+	"GitHub/go-chat/backend/internal/infra"
+	"GitHub/go-chat/backend/internal/readModel"
 	"context"
-	"errors"
-	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
-type server struct {
-	httpServer *http.Server
+type EventHandlers interface {
+	ListenForEvents()
 }
 
-func NewGracefulServer() *server {
-	port := os.Getenv("PORT")
+type Server struct {
+	httpHandlers               *httpHandlers.HTTPHandlers
+	messageEventHandlers       EventHandlers
+	notificationsEventHandlers EventHandlers
+}
 
-	httpServer := &http.Server{
-		Addr: ":" + port,
+func NewServer(ctx context.Context, commands *app.Commands, queries readModel.QueriesRepository, eventBus infra.EventsSubscriber) *Server {
+	go commands.ClientsService.Run()
+
+	return &Server{
+		httpHandlers:               httpHandlers.NewHTTPHandlers(commands, queries),
+		messageEventHandlers:       domainEventsHandlers.NewMessageEventHandlers(ctx, eventBus, commands),
+		notificationsEventHandlers: domainEventsHandlers.NewNotificationsEventHandlers(ctx, eventBus, commands, queries),
 	}
-	return &server{
-		httpServer: httpServer,
-	}
 }
 
-func (s *server) Run() {
-	defer s.shutdownGracefully()
-
-	go func() {
-		log.Println("Listening on port " + s.httpServer.Addr)
-		if err := s.httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("HTTP server error: %v", err)
-		}
-		log.Println("Stopped serving new connections.")
-	}()
-
-	s.waitForStopSignal()
+func (s *Server) InitRoutes() {
+	s.httpHandlers.InitRoutes()
 }
 
-func (s *server) shutdownGracefully() {
-	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
-	defer shutdownRelease()
-
-	if err := s.httpServer.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("HTTP shutdown error: %v", err)
-	}
-
-	log.Println("Graceful shutdown complete.")
-}
-
-func (s *server) waitForStopSignal() {
-	sigChan := make(chan os.Signal, 1)
-	defer close(sigChan)
-
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	<-sigChan
+func (s *Server) ListenForEvents() {
+	go s.messageEventHandlers.ListenForEvents()
+	go s.notificationsEventHandlers.ListenForEvents()
 }

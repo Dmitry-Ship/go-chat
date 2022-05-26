@@ -8,17 +8,17 @@ import (
 	"github.com/google/uuid"
 )
 
-type queryController struct {
+type queryHandlers struct {
 	queries readModel.QueriesRepository
 }
 
-func NewQueryController(queries readModel.QueriesRepository) *queryController {
-	return &queryController{
+func NewQueryHandlers(queries readModel.QueriesRepository) *queryHandlers {
+	return &queryHandlers{
 		queries: queries,
 	}
 }
 
-func (s *queryController) handleGetContacts(w http.ResponseWriter, r *http.Request) {
+func (s *queryHandlers) handleGetContacts(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -48,7 +48,7 @@ func (s *queryController) handleGetContacts(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (s *queryController) handleGetPotentialInvitees(w http.ResponseWriter, r *http.Request) {
+func (s *queryHandlers) handleGetPotentialInvitees(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	conversationIdQuery := query.Get("conversation_id")
@@ -81,7 +81,7 @@ func (s *queryController) handleGetPotentialInvitees(w http.ResponseWriter, r *h
 	}
 }
 
-func (s *queryController) handleGetConversations(w http.ResponseWriter, r *http.Request) {
+func (s *queryHandlers) handleGetConversations(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -111,7 +111,7 @@ func (s *queryController) handleGetConversations(w http.ResponseWriter, r *http.
 	}
 }
 
-func (s *queryController) handleGetConversationsMessages(w http.ResponseWriter, r *http.Request) {
+func (s *queryHandlers) handleGetConversationsMessages(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	conversationIdQuery := query.Get("conversation_id")
@@ -151,7 +151,7 @@ func (s *queryController) handleGetConversationsMessages(w http.ResponseWriter, 
 	}
 }
 
-func (s *queryController) handleGetConversation(w http.ResponseWriter, r *http.Request) {
+func (s *queryHandlers) handleGetConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -184,7 +184,7 @@ func (s *queryController) handleGetConversation(w http.ResponseWriter, r *http.R
 	}
 }
 
-func (s *queryController) handleGetParticipants(w http.ResponseWriter, r *http.Request) {
+func (s *queryHandlers) handleGetParticipants(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	conversationIdQuery := query.Get("conversation_id")
@@ -224,7 +224,7 @@ func (s *queryController) handleGetParticipants(w http.ResponseWriter, r *http.R
 	}
 }
 
-func (s *queryController) handleGetUser(w http.ResponseWriter, r *http.Request) {
+func (s *queryHandlers) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {

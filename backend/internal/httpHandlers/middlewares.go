@@ -25,7 +25,7 @@ func (s *HTTPHandlers) private(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		userID, err := s.commandController.commands.AuthService.ParseAccessToken(accessToken.Value)
+		userID, err := s.commandHandlers.commands.AuthService.ParseAccessToken(accessToken.Value)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)

@@ -2,55 +2,39 @@ package main
 
 import (
 	"GitHub/go-chat/backend/internal/app"
-	"GitHub/go-chat/backend/internal/domainEventsHandlers"
-	"GitHub/go-chat/backend/internal/httpHandlers"
+	"GitHub/go-chat/backend/internal/gracefulServer"
 	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
-	"GitHub/go-chat/backend/internal/readModel"
 	"GitHub/go-chat/backend/internal/server"
 	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
 )
 
-func createInfra() (context.Context, *app.Commands, readModel.QueriesRepository, infra.EventsSubscriber, func()) {
+func main() {
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	redisClient := redisPubsub.GetRedisClient(ctx)
+	defer redisClient.Close()
+
 	db := postgres.NewDatabaseConnection()
 	db.AutoMigrate()
 
 	dbConnection := db.GetConnection()
 	eventBus := infra.NewEventBus()
+	defer eventBus.Close()
 
 	activeClients := ws.NewActiveClients()
 
 	commands := app.NewCommands(ctx, eventBus, dbConnection, activeClients, redisClient)
 	queries := postgres.NewQueriesRepository(dbConnection)
 
-	done := func() {
-		cancel()
-		redisClient.Close()
-		eventBus.Close()
-	}
+	server := server.NewServer(ctx, commands, queries, eventBus)
 
-	return ctx, commands, queries, eventBus, done
-}
+	server.InitRoutes()
+	server.ListenForEvents()
 
-func main() {
-	ctx, commands, queries, eventBus, done := createInfra()
-	defer done()
-
-	handlers := httpHandlers.NewHTTPHandlers(commands, queries)
-	handlers.InitRoutes()
-
-	messageEventHandlers := domainEventsHandlers.NewMessageEventHandlers(ctx, eventBus, commands)
-	notificationsEventHandlers := domainEventsHandlers.NewNotificationsEventHandlers(ctx, eventBus, commands, queries)
-
-	go messageEventHandlers.ListenForEvents()
-	go notificationsEventHandlers.ListenForEvents()
-	go commands.ClientsService.Run()
-
-	server := server.NewGracefulServer()
-	server.Run()
+	s := gracefulServer.NewGracefulServer()
+	s.Run()
 }

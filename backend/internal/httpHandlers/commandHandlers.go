@@ -9,19 +9,19 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type commandController struct {
+type commandHandlers struct {
 	commands   *app.Commands
 	wsHandlers WSHandlers
 }
 
-func NewCommandController(commands *app.Commands) *commandController {
-	return &commandController{
+func NewCommandHandlers(commands *app.Commands) *commandHandlers {
+	return &commandHandlers{
 		commands:   commands,
 		wsHandlers: NewWSHandlers(commands),
 	}
 }
 
-func (s *commandController) handleOpenWSConnection() http.HandlerFunc {
+func (s *commandHandlers) handleOpenWSConnection() http.HandlerFunc {
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,

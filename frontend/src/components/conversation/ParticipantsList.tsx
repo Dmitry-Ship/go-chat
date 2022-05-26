@@ -30,7 +30,7 @@ const ParticipantsList: React.FC<{ participantsCount: number }> = ({
     async (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
       e.preventDefault();
 
-      const result = await makeCommand("/createDirectConversationIfNotExists", {
+      const result = await makeCommand("/startDirectConversation", {
         to_user_id: id,
       });
 

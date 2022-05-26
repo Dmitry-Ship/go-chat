@@ -6,13 +6,13 @@ import (
 )
 
 type HTTPHandlers struct {
-	queryController   *queryController
-	commandController *commandController
+	queryHandlers   *queryHandlers
+	commandHandlers *commandHandlers
 }
 
 func NewHTTPHandlers(commands *app.Commands, queries readModel.QueriesRepository) *HTTPHandlers {
 	return &HTTPHandlers{
-		queryController:   NewQueryController(queries),
-		commandController: NewCommandController(commands),
+		queryHandlers:   NewQueryHandlers(queries),
+		commandHandlers: NewCommandHandlers(commands),
 	}
 }

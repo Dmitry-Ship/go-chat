@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *commandController) handleCreateDirectConversationIfNotExists(w http.ResponseWriter, r *http.Request) {
+func (s *commandHandlers) handleStartDirectConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ToUserId uuid.UUID `json:"to_user_id"`
 	}{}
@@ -47,7 +47,7 @@ func (s *commandController) handleCreateDirectConversationIfNotExists(w http.Res
 	}
 }
 
-func (s *commandController) handleCreateGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandHandlers) handleCreateGroupConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationName string    `json:"conversation_name"`
 		ConversationId   uuid.UUID `json:"conversation_id"`
@@ -82,7 +82,7 @@ func (s *commandController) handleCreateGroupConversation(w http.ResponseWriter,
 	}
 }
 
-func (s *commandController) handleDeleteConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandHandlers) handleDeleteConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
@@ -116,7 +116,7 @@ func (s *commandController) handleDeleteConversation(w http.ResponseWriter, r *h
 	}
 }
 
-func (s *commandController) handleJoinGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandHandlers) handleJoinGroupConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
@@ -149,7 +149,7 @@ func (s *commandController) handleJoinGroupConversation(w http.ResponseWriter, r
 	}
 }
 
-func (s *commandController) handleLeaveGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandHandlers) handleLeaveGroupConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -183,7 +183,7 @@ func (s *commandController) handleLeaveGroupConversation(w http.ResponseWriter, 
 	}
 }
 
-func (s *commandController) handleRenameGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandHandlers) handleRenameGroupConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -218,7 +218,7 @@ func (s *commandController) handleRenameGroupConversation(w http.ResponseWriter,
 	}
 }
 
-func (s *commandController) handleInviteToGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *commandHandlers) handleInviteToGroupConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
