@@ -2,18 +2,19 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/infra"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type notificationTopicRepository struct {
-	db *gorm.DB
+	repository
 }
 
-func NewNotificationTopicRepository(db *gorm.DB) *notificationTopicRepository {
+func NewNotificationTopicRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *notificationTopicRepository {
 	return &notificationTopicRepository{
-		db: db,
+		repository: *newRepository(db, eventPublisher),
 	}
 }
 
@@ -26,7 +27,13 @@ func (r *notificationTopicRepository) Store(notificationTopic *domain.Notificati
 
 	err := r.db.Create(persistence).Error
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	r.dispatchEvents(notificationTopic)
+
+	return nil
 }
 
 func (r *notificationTopicRepository) DeleteByUserIDAndTopic(userID uuid.UUID, topic string) error {

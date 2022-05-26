@@ -20,11 +20,11 @@ type Commands struct {
 
 func NewCommands(ctx context.Context, eventPublisher infra.EventPublisher, db *gorm.DB, activeClients ws.ActiveClients, redisClient *redis.Client) *Commands {
 	messagesRepository := postgres.NewMessageRepository(db, eventPublisher)
-	usersRepository := postgres.NewUserRepository(db)
+	usersRepository := postgres.NewUserRepository(db, eventPublisher)
 	groupConversationsRepository := postgres.NewGroupConversationRepository(db, eventPublisher)
 	directConversationsRepository := postgres.NewDirectConversationRepository(db, eventPublisher)
 	participantRepository := postgres.NewParticipantRepository(db, eventPublisher)
-	notificationTopicRepository := postgres.NewNotificationTopicRepository(db)
+	notificationTopicRepository := postgres.NewNotificationTopicRepository(db, eventPublisher)
 	jwtTokens := services.NewJWTokens()
 
 	return &Commands{

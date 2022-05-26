@@ -2,27 +2,44 @@ package postgres
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/infra"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type userRepository struct {
-	db *gorm.DB
+	repository
 }
 
-func NewUserRepository(db *gorm.DB) *userRepository {
+func NewUserRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *userRepository {
 	return &userRepository{
-		db: db,
+		repository: *newRepository(db, eventPublisher),
 	}
 }
 
 func (r *userRepository) Store(user *domain.User) error {
-	return r.db.Create(ToUserPersistence(user)).Error
+	err := r.db.Create(ToUserPersistence(user)).Error
+
+	if err != nil {
+		return err
+	}
+
+	r.dispatchEvents(user)
+
+	return nil
 }
 
 func (r *userRepository) Update(user *domain.User) error {
-	return r.db.Save(ToUserPersistence(user)).Error
+	err := r.db.Save(ToUserPersistence(user)).Error
+
+	if err != nil {
+		return err
+	}
+
+	r.dispatchEvents(user)
+
+	return nil
 }
 
 func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {

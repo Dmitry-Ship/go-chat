@@ -18,42 +18,6 @@ func NewDirectConversationRepository(db *gorm.DB, eventPublisher infra.EventPubl
 	}
 }
 
-func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConversation, error) {
-	conversation := Conversation{}
-
-	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	directConversation := DirectConversation{}
-
-	err = r.db.Where("conversation_id = ?", id).First(&directConversation).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	toUser := Participant{}
-
-	err = r.db.Where("conversation_id = ? AND user_id = ?", id, directConversation.ToUserID).First(&toUser).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	fromUser := Participant{}
-
-	err = r.db.Where("conversation_id = ? AND user_id = ?", id, directConversation.FromUserID).First(&fromUser).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return toDirectConversationDomain(&conversation, &directConversation, &toUser, &fromUser), nil
-}
-
 func (r *directConversationRepository) Store(conversation *domain.DirectConversation) error {
 	tx := r.db.Begin()
 
@@ -95,6 +59,42 @@ func (r *directConversationRepository) Store(conversation *domain.DirectConversa
 	r.dispatchEvents(conversation)
 
 	return nil
+}
+
+func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConversation, error) {
+	conversation := Conversation{}
+
+	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	directConversation := DirectConversation{}
+
+	err = r.db.Where("conversation_id = ?", id).First(&directConversation).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	toUser := Participant{}
+
+	err = r.db.Where("conversation_id = ? AND user_id = ?", id, directConversation.ToUserID).First(&toUser).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	fromUser := Participant{}
+
+	err = r.db.Where("conversation_id = ? AND user_id = ?", id, directConversation.FromUserID).First(&fromUser).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return toDirectConversationDomain(&conversation, &directConversation, &toUser, &fromUser), nil
 }
 
 func (r *directConversationRepository) GetID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {

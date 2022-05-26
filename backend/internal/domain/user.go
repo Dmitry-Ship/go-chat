@@ -15,6 +15,7 @@ type UserRepository interface {
 }
 
 type User struct {
+	aggregate
 	ID           uuid.UUID
 	Avatar       string
 	Name         string

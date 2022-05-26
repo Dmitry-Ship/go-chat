@@ -14,6 +14,7 @@ type NotificationTopicRepository interface {
 }
 
 type NotificationTopic struct {
+	aggregate
 	ID     uuid.UUID
 	Name   string
 	UserID uuid.UUID
