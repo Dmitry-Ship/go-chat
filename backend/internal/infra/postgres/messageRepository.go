@@ -20,15 +20,30 @@ func NewMessageRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *mes
 }
 
 func (r *messageRepository) StoreTextMessage(message *domain.TextMessage) error {
-	err := r.db.Create(toMessagePersistence(message)).Error
+	tx := r.db.Begin()
 
-	if err != nil {
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Error; err != nil {
 		return err
 	}
 
-	err = r.db.Create(toTextMessagePersistence(*message)).Error
+	if err := tx.Create(toMessagePersistence(message)).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
 
-	if err != nil {
+	if err := tx.Create(toTextMessagePersistence(*message)).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 
@@ -74,15 +89,30 @@ func (r *messageRepository) StoreInvitedConversationMessage(message *domain.Mess
 }
 
 func (r *messageRepository) StoreRenamedConversationMessage(message *domain.ConversationRenamedMessage) error {
-	err := r.db.Create(toMessagePersistence(message)).Error
+	tx := r.db.Begin()
 
-	if err != nil {
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Error; err != nil {
 		return err
 	}
 
-	err = r.db.Create(toRenameConversationMessagePersistence(*message)).Error
+	if err := tx.Create(toMessagePersistence(message)).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
 
-	if err != nil {
+	if err := tx.Create(toRenameConversationMessagePersistence(*message)).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 

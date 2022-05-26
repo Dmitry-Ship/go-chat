@@ -21,21 +21,34 @@ func NewGroupConversationRepository(db *gorm.DB, eventPublisher infra.EventPubli
 }
 
 func (r *groupConversationRepository) Store(conversation *domain.GroupConversation) error {
-	err := r.db.Create(toConversationPersistence(conversation)).Error
+	tx := r.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
-	if err != nil {
+	if err := tx.Error; err != nil {
 		return err
 	}
 
-	err = r.db.Create(toGroupConversationPersistence(conversation)).Error
-
-	if err != nil {
+	if err := tx.Create(toConversationPersistence(conversation)).Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 
-	err = r.db.Create(toParticipantPersistence(&conversation.Data.Owner)).Error
+	if err := tx.Create(toGroupConversationPersistence(conversation)).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
 
-	if err != nil {
+	if err := tx.Create(toParticipantPersistence(&conversation.Data.Owner)).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 
@@ -45,15 +58,30 @@ func (r *groupConversationRepository) Store(conversation *domain.GroupConversati
 }
 
 func (r *groupConversationRepository) Update(conversation *domain.GroupConversation) error {
-	err := r.db.Save(toConversationPersistence(conversation)).Error
+	tx := r.db.Begin()
 
-	if err != nil {
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Error; err != nil {
 		return err
 	}
 
-	err = r.db.Save(toGroupConversationPersistence(conversation)).Error
+	if err := tx.Save(toConversationPersistence(conversation)).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
 
-	if err != nil {
+	if err := tx.Save(toGroupConversationPersistence(conversation)).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 

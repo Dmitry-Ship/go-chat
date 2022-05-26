@@ -118,6 +118,7 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 			CreatedAt: result.CreatedAt,
 			Text:      result.Text,
 			Type:      messageTypesMap[result.Type],
+			NewName:   result.NewName,
 			User: &readModel.UserDTO{
 				ID:     result.UserID,
 				Avatar: result.UserAvatar,
@@ -161,6 +162,7 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 		CreatedAt: message.CreatedAt,
 		Text:      message.Text,
 		Type:      messageTypesMap[message.Type],
+		NewName:   message.NewName,
 		User: &readModel.UserDTO{
 			ID:     message.UserID,
 			Avatar: message.UserAvatar,

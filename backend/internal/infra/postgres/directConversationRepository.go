@@ -57,27 +57,40 @@ func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConv
 }
 
 func (r *directConversationRepository) Store(conversation *domain.DirectConversation) error {
-	err := r.db.Create(toConversationPersistence(conversation)).Error
+	tx := r.db.Begin()
 
-	if err != nil {
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Error; err != nil {
 		return err
 	}
 
-	err = r.db.Create(toDirectConversationPersistence(conversation)).Error
-
-	if err != nil {
+	if err := tx.Create(toConversationPersistence(conversation)).Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 
-	err = r.db.Create(toParticipantPersistence(conversation.GetFromUser())).Error
-
-	if err != nil {
+	if err := tx.Create(toDirectConversationPersistence(conversation)).Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 
-	err = r.db.Create(toParticipantPersistence(conversation.GetToUser())).Error
+	if err := tx.Create(toParticipantPersistence(conversation.GetFromUser())).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
 
-	if err != nil {
+	if err := tx.Create(toParticipantPersistence(conversation.GetToUser())).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 
