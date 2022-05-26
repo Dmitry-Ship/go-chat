@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,20 +33,4 @@ func NewParticipant(conversationID uuid.UUID, userID uuid.UUID) *Participant {
 		CreatedAt:      time.Now(),
 		IsActive:       true,
 	}
-}
-
-func (participant *Participant) LeaveGroupConversation(conversationID uuid.UUID) error {
-	if participant.ConversationID != conversationID {
-		return errors.New("participant is not in conversation")
-	}
-
-	if !participant.IsActive {
-		return errors.New("participant is already left")
-	}
-
-	participant.IsActive = false
-
-	participant.AddEvent(newGroupConversationLeftEvent(conversationID, participant.UserID))
-
-	return nil
 }

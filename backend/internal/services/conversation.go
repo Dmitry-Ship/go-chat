@@ -234,7 +234,13 @@ func (s *conversationService) LeaveGroupConversation(conversationID uuid.UUID, u
 		return err
 	}
 
-	err = participant.LeaveGroupConversation(conversationID)
+	conversation, err := s.groupConversations.GetByID(conversationID)
+
+	if err != nil {
+		return err
+	}
+
+	participant, err = conversation.Leave(participant)
 
 	if err != nil {
 		return err

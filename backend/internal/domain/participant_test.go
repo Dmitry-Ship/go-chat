@@ -19,15 +19,3 @@ func TestNewParticipant(t *testing.T) {
 	assert.NotNil(t, participant.CreatedAt)
 	assert.Equal(t, participant.IsActive, true)
 }
-
-func TestLeaveGroupConversation(t *testing.T) {
-	conversationID := uuid.New()
-	userID := uuid.New()
-	participant := NewParticipant(conversationID, userID)
-
-	err := participant.LeaveGroupConversation(conversationID)
-
-	assert.Nil(t, err)
-	assert.Equal(t, participant.IsActive, false)
-	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationLeftEvent(conversationID, userID))
-}

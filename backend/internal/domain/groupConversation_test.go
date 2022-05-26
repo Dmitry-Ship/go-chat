@@ -156,57 +156,6 @@ func TestRenameNotOwner(t *testing.T) {
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationCreatedEvent(conversationID, creatorId))
 }
 
-func TestNewDirectConversation(t *testing.T) {
-	to := uuid.New()
-	from := uuid.New()
-	conversationID := uuid.New()
-
-	conversation, err := NewDirectConversation(conversationID, to, from)
-
-	assert.Equal(t, conversation.ID, conversationID)
-	assert.Equal(t, to, conversation.Data.ToUser.UserID)
-	assert.Equal(t, from, conversation.Data.FromUser.UserID)
-	assert.Equal(t, conversationID, conversation.Data.FromUser.ConversationID)
-	assert.Equal(t, conversationID, conversation.Data.ToUser.ConversationID)
-	assert.NotNil(t, conversation.Data.ToUser.CreatedAt)
-	assert.NotNil(t, conversation.Data.FromUser.CreatedAt)
-	assert.NotNil(t, conversation.Data.FromUser.ID)
-	assert.NotNil(t, conversation.Data.ToUser.ID)
-	assert.Equal(t, conversation.Type, "direct")
-	assert.Equal(t, true, conversation.IsActive)
-	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newDirectConversationCreatedEvent(conversationID, to, from))
-	assert.Nil(t, err)
-}
-
-func TestNewDirectConversationWithOneself(t *testing.T) {
-	to := uuid.New()
-	conversationID := uuid.New()
-
-	_, err := NewDirectConversation(conversationID, to, to)
-
-	assert.Equal(t, err.Error(), "cannot chat with yourself")
-}
-
-func TestGetFromUser(t *testing.T) {
-	to := uuid.New()
-	from := uuid.New()
-	conversationID := uuid.New()
-
-	conversation, _ := NewDirectConversation(conversationID, to, from)
-
-	assert.Equal(t, from, conversation.GetFromUser().UserID)
-}
-
-func TestGetToUser(t *testing.T) {
-	to := uuid.New()
-	from := uuid.New()
-	conversationID := uuid.New()
-
-	conversation, _ := NewDirectConversation(conversationID, to, from)
-
-	assert.Equal(t, to, conversation.GetToUser().UserID)
-}
-
 func TestDelete(t *testing.T) {
 	name := "test"
 	conversationID := uuid.New()
@@ -333,4 +282,53 @@ func TestInviteSelf(t *testing.T) {
 	_, err := conversation.Invite(inviteeId, inviteeId)
 
 	assert.Equal(t, err.Error(), "cannot invite yourself")
+}
+
+func TestLeave(t *testing.T) {
+	name := "test"
+	conversationID := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
+
+	participant, err := conversation.Leave(&conversation.Data.Owner)
+
+	assert.Nil(t, err)
+	assert.Equal(t, participant.IsActive, false)
+}
+
+func TestLeaveNotActive(t *testing.T) {
+	name := "test"
+	conversationID := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
+	conversation.Delete(creatorId)
+
+	_, err := conversation.Leave(&conversation.Data.Owner)
+
+	assert.Equal(t, err.Error(), "conversation is not active")
+}
+
+func TestLeaveNotMember(t *testing.T) {
+	name := "test"
+	conversationID := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
+
+	participant := NewParticipant(uuid.New(), uuid.New())
+
+	_, err := conversation.Leave(participant)
+
+	assert.Equal(t, err.Error(), "participant is not in conversation")
+}
+
+func TestLeaveAlreadyLeft(t *testing.T) {
+	name := "test"
+	conversationID := uuid.New()
+	creatorId := uuid.New()
+	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
+	conversation.Leave(&conversation.Data.Owner)
+
+	_, err := conversation.Leave(&conversation.Data.Owner)
+
+	assert.Equal(t, err.Error(), "participant already left")
 }
