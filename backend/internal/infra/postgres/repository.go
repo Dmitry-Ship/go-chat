@@ -24,3 +24,49 @@ func (r *repository) dispatchEvents(aggregate domain.Aggregate) {
 		r.eventPublisher.Publish(domain.DomainEventChannel, event)
 	}
 }
+
+func (r *repository) beginTransaction(aggregate domain.Aggregate, callback func(tx *gorm.DB) error) error {
+	tx := r.db.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	err := callback(tx)
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	r.dispatchEvents(aggregate)
+
+	return nil
+}
+
+func (r *repository) store(aggregate domain.Aggregate, persistence interface{}) error {
+	if err := r.db.Create(persistence).Error; err != nil {
+		return err
+	}
+
+	r.dispatchEvents(aggregate)
+
+	return nil
+}
+
+func (r *repository) update(aggregate domain.Aggregate, persistence interface{}) error {
+	if err := r.db.Save(persistence).Error; err != nil {
+		return err
+	}
+
+	r.dispatchEvents(aggregate)
+
+	return nil
+}

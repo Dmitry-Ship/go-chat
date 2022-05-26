@@ -19,73 +19,35 @@ func NewGroupConversationRepository(db *gorm.DB, eventPublisher infra.EventPubli
 }
 
 func (r *groupConversationRepository) Store(conversation *domain.GroupConversation) error {
-	tx := r.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
+	return r.beginTransaction(conversation, func(tx *gorm.DB) error {
+		if err := tx.Create(toConversationPersistence(conversation)).Error; err != nil {
+			return err
 		}
-	}()
 
-	if err := tx.Error; err != nil {
-		return err
-	}
+		if err := tx.Create(toGroupConversationPersistence(conversation)).Error; err != nil {
+			return err
+		}
 
-	if err := tx.Create(toConversationPersistence(conversation)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
+		if err := tx.Create(toParticipantPersistence(&conversation.Data.Owner)).Error; err != nil {
+			return err
+		}
 
-	if err := tx.Create(toGroupConversationPersistence(conversation)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Create(toParticipantPersistence(&conversation.Data.Owner)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	r.dispatchEvents(conversation)
-
-	return nil
+		return nil
+	})
 }
 
 func (r *groupConversationRepository) Update(conversation *domain.GroupConversation) error {
-	tx := r.db.Begin()
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
+	return r.beginTransaction(conversation, func(tx *gorm.DB) error {
+		if err := tx.Save(toConversationPersistence(conversation)).Error; err != nil {
+			return err
 		}
-	}()
 
-	if err := tx.Error; err != nil {
-		return err
-	}
+		if err := tx.Save(toGroupConversationPersistence(conversation)).Error; err != nil {
+			return err
+		}
 
-	if err := tx.Save(toConversationPersistence(conversation)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Save(toGroupConversationPersistence(conversation)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	r.dispatchEvents(conversation)
-
-	return nil
+		return nil
+	})
 }
 
 func (r *groupConversationRepository) GetByID(id uuid.UUID) (*domain.GroupConversation, error) {

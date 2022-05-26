@@ -19,46 +19,25 @@ func NewDirectConversationRepository(db *gorm.DB, eventPublisher infra.EventPubl
 }
 
 func (r *directConversationRepository) Store(conversation *domain.DirectConversation) error {
-	tx := r.db.Begin()
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
+	return r.beginTransaction(conversation, func(tx *gorm.DB) error {
+		if err := tx.Create(toConversationPersistence(conversation)).Error; err != nil {
+			return err
 		}
-	}()
 
-	if err := tx.Error; err != nil {
-		return err
-	}
+		if err := tx.Create(toDirectConversationPersistence(conversation)).Error; err != nil {
+			return err
+		}
 
-	if err := tx.Create(toConversationPersistence(conversation)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
+		if err := tx.Create(toParticipantPersistence(conversation.GetFromUser())).Error; err != nil {
+			return err
+		}
 
-	if err := tx.Create(toDirectConversationPersistence(conversation)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
+		if err := tx.Create(toParticipantPersistence(conversation.GetToUser())).Error; err != nil {
+			return err
+		}
 
-	if err := tx.Create(toParticipantPersistence(conversation.GetFromUser())).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Create(toParticipantPersistence(conversation.GetToUser())).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	r.dispatchEvents(conversation)
-
-	return nil
+		return nil
+	})
 }
 
 func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConversation, error) {

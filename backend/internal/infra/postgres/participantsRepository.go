@@ -19,27 +19,11 @@ func NewParticipantRepository(db *gorm.DB, eventPublisher infra.EventPublisher) 
 }
 
 func (r *participantRepository) Store(participant *domain.Participant) error {
-	err := r.db.Create(toParticipantPersistence(participant)).Error
-
-	if err != nil {
-		return err
-	}
-
-	r.dispatchEvents(participant)
-
-	return nil
+	return r.store(participant, toParticipantPersistence(participant))
 }
 
 func (r *participantRepository) Update(participant *domain.Participant) error {
-	err := r.db.Save(toParticipantPersistence(participant)).Error
-
-	if err != nil {
-		return err
-	}
-
-	r.dispatchEvents(participant)
-
-	return nil
+	return r.update(participant, toParticipantPersistence(participant))
 }
 
 func (r *participantRepository) GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {

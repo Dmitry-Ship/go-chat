@@ -4,7 +4,7 @@ import (
 	"GitHub/go-chat/backend/internal/domain"
 )
 
-func ToUserPersistence(user *domain.User) *User {
+func toUserPersistence(user *domain.User) *User {
 	return &User{
 		ID:           user.ID,
 		Avatar:       user.Avatar,
@@ -15,7 +15,7 @@ func ToUserPersistence(user *domain.User) *User {
 	}
 }
 
-func ToUserDomain(user *User) *domain.User {
+func toUserDomain(user *User) *domain.User {
 	return &domain.User{
 		ID:           user.ID,
 		Avatar:       user.Avatar,

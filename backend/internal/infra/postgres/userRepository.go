@@ -19,34 +19,18 @@ func NewUserRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *userRe
 }
 
 func (r *userRepository) Store(user *domain.User) error {
-	err := r.db.Create(ToUserPersistence(user)).Error
-
-	if err != nil {
-		return err
-	}
-
-	r.dispatchEvents(user)
-
-	return nil
+	return r.store(user, toUserPersistence(user))
 }
 
 func (r *userRepository) Update(user *domain.User) error {
-	err := r.db.Save(ToUserPersistence(user)).Error
-
-	if err != nil {
-		return err
-	}
-
-	r.dispatchEvents(user)
-
-	return nil
+	return r.update(user, toUserPersistence(user))
 }
 
 func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
 	user := User{}
 	err := r.db.Where("id = ?", id).First(&user).Error
 
-	return ToUserDomain(&user), err
+	return toUserDomain(&user), err
 }
 
 func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
@@ -54,5 +38,5 @@ func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
 
 	err := r.db.Where("name = ?", username).First(&user).Error
 
-	return ToUserDomain(&user), err
+	return toUserDomain(&user), err
 }

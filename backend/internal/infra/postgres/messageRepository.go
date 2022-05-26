@@ -18,103 +18,45 @@ func NewMessageRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *mes
 }
 
 func (r *messageRepository) StoreTextMessage(message *domain.TextMessage) error {
-	tx := r.db.Begin()
-
-	defer func() {
-		if r := recover(); r != nil {
+	return r.beginTransaction(message, func(tx *gorm.DB) error {
+		if err := tx.Create(toMessagePersistence(message)).Error; err != nil {
 			tx.Rollback()
+			return err
 		}
-	}()
 
-	if err := tx.Error; err != nil {
-		return err
-	}
+		if err := tx.Create(toTextMessagePersistence(*message)).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
 
-	if err := tx.Create(toMessagePersistence(message)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Create(toTextMessagePersistence(*message)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	r.dispatchEvents(message)
-
-	return nil
+		return nil
+	})
 }
 
 func (r *messageRepository) StoreLeftConversationMessage(message *domain.Message) error {
-	err := r.db.Create(toMessagePersistence(message)).Error
-
-	if err != nil {
-		return err
-	}
-
-	r.dispatchEvents(message)
-
-	return nil
+	return r.store(message, toMessagePersistence(message))
 }
 
 func (r *messageRepository) StoreJoinedConversationMessage(message *domain.Message) error {
-	err := r.db.Create(toMessagePersistence(message)).Error
-
-	if err != nil {
-		return err
-	}
-
-	r.dispatchEvents(message)
-
-	return nil
+	return r.store(message, toMessagePersistence(message))
 }
 
 func (r *messageRepository) StoreInvitedConversationMessage(message *domain.Message) error {
-	err := r.db.Create(toMessagePersistence(message)).Error
-
-	if err != nil {
-		return err
-	}
-
-	r.dispatchEvents(message)
-
-	return nil
+	return r.store(message, toMessagePersistence(message))
 }
 
 func (r *messageRepository) StoreRenamedConversationMessage(message *domain.ConversationRenamedMessage) error {
-	tx := r.db.Begin()
-
-	defer func() {
-		if r := recover(); r != nil {
+	return r.beginTransaction(message, func(tx *gorm.DB) error {
+		if err := tx.Create(toMessagePersistence(message)).Error; err != nil {
 			tx.Rollback()
+			return err
 		}
-	}()
 
-	if err := tx.Error; err != nil {
-		return err
-	}
+		if err := tx.Create(toRenameConversationMessagePersistence(*message)).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
 
-	if err := tx.Create(toMessagePersistence(message)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Create(toRenameConversationMessagePersistence(*message)).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	r.dispatchEvents(message)
-
-	return nil
+		return nil
+	})
 }
