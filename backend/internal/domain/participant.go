@@ -26,10 +26,10 @@ type ParticipantLeaver interface {
 	LeaveGroupConversation(conversationID uuid.UUID) error
 }
 
-func NewParticipant(conversationId uuid.UUID, userID uuid.UUID) *Participant {
+func NewParticipant(conversationID uuid.UUID, userID uuid.UUID) *Participant {
 	return &Participant{
 		ID:             uuid.New(),
-		ConversationID: conversationId,
+		ConversationID: conversationID,
 		UserID:         userID,
 		CreatedAt:      time.Now(),
 		IsActive:       true,

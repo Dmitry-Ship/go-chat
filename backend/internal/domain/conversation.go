@@ -45,6 +45,10 @@ func (groupConversation *GroupConversation) Delete(userID uuid.UUID) error {
 		return errors.New("user is not owner")
 	}
 
+	if !groupConversation.IsActive {
+		return errors.New("conversation is not active")
+	}
+
 	groupConversation.IsActive = false
 
 	groupConversation.AddEvent(newGroupConversationDeletedEvent(groupConversation.Conversation.ID))
@@ -78,15 +82,16 @@ func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*Grou
 }
 
 func (groupConversation *GroupConversation) Rename(newName string, userID uuid.UUID) error {
-	if groupConversation.Data.Owner.UserID == userID {
-		groupConversation.Data.Name = newName
-		groupConversation.Data.Avatar = string(newName[0])
-
-		groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.ID, userID, newName))
-		return nil
+	if groupConversation.Data.Owner.UserID != userID {
+		return errors.New("user is not owner")
 	}
 
-	return errors.New("user is not owner")
+	groupConversation.Data.Name = newName
+	groupConversation.Data.Avatar = string(newName[0])
+
+	groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.ID, userID, newName))
+
+	return nil
 }
 
 func (groupConversation *GroupConversation) SendTextMessage(text string, participant *Participant) (*TextMessage, error) {
@@ -185,7 +190,7 @@ func (groupConversation *GroupConversation) SendLeftConversationMessage(conversa
 
 type DirectConversationRepository interface {
 	Store(conversation *DirectConversation) error
-	GetID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
+	GetID(firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
 	GetByID(id uuid.UUID) (*DirectConversation, error)
 }
 

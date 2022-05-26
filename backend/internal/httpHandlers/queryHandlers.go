@@ -51,8 +51,8 @@ func (s *queryHandlers) handleGetContacts(w http.ResponseWriter, r *http.Request
 func (s *queryHandlers) handleGetPotentialInvitees(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
-	conversationIdQuery := query.Get("conversation_id")
-	conversationId, err := uuid.Parse(conversationIdQuery)
+	conversationIDQuery := query.Get("conversation_id")
+	conversationID, err := uuid.Parse(conversationIDQuery)
 
 	if err != nil {
 		returnError(w, http.StatusBadRequest, err)
@@ -66,7 +66,7 @@ func (s *queryHandlers) handleGetPotentialInvitees(w http.ResponseWriter, r *htt
 		return
 	}
 
-	contacts, err := s.queries.GetPotentialInvitees(conversationId, paginationInfo)
+	contacts, err := s.queries.GetPotentialInvitees(conversationID, paginationInfo)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -114,8 +114,8 @@ func (s *queryHandlers) handleGetConversations(w http.ResponseWriter, r *http.Re
 func (s *queryHandlers) handleGetConversationsMessages(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
-	conversationIdQuery := query.Get("conversation_id")
-	conversationId, err := uuid.Parse(conversationIdQuery)
+	conversationIDQuery := query.Get("conversation_id")
+	conversationID, err := uuid.Parse(conversationIDQuery)
 
 	if err != nil {
 		returnError(w, http.StatusBadRequest, err)
@@ -136,7 +136,7 @@ func (s *queryHandlers) handleGetConversationsMessages(w http.ResponseWriter, r 
 		return
 	}
 
-	messages, err := s.queries.GetConversationMessages(conversationId, userID, paginationInfo)
+	messages, err := s.queries.GetConversationMessages(conversationID, userID, paginationInfo)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -161,15 +161,15 @@ func (s *queryHandlers) handleGetConversation(w http.ResponseWriter, r *http.Req
 
 	query := r.URL.Query()
 
-	conversationIdQuery := query.Get("conversation_id")
-	conversationId, err := uuid.Parse(conversationIdQuery)
+	conversationIDQuery := query.Get("conversation_id")
+	conversationID, err := uuid.Parse(conversationIDQuery)
 
 	if err != nil {
 		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	conversation, err := s.queries.GetConversation(conversationId, userID)
+	conversation, err := s.queries.GetConversation(conversationID, userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -187,8 +187,8 @@ func (s *queryHandlers) handleGetConversation(w http.ResponseWriter, r *http.Req
 func (s *queryHandlers) handleGetParticipants(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
-	conversationIdQuery := query.Get("conversation_id")
-	conversationId, err := uuid.Parse(conversationIdQuery)
+	conversationIDQuery := query.Get("conversation_id")
+	conversationID, err := uuid.Parse(conversationIDQuery)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -209,7 +209,7 @@ func (s *queryHandlers) handleGetParticipants(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	contacts, err := s.queries.GetParticipants(conversationId, userID, paginationInfo)
+	contacts, err := s.queries.GetParticipants(conversationID, userID, paginationInfo)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)

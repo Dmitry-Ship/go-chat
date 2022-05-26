@@ -9,17 +9,17 @@ import (
 type ConversationService interface {
 	CreateGroupConversation(id uuid.UUID, name string, userID uuid.UUID) error
 	DeleteGroupConversation(id uuid.UUID, userID uuid.UUID) error
-	RenameGroupConversation(conversationId uuid.UUID, userID uuid.UUID, name string) error
-	JoinGroupConversation(conversationId uuid.UUID, userID uuid.UUID) error
-	LeaveGroupConversation(conversationId uuid.UUID, userID uuid.UUID) error
-	InviteToGroupConversation(conversationId uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error
-	StartDirectConversation(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error)
-	SendDirectTextMessage(messageText string, conversationId uuid.UUID, userID uuid.UUID) error
-	SendGroupTextMessage(messageText string, conversationId uuid.UUID, userID uuid.UUID) error
-	SendJoinedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) error
-	SendInvitedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) error
-	SendRenamedConversationMessage(conversationId uuid.UUID, userID uuid.UUID, name string) error
-	SendLeftConversationMessage(conversationId uuid.UUID, userID uuid.UUID) error
+	RenameGroupConversation(conversationID uuid.UUID, userID uuid.UUID, name string) error
+	JoinGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error
+	LeaveGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error
+	InviteToGroupConversation(conversationID uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error
+	StartDirectConversation(fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error)
+	SendDirectTextMessage(messageText string, conversationID uuid.UUID, userID uuid.UUID) error
+	SendGroupTextMessage(messageText string, conversationID uuid.UUID, userID uuid.UUID) error
+	SendJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error
+	SendInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error
+	SendRenamedConversationMessage(conversationID uuid.UUID, userID uuid.UUID, name string) error
+	SendLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error
 }
 
 type conversationService struct {
@@ -53,8 +53,8 @@ func (s *conversationService) CreateGroupConversation(id uuid.UUID, name string,
 	return s.groupConversations.Store(conversation)
 }
 
-func (s *conversationService) StartDirectConversation(fromUserId uuid.UUID, toUserId uuid.UUID) (uuid.UUID, error) {
-	existingConversationID, err := s.directConversations.GetID(fromUserId, toUserId)
+func (s *conversationService) StartDirectConversation(fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error) {
+	existingConversationID, err := s.directConversations.GetID(fromUserID, toUserID)
 
 	if err == nil {
 		return existingConversationID, nil
@@ -62,7 +62,7 @@ func (s *conversationService) StartDirectConversation(fromUserId uuid.UUID, toUs
 
 	newConversationID := uuid.New()
 
-	conversation, err := domain.NewDirectConversation(newConversationID, toUserId, fromUserId)
+	conversation, err := domain.NewDirectConversation(newConversationID, toUserID, fromUserID)
 
 	if err != nil {
 		return uuid.Nil, err
@@ -109,8 +109,8 @@ func (s *conversationService) RenameGroupConversation(conversationID uuid.UUID, 
 	return s.groupConversations.Update(conversation)
 }
 
-func (s *conversationService) SendDirectTextMessage(messageText string, conversationId uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.directConversations.GetByID(conversationId)
+func (s *conversationService) SendDirectTextMessage(messageText string, conversationID uuid.UUID, userID uuid.UUID) error {
+	conversation, err := s.directConversations.GetByID(conversationID)
 
 	if err != nil {
 		return err
@@ -125,14 +125,14 @@ func (s *conversationService) SendDirectTextMessage(messageText string, conversa
 	return s.messages.StoreTextMessage(message)
 }
 
-func (s *conversationService) SendGroupTextMessage(messageText string, conversationId uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationId)
+func (s *conversationService) SendGroupTextMessage(messageText string, conversationID uuid.UUID, userID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
 		return err
 	}
 
-	participant, err := s.participants.GetByConversationIDAndUserID(conversationId, userID)
+	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
 
 	if err != nil {
 		return err
@@ -147,14 +147,14 @@ func (s *conversationService) SendGroupTextMessage(messageText string, conversat
 	return s.messages.StoreTextMessage(message)
 }
 
-func (s *conversationService) SendJoinedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationId)
+func (s *conversationService) SendJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
 		return err
 	}
 
-	message, err := conversation.SendJoinedConversationMessage(conversationId, userID)
+	message, err := conversation.SendJoinedConversationMessage(conversationID, userID)
 
 	if err != nil {
 		return err
@@ -163,14 +163,14 @@ func (s *conversationService) SendJoinedConversationMessage(conversationId uuid.
 	return s.messages.StoreJoinedConversationMessage(message)
 }
 
-func (s *conversationService) SendInvitedConversationMessage(conversationId uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationId)
+func (s *conversationService) SendInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
 		return err
 	}
 
-	message, err := conversation.SendInvitedConversationMessage(conversationId, userID)
+	message, err := conversation.SendInvitedConversationMessage(conversationID, userID)
 
 	if err != nil {
 		return err
@@ -179,14 +179,14 @@ func (s *conversationService) SendInvitedConversationMessage(conversationId uuid
 	return s.messages.StoreInvitedConversationMessage(message)
 }
 
-func (s *conversationService) SendRenamedConversationMessage(conversationId uuid.UUID, userID uuid.UUID, name string) error {
-	conversation, err := s.groupConversations.GetByID(conversationId)
+func (s *conversationService) SendRenamedConversationMessage(conversationID uuid.UUID, userID uuid.UUID, name string) error {
+	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
 		return err
 	}
 
-	message, err := conversation.SendRenamedConversationMessage(conversationId, userID, name)
+	message, err := conversation.SendRenamedConversationMessage(conversationID, userID, name)
 
 	if err != nil {
 		return err
@@ -195,14 +195,14 @@ func (s *conversationService) SendRenamedConversationMessage(conversationId uuid
 	return s.messages.StoreRenamedConversationMessage(message)
 }
 
-func (s *conversationService) SendLeftConversationMessage(conversationId uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationId)
+func (s *conversationService) SendLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
 		return err
 	}
 
-	message, err := conversation.SendLeftConversationMessage(conversationId, userID)
+	message, err := conversation.SendLeftConversationMessage(conversationID, userID)
 
 	if err != nil {
 		return err

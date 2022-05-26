@@ -19,7 +19,7 @@ func TestNewTextMessage(t *testing.T) {
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
-	assert.Equal(t, message.GetEvents()[len(message.events)-1], NewMessageSent(conversationID, message.ID, userID))
+	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 	assert.Nil(t, err)
 }
 
@@ -59,7 +59,7 @@ func TestNewConversationRenamedMessage(t *testing.T) {
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
-	assert.Equal(t, message.GetEvents()[len(message.events)-1], NewMessageSent(conversationID, message.ID, userID))
+	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
 func TestNewLeftConversationMessage(t *testing.T) {
@@ -72,7 +72,7 @@ func TestNewLeftConversationMessage(t *testing.T) {
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
-	assert.Equal(t, message.GetEvents()[len(message.events)-1], NewMessageSent(conversationID, message.ID, userID))
+	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
 func TestNewJoinedConversationMessage(t *testing.T) {
@@ -85,7 +85,7 @@ func TestNewJoinedConversationMessage(t *testing.T) {
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
-	assert.Equal(t, message.GetEvents()[len(message.events)-1], NewMessageSent(conversationID, message.ID, userID))
+	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
 func TestNewInvitedConversationMessage(t *testing.T) {
@@ -98,5 +98,5 @@ func TestNewInvitedConversationMessage(t *testing.T) {
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
-	assert.Equal(t, message.GetEvents()[len(message.events)-1], NewMessageSent(conversationID, message.ID, userID))
+	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 }

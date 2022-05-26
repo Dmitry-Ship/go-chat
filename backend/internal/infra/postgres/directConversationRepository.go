@@ -97,9 +97,9 @@ func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConv
 	return toDirectConversationDomain(&conversation, &directConversation, &toUser, &fromUser), nil
 }
 
-func (r *directConversationRepository) GetID(firstUserId uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {
+func (r *directConversationRepository) GetID(firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {
 	directConversation := DirectConversation{}
-	err := r.db.Where("to_user_id = ? AND from_user_id = ?", firstUserId, secondUserID).Or("to_user_id = ? AND from_user_id = ?", secondUserID, firstUserId).First(&directConversation).Error
+	err := r.db.Where("to_user_id = ? AND from_user_id = ?", firstUserID, secondUserID).Or("to_user_id = ? AND from_user_id = ?", secondUserID, firstUserID).First(&directConversation).Error
 
 	if err != nil {
 		return uuid.Nil, err

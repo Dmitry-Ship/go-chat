@@ -82,8 +82,8 @@ func (h *notificationsEventHandlers) deleteConversationTopic(e *domain.GroupConv
 	}
 }
 
-func (h *notificationsEventHandlers) subscribeToConversationNotifications(conversationId uuid.UUID, userID uuid.UUID) {
-	err := h.commands.NotificationService.SubscribeToTopic("conversation:"+conversationId.String(), userID)
+func (h *notificationsEventHandlers) subscribeToConversationNotifications(conversationID uuid.UUID, userID uuid.UUID) {
+	err := h.commands.NotificationService.SubscribeToTopic("conversation:"+conversationID.String(), userID)
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -116,8 +116,8 @@ func (h *notificationsEventHandlers) sendGroupConversationDeletedNotification(e 
 	}
 }
 
-func (h *notificationsEventHandlers) sendUpdatedConversationNotification(conversationId uuid.UUID) {
-	ids, err := h.commands.NotificationService.GetReceivers("conversation:" + conversationId.String())
+func (h *notificationsEventHandlers) sendUpdatedConversationNotification(conversationID uuid.UUID) {
+	ids, err := h.commands.NotificationService.GetReceivers("conversation:" + conversationID.String())
 
 	if err != nil {
 		h.logHandlerError(err)
@@ -125,7 +125,7 @@ func (h *notificationsEventHandlers) sendUpdatedConversationNotification(convers
 	}
 
 	for _, id := range ids {
-		conversation, err := h.queries.GetConversation(conversationId, id)
+		conversation, err := h.queries.GetConversation(conversationID, id)
 
 		if err != nil {
 			h.logHandlerError(err)

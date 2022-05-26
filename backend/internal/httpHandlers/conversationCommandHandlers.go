@@ -9,7 +9,7 @@ import (
 
 func (s *commandHandlers) handleStartDirectConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
-		ToUserId uuid.UUID `json:"to_user_id"`
+		ToUserID uuid.UUID `json:"to_user_id"`
 	}{}
 
 	err := json.NewDecoder(r.Body).Decode(&request)
@@ -26,7 +26,7 @@ func (s *commandHandlers) handleStartDirectConversation(w http.ResponseWriter, r
 		return
 	}
 
-	conversationId, err := s.commands.ConversationService.StartDirectConversation(userID, request.ToUserId)
+	conversationID, err := s.commands.ConversationService.StartDirectConversation(userID, request.ToUserID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -36,7 +36,7 @@ func (s *commandHandlers) handleStartDirectConversation(w http.ResponseWriter, r
 	response := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{
-		ConversationId: conversationId,
+		ConversationId: conversationID,
 	}
 
 	err = json.NewEncoder(w).Encode(response)
