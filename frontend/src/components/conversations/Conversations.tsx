@@ -23,7 +23,7 @@ function Conversations() {
     <>
       <header className={`header header-for-scrollable`}>
         <h2>Chats</h2>
-        <NewConversationBtn />
+        <NewConversationBtn text="+ New" />
       </header>
       <section className="wrap">
         <div className={`scrollable-content`} onScroll={handleScroll}>

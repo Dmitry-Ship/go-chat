@@ -82,7 +82,11 @@ const EditConversationBtn: React.FC<{
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                 />
-                <button type="submit" disabled={!newName} className={`btn`}>
+                <button
+                  type="submit"
+                  disabled={!newName || newName === conversation.name}
+                  className={`btn`}
+                >
                   Rename
                 </button>
               </form>

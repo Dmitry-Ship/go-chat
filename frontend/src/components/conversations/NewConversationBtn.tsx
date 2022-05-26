@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/router";
 import { useAPI } from "../../contexts/apiContext";
 
-function NewConversationBtn() {
+const NewConversationBtn: React.FC<{ text: string }> = ({ text }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [conversationName, setConversationName] = useState("");
   const router = useRouter();
@@ -36,14 +36,14 @@ function NewConversationBtn() {
   return (
     <div>
       <button className={"btn"} onClick={() => setIsCreating(true)}>
-        + New
+        {text}
       </button>
       <SlideIn isOpen={isCreating} onClose={() => setIsCreating(false)}>
         <form className={styles.form} onSubmit={handleCreate}>
           <input
             type="text"
             ref={input}
-            placeholder="Conversation name"
+            placeholder="Group name"
             size={32}
             className={`${styles.input} input`}
             value={conversationName}
@@ -56,6 +56,6 @@ function NewConversationBtn() {
       </SlideIn>
     </div>
   );
-}
+};
 
 export default NewConversationBtn;
