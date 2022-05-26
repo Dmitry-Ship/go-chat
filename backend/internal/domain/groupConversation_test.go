@@ -301,7 +301,7 @@ func TestLeaveNotActive(t *testing.T) {
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
-	conversation.Delete(creatorId)
+	_ = conversation.Delete(creatorId)
 
 	_, err := conversation.Leave(&conversation.Data.Owner)
 
@@ -326,7 +326,7 @@ func TestLeaveAlreadyLeft(t *testing.T) {
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
-	conversation.Leave(&conversation.Data.Owner)
+	_, _ = conversation.Leave(&conversation.Data.Owner)
 
 	_, err := conversation.Leave(&conversation.Data.Owner)
 

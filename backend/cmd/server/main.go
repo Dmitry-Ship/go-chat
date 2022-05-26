@@ -32,8 +32,8 @@ func main() {
 
 	server := server.NewServer(ctx, commands, queries, eventBus)
 
-	server.InitRoutes()
-	server.ListenForEvents()
+	server.HttpHandlers.InitRoutes()
+	go server.EventHandlers.ListenForEvents()
 
 	s := gracefulServer.NewGracefulServer()
 	s.Run()

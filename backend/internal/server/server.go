@@ -14,26 +14,15 @@ type EventHandlers interface {
 }
 
 type Server struct {
-	httpHandlers               *httpHandlers.HTTPHandlers
-	messageEventHandlers       EventHandlers
-	notificationsEventHandlers EventHandlers
+	HttpHandlers  *httpHandlers.HTTPHandlers
+	EventHandlers EventHandlers
 }
 
 func NewServer(ctx context.Context, commands *app.Commands, queries readModel.QueriesRepository, eventBus infra.EventsSubscriber) *Server {
 	go commands.ClientsService.Run()
 
 	return &Server{
-		httpHandlers:               httpHandlers.NewHTTPHandlers(commands, queries),
-		messageEventHandlers:       domainEventsHandlers.NewMessageEventHandlers(ctx, eventBus, commands),
-		notificationsEventHandlers: domainEventsHandlers.NewNotificationsEventHandlers(ctx, eventBus, commands, queries),
+		HttpHandlers:  httpHandlers.NewHTTPHandlers(commands, queries),
+		EventHandlers: domainEventsHandlers.NewEventHandlers(ctx, eventBus, commands, queries),
 	}
-}
-
-func (s *Server) InitRoutes() {
-	s.httpHandlers.InitRoutes()
-}
-
-func (s *Server) ListenForEvents() {
-	go s.messageEventHandlers.ListenForEvents()
-	go s.notificationsEventHandlers.ListenForEvents()
 }

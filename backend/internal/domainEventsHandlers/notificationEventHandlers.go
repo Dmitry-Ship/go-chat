@@ -1,72 +1,13 @@
 package domainEventsHandlers
 
 import (
-	"GitHub/go-chat/backend/internal/app"
 	"GitHub/go-chat/backend/internal/domain"
-	"GitHub/go-chat/backend/internal/infra"
-	"GitHub/go-chat/backend/internal/readModel"
 	ws "GitHub/go-chat/backend/internal/websocket"
-	"context"
-	"log"
 
 	"github.com/google/uuid"
 )
 
-type notificationsEventHandlers struct {
-	ctx        context.Context
-	subscriber infra.EventsSubscriber
-	commands   *app.Commands
-	queries    readModel.QueriesRepository
-}
-
-func NewNotificationsEventHandlers(ctx context.Context, subscriber infra.EventsSubscriber, commands *app.Commands, queries readModel.QueriesRepository) *notificationsEventHandlers {
-	return &notificationsEventHandlers{
-		ctx:        ctx,
-		subscriber: subscriber,
-		commands:   commands,
-		queries:    queries,
-	}
-}
-
-func (h *notificationsEventHandlers) logHandlerError(err error) {
-	log.Panicln("Error occurred event", err)
-}
-
-func (h *notificationsEventHandlers) ListenForEvents() {
-	for {
-		select {
-		case event := <-h.subscriber.Subscribe(domain.DomainEventChannel):
-			switch e := event.Data.(type) {
-			case *domain.GroupConversationRenamed:
-				go h.sendUpdatedConversationNotification(e.ConversationID)
-			case *domain.GroupConversationLeft:
-				go h.unsubscribeFromConversation(e)
-				go h.sendUpdatedConversationNotification(e.ConversationID)
-			case *domain.GroupConversationJoined:
-				go h.subscribeToConversationNotifications(e.ConversationID, e.UserID)
-				go h.sendUpdatedConversationNotification(e.ConversationID)
-			case *domain.GroupConversationInvited:
-				go h.subscribeToConversationNotifications(e.ConversationID, e.UserID)
-				go h.sendUpdatedConversationNotification(e.ConversationID)
-			case *domain.MessageSent:
-				go h.sendMessageNotification(e)
-			case *domain.GroupConversationCreated:
-				go h.subscribeToConversationNotifications(e.ConversationID, e.OwnerID)
-			case *domain.DirectConversationCreated:
-				go h.subscribeToConversationNotifications(e.ConversationID, e.FromUserID)
-				go h.subscribeToConversationNotifications(e.ConversationID, e.ToUserID)
-			case *domain.GroupConversationDeleted:
-				go h.sendGroupConversationDeletedNotification(e)
-				go h.deleteConversationTopic(e)
-			}
-
-		case <-h.ctx.Done():
-			return
-		}
-	}
-}
-
-func (h *notificationsEventHandlers) unsubscribeFromConversation(e *domain.GroupConversationLeft) {
+func (h *eventHandlers) unsubscribeFromConversation(e *domain.GroupConversationLeft) {
 	err := h.commands.NotificationService.UnsubscribeFromTopic("conversation:"+e.ConversationID.String(), e.UserID)
 
 	if err != nil {
@@ -74,7 +15,7 @@ func (h *notificationsEventHandlers) unsubscribeFromConversation(e *domain.Group
 	}
 }
 
-func (h *notificationsEventHandlers) deleteConversationTopic(e *domain.GroupConversationDeleted) {
+func (h *eventHandlers) deleteConversationTopic(e *domain.GroupConversationDeleted) {
 	err := h.commands.NotificationService.DeleteTopic("conversation:" + e.ConversationID.String())
 
 	if err != nil {
@@ -82,7 +23,7 @@ func (h *notificationsEventHandlers) deleteConversationTopic(e *domain.GroupConv
 	}
 }
 
-func (h *notificationsEventHandlers) subscribeToConversationNotifications(conversationID uuid.UUID, userID uuid.UUID) {
+func (h *eventHandlers) subscribeToConversationNotifications(conversationID uuid.UUID, userID uuid.UUID) {
 	err := h.commands.NotificationService.SubscribeToTopic("conversation:"+conversationID.String(), userID)
 
 	if err != nil {
@@ -90,7 +31,7 @@ func (h *notificationsEventHandlers) subscribeToConversationNotifications(conver
 	}
 }
 
-func (h *notificationsEventHandlers) sendGroupConversationDeletedNotification(e *domain.GroupConversationDeleted) {
+func (h *eventHandlers) sendGroupConversationDeletedNotification(e *domain.GroupConversationDeleted) {
 	ids, err := h.commands.NotificationService.GetReceivers("conversation:" + e.ConversationID.String())
 
 	if err != nil {
@@ -116,7 +57,7 @@ func (h *notificationsEventHandlers) sendGroupConversationDeletedNotification(e 
 	}
 }
 
-func (h *notificationsEventHandlers) sendUpdatedConversationNotification(conversationID uuid.UUID) {
+func (h *eventHandlers) sendUpdatedConversationNotification(conversationID uuid.UUID) {
 	ids, err := h.commands.NotificationService.GetReceivers("conversation:" + conversationID.String())
 
 	if err != nil {
@@ -145,7 +86,7 @@ func (h *notificationsEventHandlers) sendUpdatedConversationNotification(convers
 	}
 }
 
-func (h *notificationsEventHandlers) sendMessageNotification(e *domain.MessageSent) {
+func (h *eventHandlers) sendMessageNotification(e *domain.MessageSent) {
 	ids, err := h.commands.NotificationService.GetReceivers("conversation:" + e.ConversationID.String())
 
 	if err != nil {
