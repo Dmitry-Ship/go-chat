@@ -41,7 +41,19 @@ func (a *authService) Login(username string, password string) (tokens, error) {
 		return tokens{}, errors.New("password is incorrect")
 	}
 
-	return a.createAndSetTokens(user)
+	newTokens, err := a.jwTokens.CreateTokens(user.ID)
+
+	if err != nil {
+		return tokens{}, err
+	}
+
+	user.SetRefreshToken(newTokens.RefreshToken)
+
+	if err = a.users.Update(user); err != nil {
+		return tokens{}, err
+	}
+
+	return newTokens, err
 }
 
 func (a *authService) Logout(userID uuid.UUID) error {
@@ -105,10 +117,6 @@ func (a *authService) RotateTokens(refreshTokenString string) (tokens, error) {
 		return tokens{}, errors.New("invalid token")
 	}
 
-	return a.createAndSetTokens(user)
-}
-
-func (a *authService) createAndSetTokens(user *domain.User) (tokens, error) {
 	newTokens, err := a.jwTokens.CreateTokens(user.ID)
 
 	if err != nil {
