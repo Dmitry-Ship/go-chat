@@ -14,13 +14,13 @@ func TestNewGroupConversation(t *testing.T) {
 
 	conversation, err := NewGroupConversation(conversationID, name, creatorId)
 
-	assert.Equal(t, conversation.ID, conversationID)
-	assert.Equal(t, name, conversation.Data.Name)
-	assert.Equal(t, string(name[0]), conversation.Data.Avatar)
+	assert.Equal(t, conversation.Conversation.ID, conversationID)
+	assert.Equal(t, name, conversation.Name)
+	assert.Equal(t, string(name[0]), conversation.Avatar)
 	assert.Equal(t, conversation.Type, "group")
-	assert.Equal(t, conversationID, conversation.Data.Owner.ConversationID)
-	assert.Equal(t, creatorId, conversation.Data.Owner.UserID)
-	assert.NotNil(t, conversation.Data.Owner.ID)
+	assert.Equal(t, conversationID, conversation.Owner.ConversationID)
+	assert.Equal(t, creatorId, conversation.Owner.UserID)
+	assert.NotNil(t, conversation.Owner.ID)
 	assert.Equal(t, conversation.IsActive, true)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationCreatedEvent(conversationID, creatorId))
 	assert.Nil(t, err)
@@ -36,6 +36,20 @@ func TestNewGroupConversationEmptyName(t *testing.T) {
 	assert.Equal(t, "name is empty", err.Error())
 }
 
+func TestNewGroupConversationLongName(t *testing.T) {
+	name := ""
+	conversationID := uuid.New()
+	creatorId := uuid.New()
+
+	for i := 0; i < 101; i++ {
+		name += "a"
+	}
+
+	_, err := NewGroupConversation(conversationID, name, creatorId)
+
+	assert.Equal(t, "name is too long", err.Error())
+}
+
 func TestRename(t *testing.T) {
 	name := "test"
 	conversationID := uuid.New()
@@ -45,7 +59,7 @@ func TestRename(t *testing.T) {
 	err := conversation.Rename("new name", creatorId)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "new name", conversation.Data.Name)
+	assert.Equal(t, "new name", conversation.Name)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationRenamedEvent(conversationID, creatorId, "new name"))
 }
 
@@ -59,7 +73,7 @@ func TestSendTextMessage(t *testing.T) {
 	message, err := conversation.SendTextMessage("new message", participant)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "new message", message.Data.Text)
+	assert.Equal(t, "new message", message.Text)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, "text", message.Type)
 }
@@ -151,7 +165,7 @@ func TestRenameNotOwner(t *testing.T) {
 
 	assert.NotNil(t, err)
 	assert.Equal(t, "user is not owner", err.Error())
-	assert.Equal(t, name, conversation.Data.Name)
+	assert.Equal(t, name, conversation.Name)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationCreatedEvent(conversationID, creatorId))
 }
 
@@ -165,7 +179,7 @@ func TestDelete(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, false, conversation.IsActive)
-	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationDeletedEvent(conversation.ID))
+	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationDeletedEvent(conversation.Conversation.ID))
 }
 
 func TestDeleteNotOwner(t *testing.T) {
@@ -287,7 +301,7 @@ func TestLeave(t *testing.T) {
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	participant, err := conversation.Leave(&conversation.Data.Owner)
+	participant, err := conversation.Leave(&conversation.Owner)
 
 	assert.Nil(t, err)
 	assert.Equal(t, participant.IsActive, false)
@@ -300,7 +314,7 @@ func TestLeaveNotActive(t *testing.T) {
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 	_ = conversation.Delete(creatorId)
 
-	_, err := conversation.Leave(&conversation.Data.Owner)
+	_, err := conversation.Leave(&conversation.Owner)
 
 	assert.Equal(t, err.Error(), "conversation is not active")
 }
@@ -323,9 +337,9 @@ func TestLeaveAlreadyLeft(t *testing.T) {
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
-	_, _ = conversation.Leave(&conversation.Data.Owner)
+	_, _ = conversation.Leave(&conversation.Owner)
 
-	_, err := conversation.Leave(&conversation.Data.Owner)
+	_, err := conversation.Leave(&conversation.Owner)
 
 	assert.Equal(t, err.Error(), "participant already left")
 }

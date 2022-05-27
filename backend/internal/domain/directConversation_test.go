@@ -14,13 +14,13 @@ func TestNewDirectConversation(t *testing.T) {
 
 	conversation, err := NewDirectConversation(conversationID, to, from)
 
-	assert.Equal(t, conversation.ID, conversationID)
-	assert.Equal(t, to, conversation.Data.ToUser.UserID)
-	assert.Equal(t, from, conversation.Data.FromUser.UserID)
-	assert.Equal(t, conversationID, conversation.Data.FromUser.ConversationID)
-	assert.Equal(t, conversationID, conversation.Data.ToUser.ConversationID)
-	assert.NotNil(t, conversation.Data.FromUser.ID)
-	assert.NotNil(t, conversation.Data.ToUser.ID)
+	assert.Equal(t, conversation.Conversation.ID, conversationID)
+	assert.Equal(t, to, conversation.ToUser.UserID)
+	assert.Equal(t, from, conversation.FromUser.UserID)
+	assert.Equal(t, conversationID, conversation.FromUser.ConversationID)
+	assert.Equal(t, conversationID, conversation.ToUser.ConversationID)
+	assert.NotNil(t, conversation.FromUser.ID)
+	assert.NotNil(t, conversation.ToUser.ID)
 	assert.Equal(t, conversation.Type, "direct")
 	assert.Equal(t, true, conversation.IsActive)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newDirectConversationCreatedEvent(conversationID, to, from))
@@ -68,7 +68,7 @@ func TestSendDirectTextMessage(t *testing.T) {
 	message, err := conversation.SendTextMessage(text, to)
 
 	assert.Nil(t, err)
-	assert.Equal(t, message.Data.Text, text)
+	assert.Equal(t, message.Text, text)
 	assert.Equal(t, message.UserID, to)
 }
 

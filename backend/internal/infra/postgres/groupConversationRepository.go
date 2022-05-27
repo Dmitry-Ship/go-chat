@@ -28,7 +28,7 @@ func (r *groupConversationRepository) Store(conversation *domain.GroupConversati
 			return err
 		}
 
-		if err := tx.Create(toParticipantPersistence(&conversation.Data.Owner)).Error; err != nil {
+		if err := tx.Create(toParticipantPersistence(&conversation.Owner)).Error; err != nil {
 			return err
 		}
 

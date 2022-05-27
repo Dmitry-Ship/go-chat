@@ -13,11 +13,11 @@ func TestToGroupConversationPersistence(t *testing.T) {
 
 	persistence := toGroupConversationPersistence(conversation)
 
-	assert.Equal(t, persistence.ID, conversation.Data.ID)
+	assert.Equal(t, persistence.ID, conversation.ID)
 	assert.Equal(t, persistence.ConversationID, conversation.GetBaseData().ID)
-	assert.Equal(t, persistence.Name, conversation.Data.Name)
-	assert.Equal(t, persistence.Avatar, conversation.Data.Avatar)
-	assert.Equal(t, persistence.OwnerID, conversation.Data.Owner.UserID)
+	assert.Equal(t, persistence.Name, conversation.Name)
+	assert.Equal(t, persistence.Avatar, conversation.Avatar)
+	assert.Equal(t, persistence.OwnerID, conversation.Owner.UserID)
 }
 
 func TestToGroupConversationDomain(t *testing.T) {
@@ -45,11 +45,11 @@ func TestToGroupConversationDomain(t *testing.T) {
 
 	domain := toGroupConversationDomain(conversation, groupConversation, participant)
 
-	assert.Equal(t, domain.Data.ID, groupConversation.ID)
+	assert.Equal(t, domain.ID, groupConversation.ID)
 	assert.Equal(t, domain.GetBaseData().ID, groupConversation.ConversationID)
-	assert.Equal(t, domain.Data.Name, groupConversation.Name)
-	assert.Equal(t, domain.Data.Avatar, groupConversation.Avatar)
-	assert.Equal(t, domain.Data.Owner.UserID, groupConversation.OwnerID)
+	assert.Equal(t, domain.Name, groupConversation.Name)
+	assert.Equal(t, domain.Avatar, groupConversation.Avatar)
+	assert.Equal(t, domain.Owner.UserID, groupConversation.OwnerID)
 }
 
 func TestToDirectConversationPersistence(t *testing.T) {
@@ -57,8 +57,8 @@ func TestToDirectConversationPersistence(t *testing.T) {
 
 	persistence := toDirectConversationPersistence(conversation)
 
-	assert.Equal(t, persistence.ID, conversation.Data.ID)
+	assert.Equal(t, persistence.ID, conversation.ID)
 	assert.Equal(t, persistence.ConversationID, conversation.GetBaseData().ID)
-	assert.Equal(t, persistence.FromUserID, conversation.Data.FromUser.UserID)
-	assert.Equal(t, persistence.ToUserID, conversation.Data.ToUser.UserID)
+	assert.Equal(t, persistence.FromUserID, conversation.FromUser.UserID)
+	assert.Equal(t, persistence.ToUserID, conversation.ToUser.UserID)
 }

@@ -12,15 +12,11 @@ type DirectConversationRepository interface {
 	GetByID(id uuid.UUID) (*DirectConversation, error)
 }
 
-type DirectConversationData struct {
+type DirectConversation struct {
+	Conversation
 	ID       uuid.UUID
 	ToUser   Participant
 	FromUser Participant
-}
-
-type DirectConversation struct {
-	Conversation
-	Data DirectConversationData
 }
 
 func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectConversation, error) {
@@ -34,11 +30,9 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 			Type:     "direct",
 			IsActive: true,
 		},
-		Data: DirectConversationData{
-			ID:       uuid.New(),
-			ToUser:   *NewParticipant(id, to),
-			FromUser: *NewParticipant(id, from),
-		},
+		ID:       uuid.New(),
+		ToUser:   *NewParticipant(id, to),
+		FromUser: *NewParticipant(id, from),
 	}
 
 	directConversation.AddEvent(newDirectConversationCreatedEvent(id, to, from))
@@ -47,15 +41,15 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 }
 
 func (directConversation *DirectConversation) GetFromUser() *Participant {
-	return &directConversation.Data.FromUser
+	return &directConversation.FromUser
 }
 
 func (directConversation *DirectConversation) GetToUser() *Participant {
-	return &directConversation.Data.ToUser
+	return &directConversation.ToUser
 }
 
 func (directConversation *DirectConversation) SendTextMessage(text string, userID uuid.UUID) (*TextMessage, error) {
-	if directConversation.Data.ToUser.UserID != userID && directConversation.Data.FromUser.UserID != userID {
+	if directConversation.ToUser.UserID != userID && directConversation.FromUser.UserID != userID {
 		return nil, errors.New("user is not participant")
 	}
 

@@ -12,20 +12,21 @@ type GroupConversationRepository interface {
 	GetByID(id uuid.UUID) (*GroupConversation, error)
 }
 
-type GroupConversationData struct {
+type GroupConversation struct {
+	Conversation
 	ID     uuid.UUID
 	Name   string
 	Avatar string
 	Owner  Participant
 }
-type GroupConversation struct {
-	Conversation
-	Data GroupConversationData
-}
 
 func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*GroupConversation, error) {
 	if name == "" {
 		return nil, errors.New("name is empty")
+	}
+
+	if len(name) > 100 {
+		return nil, errors.New("name is too long")
 	}
 
 	groupConversation := &GroupConversation{
@@ -34,12 +35,10 @@ func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*Grou
 			Type:     "group",
 			IsActive: true,
 		},
-		Data: GroupConversationData{
-			ID:     uuid.New(),
-			Name:   name,
-			Avatar: string(name[0]),
-			Owner:  *NewParticipant(id, creatorID),
-		},
+		ID:     uuid.New(),
+		Name:   name,
+		Avatar: string(name[0]),
+		Owner:  *NewParticipant(id, creatorID),
 	}
 
 	groupConversation.AddEvent(newGroupConversationCreatedEvent(id, creatorID))
@@ -48,7 +47,7 @@ func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*Grou
 }
 
 func (groupConversation *GroupConversation) Delete(userID uuid.UUID) error {
-	if groupConversation.Data.Owner.UserID != userID {
+	if groupConversation.Owner.UserID != userID {
 		return errors.New("user is not owner")
 	}
 
@@ -64,38 +63,24 @@ func (groupConversation *GroupConversation) Delete(userID uuid.UUID) error {
 }
 
 func (groupConversation *GroupConversation) Rename(newName string, userID uuid.UUID) error {
-	if groupConversation.Data.Owner.UserID != userID {
+	if newName == "" {
+		return errors.New("name is empty")
+	}
+
+	if len(newName) > 100 {
+		return errors.New("name is too long")
+	}
+
+	if groupConversation.Owner.UserID != userID {
 		return errors.New("user is not owner")
 	}
 
-	groupConversation.Data.Name = newName
-	groupConversation.Data.Avatar = string(newName[0])
+	groupConversation.Name = newName
+	groupConversation.Avatar = string(newName[0])
 
-	groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.ID, userID, newName))
+	groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.Conversation.ID, userID, newName))
 
 	return nil
-}
-
-func (groupConversation *GroupConversation) SendTextMessage(text string, participant *Participant) (*TextMessage, error) {
-	if !groupConversation.Conversation.IsActive {
-		return nil, errors.New("conversation is not active")
-	}
-
-	if participant.ConversationID != groupConversation.Conversation.ID {
-		return nil, errors.New("user is not participant")
-	}
-
-	if !participant.IsActive {
-		return nil, errors.New("user is not participant")
-	}
-
-	message, err := newTextMessage(groupConversation.Conversation.ID, participant.UserID, text)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return message, nil
 }
 
 func (groupConversation *GroupConversation) Join(userID uuid.UUID) (*Participant, error) {
@@ -103,9 +88,9 @@ func (groupConversation *GroupConversation) Join(userID uuid.UUID) (*Participant
 		return nil, errors.New("conversation is not active")
 	}
 
-	participant := NewParticipant(groupConversation.ID, userID)
+	participant := NewParticipant(groupConversation.Conversation.ID, userID)
 
-	participant.AddEvent(newGroupConversationJoinedEvent(groupConversation.ID, userID))
+	participant.AddEvent(newGroupConversationJoinedEvent(groupConversation.Conversation.ID, userID))
 
 	return participant, nil
 }
@@ -135,7 +120,7 @@ func (groupConversation *GroupConversation) Invite(userID uuid.UUID, inviteeID u
 		return nil, errors.New("conversation is not active")
 	}
 
-	if groupConversation.Data.Owner.UserID == inviteeID {
+	if groupConversation.Owner.UserID == inviteeID {
 		return nil, errors.New("user is owner")
 	}
 
@@ -143,14 +128,36 @@ func (groupConversation *GroupConversation) Invite(userID uuid.UUID, inviteeID u
 		return nil, errors.New("cannot invite yourself")
 	}
 
-	participant := NewParticipant(groupConversation.ID, inviteeID)
+	participant := NewParticipant(groupConversation.Conversation.ID, inviteeID)
 
-	participant.AddEvent(newGroupConversationInvitedEvent(groupConversation.ID, userID, inviteeID))
+	participant.AddEvent(newGroupConversationInvitedEvent(groupConversation.Conversation.ID, userID, inviteeID))
 
 	return participant, nil
 }
 
-func (groupConversation *GroupConversation) SendJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*JoinedConversationMessage, error) {
+func (groupConversation *GroupConversation) SendTextMessage(text string, participant *Participant) (*TextMessage, error) {
+	if !groupConversation.Conversation.IsActive {
+		return nil, errors.New("conversation is not active")
+	}
+
+	if participant.ConversationID != groupConversation.Conversation.ID {
+		return nil, errors.New("user is not participant")
+	}
+
+	if !participant.IsActive {
+		return nil, errors.New("user is not participant")
+	}
+
+	message, err := newTextMessage(groupConversation.Conversation.ID, participant.UserID, text)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return message, nil
+}
+
+func (groupConversation *GroupConversation) SendJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
@@ -160,7 +167,7 @@ func (groupConversation *GroupConversation) SendJoinedConversationMessage(conver
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*InvitedConversationMessage, error) {
+func (groupConversation *GroupConversation) SendInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
@@ -180,7 +187,7 @@ func (groupConversation *GroupConversation) SendRenamedConversationMessage(conve
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*LeftConversationMessage, error) {
+func (groupConversation *GroupConversation) SendLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}

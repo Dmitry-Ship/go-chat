@@ -51,14 +51,10 @@ func (m *Message) GetBaseData() *Message {
 	return m
 }
 
-type TextMessageData struct {
-	ID   uuid.UUID
-	Text string
-}
-
 type TextMessage struct {
 	Message
-	Data TextMessageData
+	ID   uuid.UUID
+	Text string
 }
 
 func newTextMessage(conversationID uuid.UUID, userID uuid.UUID, text string) (*TextMessage, error) {
@@ -70,61 +66,36 @@ func newTextMessage(conversationID uuid.UUID, userID uuid.UUID, text string) (*T
 		return nil, errors.New("text is too long")
 	}
 
-	baseMessage := newMessage(conversationID, userID, MessageTypeText)
-
 	return &TextMessage{
-		Message: *baseMessage,
-		Data: TextMessageData{
-			ID:   uuid.New(),
-			Text: text,
-		},
+		Message: *newMessage(conversationID, userID, MessageTypeText),
+		ID:      uuid.New(),
+		Text:    text,
 	}, nil
-}
-
-func (tm *TextMessage) GetTextMessageData() TextMessageData {
-	return tm.Data
-}
-
-type conversationRenamedMessageData struct {
-	ID      uuid.UUID
-	NewName string
 }
 
 type ConversationRenamedMessage struct {
 	Message
-	Data conversationRenamedMessageData
+	ID      uuid.UUID
+	NewName string
 }
 
 func newConversationRenamedMessage(conversationID uuid.UUID, userID uuid.UUID, newName string) *ConversationRenamedMessage {
-	baseMessage := newMessage(conversationID, userID, MessageTypeRenamedConversation)
 	return &ConversationRenamedMessage{
-		Message: *baseMessage,
-		Data: conversationRenamedMessageData{
-			ID:      uuid.New(),
-			NewName: newName,
-		},
+		Message: *newMessage(conversationID, userID, MessageTypeRenamedConversation),
+		ID:      uuid.New(),
+		NewName: newName,
 	}
 
 }
 
-func (crm *ConversationRenamedMessage) GetConversationRenamedMessage() *conversationRenamedMessageData {
-	return &crm.Data
-}
-
-type LeftConversationMessage = Message
-
-func newLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) *LeftConversationMessage {
+func newLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) *Message {
 	return newMessage(conversationID, userID, MessageTypeLeftConversation)
 }
 
-type JoinedConversationMessage = Message
-
-func newJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) *JoinedConversationMessage {
+func newJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) *Message {
 	return newMessage(conversationID, userID, MessageTypeJoinedConversation)
 }
 
-type InvitedConversationMessage = Message
-
-func newInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) *InvitedConversationMessage {
+func newInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) *Message {
 	return newMessage(conversationID, userID, MessageTypeInvitedConversation)
 }

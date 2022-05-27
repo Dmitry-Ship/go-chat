@@ -13,13 +13,13 @@ func TestNewTextMessage(t *testing.T) {
 
 	message, err := newTextMessage(conversationID, userID, "content")
 
-	assert.Equal(t, "content", message.Data.Text)
-	assert.NotNil(t, message.Data.ID)
+	assert.Equal(t, "content", message.Text)
+	assert.NotNil(t, message.ID)
 	assert.Equal(t, MessageTypeText, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
-	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
+	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.GetBaseData().ID, userID))
 	assert.Nil(t, err)
 }
 
@@ -53,13 +53,13 @@ func TestNewConversationRenamedMessage(t *testing.T) {
 
 	message := newConversationRenamedMessage(conversationID, userID, "new name")
 
-	assert.Equal(t, "new name", message.Data.NewName)
-	assert.NotNil(t, message.Data.ID)
+	assert.Equal(t, "new name", message.NewName)
+	assert.NotNil(t, message.ID)
 	assert.Equal(t, MessageTypeRenamedConversation, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
-	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
+	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.GetBaseData().ID, userID))
 }
 
 func TestNewLeftConversationMessage(t *testing.T) {

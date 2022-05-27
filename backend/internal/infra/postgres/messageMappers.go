@@ -33,21 +33,17 @@ func toMessagePersistence(message domain.BaseMessage) *Message {
 }
 
 func toTextMessagePersistence(message domain.TextMessage) *TextMessage {
-	text := message.GetTextMessageData()
-
 	return &TextMessage{
-		ID:        text.ID,
+		ID:        message.ID,
 		MessageID: message.GetBaseData().ID,
-		Text:      text.Text,
+		Text:      message.Text,
 	}
 }
 
 func toRenameConversationMessagePersistence(message domain.ConversationRenamedMessage) *ConversationRenamedMessage {
-	conversationRenamedMessage := message.GetConversationRenamedMessage()
-
 	return &ConversationRenamedMessage{
-		ID:        conversationRenamedMessage.ID,
+		ID:        message.ID,
 		MessageID: message.GetBaseData().ID,
-		NewName:   conversationRenamedMessage.NewName,
+		NewName:   message.NewName,
 	}
 }

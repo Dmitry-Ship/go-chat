@@ -68,12 +68,12 @@ func (m *messagesRepositoryMock) StoreTextMessage(message *domain.TextMessage) e
 	return nil
 }
 
-func (m *messagesRepositoryMock) StoreJoinedConversationMessage(message *domain.JoinedConversationMessage) error {
+func (m *messagesRepositoryMock) StoreJoinedConversationMessage(message *domain.Message) error {
 	m.methodsCalled["StoreJoinedConversationMessage"]++
 	return nil
 }
 
-func (m *messagesRepositoryMock) StoreInvitedConversationMessage(message *domain.JoinedConversationMessage) error {
+func (m *messagesRepositoryMock) StoreInvitedConversationMessage(message *domain.Message) error {
 	m.methodsCalled["StoreInvitedConversationMessage"]++
 	return nil
 }
@@ -83,7 +83,7 @@ func (m *messagesRepositoryMock) StoreRenamedConversationMessage(message *domain
 	return nil
 }
 
-func (m *messagesRepositoryMock) StoreLeftConversationMessage(message *domain.LeftConversationMessage) error {
+func (m *messagesRepositoryMock) StoreLeftConversationMessage(message *domain.Message) error {
 	m.methodsCalled["StoreLeftConversationMessage"]++
 	return nil
 }
