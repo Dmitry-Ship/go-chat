@@ -7,15 +7,20 @@ function Settings() {
   const { user, logout } = useAuth();
 
   return (
-    <div className={styles.settingsPage}>
-      <div className={styles.accountInfo}>
-        <Avatar src={user?.avatar || ""} size={100} />
-        <h3>{user?.name}</h3>
+    <>
+      <header className={`header`}>
+        <h2>Settings</h2>
+      </header>
+      <div className={styles.settingsPage}>
+        <div className={styles.accountInfo}>
+          <Avatar src={user?.avatar || ""} size={100} />
+          <h3>{user?.name}</h3>
+        </div>
+        <button onClick={logout} className={`btn`}>
+          Logout
+        </button>
       </div>
-      <button onClick={logout} className={`btn`}>
-        Logout
-      </button>
-    </div>
+    </>
   );
 }
 

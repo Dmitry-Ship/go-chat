@@ -95,7 +95,10 @@ const Conversation: React.FC = () => {
       </header>
 
       <section className="wrap">
-        <ChatLog conversationId={conversationId} />
+        <ChatLog
+          conversationId={conversationId}
+          isEmpty={conversation.participants_count < 2}
+        />
 
         <ChatForm
           conversationId={conversationId}

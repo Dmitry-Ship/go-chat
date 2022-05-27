@@ -6,8 +6,12 @@ import Loader from "../common/Loader";
 import { usePaginatedQuery } from "../../api/hooks";
 import { parseMessage } from "../../messages";
 import { useWebSocket } from "../../contexts/WSContext";
+import InviteMenu from "./InviteMenu";
 
-const ChatLog: React.FC<{ conversationId: string }> = ({ conversationId }) => {
+const ChatLog: React.FC<{ conversationId: string; isEmpty: boolean }> = ({
+  conversationId,
+  isEmpty,
+}) => {
   const { onNotification } = useWebSocket();
   const [lastScrollHeight, setLastScrollHeight] = useState<number>(0);
 
@@ -34,7 +38,9 @@ const ChatLog: React.FC<{ conversationId: string }> = ({ conversationId }) => {
 
   useEffect(() => {
     onNotification("message", (event) => {
-      append([event.data]);
+      if (event.data.conversation_id === conversationId) {
+        append([event.data]);
+      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -49,6 +55,15 @@ const ChatLog: React.FC<{ conversationId: string }> = ({ conversationId }) => {
         <Loader />
       ) : (
         <>
+          {isEmpty && (
+            <div className={styles.emptyLog}>
+              <div>
+                <h4>It feels lonely here</h4>
+                <InviteMenu />
+              </div>
+            </div>
+          )}
+
           {messagesQuery.items.length > 0 ? (
             messagesQuery.items.map(parseMessage).map((item, i) => {
               const previous = messagesQuery.items[i - 1];

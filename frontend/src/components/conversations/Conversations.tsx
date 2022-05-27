@@ -4,7 +4,7 @@ import { usePaginatedQuery } from "../../api/hooks";
 import NewConversationBtn from "./NewConversationBtn";
 import Loader from "../common/Loader";
 import ConversationItem from "./ConversationItem";
-import EmptyScreen from "./EmptyScreen";
+import EmptyScreen from "../common/EmptyScreen";
 
 function Conversations() {
   const [conversationsQuery, , loadNext] =
@@ -33,7 +33,9 @@ function Conversations() {
                 return <Loader />;
               case "done": {
                 return conversationsQuery.items.length === 0 ? (
-                  <EmptyScreen />
+                  <EmptyScreen text="No one to talk to yet 🤷🏼">
+                    <NewConversationBtn text={"+ New Group Chat"} />
+                  </EmptyScreen>
                 ) : (
                   <>
                     {conversationsQuery.items?.map((conversation, i) => (

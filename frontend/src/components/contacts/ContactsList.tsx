@@ -6,6 +6,7 @@ import { Contact } from "../../types/coreTypes";
 import Loader from "../common/Loader";
 import ContactItem from "./ContactItem";
 import styles from "./ContactsList.module.css";
+import EmptyScreen from "../common/EmptyScreen";
 
 function ContactsList() {
   const [contactsQuery, , loadNext] =
@@ -51,13 +52,21 @@ function ContactsList() {
             case "fetching":
               return <Loader />;
             case "done":
-              return contactsQuery.items?.map((user, i) => (
-                <ContactItem
-                  key={i}
-                  onClick={handleClick(user.id)}
-                  contact={user}
-                />
-              ));
+              return (
+                <>
+                  {contactsQuery.items?.length ? (
+                    contactsQuery.items?.map((user, i) => (
+                      <ContactItem
+                        key={i}
+                        onClick={handleClick(user.id)}
+                        contact={user}
+                      />
+                    ))
+                  ) : (
+                    <EmptyScreen text="No contacts yet 🤷🏼" />
+                  )}
+                </>
+              );
             default:
               return null;
           }

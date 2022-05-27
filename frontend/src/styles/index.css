@@ -22,7 +22,7 @@ code {
   --tertiary-color: #253031;
   --vh: 1px;
   --bar-height: calc(9 * var(--vh));
-  --max-width: 756px;
+  --max-width: 520px;
   --avatar-size: 36px;
 }
 

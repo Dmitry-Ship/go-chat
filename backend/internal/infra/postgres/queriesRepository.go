@@ -96,14 +96,15 @@ func (r *queriesRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error
 
 func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.MessageDTO, error) {
 	type queryResult struct {
-		ID         uuid.UUID
-		CreatedAt  time.Time
-		Text       string
-		Type       uint8
-		UserID     uuid.UUID
-		UserName   string
-		UserAvatar string
-		NewName    string
+		ID             uuid.UUID
+		CreatedAt      time.Time
+		Text           string
+		Type           uint8
+		UserID         uuid.UUID
+		ConversationID uuid.UUID
+		UserName       string
+		UserAvatar     string
+		NewName        string
 	}
 
 	queryResults := []*queryResult{}
@@ -111,7 +112,7 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 	err := r.db.Scopes(r.paginate(paginationInfo)).
 		Model(&Message{}).
 		Select(
-			"messages.id", "messages.type as type", "messages.created_at", "text_messages.text",
+			"messages.id", "messages.type as type", "messages.created_at", "messages.conversation_id", "text_messages.text",
 			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
 			"conversation_renamed_messages.new_name",
 		).
@@ -126,11 +127,12 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 
 	for i, result := range queryResults {
 		messages[i] = &readModel.MessageDTO{
-			ID:        result.ID,
-			CreatedAt: result.CreatedAt,
-			Text:      result.Text,
-			Type:      messageTypesMap[result.Type],
-			NewName:   result.NewName,
+			ID:             result.ID,
+			CreatedAt:      result.CreatedAt,
+			Text:           result.Text,
+			Type:           messageTypesMap[result.Type],
+			NewName:        result.NewName,
+			ConversationId: result.ConversationID,
 			User: &readModel.UserDTO{
 				ID:     result.UserID,
 				Avatar: result.UserAvatar,
@@ -145,21 +147,22 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 
 func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (*readModel.MessageDTO, error) {
 	type queryResult struct {
-		ID         uuid.UUID
-		CreatedAt  time.Time
-		Text       string
-		Type       uint8
-		UserID     uuid.UUID
-		UserName   string
-		UserAvatar string
-		NewName    string
+		ID             uuid.UUID
+		CreatedAt      time.Time
+		Text           string
+		Type           uint8
+		UserID         uuid.UUID
+		ConversationID uuid.UUID
+		UserName       string
+		UserAvatar     string
+		NewName        string
 	}
 
 	message := &queryResult{}
 
 	err := r.db.Model(&Message{}).
 		Select(
-			"messages.id", "messages.type as type", "messages.created_at", "text_messages.text",
+			"messages.id", "messages.type as type", "messages.created_at", "text_messages.text", "messages.conversation_id",
 			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
 			"conversation_renamed_messages.new_name",
 		).
@@ -170,11 +173,12 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 		Find(&message).Error
 
 	massageDTO := &readModel.MessageDTO{
-		ID:        message.ID,
-		CreatedAt: message.CreatedAt,
-		Text:      message.Text,
-		Type:      messageTypesMap[message.Type],
-		NewName:   message.NewName,
+		ID:             message.ID,
+		CreatedAt:      message.CreatedAt,
+		Text:           message.Text,
+		Type:           messageTypesMap[message.Type],
+		NewName:        message.NewName,
+		ConversationId: message.ConversationID,
 		User: &readModel.UserDTO{
 			ID:     message.UserID,
 			Avatar: message.UserAvatar,

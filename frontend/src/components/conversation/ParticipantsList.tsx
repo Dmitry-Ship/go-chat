@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import { useQueryOnDemand } from "../../api/hooks";
 import Loader from "../common/Loader";
 import { useAPI } from "../../contexts/apiContext";
+import InviteMenu from "./InviteMenu";
 
 const ParticipantsList: React.FC<{ participantsCount: number }> = ({
   participantsCount,
@@ -60,6 +61,7 @@ const ParticipantsList: React.FC<{ participantsCount: number }> = ({
             case "done":
               return (
                 <>
+                  <InviteMenu />
                   {response.data.map((contact, i) => (
                     <ContactItem
                       key={i}
