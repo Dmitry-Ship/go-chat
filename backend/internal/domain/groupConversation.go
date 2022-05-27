@@ -12,15 +12,15 @@ type GroupConversationRepository interface {
 	GetByID(id uuid.UUID) (*GroupConversation, error)
 }
 
-type ConversationName struct {
-	Name string
+type conversationName struct {
+	name string
 }
 
-func (n *ConversationName) String() string {
-	return n.Name
+func (n *conversationName) String() string {
+	return n.name
 }
 
-func NewConversationName(name string) (*ConversationName, error) {
+func NewConversationName(name string) (*conversationName, error) {
 	if name == "" {
 		return nil, errors.New("name is empty")
 	}
@@ -29,25 +29,20 @@ func NewConversationName(name string) (*ConversationName, error) {
 		return nil, errors.New("name is too long")
 	}
 
-	return &ConversationName{
-		Name: name,
+	return &conversationName{
+		name: name,
 	}, nil
 }
 
 type GroupConversation struct {
 	Conversation
 	ID     uuid.UUID
-	Name   ConversationName
+	Name   conversationName
 	Avatar string
 	Owner  Participant
 }
 
-func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*GroupConversation, error) {
-	validName, err := NewConversationName(name)
-
-	if err != nil {
-		return nil, err
-	}
+func NewGroupConversation(id uuid.UUID, name *conversationName, creatorID uuid.UUID) (*GroupConversation, error) {
 
 	groupConversation := &GroupConversation{
 		Conversation: Conversation{
@@ -56,8 +51,8 @@ func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*Grou
 			IsActive: true,
 		},
 		ID:     uuid.New(),
-		Name:   *validName,
-		Avatar: string(validName.String()[0]),
+		Name:   *name,
+		Avatar: string(name.String()[0]),
 		Owner:  *NewParticipant(id, creatorID),
 	}
 
@@ -82,21 +77,15 @@ func (groupConversation *GroupConversation) Delete(userID uuid.UUID) error {
 	return nil
 }
 
-func (groupConversation *GroupConversation) Rename(newName string, userID uuid.UUID) error {
-	validName, err := NewConversationName(newName)
-
-	if err != nil {
-		return err
-	}
-
+func (groupConversation *GroupConversation) Rename(newName *conversationName, userID uuid.UUID) error {
 	if groupConversation.Owner.UserID != userID {
 		return errors.New("user is not owner")
 	}
 
-	groupConversation.Name = *validName
-	groupConversation.Avatar = string(newName[0])
+	groupConversation.Name = *newName
+	groupConversation.Avatar = string(newName.String()[0])
 
-	groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.Conversation.ID, userID, newName))
+	groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.Conversation.ID, userID, newName.String()))
 
 	return nil
 }

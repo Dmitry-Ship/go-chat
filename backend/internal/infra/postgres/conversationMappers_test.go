@@ -9,7 +9,8 @@ import (
 )
 
 func TestToGroupConversationPersistence(t *testing.T) {
-	conversation, _ := domain.NewGroupConversation(uuid.New(), "cool room", uuid.New())
+	name, _ := domain.NewConversationName("cool room")
+	conversation, _ := domain.NewGroupConversation(uuid.New(), name, uuid.New())
 
 	persistence := toGroupConversationPersistence(conversation)
 

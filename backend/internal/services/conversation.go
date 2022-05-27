@@ -44,7 +44,13 @@ func NewConversationService(
 }
 
 func (s *conversationService) CreateGroupConversation(id uuid.UUID, name string, userID uuid.UUID) error {
-	conversation, err := domain.NewGroupConversation(id, name, userID)
+	conversationName, err := domain.NewConversationName(name)
+
+	if err != nil {
+		return err
+	}
+
+	conversation, err := domain.NewGroupConversation(id, conversationName, userID)
 
 	if err != nil {
 		return err
@@ -96,7 +102,13 @@ func (s *conversationService) RenameGroupConversation(conversationID uuid.UUID, 
 		return err
 	}
 
-	if err = conversation.Rename(name, userID); err != nil {
+	conversationName, err := domain.NewConversationName(name)
+
+	if err != nil {
+		return err
+	}
+
+	if err = conversation.Rename(conversationName, userID); err != nil {
 		return err
 	}
 

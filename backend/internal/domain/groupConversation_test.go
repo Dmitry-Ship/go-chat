@@ -8,15 +8,16 @@ import (
 )
 
 func TestNewGroupConversation(t *testing.T) {
-	name := "test"
 	conversationID := uuid.New()
 	creatorId := uuid.New()
+
+	name, _ := NewConversationName("test")
 
 	conversation, err := NewGroupConversation(conversationID, name, creatorId)
 
 	assert.Equal(t, conversation.Conversation.ID, conversationID)
-	assert.Equal(t, name, conversation.Name.String())
-	assert.Equal(t, string(name[0]), conversation.Avatar)
+	assert.Equal(t, name, &conversation.Name)
+	assert.Equal(t, string(name.String()[0]), conversation.Avatar)
 	assert.Equal(t, conversation.Type, ConversationTypeGroup)
 	assert.Equal(t, conversationID, conversation.Owner.ConversationID)
 	assert.Equal(t, creatorId, conversation.Owner.UserID)
@@ -26,37 +27,40 @@ func TestNewGroupConversation(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestNewGroupConversationEmptyName(t *testing.T) {
-	name := ""
-	conversationID := uuid.New()
-	creatorId := uuid.New()
+func TestNewConversationName(t *testing.T) {
+	name, err := NewConversationName("test")
 
-	_, err := NewGroupConversation(conversationID, name, creatorId)
+	assert.Nil(t, err)
+	assert.Equal(t, "test", name.String())
+}
+
+func TestNewConversationNameEmptyName(t *testing.T) {
+	_, err := NewConversationName("")
 
 	assert.Equal(t, "name is empty", err.Error())
 }
 
-func TestNewGroupConversationLongName(t *testing.T) {
+func TestNewConversationNameLongName(t *testing.T) {
 	name := ""
-	conversationID := uuid.New()
-	creatorId := uuid.New()
 
 	for i := 0; i < 101; i++ {
 		name += "a"
 	}
 
-	_, err := NewGroupConversation(conversationID, name, creatorId)
+	_, err := NewConversationName(name)
 
 	assert.Equal(t, "name is too long", err.Error())
 }
 
 func TestRename(t *testing.T) {
-	name := "test"
 	conversationID := uuid.New()
+	name, _ := NewConversationName("test")
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	err := conversation.Rename("new name", creatorId)
+	newName, _ := NewConversationName("new name")
+
+	err := conversation.Rename(newName, creatorId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, "new name", conversation.Name.String())
@@ -64,7 +68,7 @@ func TestRename(t *testing.T) {
 }
 
 func TestSendTextMessage(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -79,7 +83,7 @@ func TestSendTextMessage(t *testing.T) {
 }
 
 func TestSendTextMessageUserNotParticipant(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -91,7 +95,7 @@ func TestSendTextMessageUserNotParticipant(t *testing.T) {
 }
 
 func TestSendTextMessageNotActive(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -104,7 +108,7 @@ func TestSendTextMessageNotActive(t *testing.T) {
 }
 
 func TestSendJoinedConversationMessage(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -117,7 +121,7 @@ func TestSendJoinedConversationMessage(t *testing.T) {
 }
 
 func TestSendInvitedConversationMessage(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -130,7 +134,7 @@ func TestSendInvitedConversationMessage(t *testing.T) {
 }
 
 func TestSendRenamedConversationMessage(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -143,7 +147,7 @@ func TestSendRenamedConversationMessage(t *testing.T) {
 }
 
 func TestSendLeftConversationMessage(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -156,21 +160,22 @@ func TestSendLeftConversationMessage(t *testing.T) {
 }
 
 func TestRenameNotOwner(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
+	newName, _ := NewConversationName("new name")
 
-	err := conversation.Rename("new name", uuid.New())
+	err := conversation.Rename(newName, uuid.New())
 
 	assert.NotNil(t, err)
 	assert.Equal(t, "user is not owner", err.Error())
-	assert.Equal(t, name, conversation.Name.String())
+	assert.Equal(t, name, &conversation.Name)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationCreatedEvent(conversationID, creatorId))
 }
 
 func TestDelete(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -183,7 +188,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleteNotOwner(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -197,7 +202,7 @@ func TestDeleteNotOwner(t *testing.T) {
 }
 
 func TestDeleteNotActive(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -209,7 +214,7 @@ func TestDeleteNotActive(t *testing.T) {
 }
 
 func TestJoin(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -226,7 +231,7 @@ func TestJoin(t *testing.T) {
 }
 
 func TestJoinNotActive(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -240,7 +245,7 @@ func TestJoinNotActive(t *testing.T) {
 }
 
 func TestInvite(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -258,7 +263,7 @@ func TestInvite(t *testing.T) {
 }
 
 func TestInviteNotActive(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -273,7 +278,7 @@ func TestInviteNotActive(t *testing.T) {
 }
 
 func TestInviteOwner(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -284,7 +289,7 @@ func TestInviteOwner(t *testing.T) {
 }
 
 func TestInviteSelf(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -296,7 +301,7 @@ func TestInviteSelf(t *testing.T) {
 }
 
 func TestLeave(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -308,7 +313,7 @@ func TestLeave(t *testing.T) {
 }
 
 func TestLeaveNotActive(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -320,7 +325,7 @@ func TestLeaveNotActive(t *testing.T) {
 }
 
 func TestLeaveNotMember(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
@@ -333,7 +338,7 @@ func TestLeaveNotMember(t *testing.T) {
 }
 
 func TestLeaveAlreadyLeft(t *testing.T) {
-	name := "test"
+	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)

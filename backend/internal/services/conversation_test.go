@@ -26,7 +26,9 @@ func (m *groupConversationRepositoryMock) Update(conversation *domain.GroupConve
 func (m *groupConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.GroupConversation, error) {
 	m.methodsCalled["GetByID"]++
 
-	conversation, err := domain.NewGroupConversation(id, "cool room", m.groupConversationOwnerID)
+	name, _ := domain.NewConversationName("cool room")
+
+	conversation, err := domain.NewGroupConversation(id, name, m.groupConversationOwnerID)
 
 	return conversation, err
 }
