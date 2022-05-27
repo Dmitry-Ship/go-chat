@@ -4,7 +4,7 @@ import (
 	"GitHub/go-chat/backend/internal/domain"
 )
 
-var messageTypesMap = map[uint8]string{
+var messageTypesMap = map[uint8]domain.MessageType{
 	0: domain.MessageTypeText,
 	1: domain.MessageTypeRenamedConversation,
 	2: domain.MessageTypeLeftConversation,
@@ -12,7 +12,7 @@ var messageTypesMap = map[uint8]string{
 	4: domain.MessageTypeInvitedConversation,
 }
 
-func toMessageTypePersistence(messageType string) uint8 {
+func toMessageTypePersistence(messageType domain.MessageType) uint8 {
 	for k, v := range messageTypesMap {
 		if v == messageType {
 			return k

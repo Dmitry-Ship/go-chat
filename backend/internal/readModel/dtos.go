@@ -44,5 +44,4 @@ type MessageDTO struct {
 	User           *UserDTO  `json:"user"`
 	IsInbound      bool      `json:"is_inbound,omitempty"`
 	ConversationId uuid.UUID `json:"conversation_id"`
-	NewName        string    `json:"new_name,omitempty"`
 }

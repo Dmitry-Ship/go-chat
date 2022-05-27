@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/readModel"
 	"errors"
 	"time"
@@ -126,20 +127,41 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 	messages := make([]*readModel.MessageDTO, len(queryResults))
 
 	for i, result := range queryResults {
-		messages[i] = &readModel.MessageDTO{
+		text := ""
+
+		switch messageTypesMap[result.Type] {
+		case domain.MessageTypeText:
+			text = result.Text
+		case domain.MessageTypeRenamedConversation:
+			text = result.UserName + " renamed chat to " + result.NewName
+		case domain.MessageTypeJoinedConversation:
+			text = result.UserName + " joined"
+		case domain.MessageTypeLeftConversation:
+			text = result.UserName + " left"
+		case domain.MessageTypeInvitedConversation:
+			text = result.UserName + " was invited"
+		default:
+			text = "Unknown message type"
+		}
+
+		messageDTO := &readModel.MessageDTO{
 			ID:             result.ID,
 			CreatedAt:      result.CreatedAt,
-			Text:           result.Text,
-			Type:           messageTypesMap[result.Type],
-			NewName:        result.NewName,
+			Text:           text,
+			Type:           messageTypesMap[result.Type].String(),
 			ConversationId: result.ConversationID,
 			User: &readModel.UserDTO{
 				ID:     result.UserID,
 				Avatar: result.UserAvatar,
 				Name:   result.UserName,
 			},
-			IsInbound: result.UserID != requestUserID,
 		}
+
+		if messageTypesMap[result.Type] == domain.MessageTypeText {
+			messageDTO.IsInbound = result.UserID != requestUserID
+		}
+
+		messages[i] = messageDTO
 	}
 
 	return messages, err
@@ -172,19 +194,38 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 		Where("messages.id = ?", messageID).
 		Find(&message).Error
 
+	text := ""
+
+	switch messageTypesMap[message.Type] {
+	case domain.MessageTypeText:
+		text = message.Text
+	case domain.MessageTypeRenamedConversation:
+		text = message.UserName + " renamed chat to " + message.NewName
+	case domain.MessageTypeJoinedConversation:
+		text = message.UserName + " joined"
+	case domain.MessageTypeLeftConversation:
+		text = message.UserName + " left"
+	case domain.MessageTypeInvitedConversation:
+		text = message.UserName + " was invited"
+	default:
+		text = "Unknown message type"
+	}
+
 	massageDTO := &readModel.MessageDTO{
 		ID:             message.ID,
 		CreatedAt:      message.CreatedAt,
-		Text:           message.Text,
-		Type:           messageTypesMap[message.Type],
-		NewName:        message.NewName,
+		Text:           text,
+		Type:           messageTypesMap[message.Type].String(),
 		ConversationId: message.ConversationID,
 		User: &readModel.UserDTO{
 			ID:     message.UserID,
 			Avatar: message.UserAvatar,
 			Name:   message.UserName,
 		},
-		IsInbound: message.UserID != requestUserID,
+	}
+
+	if messageTypesMap[message.Type] == domain.MessageTypeText {
+		massageDTO.IsInbound = message.UserID != requestUserID
 	}
 
 	return massageDTO, err
@@ -285,7 +326,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 	conversationDTO := &readModel.ConversationFullDTO{
 		ID:        conversation.ID,
 		CreatedAt: conversation.CreatedAt,
-		Type:      conversationTypesMap[conversation.Type],
+		Type:      conversationTypesMap[conversation.Type].String(),
 	}
 
 	if conversation.Type == 1 {

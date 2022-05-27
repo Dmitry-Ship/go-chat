@@ -7,10 +7,24 @@ import (
 type BaseConversation interface {
 	GetBaseData() *Conversation
 }
+
+type ConversationType struct {
+	slug string
+}
+
+func (r ConversationType) String() string {
+	return r.slug
+}
+
+var (
+	ConversationTypeGroup  = ConversationType{"group"}
+	ConversationTypeDirect = ConversationType{"direct"}
+)
+
 type Conversation struct {
 	aggregate
 	ID       uuid.UUID
-	Type     string
+	Type     ConversationType
 	IsActive bool
 }
 

@@ -18,12 +18,20 @@ type BaseMessage interface {
 	GetBaseData() *Message
 }
 
-const (
-	MessageTypeText                = "text"
-	MessageTypeRenamedConversation = "renamed_conversation"
-	MessageTypeLeftConversation    = "left_conversation"
-	MessageTypeJoinedConversation  = "joined_conversation"
-	MessageTypeInvitedConversation = "invited_conversation"
+type MessageType struct {
+	slug string
+}
+
+func (r MessageType) String() string {
+	return r.slug
+}
+
+var (
+	MessageTypeText                = MessageType{"text"}
+	MessageTypeRenamedConversation = MessageType{"renamed_conversation"}
+	MessageTypeLeftConversation    = MessageType{"left_conversation"}
+	MessageTypeJoinedConversation  = MessageType{"joined_conversation"}
+	MessageTypeInvitedConversation = MessageType{"invited_conversation"}
 )
 
 type Message struct {
@@ -31,10 +39,10 @@ type Message struct {
 	ID             uuid.UUID
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
-	Type           string
+	Type           MessageType
 }
 
-func newMessage(conversationID uuid.UUID, userID uuid.UUID, messageType string) *Message {
+func newMessage(conversationID uuid.UUID, userID uuid.UUID, messageType MessageType) *Message {
 	message := Message{
 		ID:             uuid.New(),
 		ConversationID: conversationID,

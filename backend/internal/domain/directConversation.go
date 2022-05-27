@@ -27,7 +27,7 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 	directConversation := DirectConversation{
 		Conversation: Conversation{
 			ID:       id,
-			Type:     "direct",
+			Type:     ConversationTypeDirect,
 			IsActive: true,
 		},
 		ID:       uuid.New(),

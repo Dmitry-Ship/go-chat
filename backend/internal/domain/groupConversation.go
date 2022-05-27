@@ -32,7 +32,7 @@ func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*Grou
 	groupConversation := &GroupConversation{
 		Conversation: Conversation{
 			ID:       id,
-			Type:     "group",
+			Type:     ConversationTypeGroup,
 			IsActive: true,
 		},
 		ID:     uuid.New(),

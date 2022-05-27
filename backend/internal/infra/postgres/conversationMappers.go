@@ -4,12 +4,12 @@ import (
 	"GitHub/go-chat/backend/internal/domain"
 )
 
-var conversationTypesMap = map[uint8]string{
-	0: "group",
-	1: "direct",
+var conversationTypesMap = map[uint8]domain.ConversationType{
+	0: domain.ConversationTypeGroup,
+	1: domain.ConversationTypeDirect,
 }
 
-func toConversationTypePersistence(conversationType string) uint8 {
+func toConversationTypePersistence(conversationType domain.ConversationType) uint8 {
 	for k, v := range conversationTypesMap {
 		if v == conversationType {
 			return k

@@ -9,6 +9,7 @@ const ParseBaseMessage = (raw: MessageRaw): BaseMessage => {
       avatar: raw.user.avatar,
       name: raw.user.name,
     },
+    text: raw.text,
     createdAt: raw.created_at,
   };
 };
@@ -19,42 +20,35 @@ export const parseMessage = (data: MessageRaw): Message => {
     case "joined_conversation":
       return {
         ...base,
-        text: `${base.user.name} joined`,
         type: "joined_conversation",
       };
     case "left_conversation":
       return {
         ...base,
-        text: `${base.user.name} left`,
         type: "left_conversation",
       };
 
     case "renamed_conversation":
       return {
         ...base,
-        text: `${base.user.name} renamed the conversation to ${data.new_name}`,
         type: "renamed_conversation",
-        newName: data.new_name,
       };
 
     case "text":
       return {
         ...base,
-        text: data.text,
         type: "text",
         isInbound: data.is_inbound,
       };
     case "invited_conversation":
       return {
         ...base,
-        text: `${base.user.name} was invited`,
         type: "invited_conversation",
       };
     default:
       return {
         ...base,
         type: "unknown",
-        text: `Unsupported message type`,
       };
   }
 };
