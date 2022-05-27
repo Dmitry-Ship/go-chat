@@ -32,7 +32,7 @@ func toGroupConversationPersistence(conversation *domain.GroupConversation) *Gro
 	return &GroupConversation{
 		ID:             conversation.ID,
 		ConversationID: conversation.Conversation.ID,
-		Name:           conversation.Name,
+		Name:           conversation.Name.String(),
 		Avatar:         conversation.Avatar,
 		OwnerID:        conversation.Owner.UserID,
 	}
@@ -41,7 +41,7 @@ func toGroupConversationPersistence(conversation *domain.GroupConversation) *Gro
 func toGroupConversationDomain(conversation *Conversation, groupConversation *GroupConversation, participant *Participant) *domain.GroupConversation {
 	return &domain.GroupConversation{
 		ID:     groupConversation.ID,
-		Name:   groupConversation.Name,
+		Name:   domain.ConversationName{Name: groupConversation.Name},
 		Avatar: groupConversation.Avatar,
 		Owner: domain.Participant{
 			UserID:         participant.UserID,

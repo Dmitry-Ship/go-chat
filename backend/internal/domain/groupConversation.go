@@ -12,21 +12,41 @@ type GroupConversationRepository interface {
 	GetByID(id uuid.UUID) (*GroupConversation, error)
 }
 
-type GroupConversation struct {
-	Conversation
-	ID     uuid.UUID
-	Name   string
-	Avatar string
-	Owner  Participant
+type ConversationName struct {
+	Name string
 }
 
-func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*GroupConversation, error) {
+func (n *ConversationName) String() string {
+	return n.Name
+}
+
+func NewConversationName(name string) (*ConversationName, error) {
 	if name == "" {
 		return nil, errors.New("name is empty")
 	}
 
 	if len(name) > 100 {
 		return nil, errors.New("name is too long")
+	}
+
+	return &ConversationName{
+		Name: name,
+	}, nil
+}
+
+type GroupConversation struct {
+	Conversation
+	ID     uuid.UUID
+	Name   ConversationName
+	Avatar string
+	Owner  Participant
+}
+
+func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*GroupConversation, error) {
+	validName, err := NewConversationName(name)
+
+	if err != nil {
+		return nil, err
 	}
 
 	groupConversation := &GroupConversation{
@@ -36,8 +56,8 @@ func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*Grou
 			IsActive: true,
 		},
 		ID:     uuid.New(),
-		Name:   name,
-		Avatar: string(name[0]),
+		Name:   *validName,
+		Avatar: string(validName.String()[0]),
 		Owner:  *NewParticipant(id, creatorID),
 	}
 
@@ -63,19 +83,17 @@ func (groupConversation *GroupConversation) Delete(userID uuid.UUID) error {
 }
 
 func (groupConversation *GroupConversation) Rename(newName string, userID uuid.UUID) error {
-	if newName == "" {
-		return errors.New("name is empty")
-	}
+	validName, err := NewConversationName(newName)
 
-	if len(newName) > 100 {
-		return errors.New("name is too long")
+	if err != nil {
+		return err
 	}
 
 	if groupConversation.Owner.UserID != userID {
 		return errors.New("user is not owner")
 	}
 
-	groupConversation.Name = newName
+	groupConversation.Name = *validName
 	groupConversation.Avatar = string(newName[0])
 
 	groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.Conversation.ID, userID, newName))

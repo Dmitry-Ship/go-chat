@@ -15,9 +15,9 @@ func TestNewGroupConversation(t *testing.T) {
 	conversation, err := NewGroupConversation(conversationID, name, creatorId)
 
 	assert.Equal(t, conversation.Conversation.ID, conversationID)
-	assert.Equal(t, name, conversation.Name)
+	assert.Equal(t, name, conversation.Name.String())
 	assert.Equal(t, string(name[0]), conversation.Avatar)
-	assert.Equal(t, conversation.Type, "group")
+	assert.Equal(t, conversation.Type, ConversationTypeGroup)
 	assert.Equal(t, conversationID, conversation.Owner.ConversationID)
 	assert.Equal(t, creatorId, conversation.Owner.UserID)
 	assert.NotNil(t, conversation.Owner.ID)
@@ -59,7 +59,7 @@ func TestRename(t *testing.T) {
 	err := conversation.Rename("new name", creatorId)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "new name", conversation.Name)
+	assert.Equal(t, "new name", conversation.Name.String())
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationRenamedEvent(conversationID, creatorId, "new name"))
 }
 
@@ -75,7 +75,7 @@ func TestSendTextMessage(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "new message", message.Text)
 	assert.Equal(t, conversationID, message.ConversationID)
-	assert.Equal(t, "text", message.Type)
+	assert.Equal(t, MessageTypeText, message.Type)
 }
 
 func TestSendTextMessageUserNotParticipant(t *testing.T) {
@@ -113,7 +113,7 @@ func TestSendJoinedConversationMessage(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
-	assert.Equal(t, "joined_conversation", message.Type)
+	assert.Equal(t, MessageTypeJoinedConversation, message.Type)
 }
 
 func TestSendInvitedConversationMessage(t *testing.T) {
@@ -126,7 +126,7 @@ func TestSendInvitedConversationMessage(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
-	assert.Equal(t, "invited_conversation", message.Type)
+	assert.Equal(t, MessageTypeInvitedConversation, message.Type)
 }
 
 func TestSendRenamedConversationMessage(t *testing.T) {
@@ -139,7 +139,7 @@ func TestSendRenamedConversationMessage(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
-	assert.Equal(t, "renamed_conversation", message.Type)
+	assert.Equal(t, MessageTypeRenamedConversation, message.Type)
 }
 
 func TestSendLeftConversationMessage(t *testing.T) {
@@ -152,7 +152,7 @@ func TestSendLeftConversationMessage(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
-	assert.Equal(t, "left_conversation", message.Type)
+	assert.Equal(t, MessageTypeLeftConversation, message.Type)
 }
 
 func TestRenameNotOwner(t *testing.T) {
@@ -165,7 +165,7 @@ func TestRenameNotOwner(t *testing.T) {
 
 	assert.NotNil(t, err)
 	assert.Equal(t, "user is not owner", err.Error())
-	assert.Equal(t, name, conversation.Name)
+	assert.Equal(t, name, conversation.Name.String())
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationCreatedEvent(conversationID, creatorId))
 }
 

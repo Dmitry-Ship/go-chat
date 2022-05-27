@@ -21,7 +21,7 @@ func TestNewDirectConversation(t *testing.T) {
 	assert.Equal(t, conversationID, conversation.ToUser.ConversationID)
 	assert.NotNil(t, conversation.FromUser.ID)
 	assert.NotNil(t, conversation.ToUser.ID)
-	assert.Equal(t, conversation.Type, "direct")
+	assert.Equal(t, conversation.Type, ConversationTypeDirect)
 	assert.Equal(t, true, conversation.IsActive)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newDirectConversationCreatedEvent(conversationID, to, from))
 	assert.Nil(t, err)
