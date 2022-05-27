@@ -9,7 +9,6 @@ func toParticipantPersistence(participant *domain.Participant) *Participant {
 		ID:             participant.ID,
 		ConversationID: participant.ConversationID,
 		UserID:         participant.UserID,
-		CreatedAt:      participant.CreatedAt,
 		IsActive:       participant.IsActive,
 	}
 }
@@ -19,7 +18,6 @@ func toParticipantDomain(participant *Participant) *domain.Participant {
 		ID:             participant.ID,
 		ConversationID: participant.ConversationID,
 		UserID:         participant.UserID,
-		CreatedAt:      participant.CreatedAt,
 		IsActive:       participant.IsActive,
 	}
 }

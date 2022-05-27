@@ -2,7 +2,6 @@ package domain
 
 import (
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -20,7 +19,6 @@ type User struct {
 	Avatar       string
 	Name         string
 	Password     string
-	CreatedAt    time.Time
 	RefreshToken string
 }
 
@@ -42,11 +40,10 @@ func NewUser(username string, password string) (*User, error) {
 	}
 
 	return &User{
-		ID:        uuid.New(),
-		Avatar:    string(username[0]),
-		CreatedAt: time.Now(),
-		Name:      username,
-		Password:  password,
+		ID:       uuid.New(),
+		Avatar:   string(username[0]),
+		Name:     username,
+		Password: password,
 	}, nil
 }
 

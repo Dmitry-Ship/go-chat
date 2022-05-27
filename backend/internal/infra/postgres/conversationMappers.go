@@ -22,10 +22,9 @@ func toConversationTypePersistence(conversationType string) uint8 {
 func toConversationPersistence(conversation domain.BaseConversation) *Conversation {
 	conversationBase := conversation.GetBaseData()
 	return &Conversation{
-		ID:        conversationBase.ID,
-		Type:      toConversationTypePersistence(conversationBase.Type),
-		CreatedAt: conversationBase.CreatedAt,
-		IsActive:  conversationBase.IsActive,
+		ID:       conversationBase.ID,
+		Type:     toConversationTypePersistence(conversationBase.Type),
+		IsActive: conversationBase.IsActive,
 	}
 }
 
@@ -49,14 +48,12 @@ func toGroupConversationDomain(conversation *Conversation, groupConversation *Gr
 				UserID:         participant.UserID,
 				ID:             participant.ID,
 				ConversationID: groupConversation.ConversationID,
-				CreatedAt:      participant.CreatedAt,
 			},
 		},
 		Conversation: domain.Conversation{
-			ID:        conversation.ID,
-			Type:      conversationTypesMap[conversation.Type],
-			CreatedAt: conversation.CreatedAt,
-			IsActive:  conversation.IsActive,
+			ID:       conversation.ID,
+			Type:     conversationTypesMap[conversation.Type],
+			IsActive: conversation.IsActive,
 		},
 	}
 }
@@ -69,20 +66,17 @@ func toDirectConversationDomain(conversation *Conversation, directConversation *
 				UserID:         toUser.UserID,
 				ID:             toUser.ID,
 				ConversationID: directConversation.ConversationID,
-				CreatedAt:      toUser.CreatedAt,
 			},
 			FromUser: domain.Participant{
 				UserID:         fromUser.UserID,
 				ID:             fromUser.ID,
 				ConversationID: directConversation.ConversationID,
-				CreatedAt:      fromUser.CreatedAt,
 			},
 		},
 		Conversation: domain.Conversation{
-			ID:        conversation.ID,
-			Type:      conversationTypesMap[conversation.Type],
-			CreatedAt: conversation.CreatedAt,
-			IsActive:  conversation.IsActive,
+			ID:       conversation.ID,
+			Type:     conversationTypesMap[conversation.Type],
+			IsActive: conversation.IsActive,
 		},
 	}
 }

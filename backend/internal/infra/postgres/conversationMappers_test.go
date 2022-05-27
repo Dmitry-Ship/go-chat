@@ -3,7 +3,6 @@ package postgres
 import (
 	"GitHub/go-chat/backend/internal/domain"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -34,9 +33,8 @@ func TestToGroupConversationDomain(t *testing.T) {
 	}
 
 	conversation := &Conversation{
-		ID:        conversationId,
-		CreatedAt: time.Now(),
-		Type:      0,
+		ID:   conversationId,
+		Type: 0,
 	}
 
 	participant := &Participant{

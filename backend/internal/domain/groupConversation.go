@@ -2,7 +2,6 @@ package domain
 
 import (
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -31,10 +30,9 @@ func NewGroupConversation(id uuid.UUID, name string, creatorID uuid.UUID) (*Grou
 
 	groupConversation := &GroupConversation{
 		Conversation: Conversation{
-			ID:        id,
-			Type:      "group",
-			CreatedAt: time.Now(),
-			IsActive:  true,
+			ID:       id,
+			Type:     "group",
+			IsActive: true,
 		},
 		Data: GroupConversationData{
 			ID:     uuid.New(),

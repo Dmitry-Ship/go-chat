@@ -20,7 +20,6 @@ func TestNewGroupConversation(t *testing.T) {
 	assert.Equal(t, conversation.Type, "group")
 	assert.Equal(t, conversationID, conversation.Data.Owner.ConversationID)
 	assert.Equal(t, creatorId, conversation.Data.Owner.UserID)
-	assert.NotNil(t, conversation.Data.Owner.CreatedAt)
 	assert.NotNil(t, conversation.Data.Owner.ID)
 	assert.Equal(t, conversation.IsActive, true)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationCreatedEvent(conversationID, creatorId))
@@ -208,7 +207,6 @@ func TestJoin(t *testing.T) {
 	assert.Equal(t, conversationID, participant.ConversationID)
 	assert.Equal(t, userID, participant.UserID)
 	assert.NotNil(t, participant.ID)
-	assert.NotNil(t, participant.CreatedAt)
 	assert.Equal(t, participant.IsActive, true)
 	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationJoinedEvent(conversationID, userID))
 }
@@ -241,7 +239,6 @@ func TestInvite(t *testing.T) {
 	assert.Equal(t, conversationID, participant.ConversationID)
 	assert.Equal(t, inviteeId, participant.UserID)
 	assert.NotNil(t, participant.ID)
-	assert.NotNil(t, participant.CreatedAt)
 	assert.Equal(t, participant.IsActive, true)
 	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationInvitedEvent(conversationID, userID, inviteeId))
 }

@@ -2,7 +2,6 @@ package domain
 
 import (
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -32,7 +31,6 @@ type Message struct {
 	ID             uuid.UUID
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
-	CreatedAt      time.Time
 	Type           string
 }
 
@@ -40,7 +38,6 @@ func newMessage(conversationID uuid.UUID, userID uuid.UUID, messageType string) 
 	message := Message{
 		ID:             uuid.New(),
 		ConversationID: conversationID,
-		CreatedAt:      time.Now(),
 		Type:           messageType,
 		UserID:         userID,
 	}

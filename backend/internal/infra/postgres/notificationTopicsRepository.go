@@ -19,7 +19,7 @@ func NewNotificationTopicRepository(db *gorm.DB, eventPublisher infra.EventPubli
 }
 
 func (r *notificationTopicRepository) Store(notificationTopic *domain.NotificationTopic) error {
-	persistence := UserNotificationTopic{
+	persistence := &UserNotificationTopic{
 		Topic:  notificationTopic.Name,
 		UserID: notificationTopic.UserID,
 		ID:     notificationTopic.ID,
@@ -37,7 +37,7 @@ func (r *notificationTopicRepository) DeleteByUserIDAndTopic(userID uuid.UUID, t
 }
 
 func (r *notificationTopicRepository) DeleteAllByTopic(topic string) error {
-	persistence := UserNotificationTopic{}
+	persistence := &UserNotificationTopic{}
 
 	err := r.db.Where("topic = ?", topic).Delete(persistence).Error
 

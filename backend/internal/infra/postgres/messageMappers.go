@@ -28,7 +28,6 @@ func toMessagePersistence(message domain.BaseMessage) *Message {
 		ID:             baseMessage.ID,
 		ConversationID: baseMessage.ConversationID,
 		UserID:         baseMessage.UserID,
-		CreatedAt:      baseMessage.CreatedAt,
 		Type:           toMessageTypePersistence(baseMessage.Type),
 	}
 }

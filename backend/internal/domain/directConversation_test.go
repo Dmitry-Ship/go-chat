@@ -19,8 +19,6 @@ func TestNewDirectConversation(t *testing.T) {
 	assert.Equal(t, from, conversation.Data.FromUser.UserID)
 	assert.Equal(t, conversationID, conversation.Data.FromUser.ConversationID)
 	assert.Equal(t, conversationID, conversation.Data.ToUser.ConversationID)
-	assert.NotNil(t, conversation.Data.ToUser.CreatedAt)
-	assert.NotNil(t, conversation.Data.FromUser.CreatedAt)
 	assert.NotNil(t, conversation.Data.FromUser.ID)
 	assert.NotNil(t, conversation.Data.ToUser.ID)
 	assert.Equal(t, conversation.Type, "direct")

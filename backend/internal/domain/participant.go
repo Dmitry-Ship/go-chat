@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -17,7 +15,6 @@ type Participant struct {
 	ID             uuid.UUID
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
-	CreatedAt      time.Time
 	IsActive       bool
 }
 
@@ -30,7 +27,6 @@ func NewParticipant(conversationID uuid.UUID, userID uuid.UUID) *Participant {
 		ID:             uuid.New(),
 		ConversationID: conversationID,
 		UserID:         userID,
-		CreatedAt:      time.Now(),
 		IsActive:       true,
 	}
 }

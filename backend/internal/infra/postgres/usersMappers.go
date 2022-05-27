@@ -10,7 +10,6 @@ func toUserPersistence(user *domain.User) *User {
 		Avatar:       user.Avatar,
 		Name:         user.Name,
 		Password:     user.Password,
-		CreatedAt:    user.CreatedAt,
 		RefreshToken: user.RefreshToken,
 	}
 }
@@ -21,7 +20,6 @@ func toUserDomain(user *User) *domain.User {
 		Avatar:       user.Avatar,
 		Name:         user.Name,
 		Password:     user.Password,
-		CreatedAt:    user.CreatedAt,
 		RefreshToken: user.RefreshToken,
 	}
 }

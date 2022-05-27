@@ -2,7 +2,6 @@ package domain
 
 import (
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -31,10 +30,9 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 
 	directConversation := DirectConversation{
 		Conversation: Conversation{
-			ID:        id,
-			Type:      "direct",
-			CreatedAt: time.Now(),
-			IsActive:  true,
+			ID:       id,
+			Type:     "direct",
+			IsActive: true,
 		},
 		Data: DirectConversationData{
 			ID:       uuid.New(),

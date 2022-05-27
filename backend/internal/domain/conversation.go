@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -11,10 +9,9 @@ type BaseConversation interface {
 }
 type Conversation struct {
 	aggregate
-	ID        uuid.UUID
-	Type      string
-	CreatedAt time.Time
-	IsActive  bool
+	ID       uuid.UUID
+	Type     string
+	IsActive bool
 }
 
 func (c *Conversation) GetBaseData() *Conversation {
