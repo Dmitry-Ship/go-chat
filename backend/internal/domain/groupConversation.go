@@ -7,8 +7,7 @@ import (
 )
 
 type GroupConversationRepository interface {
-	Store(conversation *GroupConversation) error
-	Update(conversation *GroupConversation) error
+	GenericRepository[*GroupConversation]
 	GetByID(id uuid.UUID) (*GroupConversation, error)
 }
 

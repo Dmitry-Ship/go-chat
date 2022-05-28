@@ -7,8 +7,7 @@ import (
 )
 
 type UserRepository interface {
-	Store(user *User) error
-	Update(user *User) error
+	GenericRepository[*User]
 	GetByID(id uuid.UUID) (*User, error)
 	FindByUsername(username string) (*User, error)
 }
