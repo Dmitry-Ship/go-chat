@@ -48,16 +48,18 @@ func (directConversation *DirectConversation) GetToUser() *Participant {
 	return &directConversation.ToUser
 }
 
-func (directConversation *DirectConversation) SendTextMessage(text string, userID uuid.UUID) (*TextMessage, error) {
+func (directConversation *DirectConversation) SendTextMessage(text string, userID uuid.UUID) (*Message, error) {
 	if directConversation.ToUser.UserID != userID && directConversation.FromUser.UserID != userID {
 		return nil, errors.New("user is not participant")
 	}
 
-	message, err := newTextMessage(directConversation.ID, userID, text)
+	content, err := newTextMessageContent(text)
 
 	if err != nil {
 		return nil, err
 	}
+
+	message := newTextMessage(directConversation.Conversation.ID, userID, content)
 
 	return message, nil
 }

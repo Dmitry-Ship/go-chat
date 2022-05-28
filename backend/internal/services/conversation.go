@@ -128,7 +128,7 @@ func (s *conversationService) SendDirectTextMessage(messageText string, conversa
 		return err
 	}
 
-	return s.messages.StoreTextMessage(message)
+	return s.messages.Store(message)
 }
 
 func (s *conversationService) SendGroupTextMessage(messageText string, conversationID uuid.UUID, userID uuid.UUID) error {
@@ -150,7 +150,7 @@ func (s *conversationService) SendGroupTextMessage(messageText string, conversat
 		return err
 	}
 
-	return s.messages.StoreTextMessage(message)
+	return s.messages.Store(message)
 }
 
 func (s *conversationService) SendJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error {
@@ -166,7 +166,7 @@ func (s *conversationService) SendJoinedConversationMessage(conversationID uuid.
 		return err
 	}
 
-	return s.messages.StoreJoinedConversationMessage(message)
+	return s.messages.Store(message)
 }
 
 func (s *conversationService) SendInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error {
@@ -182,7 +182,7 @@ func (s *conversationService) SendInvitedConversationMessage(conversationID uuid
 		return err
 	}
 
-	return s.messages.StoreInvitedConversationMessage(message)
+	return s.messages.Store(message)
 }
 
 func (s *conversationService) SendRenamedConversationMessage(conversationID uuid.UUID, userID uuid.UUID, name string) error {
@@ -198,7 +198,7 @@ func (s *conversationService) SendRenamedConversationMessage(conversationID uuid
 		return err
 	}
 
-	return s.messages.StoreRenamedConversationMessage(message)
+	return s.messages.Store(message)
 }
 
 func (s *conversationService) SendLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error {
@@ -214,7 +214,7 @@ func (s *conversationService) SendLeftConversationMessage(conversationID uuid.UU
 		return err
 	}
 
-	return s.messages.StoreLeftConversationMessage(message)
+	return s.messages.Store(message)
 }
 
 func (s *conversationService) JoinGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error {

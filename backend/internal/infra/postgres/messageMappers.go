@@ -22,28 +22,12 @@ func toMessageTypePersistence(messageType domain.MessageType) uint8 {
 	return 0
 }
 
-func toMessagePersistence(message domain.BaseMessage) *Message {
-	baseMessage := message.GetBaseData()
+func toMessagePersistence(message *domain.Message) *Message {
 	return &Message{
-		ID:             baseMessage.ID,
-		ConversationID: baseMessage.ConversationID,
-		UserID:         baseMessage.UserID,
-		Type:           toMessageTypePersistence(baseMessage.Type),
-	}
-}
-
-func toTextMessagePersistence(message domain.TextMessage) *TextMessage {
-	return &TextMessage{
-		ID:        message.ID,
-		MessageID: message.GetBaseData().ID,
-		Text:      message.Text,
-	}
-}
-
-func toRenameConversationMessagePersistence(message domain.ConversationRenamedMessage) *ConversationRenamedMessage {
-	return &ConversationRenamedMessage{
-		ID:        message.ID,
-		MessageID: message.GetBaseData().ID,
-		NewName:   message.NewName,
+		ID:             message.ID,
+		ConversationID: message.ConversationID,
+		UserID:         message.UserID,
+		Type:           toMessageTypePersistence(message.Type),
+		Content:        message.Content.String(),
 	}
 }

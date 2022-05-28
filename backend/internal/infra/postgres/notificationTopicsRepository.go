@@ -49,5 +49,9 @@ func (r *notificationTopicRepository) GetUserIDsByTopic(topic string) ([]uuid.UU
 
 	err := r.db.Model(&UserNotificationTopic{}).Where("topic = ?", topic).Select("user_id").Find(&ids).Error
 
-	return ids, err
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
 }

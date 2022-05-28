@@ -141,7 +141,7 @@ func (groupConversation *GroupConversation) Invite(userID uuid.UUID, inviteeID u
 	return participant, nil
 }
 
-func (groupConversation *GroupConversation) SendTextMessage(text string, participant *Participant) (*TextMessage, error) {
+func (groupConversation *GroupConversation) SendTextMessage(text string, participant *Participant) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
@@ -154,11 +154,13 @@ func (groupConversation *GroupConversation) SendTextMessage(text string, partici
 		return nil, errors.New("user is not participant")
 	}
 
-	message, err := newTextMessage(groupConversation.Conversation.ID, participant.UserID, text)
+	content, err := newTextMessageContent(text)
 
 	if err != nil {
 		return nil, err
 	}
+
+	message := newTextMessage(groupConversation.Conversation.ID, participant.UserID, content)
 
 	return message, nil
 }
@@ -183,12 +185,13 @@ func (groupConversation *GroupConversation) SendInvitedConversationMessage(conve
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendRenamedConversationMessage(conversationID uuid.UUID, userID uuid.UUID, newName string) (*ConversationRenamedMessage, error) {
+func (groupConversation *GroupConversation) SendRenamedConversationMessage(conversationID uuid.UUID, userID uuid.UUID, newName string) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
 
-	message := newConversationRenamedMessage(conversationID, userID, newName)
+	content := newRenamedMessageContent(newName)
+	message := newConversationRenamedMessage(conversationID, userID, content)
 
 	return message, nil
 }

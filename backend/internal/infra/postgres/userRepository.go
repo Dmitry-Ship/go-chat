@@ -30,7 +30,11 @@ func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
 	user := User{}
 	err := r.db.Where("id = ?", id).First(&user).Error
 
-	return toUserDomain(&user), err
+	if err != nil {
+		return nil, err
+	}
+
+	return toUserDomain(&user), nil
 }
 
 func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
@@ -38,5 +42,9 @@ func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
 
 	err := r.db.Where("name = ?", username).First(&user).Error
 
-	return toUserDomain(&user), err
+	if err != nil {
+		return nil, err
+	}
+
+	return toUserDomain(&user), nil
 }

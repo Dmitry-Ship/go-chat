@@ -34,21 +34,8 @@ type Message struct {
 	ID             uuid.UUID `gorm:"type:uuid"`
 	ConversationID uuid.UUID `gorm:"type:uuid"`
 	UserID         uuid.UUID `gorm:"type:uuid"`
+	Content        string
 	Type           uint8
-}
-
-type TextMessage struct {
-	gorm.Model
-	ID        uuid.UUID `gorm:"type:uuid"`
-	MessageID uuid.UUID `gorm:"type:uuid"`
-	Text      string
-}
-
-type ConversationRenamedMessage struct {
-	gorm.Model
-	ID        uuid.UUID `gorm:"type:uuid"`
-	MessageID uuid.UUID `gorm:"type:uuid"`
-	NewName   string
 }
 
 type Participant struct {

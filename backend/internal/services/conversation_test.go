@@ -65,28 +65,8 @@ type messagesRepositoryMock struct {
 	methodsCalled map[string]int
 }
 
-func (m *messagesRepositoryMock) StoreTextMessage(message *domain.TextMessage) error {
-	m.methodsCalled["StoreTextMessage"]++
-	return nil
-}
-
-func (m *messagesRepositoryMock) StoreJoinedConversationMessage(message *domain.Message) error {
-	m.methodsCalled["StoreJoinedConversationMessage"]++
-	return nil
-}
-
-func (m *messagesRepositoryMock) StoreInvitedConversationMessage(message *domain.Message) error {
-	m.methodsCalled["StoreInvitedConversationMessage"]++
-	return nil
-}
-
-func (m *messagesRepositoryMock) StoreRenamedConversationMessage(message *domain.ConversationRenamedMessage) error {
-	m.methodsCalled["StoreRenamedConversationMessage"]++
-	return nil
-}
-
-func (m *messagesRepositoryMock) StoreLeftConversationMessage(message *domain.Message) error {
-	m.methodsCalled["StoreLeftConversationMessage"]++
+func (m *messagesRepositoryMock) Store(message *domain.Message) error {
+	m.methodsCalled["Store"]++
 	return nil
 }
 
@@ -193,7 +173,7 @@ func TestSendTextMessage(t *testing.T) {
 	err := conversationService.SendGroupTextMessage("test", conversationID, userID)
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, messagesRepository.methodsCalled["StoreTextMessage"])
+	assert.Equal(t, 1, messagesRepository.methodsCalled["Store"])
 	assert.Equal(t, 1, participantsRepository.methodsCalled["GetByConversationIDAndUserID"])
 }
 
@@ -217,7 +197,7 @@ func TestSendJoinedConversationMessage(t *testing.T) {
 	err := conversationService.SendJoinedConversationMessage(conversationID, userID)
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, messagesRepository.methodsCalled["StoreJoinedConversationMessage"])
+	assert.Equal(t, 1, messagesRepository.methodsCalled["Store"])
 }
 
 func TestSendInvitedConversationMessage(t *testing.T) {
@@ -240,7 +220,7 @@ func TestSendInvitedConversationMessage(t *testing.T) {
 	err := conversationService.SendInvitedConversationMessage(conversationID, userID)
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, messagesRepository.methodsCalled["StoreInvitedConversationMessage"])
+	assert.Equal(t, 1, messagesRepository.methodsCalled["Store"])
 }
 
 func TestSendRenamedConversationMessage(t *testing.T) {
@@ -264,7 +244,7 @@ func TestSendRenamedConversationMessage(t *testing.T) {
 	err := conversationService.SendRenamedConversationMessage(conversationID, userID, newName)
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, messagesRepository.methodsCalled["StoreRenamedConversationMessage"])
+	assert.Equal(t, 1, messagesRepository.methodsCalled["Store"])
 }
 
 func TestSendLeftConversationMessage(t *testing.T) {
@@ -287,7 +267,7 @@ func TestSendLeftConversationMessage(t *testing.T) {
 	err := conversationService.SendLeftConversationMessage(conversationID, userID)
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, messagesRepository.methodsCalled["StoreLeftConversationMessage"])
+	assert.Equal(t, 1, messagesRepository.methodsCalled["Store"])
 }
 
 func TestJoinGroupConversation(t *testing.T) {

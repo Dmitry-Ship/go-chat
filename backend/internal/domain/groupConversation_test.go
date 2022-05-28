@@ -77,7 +77,7 @@ func TestSendTextMessage(t *testing.T) {
 	message, err := conversation.SendTextMessage("new message", participant)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "new message", message.Text)
+	assert.Equal(t, "new message", message.Content.String())
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, MessageTypeText, message.Type)
 }

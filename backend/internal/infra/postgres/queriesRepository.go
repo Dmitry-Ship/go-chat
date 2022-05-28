@@ -99,13 +99,12 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 	type queryResult struct {
 		ID             uuid.UUID
 		CreatedAt      time.Time
-		Text           string
 		Type           uint8
 		UserID         uuid.UUID
 		ConversationID uuid.UUID
 		UserName       string
 		UserAvatar     string
-		NewName        string
+		Content        string
 	}
 
 	queryResults := []*queryResult{}
@@ -113,13 +112,10 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 	err := r.db.Scopes(r.paginate(paginationInfo)).
 		Model(&Message{}).
 		Select(
-			"messages.id", "messages.type as type", "messages.created_at", "messages.conversation_id", "text_messages.text",
+			"messages.id", "messages.type as type", "messages.created_at", "messages.conversation_id", "messages.content",
 			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
-			"conversation_renamed_messages.new_name",
 		).
-		Joins("LEFT JOIN conversation_renamed_messages ON messages.id = conversation_renamed_messages.message_id").
 		Joins("LEFT JOIN users ON messages.user_id = users.id").
-		Joins("LEFT JOIN text_messages ON messages.id = text_messages.message_id").
 		Where("messages.conversation_id = ?", conversationID).
 		Order("messages.created_at asc").
 		Find(&queryResults).Error
@@ -131,9 +127,9 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 
 		switch messageTypesMap[result.Type] {
 		case domain.MessageTypeText:
-			text = result.Text
+			text = result.Content
 		case domain.MessageTypeRenamedConversation:
-			text = result.UserName + " renamed chat to " + result.NewName
+			text = result.UserName + " renamed chat to " + result.Content
 		case domain.MessageTypeJoinedConversation:
 			text = result.UserName + " joined"
 		case domain.MessageTypeLeftConversation:
@@ -171,26 +167,22 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 	type queryResult struct {
 		ID             uuid.UUID
 		CreatedAt      time.Time
-		Text           string
 		Type           uint8
 		UserID         uuid.UUID
 		ConversationID uuid.UUID
 		UserName       string
 		UserAvatar     string
-		NewName        string
+		Content        string
 	}
 
 	message := &queryResult{}
 
 	err := r.db.Model(&Message{}).
 		Select(
-			"messages.id", "messages.type as type", "messages.created_at", "text_messages.text", "messages.conversation_id",
+			"messages.id", "messages.type as type", "messages.created_at", "messages.content", "messages.conversation_id",
 			"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
-			"conversation_renamed_messages.new_name",
 		).
-		Joins("LEFT JOIN conversation_renamed_messages ON messages.id = conversation_renamed_messages.message_id").
 		Joins("LEFT JOIN users ON messages.user_id = users.id").
-		Joins("LEFT JOIN text_messages ON messages.id = text_messages.message_id").
 		Where("messages.id = ?", messageID).
 		Find(&message).Error
 
@@ -198,9 +190,9 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 
 	switch messageTypesMap[message.Type] {
 	case domain.MessageTypeText:
-		text = message.Text
+		text = message.Content
 	case domain.MessageTypeRenamedConversation:
-		text = message.UserName + " renamed chat to " + message.NewName
+		text = message.UserName + " renamed chat to " + message.Content
 	case domain.MessageTypeJoinedConversation:
 		text = message.UserName + " joined"
 	case domain.MessageTypeLeftConversation:

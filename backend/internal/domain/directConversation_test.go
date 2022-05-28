@@ -68,7 +68,7 @@ func TestSendDirectTextMessage(t *testing.T) {
 	message, err := conversation.SendTextMessage(text, to)
 
 	assert.Nil(t, err)
-	assert.Equal(t, message.Text, text)
+	assert.Equal(t, message.Content.String(), text)
 	assert.Equal(t, message.UserID, to)
 }
 

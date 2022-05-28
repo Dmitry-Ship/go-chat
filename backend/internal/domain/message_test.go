@@ -10,31 +10,26 @@ import (
 func TestNewTextMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
+	content, _ := newTextMessageContent("content")
 
-	message, err := newTextMessage(conversationID, userID, "content")
+	message := newTextMessage(conversationID, userID, content)
 
-	assert.Equal(t, "content", message.Text)
+	assert.Equal(t, content, message.Content)
 	assert.NotNil(t, message.ID)
 	assert.Equal(t, MessageTypeText, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
-	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.GetBaseData().ID, userID))
-	assert.Nil(t, err)
+	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
-func TestNewTextMessageEmptyText(t *testing.T) {
-	conversationID := uuid.New()
-	userID := uuid.New()
-
-	_, err := newTextMessage(conversationID, userID, "")
+func TestNewTextMessageContentEmpty(t *testing.T) {
+	_, err := newTextMessageContent("")
 
 	assert.Equal(t, err.Error(), "text is empty")
 }
 
-func TestNewTextMessageTooLong(t *testing.T) {
-	conversationID := uuid.New()
-	userID := uuid.New()
+func TestNewTextMessageContentTooLong(t *testing.T) {
 	maxTextLength := 1000
 	text := ""
 
@@ -42,7 +37,7 @@ func TestNewTextMessageTooLong(t *testing.T) {
 		text += "a"
 	}
 
-	_, err := newTextMessage(conversationID, userID, text)
+	_, err := newTextMessageContent(text)
 
 	assert.Equal(t, err.Error(), "text is too long")
 }
@@ -51,15 +46,17 @@ func TestNewConversationRenamedMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
 
-	message := newConversationRenamedMessage(conversationID, userID, "new name")
+	name := newRenamedMessageContent("new name")
 
-	assert.Equal(t, "new name", message.NewName)
+	message := newConversationRenamedMessage(conversationID, userID, name)
+
+	assert.Equal(t, name, message.Content)
 	assert.NotNil(t, message.ID)
 	assert.Equal(t, MessageTypeRenamedConversation, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
 	assert.NotNil(t, message.ID)
-	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.GetBaseData().ID, userID))
+	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
 func TestNewLeftConversationMessage(t *testing.T) {
