@@ -29,7 +29,7 @@ func (r *notificationTopicRepository) Store(notificationTopic *domain.Notificati
 }
 
 func (r *notificationTopicRepository) DeleteByUserIDAndTopic(userID uuid.UUID, topic string) error {
-	persistence := UserNotificationTopic{}
+	persistence := &UserNotificationTopic{}
 
 	err := r.db.Where("user_id = ?", userID).Where("topic = ?", topic).Delete(persistence).Error
 

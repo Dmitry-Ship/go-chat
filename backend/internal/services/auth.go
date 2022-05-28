@@ -35,10 +35,18 @@ func (a *authService) Login(username string, password string) (tokens, error) {
 		return tokens{}, err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	userPassword, err := domain.NewUserPassword(password, func(p []byte) ([]byte, error) {
+		return []byte(p), nil
+	})
 
 	if err != nil {
-		return tokens{}, errors.New("password is incorrect")
+		return tokens{}, err
+	}
+
+	if err = user.Password.Compare(userPassword, func(p1 []byte, p2 []byte) error {
+		return bcrypt.CompareHashAndPassword(p1, p2)
+	}); err != nil {
+		return tokens{}, err
 	}
 
 	newTokens, err := a.jwTokens.CreateTokens(user.ID)
@@ -71,19 +79,21 @@ func (a *authService) Logout(userID uuid.UUID) error {
 }
 
 func (a *authService) SignUp(username string, password string) (tokens, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	name, err := domain.NewUserName(username)
 
 	if err != nil {
 		return tokens{}, err
 	}
 
-	hashedPassword := string(bytes)
-
-	user, err := domain.NewUser(username, hashedPassword)
+	hashedPassword, err := domain.NewUserPassword(password, func(p []byte) ([]byte, error) {
+		return bcrypt.GenerateFromPassword(p, 14)
+	})
 
 	if err != nil {
 		return tokens{}, err
 	}
+
+	user := domain.NewUser(name, hashedPassword)
 
 	newTokens, err := a.jwTokens.CreateTokens(user.ID)
 
