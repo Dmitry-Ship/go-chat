@@ -9,7 +9,7 @@ func (h *Server) logHandlerError(err error) {
 	log.Panicln("Error occurred event", err)
 }
 
-func (h *Server) ListenForEvents() {
+func (h *Server) listenForEvents() {
 	for {
 		select {
 		case event := <-h.subscriber.Subscribe(domain.DomainEventChannel):

@@ -30,7 +30,6 @@ func NewServer(
 	queries readModel.QueriesRepository,
 	eventBus infra.EventsSubscriber,
 ) *Server {
-
 	return &Server{
 		ctx:                  ctx,
 		authCommands:         authCommands,
@@ -43,7 +42,7 @@ func NewServer(
 }
 
 func (s *Server) Run() {
-	s.InitRoutes()
-	go s.ListenForEvents()
+	s.initRoutes()
+	go s.listenForEvents()
 	go s.wsClientCommands.Run()
 }

@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func (s *Server) InitRoutes() {
+func (s *Server) initRoutes() {
 	http.HandleFunc("/signup", s.post(s.handleSignUp))
 	http.HandleFunc("/login", s.post(s.handleLogin))
 	http.HandleFunc("/refreshToken", s.post(s.handleRefreshToken))

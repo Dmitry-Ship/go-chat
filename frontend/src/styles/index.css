@@ -15,11 +15,12 @@ code {
 
 :root {
   --br: 20px;
-  --warn-color: #315659;
-  --accent-color: #BCAB79;
-  --primary-color: #C6E0FF;
-  --secondary-color: #2978A0;
-  --tertiary-color: #253031;
+  --warn-color: #7ea3a5;
+  /* --warn-color: #a8dadc; */
+  --accent-color: #e63946;
+  --primary-color: #f1faee;
+  --secondary-color: #457b9d;
+  --tertiary-color: #1d3557;
   --vh: 1px;
   --bar-height: calc(9 * var(--vh));
   --max-width: 520px;

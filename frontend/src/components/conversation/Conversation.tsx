@@ -74,8 +74,8 @@ const Conversation: React.FC = () => {
         </Link>
         <div className={styles.conversationInfo}>
           <div className={styles.conversationGroupInfo}>
-            <Avatar src={conversation.avatar} />
-            <h3 className={styles.conversationName}>{conversation.name}</h3>
+            <Avatar src={conversation?.avatar} />
+            <h3 className={styles.conversationName}>{conversation?.name}</h3>
           </div>
 
           {conversation?.type === "group" && (
