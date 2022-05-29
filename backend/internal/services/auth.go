@@ -93,7 +93,9 @@ func (a *authService) SignUp(username string, password string) (tokens, error) {
 		return tokens{}, err
 	}
 
-	user := domain.NewUser(name, hashedPassword)
+	userID := uuid.New()
+
+	user := domain.NewUser(userID, name, hashedPassword)
 
 	newTokens, err := a.jwTokens.CreateTokens(user.ID)
 

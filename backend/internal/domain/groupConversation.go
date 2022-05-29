@@ -51,7 +51,7 @@ func NewGroupConversation(id uuid.UUID, name *conversationName, creatorID uuid.U
 		ID:     uuid.New(),
 		Name:   *name,
 		Avatar: string(name.String()[0]),
-		Owner:  *NewParticipant(id, creatorID),
+		Owner:  *NewParticipant(uuid.New(), id, creatorID),
 	}
 
 	groupConversation.AddEvent(newGroupConversationCreatedEvent(id, creatorID))
@@ -93,7 +93,7 @@ func (groupConversation *GroupConversation) Join(userID uuid.UUID) (*Participant
 		return nil, errors.New("conversation is not active")
 	}
 
-	participant := NewParticipant(groupConversation.Conversation.ID, userID)
+	participant := NewParticipant(uuid.New(), groupConversation.Conversation.ID, userID)
 
 	participant.AddEvent(newGroupConversationJoinedEvent(groupConversation.Conversation.ID, userID))
 
@@ -133,14 +133,14 @@ func (groupConversation *GroupConversation) Invite(userID uuid.UUID, inviteeID u
 		return nil, errors.New("cannot invite yourself")
 	}
 
-	participant := NewParticipant(groupConversation.Conversation.ID, inviteeID)
+	participant := NewParticipant(uuid.New(), groupConversation.Conversation.ID, inviteeID)
 
 	participant.AddEvent(newGroupConversationInvitedEvent(groupConversation.Conversation.ID, userID, inviteeID))
 
 	return participant, nil
 }
 
-func (groupConversation *GroupConversation) SendTextMessage(text string, participant *Participant) (*Message, error) {
+func (groupConversation *GroupConversation) SendTextMessage(messageID uuid.UUID, text string, participant *Participant) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
@@ -159,48 +159,48 @@ func (groupConversation *GroupConversation) SendTextMessage(text string, partici
 		return nil, err
 	}
 
-	message := newTextMessage(groupConversation.Conversation.ID, participant.UserID, content)
+	message := newTextMessage(messageID, groupConversation.Conversation.ID, participant.UserID, content)
 
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendJoinedConversationMessage(userID uuid.UUID) (*Message, error) {
+func (groupConversation *GroupConversation) SendJoinedConversationMessage(messageID uuid.UUID, userID uuid.UUID) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
 
-	message := newJoinedConversationMessage(groupConversation.Conversation.ID, userID)
+	message := newJoinedConversationMessage(messageID, groupConversation.Conversation.ID, userID)
 
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendInvitedConversationMessage(userID uuid.UUID) (*Message, error) {
+func (groupConversation *GroupConversation) SendInvitedConversationMessage(messageID uuid.UUID, userID uuid.UUID) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
 
-	message := newInvitedConversationMessage(groupConversation.Conversation.ID, userID)
+	message := newInvitedConversationMessage(messageID, groupConversation.Conversation.ID, userID)
 
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendRenamedConversationMessage(userID uuid.UUID, newName string) (*Message, error) {
+func (groupConversation *GroupConversation) SendRenamedConversationMessage(messageID uuid.UUID, userID uuid.UUID, newName string) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
 
 	content := newRenamedMessageContent(newName)
-	message := newConversationRenamedMessage(groupConversation.Conversation.ID, userID, content)
+	message := newConversationRenamedMessage(messageID, groupConversation.Conversation.ID, userID, content)
 
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendLeftConversationMessage(userID uuid.UUID) (*Message, error) {
+func (groupConversation *GroupConversation) SendLeftConversationMessage(messageID uuid.UUID, userID uuid.UUID) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
 
-	message := newLeftConversationMessage(groupConversation.Conversation.ID, userID)
+	message := newLeftConversationMessage(messageID, groupConversation.Conversation.ID, userID)
 
 	return message, nil
 }

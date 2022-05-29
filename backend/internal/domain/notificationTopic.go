@@ -20,7 +20,7 @@ type NotificationTopic struct {
 	UserID uuid.UUID
 }
 
-func NewNotificationTopic(topic string, userID uuid.UUID) (*NotificationTopic, error) {
+func NewNotificationTopic(notificationTopicID uuid.UUID, topic string, userID uuid.UUID) (*NotificationTopic, error) {
 	if topic == "" {
 		return nil, errors.New("topic is empty")
 	}
@@ -30,7 +30,7 @@ func NewNotificationTopic(topic string, userID uuid.UUID) (*NotificationTopic, e
 	}
 
 	return &NotificationTopic{
-		ID:     uuid.New(),
+		ID:     notificationTopicID,
 		Name:   topic,
 		UserID: userID,
 	}, nil

@@ -71,10 +71,11 @@ func TestSendTextMessage(t *testing.T) {
 	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
+	messageID := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
-	participant := NewParticipant(conversationID, creatorId)
+	participant := NewParticipant(uuid.New(), conversationID, creatorId)
 
-	message, err := conversation.SendTextMessage("new message", participant)
+	message, err := conversation.SendTextMessage(messageID, "new message", participant)
 
 	assert.Nil(t, err)
 	assert.Equal(t, "new message", message.Content.String())
@@ -86,10 +87,11 @@ func TestSendTextMessageUserNotParticipant(t *testing.T) {
 	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
+	messageID := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
-	participant := NewParticipant(uuid.New(), uuid.New())
+	participant := NewParticipant(uuid.New(), uuid.New(), uuid.New())
 
-	_, err := conversation.SendTextMessage("new message", participant)
+	_, err := conversation.SendTextMessage(messageID, "new message", participant)
 
 	assert.Equal(t, "user is not participant", err.Error())
 }
@@ -98,11 +100,12 @@ func TestSendTextMessageNotActive(t *testing.T) {
 	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
+	messageID := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
-	participant := NewParticipant(conversationID, creatorId)
+	participant := NewParticipant(uuid.New(), conversationID, creatorId)
 	_ = conversation.Delete(creatorId)
 
-	_, err := conversation.SendTextMessage("new message", participant)
+	_, err := conversation.SendTextMessage(messageID, "new message", participant)
 
 	assert.Equal(t, "conversation is not active", err.Error())
 }
@@ -111,9 +114,10 @@ func TestSendJoinedConversationMessage(t *testing.T) {
 	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
+	messageID := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	message, err := conversation.SendJoinedConversationMessage(creatorId)
+	message, err := conversation.SendJoinedConversationMessage(messageID, creatorId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
@@ -124,9 +128,10 @@ func TestSendInvitedConversationMessage(t *testing.T) {
 	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
+	messageID := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	message, err := conversation.SendInvitedConversationMessage(creatorId)
+	message, err := conversation.SendInvitedConversationMessage(messageID, creatorId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
@@ -137,9 +142,10 @@ func TestSendRenamedConversationMessage(t *testing.T) {
 	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
+	messageID := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	message, err := conversation.SendRenamedConversationMessage(creatorId, "new name")
+	message, err := conversation.SendRenamedConversationMessage(messageID, creatorId, "new name")
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
@@ -150,9 +156,10 @@ func TestSendLeftConversationMessage(t *testing.T) {
 	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
+	messageID := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	message, err := conversation.SendLeftConversationMessage(creatorId)
+	message, err := conversation.SendLeftConversationMessage(messageID, creatorId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
@@ -330,7 +337,7 @@ func TestLeaveNotMember(t *testing.T) {
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	participant := NewParticipant(uuid.New(), uuid.New())
+	participant := NewParticipant(uuid.New(), uuid.New(), uuid.New())
 
 	_, err := conversation.Leave(participant)
 

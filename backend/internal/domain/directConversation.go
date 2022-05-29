@@ -31,8 +31,8 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 			IsActive: true,
 		},
 		ID:       uuid.New(),
-		ToUser:   *NewParticipant(id, to),
-		FromUser: *NewParticipant(id, from),
+		ToUser:   *NewParticipant(uuid.New(), id, to),
+		FromUser: *NewParticipant(uuid.New(), id, from),
 	}
 
 	directConversation.AddEvent(newDirectConversationCreatedEvent(id, to, from))
@@ -48,7 +48,7 @@ func (directConversation *DirectConversation) GetToUser() *Participant {
 	return &directConversation.ToUser
 }
 
-func (directConversation *DirectConversation) SendTextMessage(text string, userID uuid.UUID) (*Message, error) {
+func (directConversation *DirectConversation) SendTextMessage(messageID uuid.UUID, text string, userID uuid.UUID) (*Message, error) {
 	if directConversation.ToUser.UserID != userID && directConversation.FromUser.UserID != userID {
 		return nil, errors.New("user is not participant")
 	}
@@ -59,7 +59,7 @@ func (directConversation *DirectConversation) SendTextMessage(text string, userI
 		return nil, err
 	}
 
-	message := newTextMessage(directConversation.Conversation.ID, userID, content)
+	message := newTextMessage(messageID, directConversation.Conversation.ID, userID, content)
 
 	return message, nil
 }

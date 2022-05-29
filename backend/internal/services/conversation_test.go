@@ -86,7 +86,7 @@ func (m *participantsRepositoryMock) Update(participant *domain.Participant) err
 
 func (m *participantsRepositoryMock) GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
 	m.methodsCalled["GetByConversationIDAndUserID"]++
-	return domain.NewParticipant(conversationID, userID), nil
+	return domain.NewParticipant(uuid.New(), conversationID, userID), nil
 }
 
 func TestCreateGroupConversation(t *testing.T) {

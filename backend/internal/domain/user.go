@@ -83,9 +83,9 @@ type User struct {
 	RefreshToken string
 }
 
-func NewUser(username *userName, password *userPassword) *User {
+func NewUser(userID uuid.UUID, username *userName, password *userPassword) *User {
 	return &User{
-		ID:       uuid.New(),
+		ID:       userID,
 		Avatar:   string(username.String()[0]),
 		Name:     username,
 		Password: password,

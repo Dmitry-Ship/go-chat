@@ -10,20 +10,22 @@ import (
 func TestNewNotificationTopic(t *testing.T) {
 	name := "test"
 	userID := uuid.New()
+	notificationTopicID := uuid.New()
 
-	notificationTopic, err := NewNotificationTopic(name, userID)
+	notificationTopic, err := NewNotificationTopic(notificationTopicID, name, userID)
 
 	assert.Equal(t, name, notificationTopic.Name)
 	assert.Equal(t, userID, notificationTopic.UserID)
-	assert.NotNil(t, notificationTopic.ID)
+	assert.Equal(t, notificationTopicID, notificationTopic.ID)
 	assert.Nil(t, err)
 }
 
 func TestNewNotificationTopicEmptyTopic(t *testing.T) {
 	name := ""
 	userID := uuid.New()
+	notificationTopicID := uuid.New()
 
-	_, err := NewNotificationTopic(name, userID)
+	_, err := NewNotificationTopic(notificationTopicID, name, userID)
 
 	assert.Equal(t, "topic is empty", err.Error())
 }
@@ -35,8 +37,9 @@ func TestNewNotificationTopicLongTopic(t *testing.T) {
 		name += "a"
 	}
 	userID := uuid.New()
+	notificationTopicID := uuid.New()
 
-	_, err := NewNotificationTopic(name, userID)
+	_, err := NewNotificationTopic(notificationTopicID, name, userID)
 
 	assert.Equal(t, "topic is too long", err.Error())
 }

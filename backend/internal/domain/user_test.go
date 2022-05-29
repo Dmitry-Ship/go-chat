@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,10 +13,11 @@ func TestNewUser(t *testing.T) {
 	password, _ := NewUserPassword("12345678", func(p []byte) ([]byte, error) {
 		return []byte(p), nil
 	})
-	user := NewUser(name, password)
+	userID := uuid.New()
+	user := NewUser(userID, name, password)
 
-	assert.NotNil(t, user.ID)
-	assert.NotNil(t, user.Avatar)
+	assert.Equal(t, user.ID, userID)
+	assert.Equal(t, user.Avatar, string(name.String()[0]))
 	assert.NotNil(t, user.Password, password)
 	assert.Equal(t, user.Name, name)
 }
@@ -107,7 +109,8 @@ func TestSetRefreshToken(t *testing.T) {
 		return []byte(p), nil
 	})
 	name, _ := NewUserName("John")
-	user := NewUser(name, password)
+	userID := uuid.New()
+	user := NewUser(userID, name, password)
 
 	user.SetRefreshToken("test")
 

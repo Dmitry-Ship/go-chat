@@ -10,11 +10,12 @@ import (
 func TestNewParticipant(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
+	participantID := uuid.New()
 
-	participant := NewParticipant(conversationID, userID)
+	participant := NewParticipant(participantID, conversationID, userID)
 
 	assert.Equal(t, conversationID, participant.ConversationID)
 	assert.Equal(t, userID, participant.UserID)
-	assert.NotNil(t, participant.ID)
+	assert.Equal(t, participantID, participant.ID)
 	assert.Equal(t, participant.IsActive, true)
 }

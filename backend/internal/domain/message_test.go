@@ -10,12 +10,13 @@ import (
 func TestNewTextMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
+	messageID := uuid.New()
 	content, _ := newTextMessageContent("content")
 
-	message := newTextMessage(conversationID, userID, content)
+	message := newTextMessage(messageID, conversationID, userID, content)
 
 	assert.Equal(t, content, message.Content)
-	assert.NotNil(t, message.ID)
+	assert.Equal(t, messageID, message.ID)
 	assert.Equal(t, MessageTypeText, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
@@ -45,55 +46,57 @@ func TestNewTextMessageContentTooLong(t *testing.T) {
 func TestNewConversationRenamedMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
-
+	messageID := uuid.New()
 	name := newRenamedMessageContent("new name")
 
-	message := newConversationRenamedMessage(conversationID, userID, name)
+	message := newConversationRenamedMessage(messageID, conversationID, userID, name)
 
 	assert.Equal(t, name, message.Content)
-	assert.NotNil(t, message.ID)
+	assert.Equal(t, messageID, message.ID)
 	assert.Equal(t, MessageTypeRenamedConversation, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
-	assert.NotNil(t, message.ID)
 	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
 func TestNewLeftConversationMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
+	messageID := uuid.New()
 
-	message := newLeftConversationMessage(conversationID, userID)
+	message := newLeftConversationMessage(messageID, conversationID, userID)
 
 	assert.Equal(t, MessageTypeLeftConversation, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
-	assert.NotNil(t, message.ID)
+	assert.Equal(t, messageID, message.ID)
 	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
 func TestNewJoinedConversationMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
+	messageID := uuid.New()
 
-	message := newJoinedConversationMessage(conversationID, userID)
+	message := newJoinedConversationMessage(messageID, conversationID, userID)
 
 	assert.Equal(t, MessageTypeJoinedConversation, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
-	assert.NotNil(t, message.ID)
+	assert.Equal(t, messageID, message.ID)
 	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 }
 
 func TestNewInvitedConversationMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
+	messageID := uuid.New()
 
-	message := newInvitedConversationMessage(conversationID, userID)
+	message := newInvitedConversationMessage(messageID, conversationID, userID)
 
 	assert.Equal(t, MessageTypeInvitedConversation, message.Type)
 	assert.Equal(t, conversationID, message.ConversationID)
 	assert.Equal(t, userID, message.UserID)
-	assert.NotNil(t, message.ID)
+	assert.Equal(t, messageID, message.ID)
 	assert.Equal(t, message.GetEvents()[len(message.GetEvents())-1], NewMessageSent(conversationID, message.ID, userID))
 }

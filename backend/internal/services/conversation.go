@@ -122,7 +122,9 @@ func (s *conversationService) SendDirectTextMessage(conversationID uuid.UUID, us
 		return err
 	}
 
-	message, err := conversation.SendTextMessage(messageText, userID)
+	messageID := uuid.New()
+
+	message, err := conversation.SendTextMessage(messageID, messageText, userID)
 
 	if err != nil {
 		return err
@@ -144,7 +146,9 @@ func (s *conversationService) SendGroupTextMessage(conversationID uuid.UUID, use
 		return err
 	}
 
-	message, err := conversation.SendTextMessage(messageText, participant)
+	messageID := uuid.New()
+
+	message, err := conversation.SendTextMessage(messageID, messageText, participant)
 
 	if err != nil {
 		return err
@@ -160,7 +164,9 @@ func (s *conversationService) SendJoinedConversationMessage(conversationID uuid.
 		return err
 	}
 
-	message, err := conversation.SendJoinedConversationMessage(userID)
+	messageID := uuid.New()
+
+	message, err := conversation.SendJoinedConversationMessage(messageID, userID)
 
 	if err != nil {
 		return err
@@ -176,7 +182,9 @@ func (s *conversationService) SendInvitedConversationMessage(conversationID uuid
 		return err
 	}
 
-	message, err := conversation.SendInvitedConversationMessage(userID)
+	messageID := uuid.New()
+
+	message, err := conversation.SendInvitedConversationMessage(messageID, userID)
 
 	if err != nil {
 		return err
@@ -192,7 +200,9 @@ func (s *conversationService) SendRenamedConversationMessage(conversationID uuid
 		return err
 	}
 
-	message, err := conversation.SendRenamedConversationMessage(userID, name)
+	messageID := uuid.New()
+
+	message, err := conversation.SendRenamedConversationMessage(messageID, userID, name)
 
 	if err != nil {
 		return err
@@ -208,7 +218,9 @@ func (s *conversationService) SendLeftConversationMessage(conversationID uuid.UU
 		return err
 	}
 
-	message, err := conversation.SendLeftConversationMessage(userID)
+	messageID := uuid.New()
+
+	message, err := conversation.SendLeftConversationMessage(messageID, userID)
 
 	if err != nil {
 		return err
