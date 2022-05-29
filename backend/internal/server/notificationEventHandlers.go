@@ -32,14 +32,7 @@ func (h *Server) subscribeToConversationNotifications(conversationID uuid.UUID, 
 }
 
 func (h *Server) sendGroupConversationDeletedNotification(e *domain.GroupConversationDeleted) {
-	ids, err := h.notificationCommands.GetReceivers("conversation:" + e.ConversationID.String())
-
-	if err != nil {
-		h.logHandlerError(err)
-		return
-	}
-
-	for _, id := range ids {
+	err := h.notificationCommands.SendToTopic("conversation:"+e.ConversationID.String(), func(userID uuid.UUID) (*ws.OutgoingNotification, error) {
 		notification := ws.OutgoingNotification{
 			Type: "conversation_deleted",
 			Payload: struct {
@@ -49,28 +42,20 @@ func (h *Server) sendGroupConversationDeletedNotification(e *domain.GroupConvers
 			},
 		}
 
-		err := h.notificationCommands.SendToUser(id, notification)
+		return &notification, nil
+	})
 
-		if err != nil {
-			h.logHandlerError(err)
-		}
+	if err != nil {
+		h.logHandlerError(err)
 	}
 }
 
 func (h *Server) sendUpdatedConversationNotification(conversationID uuid.UUID) {
-	ids, err := h.notificationCommands.GetReceivers("conversation:" + conversationID.String())
-
-	if err != nil {
-		h.logHandlerError(err)
-		return
-	}
-
-	for _, id := range ids {
-		conversation, err := h.queries.GetConversation(conversationID, id)
+	err := h.notificationCommands.SendToTopic("conversation:"+conversationID.String(), func(userID uuid.UUID) (*ws.OutgoingNotification, error) {
+		conversation, err := h.queries.GetConversation(conversationID, userID)
 
 		if err != nil {
-			h.logHandlerError(err)
-			return
+			return nil, err
 		}
 
 		notification := ws.OutgoingNotification{
@@ -78,28 +63,20 @@ func (h *Server) sendUpdatedConversationNotification(conversationID uuid.UUID) {
 			Payload: conversation,
 		}
 
-		err = h.notificationCommands.SendToUser(id, notification)
+		return &notification, nil
+	})
 
-		if err != nil {
-			h.logHandlerError(err)
-		}
+	if err != nil {
+		h.logHandlerError(err)
 	}
 }
 
 func (h *Server) sendMessageNotification(e *domain.MessageSent) {
-	ids, err := h.notificationCommands.GetReceivers("conversation:" + e.ConversationID.String())
-
-	if err != nil {
-		h.logHandlerError(err)
-		return
-	}
-
-	for _, id := range ids {
-		messageDTO, err := h.queries.GetNotificationMessage(e.MessageID, id)
+	err := h.notificationCommands.SendToTopic("conversation:"+e.ConversationID.String(), func(userID uuid.UUID) (*ws.OutgoingNotification, error) {
+		messageDTO, err := h.queries.GetNotificationMessage(e.MessageID, userID)
 
 		if err != nil {
-			h.logHandlerError(err)
-			return
+			return nil, err
 		}
 
 		notification := ws.OutgoingNotification{
@@ -107,10 +84,10 @@ func (h *Server) sendMessageNotification(e *domain.MessageSent) {
 			Payload: messageDTO,
 		}
 
-		err = h.notificationCommands.SendToUser(id, notification)
+		return &notification, nil
+	})
 
-		if err != nil {
-			h.logHandlerError(err)
-		}
+	if err != nil {
+		h.logHandlerError(err)
 	}
 }

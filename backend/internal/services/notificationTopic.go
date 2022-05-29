@@ -18,10 +18,9 @@ type BroadcastMessage struct {
 
 type NotificationTopicService interface {
 	SubscribeToTopic(topic string, userID uuid.UUID) error
-	GetReceivers(topic string) ([]uuid.UUID, error)
-	SendToUser(userID uuid.UUID, notification ws.OutgoingNotification) error
 	UnsubscribeFromTopic(topic string, userID uuid.UUID) error
 	DeleteTopic(topic string) error
+	SendToTopic(topic string, buildMessage func(userID uuid.UUID) (*ws.OutgoingNotification, error)) error
 }
 
 type notificationTopicService struct {
@@ -62,11 +61,7 @@ func (s *notificationTopicService) DeleteTopic(topic string) error {
 	return s.notificationTopics.DeleteAllByTopic(topic)
 }
 
-func (s *notificationTopicService) GetReceivers(topic string) ([]uuid.UUID, error) {
-	return s.notificationTopics.GetUserIDsByTopic(topic)
-}
-
-func (s *notificationTopicService) SendToUser(userID uuid.UUID, notification ws.OutgoingNotification) error {
+func (s *notificationTopicService) sendToUser(userID uuid.UUID, notification ws.OutgoingNotification) error {
 	message := BroadcastMessage{
 		Payload: notification,
 		UserID:  userID,
@@ -79,4 +74,28 @@ func (s *notificationTopicService) SendToUser(userID uuid.UUID, notification ws.
 	}
 
 	return s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err()
+}
+
+func (s *notificationTopicService) SendToTopic(topic string, buildMessage func(userID uuid.UUID) (*ws.OutgoingNotification, error)) error {
+	ids, err := s.notificationTopics.GetUserIDsByTopic(topic)
+
+	if err != nil {
+		return err
+	}
+
+	for _, id := range ids {
+		notification, err := buildMessage(id)
+
+		if err != nil {
+			return err
+		}
+
+		err = s.sendToUser(id, *notification)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
