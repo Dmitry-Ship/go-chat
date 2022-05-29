@@ -33,5 +33,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+
       - name: Build
         run: docker build --target prod -t $IMAGE_NAME .
