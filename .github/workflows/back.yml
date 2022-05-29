@@ -36,6 +36,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+
       - name: Build Image
         run: docker build --target prod -t $IMAGE_NAME .
 
