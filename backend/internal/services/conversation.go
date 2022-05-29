@@ -7,15 +7,15 @@ import (
 )
 
 type ConversationService interface {
-	CreateGroupConversation(id uuid.UUID, name string, userID uuid.UUID) error
-	DeleteGroupConversation(id uuid.UUID, userID uuid.UUID) error
+	CreateGroupConversation(conversationID uuid.UUID, name string, userID uuid.UUID) error
+	DeleteGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error
 	RenameGroupConversation(conversationID uuid.UUID, userID uuid.UUID, name string) error
 	JoinGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error
 	LeaveGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error
 	InviteToGroupConversation(conversationID uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error
 	StartDirectConversation(fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error)
-	SendDirectTextMessage(messageText string, conversationID uuid.UUID, userID uuid.UUID) error
-	SendGroupTextMessage(messageText string, conversationID uuid.UUID, userID uuid.UUID) error
+	SendDirectTextMessage(conversationID uuid.UUID, userID uuid.UUID, messageText string) error
+	SendGroupTextMessage(conversationID uuid.UUID, userID uuid.UUID, messageText string) error
 	SendJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error
 	SendInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error
 	SendRenamedConversationMessage(conversationID uuid.UUID, userID uuid.UUID, name string) error
@@ -43,14 +43,14 @@ func NewConversationService(
 	}
 }
 
-func (s *conversationService) CreateGroupConversation(id uuid.UUID, name string, userID uuid.UUID) error {
+func (s *conversationService) CreateGroupConversation(conversationID uuid.UUID, name string, userID uuid.UUID) error {
 	conversationName, err := domain.NewConversationName(name)
 
 	if err != nil {
 		return err
 	}
 
-	conversation, err := domain.NewGroupConversation(id, conversationName, userID)
+	conversation, err := domain.NewGroupConversation(conversationID, conversationName, userID)
 
 	if err != nil {
 		return err
@@ -81,8 +81,8 @@ func (s *conversationService) StartDirectConversation(fromUserID uuid.UUID, toUs
 	return newConversationID, nil
 }
 
-func (s *conversationService) DeleteGroupConversation(id uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(id)
+func (s *conversationService) DeleteGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func (s *conversationService) RenameGroupConversation(conversationID uuid.UUID, 
 	return s.groupConversations.Update(conversation)
 }
 
-func (s *conversationService) SendDirectTextMessage(messageText string, conversationID uuid.UUID, userID uuid.UUID) error {
+func (s *conversationService) SendDirectTextMessage(conversationID uuid.UUID, userID uuid.UUID, messageText string) error {
 	conversation, err := s.directConversations.GetByID(conversationID)
 
 	if err != nil {
@@ -131,7 +131,7 @@ func (s *conversationService) SendDirectTextMessage(messageText string, conversa
 	return s.messages.Store(message)
 }
 
-func (s *conversationService) SendGroupTextMessage(messageText string, conversationID uuid.UUID, userID uuid.UUID) error {
+func (s *conversationService) SendGroupTextMessage(conversationID uuid.UUID, userID uuid.UUID, messageText string) error {
 	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {

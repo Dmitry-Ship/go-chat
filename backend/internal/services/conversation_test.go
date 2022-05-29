@@ -170,7 +170,7 @@ func TestSendTextMessage(t *testing.T) {
 	conversationID := uuid.New()
 	userID := uuid.New()
 
-	err := conversationService.SendGroupTextMessage("test", conversationID, userID)
+	err := conversationService.SendGroupTextMessage(conversationID, userID, "test")
 
 	assert.Nil(t, err)
 	assert.Equal(t, 1, messagesRepository.methodsCalled["Store"])

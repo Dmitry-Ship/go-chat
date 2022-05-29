@@ -46,7 +46,7 @@ func (s *wsHandlers) handleReceiveWSGroupChatMessage(data json.RawMessage, userI
 		return
 	}
 
-	err := s.commands.ConversationService.SendGroupTextMessage(request.Content, request.ConversationId, userID)
+	err := s.commands.ConversationService.SendGroupTextMessage(request.ConversationId, userID, request.Content)
 
 	if err != nil {
 		log.Println(err)
@@ -65,7 +65,7 @@ func (s *wsHandlers) handleReceiveWSDirectChatMessage(data json.RawMessage, user
 		return
 	}
 
-	err := s.commands.ConversationService.SendDirectTextMessage(request.Content, request.ConversationId, userID)
+	err := s.commands.ConversationService.SendDirectTextMessage(request.ConversationId, userID, request.Content)
 
 	if err != nil {
 		log.Println(err)
