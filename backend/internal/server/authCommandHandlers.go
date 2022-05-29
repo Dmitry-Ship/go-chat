@@ -1,4 +1,4 @@
-package httpHandlers
+package server
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *commandHandlers) handleLogin(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		UserName string `json:"username"`
 		Password string `json:"password"`
@@ -19,7 +19,7 @@ func (s *commandHandlers) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := s.commands.AuthService.Login(request.UserName, request.Password)
+	tokens, err := s.authCommands.Login(request.UserName, request.Password)
 
 	if err != nil {
 		returnError(w, http.StatusUnauthorized, err)
@@ -58,7 +58,7 @@ func (s *commandHandlers) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *commandHandlers) handleLogout(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -66,7 +66,7 @@ func (s *commandHandlers) handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.commands.AuthService.Logout(userID); err != nil {
+	if err := s.authCommands.Logout(userID); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -91,7 +91,7 @@ func (s *commandHandlers) handleLogout(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *commandHandlers) handleSignUp(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleSignUp(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		UserName string `json:"username"`
 		Password string `json:"password"`
@@ -102,7 +102,7 @@ func (s *commandHandlers) handleSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := s.commands.AuthService.SignUp(request.UserName, request.Password)
+	tokens, err := s.authCommands.SignUp(request.UserName, request.Password)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -141,7 +141,7 @@ func (s *commandHandlers) handleSignUp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *commandHandlers) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := r.Cookie("refresh_token")
 
 	if err != nil {
@@ -154,7 +154,7 @@ func (s *commandHandlers) handleRefreshToken(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	newTokens, err := s.commands.AuthService.RotateTokens(refreshToken.Value)
+	newTokens, err := s.authCommands.RotateTokens(refreshToken.Value)
 
 	if err != nil {
 		returnError(w, http.StatusUnauthorized, err)

@@ -1,24 +1,13 @@
-package httpHandlers
+package server
 
 import (
-	"GitHub/go-chat/backend/internal/readModel"
 	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
 )
 
-type queryHandlers struct {
-	queries readModel.QueriesRepository
-}
-
-func NewQueryHandlers(queries readModel.QueriesRepository) *queryHandlers {
-	return &queryHandlers{
-		queries: queries,
-	}
-}
-
-func (s *queryHandlers) handleGetContacts(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetContacts(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -48,7 +37,7 @@ func (s *queryHandlers) handleGetContacts(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (s *queryHandlers) handleGetPotentialInvitees(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetPotentialInvitees(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	conversationIDQuery := query.Get("conversation_id")
@@ -81,7 +70,7 @@ func (s *queryHandlers) handleGetPotentialInvitees(w http.ResponseWriter, r *htt
 	}
 }
 
-func (s *queryHandlers) handleGetConversations(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetConversations(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -111,7 +100,7 @@ func (s *queryHandlers) handleGetConversations(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (s *queryHandlers) handleGetConversationsMessages(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetConversationsMessages(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	conversationIDQuery := query.Get("conversation_id")
@@ -151,7 +140,7 @@ func (s *queryHandlers) handleGetConversationsMessages(w http.ResponseWriter, r 
 	}
 }
 
-func (s *queryHandlers) handleGetConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -184,7 +173,7 @@ func (s *queryHandlers) handleGetConversation(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func (s *queryHandlers) handleGetParticipants(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetParticipants(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	conversationIDQuery := query.Get("conversation_id")
@@ -224,7 +213,7 @@ func (s *queryHandlers) handleGetParticipants(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func (s *queryHandlers) handleGetUser(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {

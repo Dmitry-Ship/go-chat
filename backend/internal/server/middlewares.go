@@ -1,4 +1,4 @@
-package httpHandlers
+package server
 
 import (
 	"context"
@@ -12,7 +12,7 @@ type userIDKeyType string
 
 const userIDKey userIDKeyType = "userId"
 
-func (s *HTTPHandlers) private(next http.HandlerFunc) http.HandlerFunc {
+func (s *Server) private(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken, err := r.Cookie("access_token")
 
@@ -25,7 +25,7 @@ func (s *HTTPHandlers) private(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		userID, err := s.commandHandlers.commands.AuthService.ParseAccessToken(accessToken.Value)
+		userID, err := s.authCommands.ParseAccessToken(accessToken.Value)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -55,7 +55,7 @@ func (p pagination) GetPageSize() int {
 	return p.pageSize
 }
 
-func (s *HTTPHandlers) get(next http.HandlerFunc) http.HandlerFunc {
+func (s *Server) get(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -73,7 +73,7 @@ func (s *HTTPHandlers) get(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (s *HTTPHandlers) post(next http.HandlerFunc) http.HandlerFunc {
+func (s *Server) post(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -97,7 +97,7 @@ func (s *HTTPHandlers) post(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (s *HTTPHandlers) getPaginated(next http.HandlerFunc) http.HandlerFunc {
+func (s *Server) getPaginated(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 

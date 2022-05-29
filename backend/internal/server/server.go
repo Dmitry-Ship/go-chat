@@ -1,11 +1,9 @@
 package server
 
 import (
-	"GitHub/go-chat/backend/internal/app"
-	"GitHub/go-chat/backend/internal/domainEventsHandlers"
-	"GitHub/go-chat/backend/internal/httpHandlers"
 	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/readModel"
+	"GitHub/go-chat/backend/internal/services"
 	"context"
 )
 
@@ -14,15 +12,38 @@ type EventHandlers interface {
 }
 
 type Server struct {
-	HttpHandlers  *httpHandlers.HTTPHandlers
-	EventHandlers EventHandlers
+	ctx                  context.Context
+	authCommands         services.AuthService
+	conversationCommands services.ConversationService
+	notificationCommands services.NotificationTopicService
+	wsClientCommands     services.ClientsService
+	queries              readModel.QueriesRepository
+	subscriber           infra.EventsSubscriber
 }
 
-func NewServer(ctx context.Context, commands *app.Commands, queries readModel.QueriesRepository, eventBus infra.EventsSubscriber) *Server {
-	go commands.ClientsService.Run()
+func NewServer(
+	ctx context.Context,
+	authCommands services.AuthService,
+	conversationCommands services.ConversationService,
+	notificationCommands services.NotificationTopicService,
+	wsClientCommands services.ClientsService,
+	queries readModel.QueriesRepository,
+	eventBus infra.EventsSubscriber,
+) *Server {
 
 	return &Server{
-		HttpHandlers:  httpHandlers.NewHTTPHandlers(commands, queries),
-		EventHandlers: domainEventsHandlers.NewEventHandlers(ctx, eventBus, commands, queries),
+		ctx:                  ctx,
+		authCommands:         authCommands,
+		conversationCommands: conversationCommands,
+		notificationCommands: notificationCommands,
+		wsClientCommands:     wsClientCommands,
+		queries:              queries,
+		subscriber:           eventBus,
 	}
+}
+
+func (s *Server) Run() {
+	s.InitRoutes()
+	go s.ListenForEvents()
+	go s.wsClientCommands.Run()
 }

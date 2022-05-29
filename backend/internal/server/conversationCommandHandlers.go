@@ -1,4 +1,4 @@
-package httpHandlers
+package server
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *commandHandlers) handleStartDirectConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleStartDirectConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ToUserID uuid.UUID `json:"to_user_id"`
 	}{}
@@ -24,7 +24,7 @@ func (s *commandHandlers) handleStartDirectConversation(w http.ResponseWriter, r
 		return
 	}
 
-	conversationID, err := s.commands.ConversationService.StartDirectConversation(userID, request.ToUserID)
+	conversationID, err := s.conversationCommands.StartDirectConversation(userID, request.ToUserID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -43,7 +43,7 @@ func (s *commandHandlers) handleStartDirectConversation(w http.ResponseWriter, r
 	}
 }
 
-func (s *commandHandlers) handleCreateGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleCreateGroupConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationName string    `json:"conversation_name"`
 		ConversationId   uuid.UUID `json:"conversation_id"`
@@ -61,7 +61,7 @@ func (s *commandHandlers) handleCreateGroupConversation(w http.ResponseWriter, r
 		return
 	}
 
-	err := s.commands.ConversationService.CreateGroupConversation(request.ConversationId, request.ConversationName, userID)
+	err := s.conversationCommands.CreateGroupConversation(request.ConversationId, request.ConversationName, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -74,7 +74,7 @@ func (s *commandHandlers) handleCreateGroupConversation(w http.ResponseWriter, r
 	}
 }
 
-func (s *commandHandlers) handleDeleteConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleDeleteConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
@@ -91,7 +91,7 @@ func (s *commandHandlers) handleDeleteConversation(w http.ResponseWriter, r *htt
 		return
 	}
 
-	err := s.commands.ConversationService.DeleteGroupConversation(request.ConversationId, userID)
+	err := s.conversationCommands.DeleteGroupConversation(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -104,7 +104,7 @@ func (s *commandHandlers) handleDeleteConversation(w http.ResponseWriter, r *htt
 	}
 }
 
-func (s *commandHandlers) handleJoinGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleJoinGroupConversation(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
@@ -120,7 +120,7 @@ func (s *commandHandlers) handleJoinGroupConversation(w http.ResponseWriter, r *
 		return
 	}
 
-	err := s.commands.ConversationService.JoinGroupConversation(request.ConversationId, userID)
+	err := s.conversationCommands.JoinGroupConversation(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -133,7 +133,7 @@ func (s *commandHandlers) handleJoinGroupConversation(w http.ResponseWriter, r *
 	}
 }
 
-func (s *commandHandlers) handleLeaveGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleLeaveGroupConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -150,7 +150,7 @@ func (s *commandHandlers) handleLeaveGroupConversation(w http.ResponseWriter, r 
 		return
 	}
 
-	err := s.commands.ConversationService.LeaveGroupConversation(request.ConversationId, userID)
+	err := s.conversationCommands.LeaveGroupConversation(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -163,7 +163,7 @@ func (s *commandHandlers) handleLeaveGroupConversation(w http.ResponseWriter, r 
 	}
 }
 
-func (s *commandHandlers) handleRenameGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleRenameGroupConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -181,7 +181,7 @@ func (s *commandHandlers) handleRenameGroupConversation(w http.ResponseWriter, r
 		return
 	}
 
-	err := s.commands.ConversationService.RenameGroupConversation(request.ConversationId, userID, request.ConversationName)
+	err := s.conversationCommands.RenameGroupConversation(request.ConversationId, userID, request.ConversationName)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -194,7 +194,7 @@ func (s *commandHandlers) handleRenameGroupConversation(w http.ResponseWriter, r
 	}
 }
 
-func (s *commandHandlers) handleInviteToGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleInviteToGroupConversation(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -212,7 +212,7 @@ func (s *commandHandlers) handleInviteToGroupConversation(w http.ResponseWriter,
 		return
 	}
 
-	err := s.commands.ConversationService.InviteToGroupConversation(request.ConversationId, userID, request.InviteeId)
+	err := s.conversationCommands.InviteToGroupConversation(request.ConversationId, userID, request.InviteeId)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)

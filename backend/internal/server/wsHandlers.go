@@ -1,30 +1,15 @@
-package httpHandlers
+package server
 
 import (
 	"encoding/json"
 	"log"
 
-	"GitHub/go-chat/backend/internal/app"
 	ws "GitHub/go-chat/backend/internal/websocket"
 
 	"github.com/google/uuid"
 )
 
-type WSHandlers interface {
-	HandleNotification(notification *ws.IncomingNotification)
-}
-
-type wsHandlers struct {
-	commands *app.Commands
-}
-
-func NewWSHandlers(commands *app.Commands) *wsHandlers {
-	return &wsHandlers{
-		commands: commands,
-	}
-}
-
-func (s *wsHandlers) HandleNotification(notification *ws.IncomingNotification) {
+func (s *Server) handleNotification(notification *ws.IncomingNotification) {
 	switch notification.Type {
 	case "group_message":
 		s.handleReceiveWSGroupChatMessage(notification.Data, notification.UserID)
@@ -35,7 +20,7 @@ func (s *wsHandlers) HandleNotification(notification *ws.IncomingNotification) {
 	}
 }
 
-func (s *wsHandlers) handleReceiveWSGroupChatMessage(data json.RawMessage, userID uuid.UUID) {
+func (s *Server) handleReceiveWSGroupChatMessage(data json.RawMessage, userID uuid.UUID) {
 	request := struct {
 		Content        string    `json:"content"`
 		ConversationId uuid.UUID `json:"conversation_id"`
@@ -46,7 +31,7 @@ func (s *wsHandlers) handleReceiveWSGroupChatMessage(data json.RawMessage, userI
 		return
 	}
 
-	err := s.commands.ConversationService.SendGroupTextMessage(request.ConversationId, userID, request.Content)
+	err := s.conversationCommands.SendGroupTextMessage(request.ConversationId, userID, request.Content)
 
 	if err != nil {
 		log.Println(err)
@@ -54,7 +39,7 @@ func (s *wsHandlers) handleReceiveWSGroupChatMessage(data json.RawMessage, userI
 	}
 }
 
-func (s *wsHandlers) handleReceiveWSDirectChatMessage(data json.RawMessage, userID uuid.UUID) {
+func (s *Server) handleReceiveWSDirectChatMessage(data json.RawMessage, userID uuid.UUID) {
 	request := struct {
 		Content        string    `json:"content"`
 		ConversationId uuid.UUID `json:"conversation_id"`
@@ -65,7 +50,7 @@ func (s *wsHandlers) handleReceiveWSDirectChatMessage(data json.RawMessage, user
 		return
 	}
 
-	err := s.commands.ConversationService.SendDirectTextMessage(request.ConversationId, userID, request.Content)
+	err := s.conversationCommands.SendDirectTextMessage(request.ConversationId, userID, request.Content)
 
 	if err != nil {
 		log.Println(err)

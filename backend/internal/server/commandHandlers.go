@@ -1,7 +1,6 @@
-package httpHandlers
+package server
 
 import (
-	"GitHub/go-chat/backend/internal/app"
 	"net/http"
 	"os"
 
@@ -9,19 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type commandHandlers struct {
-	commands   *app.Commands
-	wsHandlers WSHandlers
-}
-
-func NewCommandHandlers(commands *app.Commands) *commandHandlers {
-	return &commandHandlers{
-		commands:   commands,
-		wsHandlers: NewWSHandlers(commands),
-	}
-}
-
-func (s *commandHandlers) handleOpenWSConnection() http.HandlerFunc {
+func (s *Server) handleOpenWSConnection() http.HandlerFunc {
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -46,6 +33,6 @@ func (s *commandHandlers) handleOpenWSConnection() http.HandlerFunc {
 			return
 		}
 
-		s.commands.ClientsService.RegisterClient(conn, userID, s.wsHandlers.HandleNotification)
+		s.wsClientCommands.RegisterClient(conn, userID, s.handleNotification)
 	}
 }

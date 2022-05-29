@@ -1,35 +1,15 @@
-package domainEventsHandlers
+package server
 
 import (
-	"GitHub/go-chat/backend/internal/app"
 	"GitHub/go-chat/backend/internal/domain"
-	"GitHub/go-chat/backend/internal/infra"
-	"GitHub/go-chat/backend/internal/readModel"
-	"context"
 	"log"
 )
 
-type eventHandlers struct {
-	ctx        context.Context
-	subscriber infra.EventsSubscriber
-	commands   *app.Commands
-	queries    readModel.QueriesRepository
-}
-
-func NewEventHandlers(ctx context.Context, subscriber infra.EventsSubscriber, commands *app.Commands, queries readModel.QueriesRepository) *eventHandlers {
-	return &eventHandlers{
-		ctx:        ctx,
-		subscriber: subscriber,
-		commands:   commands,
-		queries:    queries,
-	}
-}
-
-func (h *eventHandlers) logHandlerError(err error) {
+func (h *Server) logHandlerError(err error) {
 	log.Panicln("Error occurred event", err)
 }
 
-func (h *eventHandlers) ListenForEvents() {
+func (h *Server) ListenForEvents() {
 	for {
 		select {
 		case event := <-h.subscriber.Subscribe(domain.DomainEventChannel):

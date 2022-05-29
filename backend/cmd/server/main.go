@@ -1,7 +1,7 @@
 package main
 
 import (
-	"GitHub/go-chat/backend/internal/app"
+	"GitHub/go-chat/backend/internal/commands"
 	"GitHub/go-chat/backend/internal/gracefulServer"
 	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/postgres"
@@ -20,20 +20,20 @@ func main() {
 
 	db := postgres.NewDatabaseConnection()
 	db.AutoMigrate()
-
 	dbConnection := db.GetConnection()
 	eventBus := infra.NewEventBus()
 	defer eventBus.Close()
 
 	activeClients := ws.NewActiveClients()
 
-	commands := app.NewCommands(ctx, eventBus, dbConnection, activeClients, redisClient)
+	authCommands := commands.NewAuthCommands(ctx, eventBus, dbConnection)
+	conversationCommands := commands.NewConversationCommands(ctx, eventBus, dbConnection)
+	notificationCommands := commands.NewNotificationsCommands(ctx, eventBus, dbConnection, redisClient)
+	wsClientCommands := commands.NewWSClientCommands(ctx, activeClients, redisClient)
 	queries := postgres.NewQueriesRepository(dbConnection)
 
-	server := server.NewServer(ctx, commands, queries, eventBus)
-
-	server.HttpHandlers.InitRoutes()
-	go server.EventHandlers.ListenForEvents()
+	server := server.NewServer(ctx, authCommands, conversationCommands, notificationCommands, wsClientCommands, queries, eventBus)
+	server.Run()
 
 	s := gracefulServer.NewGracefulServer()
 	s.Run()
