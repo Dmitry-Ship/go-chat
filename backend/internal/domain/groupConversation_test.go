@@ -113,7 +113,7 @@ func TestSendJoinedConversationMessage(t *testing.T) {
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	message, err := conversation.SendJoinedConversationMessage(conversationID, creatorId)
+	message, err := conversation.SendJoinedConversationMessage(creatorId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
@@ -126,7 +126,7 @@ func TestSendInvitedConversationMessage(t *testing.T) {
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	message, err := conversation.SendInvitedConversationMessage(conversationID, creatorId)
+	message, err := conversation.SendInvitedConversationMessage(creatorId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
@@ -139,7 +139,7 @@ func TestSendRenamedConversationMessage(t *testing.T) {
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	message, err := conversation.SendRenamedConversationMessage(conversationID, creatorId, "new name")
+	message, err := conversation.SendRenamedConversationMessage(creatorId, "new name")
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)
@@ -152,7 +152,7 @@ func TestSendLeftConversationMessage(t *testing.T) {
 	creatorId := uuid.New()
 	conversation, _ := NewGroupConversation(conversationID, name, creatorId)
 
-	message, err := conversation.SendLeftConversationMessage(conversationID, creatorId)
+	message, err := conversation.SendLeftConversationMessage(creatorId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversationID, message.ConversationID)

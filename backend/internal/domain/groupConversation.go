@@ -42,7 +42,6 @@ type GroupConversation struct {
 }
 
 func NewGroupConversation(id uuid.UUID, name *conversationName, creatorID uuid.UUID) (*GroupConversation, error) {
-
 	groupConversation := &GroupConversation{
 		Conversation: Conversation{
 			ID:       id,
@@ -165,43 +164,43 @@ func (groupConversation *GroupConversation) SendTextMessage(text string, partici
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*Message, error) {
+func (groupConversation *GroupConversation) SendJoinedConversationMessage(userID uuid.UUID) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
 
-	message := newJoinedConversationMessage(conversationID, userID)
+	message := newJoinedConversationMessage(groupConversation.Conversation.ID, userID)
 
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*Message, error) {
+func (groupConversation *GroupConversation) SendInvitedConversationMessage(userID uuid.UUID) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
 
-	message := newInvitedConversationMessage(conversationID, userID)
+	message := newInvitedConversationMessage(groupConversation.Conversation.ID, userID)
 
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendRenamedConversationMessage(conversationID uuid.UUID, userID uuid.UUID, newName string) (*Message, error) {
+func (groupConversation *GroupConversation) SendRenamedConversationMessage(userID uuid.UUID, newName string) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
 
 	content := newRenamedMessageContent(newName)
-	message := newConversationRenamedMessage(conversationID, userID, content)
+	message := newConversationRenamedMessage(groupConversation.Conversation.ID, userID, content)
 
 	return message, nil
 }
 
-func (groupConversation *GroupConversation) SendLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) (*Message, error) {
+func (groupConversation *GroupConversation) SendLeftConversationMessage(userID uuid.UUID) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
 	}
 
-	message := newLeftConversationMessage(conversationID, userID)
+	message := newLeftConversationMessage(groupConversation.Conversation.ID, userID)
 
 	return message, nil
 }

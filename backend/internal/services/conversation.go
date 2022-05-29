@@ -160,7 +160,7 @@ func (s *conversationService) SendJoinedConversationMessage(conversationID uuid.
 		return err
 	}
 
-	message, err := conversation.SendJoinedConversationMessage(conversationID, userID)
+	message, err := conversation.SendJoinedConversationMessage(userID)
 
 	if err != nil {
 		return err
@@ -176,7 +176,7 @@ func (s *conversationService) SendInvitedConversationMessage(conversationID uuid
 		return err
 	}
 
-	message, err := conversation.SendInvitedConversationMessage(conversationID, userID)
+	message, err := conversation.SendInvitedConversationMessage(userID)
 
 	if err != nil {
 		return err
@@ -192,7 +192,7 @@ func (s *conversationService) SendRenamedConversationMessage(conversationID uuid
 		return err
 	}
 
-	message, err := conversation.SendRenamedConversationMessage(conversationID, userID, name)
+	message, err := conversation.SendRenamedConversationMessage(userID, name)
 
 	if err != nil {
 		return err
@@ -208,7 +208,7 @@ func (s *conversationService) SendLeftConversationMessage(conversationID uuid.UU
 		return err
 	}
 
-	message, err := conversation.SendLeftConversationMessage(conversationID, userID)
+	message, err := conversation.SendLeftConversationMessage(userID)
 
 	if err != nil {
 		return err
