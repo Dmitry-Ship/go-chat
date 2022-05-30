@@ -36,14 +36,6 @@ func (r *notificationTopicRepository) DeleteByUserIDAndTopic(userID uuid.UUID, t
 	return err
 }
 
-func (r *notificationTopicRepository) DeleteAllByTopic(topic string) error {
-	persistence := &UserNotificationTopic{}
-
-	err := r.db.Where("topic = ?", topic).Delete(persistence).Error
-
-	return err
-}
-
 func (r *notificationTopicRepository) GetUserIDsByTopic(topic string) ([]uuid.UUID, error) {
 	var ids []uuid.UUID
 

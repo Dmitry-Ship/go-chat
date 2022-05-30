@@ -23,7 +23,6 @@ type BroadcastMessage struct {
 type NotificationService interface {
 	SubscribeToTopic(topic string, userID uuid.UUID) error
 	UnsubscribeFromTopic(topic string, userID uuid.UUID) error
-	DeleteTopic(topic string) error
 	SendToTopic(topic string, buildMessage func(userID uuid.UUID) (*ws.OutgoingNotification, error)) error
 	RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(notification *ws.IncomingNotification))
 	Run()
@@ -64,10 +63,6 @@ func (s *notificationService) SubscribeToTopic(topic string, userID uuid.UUID) e
 
 func (s *notificationService) UnsubscribeFromTopic(topic string, userID uuid.UUID) error {
 	return s.notificationTopics.DeleteByUserIDAndTopic(userID, topic)
-}
-
-func (s *notificationService) DeleteTopic(topic string) error {
-	return s.notificationTopics.DeleteAllByTopic(topic)
 }
 
 func (s *notificationService) sendWorker(

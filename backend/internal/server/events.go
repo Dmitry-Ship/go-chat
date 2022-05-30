@@ -19,7 +19,6 @@ func (h *Server) listenForEvents() {
 				go h.sendUpdatedConversationNotification(e.ConversationID)
 			case *domain.GroupConversationDeleted:
 				go h.sendGroupConversationDeletedNotification(e)
-				go h.deleteConversationTopic(e)
 			case *domain.GroupConversationLeft:
 				go h.sendGroupConversationLeftMessage(e)
 				go h.unsubscribeFromConversation(e)

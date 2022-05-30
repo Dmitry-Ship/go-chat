@@ -15,14 +15,6 @@ func (h *Server) unsubscribeFromConversation(e *domain.GroupConversationLeft) {
 	}
 }
 
-func (h *Server) deleteConversationTopic(e *domain.GroupConversationDeleted) {
-	err := h.notificationCommands.DeleteTopic("conversation:" + e.ConversationID.String())
-
-	if err != nil {
-		h.logHandlerError(err)
-	}
-}
-
 func (h *Server) subscribeToConversationNotifications(conversationID uuid.UUID, userID uuid.UUID) {
 	err := h.notificationCommands.SubscribeToTopic("conversation:"+conversationID.String(), userID)
 
