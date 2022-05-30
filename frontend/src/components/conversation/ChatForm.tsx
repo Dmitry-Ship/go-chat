@@ -41,7 +41,7 @@ const ChatForm: React.FC<{
         <Loader />
       ) : (
         <>
-          {joined ? (
+          {joined || conversationType === "direct" ? (
             <form className={styles.form} onSubmit={handleSubmit}>
               <input
                 type="text"

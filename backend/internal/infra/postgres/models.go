@@ -21,14 +21,6 @@ type GroupConversation struct {
 	OwnerID        uuid.UUID `gorm:"type:uuid"`
 }
 
-type DirectConversation struct {
-	gorm.Model
-	ID             uuid.UUID `gorm:"type:uuid"`
-	FromUserID     uuid.UUID `gorm:"type:uuid"`
-	ToUserID       uuid.UUID `gorm:"type:uuid"`
-	ConversationID uuid.UUID `gorm:"type:uuid"`
-}
-
 type Message struct {
 	gorm.Model
 	ID             uuid.UUID `gorm:"type:uuid"`

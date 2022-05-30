@@ -24,16 +24,10 @@ func (r *directConversationRepository) Store(conversation *domain.DirectConversa
 			return err
 		}
 
-		if err := tx.Create(toDirectConversationPersistence(conversation)).Error; err != nil {
-			return err
-		}
-
-		if err := tx.Create(toParticipantPersistence(conversation.GetFromUser())).Error; err != nil {
-			return err
-		}
-
-		if err := tx.Create(toParticipantPersistence(conversation.GetToUser())).Error; err != nil {
-			return err
+		for _, participant := range conversation.Participants {
+			if err := tx.Create(toParticipantPersistence(&participant)).Error; err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -49,40 +43,35 @@ func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConv
 		return nil, err
 	}
 
-	directConversation := DirectConversation{}
+	participants := []*Participant{}
 
-	err = r.db.Where("conversation_id = ?", id).First(&directConversation).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	toUser := Participant{}
-
-	err = r.db.Where("conversation_id = ? AND user_id = ?", id, directConversation.ToUserID).First(&toUser).Error
+	err = r.db.Where("conversation_id = ?", id).Find(&participants).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	fromUser := Participant{}
-
-	err = r.db.Where("conversation_id = ? AND user_id = ?", id, directConversation.FromUserID).First(&fromUser).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return toDirectConversationDomain(&conversation, &directConversation, &toUser, &fromUser), nil
+	return toDirectConversationDomain(&conversation, participants), nil
 }
 
 func (r *directConversationRepository) GetID(firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {
-	directConversation := DirectConversation{}
-	err := r.db.Where("to_user_id = ? AND from_user_id = ?", firstUserID, secondUserID).Or("to_user_id = ? AND from_user_id = ?", secondUserID, firstUserID).First(&directConversation).Error
+	conversation := Conversation{}
+
+	err := r.db.
+		Model(&Conversation{}).
+		Joins("LEFT JOIN participants ON participants.conversation_id = conversations.id").
+		Where("conversations.is_active = ?", true).
+		Where("conversations.type = ?", toConversationTypePersistence(domain.ConversationTypeDirect)).
+		Where("participants.is_active = ?", true).
+		Where("participants.user_id = ? ", firstUserID).
+		Or("participants.user_id = ? ", secondUserID).
+		First(&conversation).Error
+
+	// err := r.db.Where("to_user_id = ? AND from_user_id = ?", firstUserID, secondUserID).Or("to_user_id = ? AND from_user_id = ?", secondUserID, firstUserID).First(&directConversation).Error
 
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	return directConversation.ConversationID, nil
+	return conversation.ID, nil
 }

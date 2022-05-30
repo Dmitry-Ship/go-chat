@@ -62,32 +62,23 @@ func toGroupConversationDomain(conversation *Conversation, groupConversation *Gr
 	}
 }
 
-func toDirectConversationDomain(conversation *Conversation, directConversation *DirectConversation, toUser *Participant, fromUser *Participant) *domain.DirectConversation {
+func toDirectConversationDomain(conversation *Conversation, participants []*Participant) *domain.DirectConversation {
+	participantsDomain := make([]domain.Participant, len(participants))
+
+	for i, participant := range participants {
+		participantsDomain[i] = domain.Participant{
+			UserID:         participant.UserID,
+			ID:             participant.ID,
+			ConversationID: participant.ConversationID,
+		}
+	}
+
 	return &domain.DirectConversation{
-		ID: directConversation.ID,
-		ToUser: domain.Participant{
-			UserID:         toUser.UserID,
-			ID:             toUser.ID,
-			ConversationID: directConversation.ConversationID,
-		},
-		FromUser: domain.Participant{
-			UserID:         fromUser.UserID,
-			ID:             fromUser.ID,
-			ConversationID: directConversation.ConversationID,
-		},
+		Participants: participantsDomain,
 		Conversation: domain.Conversation{
 			ID:       conversation.ID,
 			Type:     conversationTypesMap[conversation.Type],
 			IsActive: conversation.IsActive,
 		},
-	}
-}
-
-func toDirectConversationPersistence(conversation *domain.DirectConversation) *DirectConversation {
-	return &DirectConversation{
-		ID:             conversation.ID,
-		ConversationID: conversation.Conversation.ID,
-		FromUserID:     conversation.FromUser.UserID,
-		ToUserID:       conversation.ToUser.UserID,
 	}
 }

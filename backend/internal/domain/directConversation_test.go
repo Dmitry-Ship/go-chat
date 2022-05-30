@@ -15,12 +15,7 @@ func TestNewDirectConversation(t *testing.T) {
 	conversation, err := NewDirectConversation(conversationID, to, from)
 
 	assert.Equal(t, conversation.Conversation.ID, conversationID)
-	assert.Equal(t, to, conversation.ToUser.UserID)
-	assert.Equal(t, from, conversation.FromUser.UserID)
-	assert.Equal(t, conversationID, conversation.FromUser.ConversationID)
-	assert.Equal(t, conversationID, conversation.ToUser.ConversationID)
-	assert.NotNil(t, conversation.FromUser.ID)
-	assert.NotNil(t, conversation.ToUser.ID)
+	assert.Equal(t, len(conversation.Participants), 2)
 	assert.Equal(t, conversation.Type, ConversationTypeDirect)
 	assert.Equal(t, true, conversation.IsActive)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newDirectConversationCreatedEvent(conversationID, to, from))
@@ -34,26 +29,6 @@ func TestNewDirectConversationWithOneself(t *testing.T) {
 	_, err := NewDirectConversation(conversationID, to, to)
 
 	assert.Equal(t, err.Error(), "cannot chat with yourself")
-}
-
-func TestGetFromUser(t *testing.T) {
-	to := uuid.New()
-	from := uuid.New()
-	conversationID := uuid.New()
-
-	conversation, _ := NewDirectConversation(conversationID, to, from)
-
-	assert.Equal(t, from, conversation.GetFromUser().UserID)
-}
-
-func TestGetToUser(t *testing.T) {
-	to := uuid.New()
-	from := uuid.New()
-	conversationID := uuid.New()
-
-	conversation, _ := NewDirectConversation(conversationID, to, from)
-
-	assert.Equal(t, to, conversation.GetToUser().UserID)
 }
 
 func TestSendDirectTextMessage(t *testing.T) {

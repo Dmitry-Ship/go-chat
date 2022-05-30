@@ -14,9 +14,7 @@ type DirectConversationRepository interface {
 
 type DirectConversation struct {
 	Conversation
-	ID       uuid.UUID
-	ToUser   Participant
-	FromUser Participant
+	Participants []Participant
 }
 
 func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectConversation, error) {
@@ -30,9 +28,10 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 			Type:     ConversationTypeDirect,
 			IsActive: true,
 		},
-		ID:       uuid.New(),
-		ToUser:   *NewParticipant(uuid.New(), id, to),
-		FromUser: *NewParticipant(uuid.New(), id, from),
+		Participants: []Participant{
+			*NewParticipant(uuid.New(), id, to),
+			*NewParticipant(uuid.New(), id, from),
+		},
 	}
 
 	directConversation.AddEvent(newDirectConversationCreatedEvent(id, to, from))
@@ -40,16 +39,16 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 	return &directConversation, nil
 }
 
-func (directConversation *DirectConversation) GetFromUser() *Participant {
-	return &directConversation.FromUser
-}
-
-func (directConversation *DirectConversation) GetToUser() *Participant {
-	return &directConversation.ToUser
-}
-
 func (directConversation *DirectConversation) SendTextMessage(messageID uuid.UUID, text string, userID uuid.UUID) (*Message, error) {
-	if directConversation.ToUser.UserID != userID && directConversation.FromUser.UserID != userID {
+	isParticipant := false
+	for _, participant := range directConversation.Participants {
+		if participant.UserID == userID {
+			isParticipant = true
+			break
+		}
+	}
+
+	if !isParticipant {
 		return nil, errors.New("user is not participant")
 	}
 

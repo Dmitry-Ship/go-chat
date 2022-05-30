@@ -53,13 +53,31 @@ func TestToGroupConversationDomain(t *testing.T) {
 	assert.Equal(t, domain.Owner.UserID, groupConversation.OwnerID)
 }
 
-func TestToDirectConversationPersistence(t *testing.T) {
-	conversation, _ := domain.NewDirectConversation(uuid.New(), uuid.New(), uuid.New())
+func TestToDirectConversationDomain(t *testing.T) {
+	conversationId := uuid.New()
+	userID := uuid.New()
 
-	persistence := toDirectConversationPersistence(conversation)
+	conversation := &Conversation{
+		ID:   conversationId,
+		Type: 1,
+	}
 
-	assert.Equal(t, persistence.ID, conversation.ID)
-	assert.Equal(t, persistence.ConversationID, conversation.GetBaseData().ID)
-	assert.Equal(t, persistence.FromUserID, conversation.FromUser.UserID)
-	assert.Equal(t, persistence.ToUserID, conversation.ToUser.UserID)
+	participants := []*Participant{
+		{
+			ID:             uuid.New(),
+			ConversationID: conversationId,
+			UserID:         userID,
+		},
+		{
+			ID:             uuid.New(),
+			ConversationID: conversationId,
+			UserID:         uuid.New(),
+		},
+	}
+
+	domain := toDirectConversationDomain(conversation, participants)
+
+	assert.Equal(t, domain.ID, conversationId)
+	assert.Equal(t, domain.Type, domain.Type)
+	assert.Equal(t, len(domain.Participants), 2)
 }
