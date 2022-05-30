@@ -15,8 +15,7 @@ type Server struct {
 	ctx                  context.Context
 	authCommands         services.AuthService
 	conversationCommands services.ConversationService
-	notificationCommands services.NotificationTopicService
-	wsClientCommands     services.ClientsService
+	notificationCommands services.NotificationService
 	queries              readModel.QueriesRepository
 	subscriber           infra.EventsSubscriber
 }
@@ -25,8 +24,7 @@ func NewServer(
 	ctx context.Context,
 	authCommands services.AuthService,
 	conversationCommands services.ConversationService,
-	notificationCommands services.NotificationTopicService,
-	wsClientCommands services.ClientsService,
+	notificationCommands services.NotificationService,
 	queries readModel.QueriesRepository,
 	eventBus infra.EventsSubscriber,
 ) *Server {
@@ -35,7 +33,6 @@ func NewServer(
 		authCommands:         authCommands,
 		conversationCommands: conversationCommands,
 		notificationCommands: notificationCommands,
-		wsClientCommands:     wsClientCommands,
 		queries:              queries,
 		subscriber:           eventBus,
 	}
@@ -44,5 +41,5 @@ func NewServer(
 func (s *Server) Run() {
 	s.initRoutes()
 	go s.listenForEvents()
-	go s.wsClientCommands.Run()
+	go s.notificationCommands.Run()
 }

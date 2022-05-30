@@ -33,6 +33,6 @@ func (s *Server) handleOpenWSConnection() http.HandlerFunc {
 			return
 		}
 
-		s.wsClientCommands.RegisterClient(conn, userID, s.handleNotification)
+		s.notificationCommands.RegisterClient(conn, userID, s.handleNotification)
 	}
 }

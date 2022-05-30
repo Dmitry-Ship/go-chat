@@ -31,19 +31,19 @@ type client struct {
 	connection                 *websocket.Conn
 	UserID                     uuid.UUID
 	sendChannel                chan *OutgoingNotification
-	handleincomingNotification func(notification *IncomingNotification)
+	handleIncomingNotification func(notification *IncomingNotification)
 	unregisterClient           func(client *client)
 	connectionOptions          connectionOptions
 }
 
-func NewClient(conn *websocket.Conn, unregisterClient func(client *client), handleincomingNotification func(notification *IncomingNotification), userID uuid.UUID) *client {
+func NewClient(conn *websocket.Conn, unregisterClient func(client *client), handleIncomingNotification func(notification *IncomingNotification), userID uuid.UUID) *client {
 	return &client{
 		Id:                         uuid.New(),
 		UserID:                     userID,
 		connection:                 conn,
 		sendChannel:                make(chan *OutgoingNotification, 1024),
 		unregisterClient:           unregisterClient,
-		handleincomingNotification: handleincomingNotification,
+		handleIncomingNotification: handleIncomingNotification,
 		connectionOptions: connectionOptions{
 			writeWait:      10 * time.Second,
 			pongWait:       60 * time.Second,
@@ -99,7 +99,7 @@ func (c *client) readPump() {
 			return
 		}
 
-		go c.handleincomingNotification(&IncomingNotification{
+		go c.handleIncomingNotification(&IncomingNotification{
 			Type:   notification.Type,
 			Data:   data,
 			UserID: c.UserID,

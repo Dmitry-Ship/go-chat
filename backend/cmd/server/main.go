@@ -7,7 +7,6 @@ import (
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
 	"GitHub/go-chat/backend/internal/server"
-	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
 )
 
@@ -24,15 +23,12 @@ func main() {
 	eventBus := infra.NewEventBus()
 	defer eventBus.Close()
 
-	activeClients := ws.NewActiveClients()
-
 	authCommands := commands.NewAuthCommands(ctx, eventBus, dbConnection)
 	conversationCommands := commands.NewConversationCommands(ctx, eventBus, dbConnection)
 	notificationCommands := commands.NewNotificationsCommands(ctx, eventBus, dbConnection, redisClient)
-	wsClientCommands := commands.NewWSClientCommands(ctx, activeClients, redisClient)
 	queries := postgres.NewQueriesRepository(dbConnection)
 
-	server := server.NewServer(ctx, authCommands, conversationCommands, notificationCommands, wsClientCommands, queries, eventBus)
+	server := server.NewServer(ctx, authCommands, conversationCommands, notificationCommands, queries, eventBus)
 	server.Run()
 
 	s := gracefulServer.NewGracefulServer()

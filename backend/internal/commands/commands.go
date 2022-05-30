@@ -27,12 +27,9 @@ func NewConversationCommands(ctx context.Context, eventPublisher infra.EventPubl
 	return services.NewConversationService(groupConversationsRepository, directConversationsRepository, participantRepository, messagesRepository)
 }
 
-func NewNotificationsCommands(ctx context.Context, eventPublisher infra.EventPublisher, db *gorm.DB, redisClient *redis.Client) services.NotificationTopicService {
+func NewNotificationsCommands(ctx context.Context, eventPublisher infra.EventPublisher, db *gorm.DB, redisClient *redis.Client) services.NotificationService {
+	activeClients := ws.NewActiveClients()
 	notificationTopicRepository := postgres.NewNotificationTopicRepository(db, eventPublisher)
 
-	return services.NewNotificationTopicService(ctx, notificationTopicRepository, redisClient)
-}
-
-func NewWSClientCommands(ctx context.Context, activeClients ws.ActiveClients, redisClient *redis.Client) services.ClientsService {
-	return services.NewClientsService(ctx, redisClient, activeClients)
+	return services.NewNotificationService(ctx, notificationTopicRepository, activeClients, redisClient)
 }
