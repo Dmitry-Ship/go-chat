@@ -18,13 +18,14 @@ docker-compose up --build
 
 ```mermaid
 graph LR
-    A(NGINX) --> B(NextJS)
-    A --> C(Golang)
-    A --> D(Golang)
-    C --> E(Postgres)
-    D --> E
-    C --> F(Redis PubSub)
-    D --> F
+    A(User) --> B(Nginx)
+    B --> C(NextJS)
+    B --> D(Golang)
+    B --> E(Golang)
+    E --> F(Postgres)
+    E --> F
+    D --> G(Redis PubSub)
+    E --> G
 ```
 
 ## 💿 Database Design
