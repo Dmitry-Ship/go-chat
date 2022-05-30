@@ -32,4 +32,10 @@ graph LR
 https://drawsql.app/none-794/diagrams/go-chat/embed
 
 ## 🌄 Screenshots
-<img width="260" alt="Screenshot 2022-05-24 at 19 23 34" src="https://user-images.githubusercontent.com/21371972/170085483-a3fce839-6e22-422e-8d38-90bef88ca716.png"> <img width="260" alt="Screenshot 2022-05-24 at 19 23 43" src="https://user-images.githubusercontent.com/21371972/170085493-016ce553-ff56-4f22-950b-72347227e36c.png"> <img width="260" alt="Screenshot 2022-05-24 at 19 23 57" src="https://user-images.githubusercontent.com/21371972/170085504-0b61723c-50ff-4839-bf16-d23116480178.png">
+
+<img width="260" alt="Screenshot 2022-05-29 at 16 36 42" src="https://user-images.githubusercontent.com/21371972/170965594-3d9db99b-a3b6-4ff7-9d19-73cd8029b4ad.png"> <img width="260" alt="Screenshot 2022-05-29 at 16 29 42" src="https://user-images.githubusercontent.com/21371972/170965835-716d7f8a-30de-40a2-b5ff-0b97fd4b8007.png"> <img width="260" alt="Screenshot 2022-05-30 at 12 45 19" src="https://user-images.githubusercontent.com/21371972/170965955-f586fcb9-0efb-46a7-9c58-9e4d6501f317.png">
+
+
+<img width="260" alt="Screenshot 2022-05-29 at 16 36 55" src="https://user-images.githubusercontent.com/21371972/170966050-34ad04bf-d115-4505-8b84-c5c3a0255a26.png"> <img width="260" alt="Screenshot 2022-05-29 at 16 28 08" src="https://user-images.githubusercontent.com/21371972/170966086-4f4af6d5-9892-4453-9f2b-46e38ba50e0d.png"> <img width="260" alt="Screenshot 2022-05-29 at 16 27 43" src="https://user-images.githubusercontent.com/21371972/170966128-50bea454-000c-43bb-a50d-14b9ae926e05.png">
+
+ 
