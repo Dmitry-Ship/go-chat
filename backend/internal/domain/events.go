@@ -146,17 +146,15 @@ func newGroupConversationInvitedEvent(conversationID uuid.UUID, userID uuid.UUID
 type DirectConversationCreated struct {
 	domainEvent
 	ConversationID uuid.UUID
-	ToUserID       uuid.UUID
-	FromUserID     uuid.UUID
+	UserIDs        []uuid.UUID
 }
 
-func newDirectConversationCreatedEvent(conversationID uuid.UUID, toUserID uuid.UUID, fromUserID uuid.UUID) *DirectConversationCreated {
+func newDirectConversationCreatedEvent(conversationID uuid.UUID, userIDs []uuid.UUID) *DirectConversationCreated {
 	return &DirectConversationCreated{
 		domainEvent: domainEvent{
 			name: DirectConversationCreatedName,
 		},
 		ConversationID: conversationID,
-		ToUserID:       toUserID,
-		FromUserID:     fromUserID,
+		UserIDs:        userIDs,
 	}
 }

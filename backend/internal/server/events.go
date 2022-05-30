@@ -35,8 +35,9 @@ func (h *Server) listenForEvents() {
 			case *domain.MessageSent:
 				go h.sendMessageNotification(e)
 			case *domain.DirectConversationCreated:
-				go h.subscribeToConversationNotifications(e.ConversationID, e.FromUserID)
-				go h.subscribeToConversationNotifications(e.ConversationID, e.ToUserID)
+				for _, userID := range e.UserIDs {
+					go h.subscribeToConversationNotifications(e.ConversationID, userID)
+				}
 			}
 
 		case <-h.ctx.Done():

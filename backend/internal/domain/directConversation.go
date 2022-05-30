@@ -34,7 +34,7 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 		},
 	}
 
-	directConversation.AddEvent(newDirectConversationCreatedEvent(id, to, from))
+	directConversation.AddEvent(newDirectConversationCreatedEvent(id, []uuid.UUID{to, from}))
 
 	return &directConversation, nil
 }
