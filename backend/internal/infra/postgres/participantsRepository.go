@@ -37,3 +37,21 @@ func (r *participantRepository) GetByConversationIDAndUserID(conversationID uuid
 
 	return toParticipantDomain(&participantPersistence), nil
 }
+
+func (r *participantRepository) GetIDsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error) {
+	var participants []Participant
+
+	err := r.db.Where("conversation_id = ?", conversationID).Find(&participants).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]uuid.UUID, len(participants))
+
+	for i, participant := range participants {
+		ids[i] = participant.UserID
+	}
+
+	return ids, nil
+}

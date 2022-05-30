@@ -46,10 +46,3 @@ type User struct {
 	Password     string
 	RefreshToken string `gorm:"column:refresh_token"`
 }
-
-type UserNotificationTopic struct {
-	gorm.Model
-	ID     uuid.UUID `gorm:"type:uuid"`
-	UserID uuid.UUID `gorm:"type:uuid"`
-	Topic  string
-}

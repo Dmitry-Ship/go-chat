@@ -7,6 +7,7 @@ import (
 type ParticipantRepository interface {
 	GenericRepository[*Participant]
 	GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*Participant, error)
+	GetIDsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error)
 }
 
 type Participant struct {
@@ -15,10 +16,6 @@ type Participant struct {
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
 	IsActive       bool
-}
-
-type ParticipantLeaver interface {
-	LeaveGroupConversation(conversationID uuid.UUID) error
 }
 
 func NewParticipant(participantID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID) *Participant {

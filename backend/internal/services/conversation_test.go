@@ -89,6 +89,12 @@ func (m *participantsRepositoryMock) GetByConversationIDAndUserID(conversationID
 	return domain.NewParticipant(uuid.New(), conversationID, userID), nil
 }
 
+func (m *participantsRepositoryMock) GetIDsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error) {
+	m.methodsCalled["GetIDsByConversationID"]++
+
+	return []uuid.UUID{uuid.New()}, nil
+}
+
 func TestCreateGroupConversation(t *testing.T) {
 	groupConversationRepository := &groupConversationRepositoryMock{
 		methodsCalled: make(map[string]int),

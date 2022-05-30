@@ -20,54 +20,38 @@ type BroadcastMessage struct {
 	UserID  uuid.UUID               `json:"user_id"`
 }
 
+type buildFunc func(userID uuid.UUID) (*ws.OutgoingNotification, error)
+
 type NotificationService interface {
-	SubscribeToTopic(topic string, userID uuid.UUID) error
-	UnsubscribeFromTopic(topic string, userID uuid.UUID) error
-	SendToTopic(topic string, buildMessage func(userID uuid.UUID) (*ws.OutgoingNotification, error)) error
+	SendToConversation(conversationId uuid.UUID, buildMessage buildFunc) error
 	RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(notification *ws.IncomingNotification))
 	Run()
 }
 
 type notificationService struct {
-	ctx                context.Context
-	notificationTopics domain.NotificationTopicRepository
-	activeClients      ws.ActiveClients
-	redisClient        *redis.Client
+	ctx           context.Context
+	participants  domain.ParticipantRepository
+	activeClients ws.ActiveClients
+	redisClient   *redis.Client
 }
 
 func NewNotificationService(
 	ctx context.Context,
-	notificationTopics domain.NotificationTopicRepository,
+	participants domain.ParticipantRepository,
 	activeClients ws.ActiveClients,
 	redisClient *redis.Client,
 ) *notificationService {
 	return &notificationService{
-		ctx:                ctx,
-		notificationTopics: notificationTopics,
-		activeClients:      activeClients,
-		redisClient:        redisClient,
+		ctx:           ctx,
+		participants:  participants,
+		activeClients: activeClients,
+		redisClient:   redisClient,
 	}
-}
-
-func (s *notificationService) SubscribeToTopic(topic string, userID uuid.UUID) error {
-	notificationTopicID := uuid.New()
-
-	notificationTopic, err := domain.NewNotificationTopic(notificationTopicID, topic, userID)
-
-	if err != nil {
-		return err
-	}
-
-	return s.notificationTopics.Store(notificationTopic)
-}
-
-func (s *notificationService) UnsubscribeFromTopic(topic string, userID uuid.UUID) error {
-	return s.notificationTopics.DeleteByUserIDAndTopic(userID, topic)
 }
 
 func (s *notificationService) sendWorker(
 	userID uuid.UUID,
-	buildMessage func(userID uuid.UUID) (*ws.OutgoingNotification, error),
+	buildMessage buildFunc,
 	wg *sync.WaitGroup,
 	sem chan struct{},
 	errorChan chan error,
@@ -105,13 +89,7 @@ func (s *notificationService) sendWorker(
 	}
 }
 
-func (s *notificationService) SendToTopic(topic string, buildMessage func(userID uuid.UUID) (*ws.OutgoingNotification, error)) error {
-	ids, err := s.notificationTopics.GetUserIDsByTopic(topic)
-
-	if err != nil {
-		return err
-	}
-
+func (s *notificationService) broadcast(ids []uuid.UUID, buildMessage buildFunc) error {
 	sem := make(chan struct{}, 100)
 	errorChan := make(chan error, len(ids))
 	var wg sync.WaitGroup
@@ -127,6 +105,16 @@ func (s *notificationService) SendToTopic(topic string, buildMessage func(userID
 	}
 
 	return nil
+}
+
+func (s *notificationService) SendToConversation(conversationId uuid.UUID, buildMessage buildFunc) error {
+	ids, err := s.participants.GetIDsByConversationID(conversationId)
+
+	if err != nil {
+		return err
+	}
+
+	return s.broadcast(ids, buildMessage)
 }
 
 func (s *notificationService) RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(notification *ws.IncomingNotification)) {

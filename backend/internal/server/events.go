@@ -21,22 +21,18 @@ func (h *Server) listenForEvents() {
 				go h.sendGroupConversationDeletedNotification(e)
 			case *domain.GroupConversationLeft:
 				go h.sendGroupConversationLeftMessage(e)
-				go h.unsubscribeFromConversation(e)
 				go h.sendUpdatedConversationNotification(e.ConversationID)
 			case *domain.GroupConversationJoined:
 				go h.sendGroupConversationJoinedMessage(e)
 			case *domain.GroupConversationInvited:
 				go h.sendGroupConversationInvitedMessage(e)
-				go h.subscribeToConversationNotifications(e.ConversationID, e.UserID)
 				go h.sendUpdatedConversationNotification(e.ConversationID)
 			case *domain.GroupConversationCreated:
-				go h.subscribeToConversationNotifications(e.ConversationID, e.OwnerID)
+				continue
 			case *domain.MessageSent:
 				go h.sendMessageNotification(e)
 			case *domain.DirectConversationCreated:
-				for _, userID := range e.UserIDs {
-					go h.subscribeToConversationNotifications(e.ConversationID, userID)
-				}
+				continue
 			}
 
 		case <-h.ctx.Done():

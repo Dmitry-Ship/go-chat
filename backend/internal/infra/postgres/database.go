@@ -44,7 +44,6 @@ func (d *DatabaseConnection) AutoMigrate() {
 	// d.connection.Migrator().DropTable(&Participant{})
 	// d.connection.Migrator().DropTable(&Message{})
 	// d.connection.Migrator().DropTable(&Conversation{})
-	// d.connection.Migrator().DropTable(&UserNotificationTopic{})
 
 	err := d.connection.AutoMigrate(Message{})
 	if err != nil {
@@ -63,10 +62,6 @@ func (d *DatabaseConnection) AutoMigrate() {
 		panic(err)
 	}
 	err = d.connection.AutoMigrate(Participant{})
-	if err != nil {
-		panic(err)
-	}
-	err = d.connection.AutoMigrate(UserNotificationTopic{})
 	if err != nil {
 		panic(err)
 	}
