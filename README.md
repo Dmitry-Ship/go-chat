@@ -22,7 +22,7 @@ graph LR
     B --> C(NextJS)
     B --> D(Golang)
     B --> E(Golang)
-    E --> F(Postgres)
+    D --> F(Postgres)
     E --> F
     D --> G(Redis PubSub)
     E --> G
