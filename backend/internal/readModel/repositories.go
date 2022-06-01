@@ -13,7 +13,6 @@ type userQueryRepository interface {
 	GetContacts(userID uuid.UUID, paginationInfo PaginationInfo) ([]*ContactDTO, error)
 	GetPotentialInvitees(conversationID uuid.UUID, paginationInfo PaginationInfo) ([]*ContactDTO, error)
 	GetParticipants(conversationID uuid.UUID, userID uuid.UUID, paginationInfo PaginationInfo) ([]*ContactDTO, error)
-	GetParticipantsCount(conversationID uuid.UUID) (int64, error)
 	GetUserByID(userID uuid.UUID) (*UserDTO, error)
 }
 

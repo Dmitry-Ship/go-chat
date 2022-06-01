@@ -12,7 +12,11 @@ func (h *Server) logHandlerError(err error) {
 func (h *Server) listenForEvents() {
 	for {
 		select {
-		case event := <-h.subscriber.Subscribe(domain.DomainEventChannel):
+		case event, more := <-h.subscriber.Subscribe(domain.DomainEventChannel):
+			if !more {
+				return
+			}
+
 			switch e := event.Data.(type) {
 			case *domain.GroupConversationRenamed:
 				go h.sendRenamedConversationMessage(e)

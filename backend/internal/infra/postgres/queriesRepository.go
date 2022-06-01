@@ -63,17 +63,6 @@ func (r *queriesRepository) GetParticipants(conversationID uuid.UUID, userID uui
 	return users, err
 }
 
-func (r *queriesRepository) GetParticipantsCount(conversationID uuid.UUID) (int64, error) {
-	var count int64
-
-	err := r.db.Model(&Participant{}).
-		Where("participants.conversation_id = ?", conversationID).
-		Where("participants.is_active = ?", true).
-		Count(&count).Error
-
-	return count, err
-}
-
 func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
 	users := []*readModel.ContactDTO{}
 
@@ -84,30 +73,25 @@ func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, pagin
 }
 
 func (r *queriesRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error) {
-	user := &readModel.UserDTO{}
+	user := User{}
 
-	err := r.db.Model(&User{}).Where("id = ?", id).First(&user).Error
+	err := r.db.Where("id = ?", id).First(&user).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	userDTO := &readModel.UserDTO{
+		ID:     user.ID,
+		Name:   user.Name,
+		Avatar: user.Avatar,
+	}
+
+	return userDTO, nil
 }
 
 func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.MessageDTO, error) {
-	type queryResult struct {
-		ID             uuid.UUID
-		CreatedAt      time.Time
-		Type           uint8
-		UserID         uuid.UUID
-		ConversationID uuid.UUID
-		UserName       string
-		UserAvatar     string
-		Content        string
-	}
-
-	queryResults := []*queryResult{}
+	queryResults := []*messageQuery{}
 
 	err := r.db.Scopes(r.paginate(paginationInfo)).
 		Model(&Message{}).
@@ -120,62 +104,21 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 		Order("messages.created_at asc").
 		Find(&queryResults).Error
 
+	if err != nil {
+		return nil, err
+	}
+
 	messages := make([]*readModel.MessageDTO, len(queryResults))
 
 	for i, result := range queryResults {
-		text := ""
-
-		switch messageTypesMap[result.Type] {
-		case domain.MessageTypeText:
-			text = result.Content
-		case domain.MessageTypeRenamedConversation:
-			text = result.UserName + " renamed chat to " + result.Content
-		case domain.MessageTypeJoinedConversation:
-			text = result.UserName + " joined"
-		case domain.MessageTypeLeftConversation:
-			text = result.UserName + " left"
-		case domain.MessageTypeInvitedConversation:
-			text = result.UserName + " was invited"
-		default:
-			text = "Unknown message type"
-		}
-
-		messageDTO := &readModel.MessageDTO{
-			ID:             result.ID,
-			CreatedAt:      result.CreatedAt,
-			Text:           text,
-			Type:           messageTypesMap[result.Type].String(),
-			ConversationId: result.ConversationID,
-			User: &readModel.UserDTO{
-				ID:     result.UserID,
-				Avatar: result.UserAvatar,
-				Name:   result.UserName,
-			},
-		}
-
-		if messageTypesMap[result.Type] == domain.MessageTypeText {
-			messageDTO.IsInbound = result.UserID != requestUserID
-		}
-
-		messages[i] = messageDTO
+		messages[i] = toMessageDTO(result, requestUserID)
 	}
 
-	return messages, err
+	return messages, nil
 }
 
 func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (*readModel.MessageDTO, error) {
-	type queryResult struct {
-		ID             uuid.UUID
-		CreatedAt      time.Time
-		Type           uint8
-		UserID         uuid.UUID
-		ConversationID uuid.UUID
-		UserName       string
-		UserAvatar     string
-		Content        string
-	}
-
-	message := &queryResult{}
+	message := &messageQuery{}
 
 	err := r.db.Model(&Message{}).
 		Select(
@@ -186,41 +129,11 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 		Where("messages.id = ?", messageID).
 		Find(&message).Error
 
-	text := ""
-
-	switch messageTypesMap[message.Type] {
-	case domain.MessageTypeText:
-		text = message.Content
-	case domain.MessageTypeRenamedConversation:
-		text = message.UserName + " renamed chat to " + message.Content
-	case domain.MessageTypeJoinedConversation:
-		text = message.UserName + " joined"
-	case domain.MessageTypeLeftConversation:
-		text = message.UserName + " left"
-	case domain.MessageTypeInvitedConversation:
-		text = message.UserName + " was invited"
-	default:
-		text = "Unknown message type"
+	if err != nil {
+		return nil, err
 	}
 
-	massageDTO := &readModel.MessageDTO{
-		ID:             message.ID,
-		CreatedAt:      message.CreatedAt,
-		Text:           text,
-		Type:           messageTypesMap[message.Type].String(),
-		ConversationId: message.ConversationID,
-		User: &readModel.UserDTO{
-			ID:     message.UserID,
-			Avatar: message.UserAvatar,
-			Name:   message.UserName,
-		},
-	}
-
-	if messageTypesMap[message.Type] == domain.MessageTypeText {
-		massageDTO.IsInbound = message.UserID != requestUserID
-	}
-
-	return massageDTO, err
+	return toMessageDTO(message, requestUserID), nil
 }
 
 func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ConversationDTO, error) {
@@ -279,17 +192,9 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 			conversationDTO.Avatar = userQueryResult.UserAvatar
 			conversationDTO.Name = userQueryResult.UserName
 		case domain.ConversationTypeGroup:
-			type groupConversationQuery struct {
-				Name   string
-				Avatar string
-			}
+			groupConversationQueryResult := &GroupConversation{}
 
-			groupConversationQueryResult := &groupConversationQuery{}
-
-			err := r.db.Model(&GroupConversation{}).
-				Select("group_conversations.avatar", "group_conversations.name").
-				Where("group_conversations.conversation_id = ?", result.ID).
-				First(&groupConversationQueryResult).Error
+			err := r.db.Where("conversation_id = ?", result.ID).First(&groupConversationQueryResult).Error
 
 			if err != nil {
 				return nil, err
@@ -306,20 +211,9 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 }
 
 func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*readModel.ConversationFullDTO, error) {
-	type queryResult struct {
-		ID        uuid.UUID
-		CreatedAt time.Time
-		Type      uint8
-	}
+	conversation := Conversation{}
 
-	conversation := queryResult{}
-
-	err := r.db.Model(&Conversation{}).
-		Select("conversations.id", "conversations.created_at", "conversations.type as type").
-		Joins("LEFT JOIN participants ON participants.conversation_id = conversations.id").
-		Where("conversations.is_active = ?", true).
-		Where("conversations.id = ?", id).
-		Find(&conversation).Error
+	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
 
 	if err != nil {
 		return nil, err
@@ -362,12 +256,9 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 			OwnerID uuid.UUID
 		}
 
-		groupConversationQueryResult := &groupConversationQuery{}
+		groupConversationQueryResult := &GroupConversation{}
 
-		err := r.db.Model(&GroupConversation{}).
-			Select("group_conversations.avatar", "group_conversations.name", "group_conversations.owner_id").
-			Where("group_conversations.conversation_id = ?", conversation.ID).
-			First(&groupConversationQueryResult).Error
+		err := r.db.Where("conversation_id = ?", conversation.ID).First(&groupConversationQueryResult).Error
 
 		if err != nil {
 			return nil, err
