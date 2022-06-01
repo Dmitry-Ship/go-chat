@@ -21,10 +21,10 @@ type AuthService interface {
 	ParseAccessToken(accessTokenString string) (uuid.UUID, error)
 }
 
-func NewAuthService(users domain.UserRepository, jwTokens JWTokens) *authService {
+func NewAuthService(users domain.UserRepository) *authService {
 	return &authService{
 		users:    users,
-		jwTokens: jwTokens,
+		jwTokens: NewJWTokens(),
 	}
 }
 

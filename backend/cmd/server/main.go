@@ -1,12 +1,12 @@
 package main
 
 import (
-	"GitHub/go-chat/backend/internal/commands"
 	"GitHub/go-chat/backend/internal/gracefulServer"
 	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
 	"GitHub/go-chat/backend/internal/server"
+	"GitHub/go-chat/backend/internal/services"
 	"context"
 )
 
@@ -18,17 +18,27 @@ func main() {
 	defer redisClient.Close()
 
 	db := postgres.NewDatabaseConnection()
-	db.AutoMigrate()
-	dbConnection := db.GetConnection()
 	eventBus := infra.NewEventBus()
 	defer eventBus.Close()
 
-	authCommands := commands.NewAuthCommands(ctx, eventBus, dbConnection)
-	conversationCommands := commands.NewConversationCommands(ctx, eventBus, dbConnection)
-	notificationCommands := commands.NewNotificationsCommands(ctx, eventBus, dbConnection, redisClient)
-	queries := postgres.NewQueriesRepository(dbConnection)
+	messagesRepository := postgres.NewMessageRepository(db, eventBus)
+	groupConversationsRepository := postgres.NewGroupConversationRepository(db, eventBus)
+	directConversationsRepository := postgres.NewDirectConversationRepository(db, eventBus)
+	participantRepository := postgres.NewParticipantRepository(db, eventBus)
+	usersRepository := postgres.NewUserRepository(db, eventBus)
 
-	server := server.NewServer(ctx, authCommands, conversationCommands, notificationCommands, queries, eventBus)
+	authService := services.NewAuthService(usersRepository)
+	conversationService := services.NewConversationService(
+		groupConversationsRepository,
+		directConversationsRepository,
+		participantRepository,
+		usersRepository,
+		messagesRepository,
+	)
+	notificationService := services.NewNotificationService(ctx, participantRepository, redisClient)
+	queries := postgres.NewQueriesRepository(db)
+
+	server := server.NewServer(ctx, authService, conversationService, notificationService, queries, eventBus)
 	server.Run()
 
 	s := gracefulServer.NewGracefulServer()

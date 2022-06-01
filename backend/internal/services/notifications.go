@@ -38,13 +38,12 @@ type notificationService struct {
 func NewNotificationService(
 	ctx context.Context,
 	participants domain.ParticipantRepository,
-	activeClients ws.ActiveClients,
 	redisClient *redis.Client,
 ) *notificationService {
 	return &notificationService{
 		ctx:           ctx,
 		participants:  participants,
-		activeClients: activeClients,
+		activeClients: ws.NewActiveClients(),
 		redisClient:   redisClient,
 	}
 }

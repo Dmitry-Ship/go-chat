@@ -9,11 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type DatabaseConnection struct {
-	connection *gorm.DB
-}
-
-func NewDatabaseConnection() *DatabaseConnection {
+func NewDatabaseConnection() *gorm.DB {
 	port := os.Getenv("DB_PORT")
 	host := os.Getenv("DB_HOST")
 	user := os.Getenv("DB_USER")
@@ -27,42 +23,35 @@ func NewDatabaseConnection() *DatabaseConnection {
 		panic("⛔️ Could not connect to database")
 	}
 
+	err = autoMigrate(db)
+
+	if err != nil {
+		panic("⛔️ Could not migrate database")
+	}
+
 	log.Printf("💿 Connected to database %s", dbname)
 
-	return &DatabaseConnection{
-		connection: db,
-	}
+	return db
 }
 
-func (d *DatabaseConnection) GetConnection() *gorm.DB {
-	return d.connection
-}
+func autoMigrate(db *gorm.DB) error {
+	models := []interface{}{
+		&User{},
+		&GroupConversation{},
+		&Participant{},
+		&Message{},
+		&Conversation{},
+	}
 
-func (d *DatabaseConnection) AutoMigrate() {
-	// d.connection.Migrator().DropTable(&User{})
-	// d.connection.Migrator().DropTable(&GroupConversation{})
-	// d.connection.Migrator().DropTable(&Participant{})
-	// d.connection.Migrator().DropTable(&Message{})
-	// d.connection.Migrator().DropTable(&Conversation{})
+	// for _, model := range models {
+	// 	db.Migrator().DropTable(&model)
+	// }
 
-	err := d.connection.AutoMigrate(Message{})
+	err := db.AutoMigrate(models...)
+
 	if err != nil {
-		panic(err)
+		return err
 	}
-	err = d.connection.AutoMigrate(Conversation{})
-	if err != nil {
-		panic(err)
-	}
-	err = d.connection.AutoMigrate(GroupConversation{})
-	if err != nil {
-		panic(err)
-	}
-	err = d.connection.AutoMigrate(User{})
-	if err != nil {
-		panic(err)
-	}
-	err = d.connection.AutoMigrate(Participant{})
-	if err != nil {
-		panic(err)
-	}
+
+	return nil
 }
