@@ -59,12 +59,11 @@ func (r *directConversationRepository) GetID(firstUserID uuid.UUID, secondUserID
 
 	err := r.db.
 		Model(&Conversation{}).
-		Joins("LEFT JOIN participants ON participants.conversation_id = conversations.id").
+		Joins("INNER JOIN participants ON participants.conversation_id = conversations.id").
 		Where("conversations.is_active = ?", true).
 		Where("conversations.type = ?", toConversationTypePersistence(domain.ConversationTypeDirect)).
 		Where("participants.is_active = ?", true).
-		Where("participants.user_id = ? ", firstUserID).
-		Or("participants.user_id = ? ", secondUserID).
+		Where(r.db.Where("participants.user_id = ? ", secondUserID).Or("participants.user_id = ? ", secondUserID)).
 		First(&conversation).Error
 
 	if err != nil {
