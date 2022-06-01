@@ -29,7 +29,7 @@ func (r *participantRepository) Update(participant *domain.Participant) error {
 func (r *participantRepository) GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
 	var participantPersistence Participant
 
-	err := r.db.Where("conversation_id = ? AND user_id = ?", conversationID, userID).First(&participantPersistence).Error
+	err := r.db.Where(&Participant{ConversationID: conversationID, UserID: userID}).First(&participantPersistence).Error
 
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (r *participantRepository) GetByConversationIDAndUserID(conversationID uuid
 func (r *participantRepository) GetIDsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error) {
 	var participants []Participant
 
-	err := r.db.Where("conversation_id = ?", conversationID).Find(&participants).Error
+	err := r.db.Where(&Participant{ConversationID: conversationID}).Find(&participants).Error
 
 	if err != nil {
 		return nil, err

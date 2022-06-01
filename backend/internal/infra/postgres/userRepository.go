@@ -28,7 +28,7 @@ func (r *userRepository) Update(user *domain.User) error {
 
 func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
 	user := User{}
-	err := r.db.Where("id = ?", id).First(&user).Error
+	err := r.db.Where(&User{ID: id}).First(&user).Error
 
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
 func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
 	user := User{}
 
-	err := r.db.Where("name = ?", username).First(&user).Error
+	err := r.db.Where(&User{Name: username}).First(&user).Error
 
 	if err != nil {
 		return nil, err

@@ -53,7 +53,7 @@ func (r *groupConversationRepository) Update(conversation *domain.GroupConversat
 func (r *groupConversationRepository) GetByID(id uuid.UUID) (*domain.GroupConversation, error) {
 	conversation := Conversation{}
 
-	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
+	err := r.db.Where(&Conversation{ID: id, IsActive: true}).First(&conversation).Error
 
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (r *groupConversationRepository) GetByID(id uuid.UUID) (*domain.GroupConver
 
 	groupConversation := GroupConversation{}
 
-	err = r.db.Where("conversation_id = ?", id).First(&groupConversation).Error
+	err = r.db.Where(&GroupConversation{ConversationID: id}).First(&groupConversation).Error
 
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (r *groupConversationRepository) GetByID(id uuid.UUID) (*domain.GroupConver
 
 	participant := Participant{}
 
-	err = r.db.Where("conversation_id = ? AND user_id = ?", id, groupConversation.OwnerID).First(&participant).Error
+	err = r.db.Where(&Participant{ConversationID: id, UserID: groupConversation.OwnerID}).First(&participant).Error
 
 	if err != nil {
 		return nil, err

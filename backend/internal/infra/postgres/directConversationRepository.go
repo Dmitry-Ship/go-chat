@@ -37,7 +37,7 @@ func (r *directConversationRepository) Store(conversation *domain.DirectConversa
 func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConversation, error) {
 	conversation := Conversation{}
 
-	err := r.db.Where("id = ?", id).Where("is_active = ?", true).First(&conversation).Error
+	err := r.db.Where(&Conversation{ID: id, IsActive: true}).First(&conversation).Error
 
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConv
 
 	participants := []*Participant{}
 
-	err = r.db.Where("conversation_id = ?", id).Find(&participants).Error
+	err = r.db.Where(&Participant{ConversationID: id}).Find(&participants).Error
 
 	if err != nil {
 		return nil, err
@@ -60,8 +60,7 @@ func (r *directConversationRepository) GetID(firstUserID uuid.UUID, secondUserID
 	err := r.db.
 		Model(&Conversation{}).
 		Joins("INNER JOIN participants ON participants.conversation_id = conversations.id").
-		Where("conversations.is_active = ?", true).
-		Where("conversations.type = ?", toConversationTypePersistence(domain.ConversationTypeDirect)).
+		Where(&Conversation{IsActive: true, Type: toConversationTypePersistence(domain.ConversationTypeDirect)}).
 		Where("participants.is_active = ?", true).
 		Where(r.db.Where("participants.user_id = ? ", secondUserID).Or("participants.user_id = ? ", secondUserID)).
 		First(&conversation).Error
