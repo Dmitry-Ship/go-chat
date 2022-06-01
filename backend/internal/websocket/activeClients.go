@@ -43,8 +43,8 @@ func (ac *activeClients) RemoveClient(c *client) {
 	defer ac.mu.Unlock()
 
 	if _, ok := ac.userClientsMap[c.UserID]; ok {
-		delete(ac.userClientsMap[c.UserID], c.Id)
 		close(c.sendChannel)
+		delete(ac.userClientsMap[c.UserID], c.Id)
 	}
 }
 

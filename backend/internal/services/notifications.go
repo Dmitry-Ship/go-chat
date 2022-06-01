@@ -24,7 +24,7 @@ type buildFunc func(userID uuid.UUID) (*ws.OutgoingNotification, error)
 
 type NotificationService interface {
 	SendToConversation(conversationId uuid.UUID, buildMessage buildFunc) error
-	RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(notification *ws.IncomingNotification))
+	RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte))
 	Run()
 }
 
@@ -117,11 +117,13 @@ func (s *notificationService) SendToConversation(conversationId uuid.UUID, build
 	return s.broadcast(ids, buildMessage)
 }
 
-func (s *notificationService) RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(notification *ws.IncomingNotification)) {
+func (s *notificationService) RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) {
 	newClient := ws.NewClient(conn, s.activeClients.RemoveClient, handleNotification, userID)
-	newClient.Listen()
 
 	s.activeClients.AddClient(newClient)
+
+	go newClient.WritePump()
+	newClient.ReadPump()
 }
 
 func (s *notificationService) Run() {

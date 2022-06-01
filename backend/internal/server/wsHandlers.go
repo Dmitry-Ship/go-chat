@@ -4,17 +4,29 @@ import (
 	"encoding/json"
 	"log"
 
-	ws "GitHub/go-chat/backend/internal/websocket"
-
 	"github.com/google/uuid"
 )
 
-func (s *Server) handleNotification(notification *ws.IncomingNotification) {
+func (s *Server) handleNotification(userID uuid.UUID, message []byte) {
+	var data json.RawMessage
+
+	notification := struct {
+		Type string      `json:"type"`
+		Data interface{} `json:"data"`
+	}{
+		Data: &data,
+	}
+
+	if err := json.Unmarshal(message, &notification); err != nil {
+		log.Println(err)
+		return
+	}
+
 	switch notification.Type {
 	case "group_message":
-		s.handleReceiveWSGroupChatMessage(notification.Data, notification.UserID)
+		s.handleReceiveWSGroupChatMessage(data, userID)
 	case "direct_message":
-		s.handleReceiveWSDirectChatMessage(notification.Data, notification.UserID)
+		s.handleReceiveWSDirectChatMessage(data, userID)
 	default:
 		log.Println("Unknown notification type:", notification.Type)
 	}

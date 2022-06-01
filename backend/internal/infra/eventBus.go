@@ -50,9 +50,7 @@ func (eb *eventBus) Publish(topic string, data interface{}) {
 	}
 
 	for _, subscriptionChannel := range eb.topicSubscribersMap[topic] {
-		go func(subscriptionChannel chan<- event) {
-			subscriptionChannel <- event{Topic: topic, Data: data}
-		}(subscriptionChannel)
+		subscriptionChannel <- event{Topic: topic, Data: data}
 	}
 }
 

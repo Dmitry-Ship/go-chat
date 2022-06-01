@@ -31,12 +31,12 @@ type client struct {
 	connection                 *websocket.Conn
 	UserID                     uuid.UUID
 	sendChannel                chan *OutgoingNotification
-	handleIncomingNotification func(notification *IncomingNotification)
+	handleIncomingNotification func(userID uuid.UUID, message []byte)
 	unregisterClient           func(client *client)
 	connectionOptions          connectionOptions
 }
 
-func NewClient(conn *websocket.Conn, unregisterClient func(client *client), handleIncomingNotification func(notification *IncomingNotification), userID uuid.UUID) *client {
+func NewClient(conn *websocket.Conn, unregisterClient func(client *client), handleIncomingNotification func(userID uuid.UUID, message []byte), userID uuid.UUID) *client {
 	return &client{
 		Id:                         uuid.New(),
 		UserID:                     userID,
@@ -53,12 +53,7 @@ func NewClient(conn *websocket.Conn, unregisterClient func(client *client), hand
 	}
 }
 
-func (c *client) Listen() {
-	go c.writePump()
-	go c.readPump()
-}
-
-func (c *client) readPump() {
+func (c *client) ReadPump() {
 	defer func() {
 		c.unregisterClient(c)
 		c.connection.Close()
@@ -85,32 +80,14 @@ func (c *client) readPump() {
 			break
 		}
 
-		var data json.RawMessage
-
-		notification := struct {
-			Type string      `json:"type"`
-			Data interface{} `json:"data"`
-		}{
-			Data: &data,
-		}
-
-		if err := json.Unmarshal(message, &notification); err != nil {
-			log.Println(err)
-			return
-		}
-
-		go c.handleIncomingNotification(&IncomingNotification{
-			Type:   notification.Type,
-			Data:   data,
-			UserID: c.UserID,
-		})
+		go c.handleIncomingNotification(c.UserID, message)
 	}
 }
 
-func (c *client) writePump() {
-	ticker := time.NewTicker(c.connectionOptions.pingPeriod)
+func (c *client) WritePump() {
+	pingTicker := time.NewTicker(c.connectionOptions.pingPeriod)
 	defer func() {
-		ticker.Stop()
+		pingTicker.Stop()
 		c.connection.Close()
 	}()
 
@@ -134,7 +111,7 @@ func (c *client) writePump() {
 				log.Println(err)
 			}
 
-		case <-ticker.C:
+		case <-pingTicker.C:
 			if err := c.connection.SetWriteDeadline(time.Now().Add(c.connectionOptions.writeWait)); err != nil {
 				log.Println(err)
 			}
