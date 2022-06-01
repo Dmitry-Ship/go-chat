@@ -31,29 +31,31 @@ func TestNewDirectConversationWithOneself(t *testing.T) {
 	assert.Equal(t, err.Error(), "cannot chat with yourself")
 }
 
-func TestSendDirectTextMessage(t *testing.T) {
+func createTestDirectConversation() *DirectConversation {
 	to := uuid.New()
 	from := uuid.New()
 	conversationID := uuid.New()
-	messageID := uuid.New()
 	conversation, _ := NewDirectConversation(conversationID, to, from)
+	return conversation
+}
+
+func TestSendDirectTextMessage(t *testing.T) {
+	conversation := createTestDirectConversation()
+	messageID := uuid.New()
 	text := "Hello world"
 
 	message, err := conversation.SendTextMessage(messageID, text, &conversation.Participants[0])
 
 	assert.Nil(t, err)
 	assert.Equal(t, message.Content.String(), text)
-	assert.Equal(t, message.UserID, to)
+	assert.Equal(t, message.UserID, conversation.Participants[0].UserID)
 }
 
 func TestSendDirectTextMessageNotAMember(t *testing.T) {
-	to := uuid.New()
-	from := uuid.New()
-	conversationID := uuid.New()
+	conversation := createTestDirectConversation()
 	messageID := uuid.New()
-	conversation, _ := NewDirectConversation(conversationID, to, from)
 	text := "Hello world"
-	participant := NewParticipant(uuid.New(), conversationID, uuid.New())
+	participant := NewParticipant(uuid.New(), uuid.New(), uuid.New())
 
 	_, err := conversation.SendTextMessage(messageID, text, participant)
 

@@ -40,15 +40,7 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 }
 
 func (directConversation *DirectConversation) SendTextMessage(messageID uuid.UUID, text string, participant *Participant) (*Message, error) {
-	isParticipant := false
-	for _, p := range directConversation.Participants {
-		if p.UserID == participant.UserID {
-			isParticipant = true
-			break
-		}
-	}
-
-	if !isParticipant {
+	if directConversation.Conversation.ID != participant.ConversationID {
 		return nil, errors.New("user is not participant")
 	}
 

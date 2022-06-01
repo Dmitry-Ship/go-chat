@@ -19,6 +19,15 @@ func createTestGroupConversation() (*GroupConversation, *User, *Participant) {
 	return conversation, creatorUser, &conversation.Owner
 }
 
+func createTestUser() *User {
+	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
+	userName, _ := NewUserName("test")
+	userID := uuid.New()
+	user := NewUser(userID, userName, userPassword)
+
+	return user
+}
+
 func TestNewGroupConversation(t *testing.T) {
 	conversationID := uuid.New()
 	creatorId := uuid.New()
@@ -157,10 +166,7 @@ func TestSendLeftConversationMessage(t *testing.T) {
 func TestRenameNotOwner(t *testing.T) {
 	conversation, creator, _ := createTestGroupConversation()
 	newName, _ := NewConversationName("new name")
-	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
-	userName, _ := NewUserName("test")
-	userID := uuid.New()
-	user := NewUser(userID, userName, userPassword)
+	user := createTestUser()
 	participant, _ := conversation.Join(user)
 
 	err := conversation.Rename(newName, participant)
@@ -183,10 +189,7 @@ func TestDelete(t *testing.T) {
 
 func TestDeleteNotOwner(t *testing.T) {
 	conversation, creator, _ := createTestGroupConversation()
-	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
-	userName, _ := NewUserName("test")
-	userID := uuid.New()
-	user := NewUser(userID, userName, userPassword)
+	user := createTestUser()
 	participant, _ := conversation.Join(user)
 
 	err := conversation.Delete(participant)
@@ -208,19 +211,16 @@ func TestDeleteNotActive(t *testing.T) {
 
 func TestJoin(t *testing.T) {
 	conversation, _, _ := createTestGroupConversation()
-	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
-	userName, _ := NewUserName("test")
-	userID := uuid.New()
-	user := NewUser(userID, userName, userPassword)
+	user := createTestUser()
 
 	participant, err := conversation.Join(user)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversation.Conversation.ID, participant.ConversationID)
-	assert.Equal(t, userID, participant.UserID)
+	assert.Equal(t, user.ID, participant.UserID)
 	assert.NotNil(t, participant.ID)
 	assert.Equal(t, participant.IsActive, true)
-	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationJoinedEvent(conversation.Conversation.ID, userID))
+	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationJoinedEvent(conversation.Conversation.ID, user.ID))
 }
 
 func TestJoinNotActive(t *testing.T) {
@@ -235,27 +235,21 @@ func TestJoinNotActive(t *testing.T) {
 
 func TestInvite(t *testing.T) {
 	conversation, _, creatorParticipant := createTestGroupConversation()
-	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
-	userName, _ := NewUserName("test")
-	inviteeId := uuid.New()
-	user := NewUser(inviteeId, userName, userPassword)
+	user := createTestUser()
 
 	participant, err := conversation.Invite(creatorParticipant, user)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversation.Conversation.ID, participant.ConversationID)
-	assert.Equal(t, inviteeId, participant.UserID)
+	assert.Equal(t, user.ID, participant.UserID)
 	assert.NotNil(t, participant.ID)
 	assert.Equal(t, participant.IsActive, true)
-	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationInvitedEvent(conversation.Conversation.ID, creatorParticipant.UserID, inviteeId))
+	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationInvitedEvent(conversation.Conversation.ID, creatorParticipant.UserID, user.ID))
 }
 
 func TestInviteNotActive(t *testing.T) {
 	conversation, _, creatorParticipant := createTestGroupConversation()
-	userName, _ := NewUserName("test")
-	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
-	inviteeId := uuid.New()
-	user := NewUser(inviteeId, userName, userPassword)
+	user := createTestUser()
 	_ = conversation.Delete(creatorParticipant)
 
 	_, err := conversation.Invite(creatorParticipant, user)
@@ -273,10 +267,7 @@ func TestInviteOwner(t *testing.T) {
 
 func TestInviteSelf(t *testing.T) {
 	conversation, _, _ := createTestGroupConversation()
-	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
-	userName, _ := NewUserName("test")
-	userID := uuid.New()
-	user := NewUser(userID, userName, userPassword)
+	user := createTestUser()
 	participant, _ := conversation.Join(user)
 
 	_, err := conversation.Invite(participant, user)

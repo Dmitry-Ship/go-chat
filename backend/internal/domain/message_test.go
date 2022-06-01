@@ -7,10 +7,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func generateTestIDs() (uuid.UUID, uuid.UUID, uuid.UUID) {
+	return uuid.New(), uuid.New(), uuid.New()
+}
+
 func TestNewTextMessage(t *testing.T) {
-	conversationID := uuid.New()
-	userID := uuid.New()
-	messageID := uuid.New()
+	conversationID, userID, messageID := generateTestIDs()
 	content, _ := newTextMessageContent("content")
 
 	message := newTextMessage(messageID, conversationID, userID, content)
@@ -44,9 +46,7 @@ func TestNewTextMessageContentTooLong(t *testing.T) {
 }
 
 func TestNewConversationRenamedMessage(t *testing.T) {
-	conversationID := uuid.New()
-	userID := uuid.New()
-	messageID := uuid.New()
+	conversationID, userID, messageID := generateTestIDs()
 	name := newRenamedMessageContent("new name")
 
 	message := newConversationRenamedMessage(messageID, conversationID, userID, name)
@@ -60,9 +60,7 @@ func TestNewConversationRenamedMessage(t *testing.T) {
 }
 
 func TestNewLeftConversationMessage(t *testing.T) {
-	conversationID := uuid.New()
-	userID := uuid.New()
-	messageID := uuid.New()
+	conversationID, userID, messageID := generateTestIDs()
 
 	message := newLeftConversationMessage(messageID, conversationID, userID)
 
@@ -74,9 +72,7 @@ func TestNewLeftConversationMessage(t *testing.T) {
 }
 
 func TestNewJoinedConversationMessage(t *testing.T) {
-	conversationID := uuid.New()
-	userID := uuid.New()
-	messageID := uuid.New()
+	conversationID, userID, messageID := generateTestIDs()
 
 	message := newJoinedConversationMessage(messageID, conversationID, userID)
 
@@ -88,9 +84,7 @@ func TestNewJoinedConversationMessage(t *testing.T) {
 }
 
 func TestNewInvitedConversationMessage(t *testing.T) {
-	conversationID := uuid.New()
-	userID := uuid.New()
-	messageID := uuid.New()
+	conversationID, userID, messageID := generateTestIDs()
 
 	message := newInvitedConversationMessage(messageID, conversationID, userID)
 
