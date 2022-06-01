@@ -2,10 +2,10 @@ import React from "react";
 import styles from "./ConversationItem.module.css";
 import Link from "next/link";
 import Avatar from "../common/Avatar";
-import { Conversation } from "../../types/coreTypes";
+import { ConversationListItem } from "../../types/coreTypes";
 
 type ConversationItemProps = {
-  conversation: Conversation;
+  conversation: ConversationListItem;
 };
 
 const ConversationItem: React.FC<ConversationItemProps> = ({
@@ -13,9 +13,25 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
 }) => {
   return (
     <Link href={"conversations/" + conversation.id}>
-      <a className={`${styles.conversation} rounded`}>
+      <a className={`${styles.wrap} rounded`}>
         <Avatar src={conversation.avatar} size={65} />
-        <h3 className={styles.conversationName}>{conversation.name}</h3>
+        <div className={styles.conversationInfo}>
+          <h3 className={styles.conversationName}>{conversation.name}</h3>
+
+          {conversation.last_message && (
+            <div className={styles.lastMessage}>
+              {conversation.last_message.type === "text" &&
+                conversation.type === "group" && (
+                  <div>
+                    <strong>{conversation.last_message.user.name}: </strong>
+                  </div>
+                )}
+              <span className={styles.lastMessageText}>
+                {conversation.last_message.text}
+              </span>
+            </div>
+          )}
+        </div>
       </a>
     </Link>
   );

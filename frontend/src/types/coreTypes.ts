@@ -90,6 +90,10 @@ export type Conversation = {
   type: "direct" | "group";
 };
 
+export type ConversationListItem = Conversation & {
+  last_message: MessageRaw | null;
+};
+
 export type Contact = {
   name: string;
   avatar: string;

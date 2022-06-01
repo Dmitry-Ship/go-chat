@@ -1,5 +1,5 @@
 import React from "react";
-import { Conversation } from "../../types/coreTypes";
+import { Conversation, ConversationListItem } from "../../types/coreTypes";
 import { usePaginatedQuery } from "../../api/hooks";
 import NewConversationBtn from "./NewConversationBtn";
 import Loader from "../common/Loader";
@@ -8,7 +8,7 @@ import EmptyScreen from "../common/EmptyScreen";
 
 function Conversations() {
   const [conversationsQuery, , loadNext] =
-    usePaginatedQuery<Conversation>("/getConversations");
+    usePaginatedQuery<ConversationListItem>("/getConversations");
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     if (

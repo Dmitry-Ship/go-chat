@@ -4,7 +4,6 @@ import (
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/readModel"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -137,13 +136,7 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 }
 
 func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ConversationDTO, error) {
-	type queryResult struct {
-		ID        uuid.UUID
-		CreatedAt time.Time
-		Type      uint8
-	}
-
-	queryResults := []*queryResult{}
+	conversations := []*Conversation{}
 
 	err := r.db.Scopes(r.paginate(paginationInfo)).
 		Model(&Conversation{}).
@@ -152,21 +145,38 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 		Where("participants.user_id = ? ", userID).
 		Where(&Conversation{IsActive: true}).
 		Where("participants.is_active = ?", true).
-		Find(&queryResults).Error
+		Find(&conversations).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	conversationDTOs := make([]*readModel.ConversationDTO, len(queryResults))
+	conversationDTOs := make([]*readModel.ConversationDTO, len(conversations))
 
-	for i, result := range queryResults {
+	for i, conversation := range conversations {
 		conversationDTO := &readModel.ConversationDTO{
-			ID:        result.ID,
-			CreatedAt: result.CreatedAt,
+			ID:   conversation.ID,
+			Type: conversationTypesMap[conversation.Type].String(),
 		}
 
-		switch conversationTypesMap[result.Type] {
+		message := &messageQuery{}
+
+		err := r.db.Model(&Message{}).
+			Select(
+				"messages.id", "messages.type as type", "messages.created_at", "messages.content", "messages.conversation_id",
+				"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
+			).
+			Joins("LEFT JOIN users ON messages.user_id = users.id").
+			Where(&Message{ConversationID: conversation.ID}).
+			Order("messages.created_at desc").
+			Limit(1).
+			First(&message).Error
+
+		if err == nil {
+			conversationDTO.LastMessage = *toMessageDTO(message, userID)
+		}
+
+		switch conversationTypesMap[conversation.Type] {
 		case domain.ConversationTypeDirect:
 
 			type userQuery struct {
@@ -181,7 +191,7 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 				Select("users.id as user_id", "users.name as user_name", "users.avatar as user_avatar").
 				Joins("JOIN users ON participants.user_id = users.id").
 				Where("users.id <> ?", userID).
-				Where(&Participant{ConversationID: result.ID, IsActive: true}).
+				Where(&Participant{ConversationID: conversation.ID, IsActive: true}).
 				First(&userQueryResult).Error
 
 			if err != nil {
@@ -193,7 +203,7 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 		case domain.ConversationTypeGroup:
 			groupConversationQueryResult := &GroupConversation{}
 
-			err := r.db.Where(&GroupConversation{ConversationID: result.ID}).First(&groupConversationQueryResult).Error
+			err := r.db.Where(&GroupConversation{ConversationID: conversation.ID}).First(&groupConversationQueryResult).Error
 
 			if err != nil {
 				return nil, err
@@ -262,7 +272,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 
 		var participantsCount int64
 
-		err = r.db.Model(&Participant{}).Where(&Participant{ConversationID: groupConversationQueryResult.ConversationID, IsActive: true}).Count(&participantsCount).Error
+		err = r.db.Model(&Participant{}).Where(&Participant{ConversationID: conversation.ID, IsActive: true}).Count(&participantsCount).Error
 
 		if err != nil {
 			return nil, err

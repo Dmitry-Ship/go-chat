@@ -7,10 +7,11 @@ import (
 )
 
 type ConversationDTO struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Avatar    string    `json:"avatar"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          uuid.UUID  `json:"id"`
+	Name        string     `json:"name"`
+	Avatar      string     `json:"avatar"`
+	Type        string     `json:"type"`
+	LastMessage MessageDTO `json:"last_message"`
 }
 
 type ConversationFullDTO struct {
