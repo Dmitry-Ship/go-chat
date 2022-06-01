@@ -67,8 +67,6 @@ func (r *directConversationRepository) GetID(firstUserID uuid.UUID, secondUserID
 		Or("participants.user_id = ? ", secondUserID).
 		First(&conversation).Error
 
-	// err := r.db.Where("to_user_id = ? AND from_user_id = ?", firstUserID, secondUserID).Or("to_user_id = ? AND from_user_id = ?", secondUserID, firstUserID).First(&directConversation).Error
-
 	if err != nil {
 		return uuid.Nil, err
 	}

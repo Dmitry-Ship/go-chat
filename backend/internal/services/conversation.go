@@ -26,6 +26,7 @@ type conversationService struct {
 	groupConversations  domain.GroupConversationRepository
 	directConversations domain.DirectConversationRepository
 	participants        domain.ParticipantRepository
+	users               domain.UserRepository
 	messages            domain.MessageRepository
 }
 
@@ -33,12 +34,14 @@ func NewConversationService(
 	groupConversations domain.GroupConversationRepository,
 	directConversations domain.DirectConversationRepository,
 	participants domain.ParticipantRepository,
+	users domain.UserRepository,
 	messages domain.MessageRepository,
 ) *conversationService {
 	return &conversationService{
 		groupConversations:  groupConversations,
 		directConversations: directConversations,
 		participants:        participants,
+		users:               users,
 		messages:            messages,
 	}
 }
@@ -50,7 +53,13 @@ func (s *conversationService) CreateGroupConversation(conversationID uuid.UUID, 
 		return err
 	}
 
-	conversation, err := domain.NewGroupConversation(conversationID, conversationName, userID)
+	user, err := s.users.GetByID(userID)
+
+	if err != nil {
+		return err
+	}
+
+	conversation, err := domain.NewGroupConversation(conversationID, conversationName, user)
 
 	if err != nil {
 		return err
@@ -88,7 +97,13 @@ func (s *conversationService) DeleteGroupConversation(conversationID uuid.UUID, 
 		return err
 	}
 
-	if err = conversation.Delete(userID); err != nil {
+	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+
+	if err != nil {
+		return err
+	}
+
+	if err = conversation.Delete(participant); err != nil {
 		return err
 	}
 
@@ -108,7 +123,13 @@ func (s *conversationService) RenameGroupConversation(conversationID uuid.UUID, 
 		return err
 	}
 
-	if err = conversation.Rename(conversationName, userID); err != nil {
+	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+
+	if err != nil {
+		return err
+	}
+
+	if err = conversation.Rename(conversationName, participant); err != nil {
 		return err
 	}
 
@@ -124,7 +145,13 @@ func (s *conversationService) SendDirectTextMessage(conversationID uuid.UUID, us
 
 	messageID := uuid.New()
 
-	message, err := conversation.SendTextMessage(messageID, messageText, userID)
+	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+
+	if err != nil {
+		return err
+	}
+
+	message, err := conversation.SendTextMessage(messageID, messageText, participant)
 
 	if err != nil {
 		return err
@@ -166,7 +193,13 @@ func (s *conversationService) SendJoinedConversationMessage(conversationID uuid.
 
 	messageID := uuid.New()
 
-	message, err := conversation.SendJoinedConversationMessage(messageID, userID)
+	user, err := s.users.GetByID(userID)
+
+	if err != nil {
+		return err
+	}
+
+	message, err := conversation.SendJoinedConversationMessage(messageID, user)
 
 	if err != nil {
 		return err
@@ -184,7 +217,13 @@ func (s *conversationService) SendInvitedConversationMessage(conversationID uuid
 
 	messageID := uuid.New()
 
-	message, err := conversation.SendInvitedConversationMessage(messageID, userID)
+	user, err := s.users.GetByID(userID)
+
+	if err != nil {
+		return err
+	}
+
+	message, err := conversation.SendInvitedConversationMessage(messageID, user)
 
 	if err != nil {
 		return err
@@ -202,7 +241,13 @@ func (s *conversationService) SendRenamedConversationMessage(conversationID uuid
 
 	messageID := uuid.New()
 
-	message, err := conversation.SendRenamedConversationMessage(messageID, userID, name)
+	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+
+	if err != nil {
+		return err
+	}
+
+	message, err := conversation.SendRenamedConversationMessage(messageID, participant, name)
 
 	if err != nil {
 		return err
@@ -220,7 +265,13 @@ func (s *conversationService) SendLeftConversationMessage(conversationID uuid.UU
 
 	messageID := uuid.New()
 
-	message, err := conversation.SendLeftConversationMessage(messageID, userID)
+	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+
+	if err != nil {
+		return err
+	}
+
+	message, err := conversation.SendLeftConversationMessage(messageID, participant)
 
 	if err != nil {
 		return err
@@ -236,7 +287,13 @@ func (s *conversationService) JoinGroupConversation(conversationID uuid.UUID, us
 		return err
 	}
 
-	participant, err := conversation.Join(userID)
+	user, err := s.users.GetByID(userID)
+
+	if err != nil {
+		return err
+	}
+
+	participant, err := conversation.Join(user)
 
 	if err != nil {
 		return err
@@ -274,11 +331,23 @@ func (s *conversationService) InviteToGroupConversation(conversationID uuid.UUID
 		return err
 	}
 
-	participant, err := conversation.Invite(userID, inviteeID)
+	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
 
 	if err != nil {
 		return err
 	}
 
-	return s.participants.Store(participant)
+	invitee, err := s.users.GetByID(inviteeID)
+
+	if err != nil {
+		return err
+	}
+
+	newParticipant, err := conversation.Invite(participant, invitee)
+
+	if err != nil {
+		return err
+	}
+
+	return s.participants.Store(newParticipant)
 }

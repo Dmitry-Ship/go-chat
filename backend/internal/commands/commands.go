@@ -23,8 +23,9 @@ func NewConversationCommands(ctx context.Context, eventPublisher infra.EventPubl
 	groupConversationsRepository := postgres.NewGroupConversationRepository(db, eventPublisher)
 	directConversationsRepository := postgres.NewDirectConversationRepository(db, eventPublisher)
 	participantRepository := postgres.NewParticipantRepository(db, eventPublisher)
+	usersRepository := postgres.NewUserRepository(db, eventPublisher)
 
-	return services.NewConversationService(groupConversationsRepository, directConversationsRepository, participantRepository, messagesRepository)
+	return services.NewConversationService(groupConversationsRepository, directConversationsRepository, participantRepository, usersRepository, messagesRepository)
 }
 
 func NewNotificationsCommands(ctx context.Context, eventPublisher infra.EventPublisher, db *gorm.DB, redisClient *redis.Client) services.NotificationService {

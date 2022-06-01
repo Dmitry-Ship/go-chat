@@ -39,10 +39,10 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 	return &directConversation, nil
 }
 
-func (directConversation *DirectConversation) SendTextMessage(messageID uuid.UUID, text string, userID uuid.UUID) (*Message, error) {
+func (directConversation *DirectConversation) SendTextMessage(messageID uuid.UUID, text string, participant *Participant) (*Message, error) {
 	isParticipant := false
-	for _, participant := range directConversation.Participants {
-		if participant.UserID == userID {
+	for _, p := range directConversation.Participants {
+		if p.UserID == participant.UserID {
 			isParticipant = true
 			break
 		}
@@ -58,7 +58,7 @@ func (directConversation *DirectConversation) SendTextMessage(messageID uuid.UUI
 		return nil, err
 	}
 
-	message := newTextMessage(messageID, directConversation.Conversation.ID, userID, content)
+	message := newTextMessage(messageID, directConversation.Conversation.ID, participant.UserID, content)
 
 	return message, nil
 }
