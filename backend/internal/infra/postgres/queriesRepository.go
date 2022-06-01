@@ -250,12 +250,6 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 		conversationDTO.Avatar = userQueryResult.UserAvatar
 		conversationDTO.Name = userQueryResult.UserName
 	case domain.ConversationTypeGroup:
-		type groupConversationQuery struct {
-			Name    string
-			Avatar  string
-			OwnerID uuid.UUID
-		}
-
 		groupConversationQueryResult := &GroupConversation{}
 
 		err := r.db.Where("conversation_id = ?", conversation.ID).First(&groupConversationQueryResult).Error
