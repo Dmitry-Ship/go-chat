@@ -34,7 +34,7 @@ func (eb *eventBus) Subscribe(topic string) <-chan Event {
 	eb.mu.Lock()
 	defer eb.mu.Unlock()
 
-	subscriptionChannel := make(chan Event, 100)
+	subscriptionChannel := make(chan Event, 1)
 
 	eb.topicSubscribersMap[topic] = append(eb.topicSubscribersMap[topic], subscriptionChannel)
 

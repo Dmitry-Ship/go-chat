@@ -49,55 +49,53 @@ func NewNotificationService(
 	}
 }
 
-func (s *notificationService) createWorker(buildMessage buildFunc) workerFunc {
-	return func(userID uuid.UUID, wg *sync.WaitGroup, sem chan struct{}, errorChan chan error) {
-		defer func() {
-			wg.Done()
-			<-sem
-		}()
+func (s *notificationService) worker(userID uuid.UUID, wg *sync.WaitGroup, sem chan struct{}, errorChan chan error, buildMessage buildFunc) {
+	defer func() {
+		wg.Done()
+		<-sem
+	}()
 
-		sem <- struct{}{}
+	sem <- struct{}{}
 
-		notification, err := buildMessage(userID)
+	notification, err := buildMessage(userID)
 
-		if err != nil {
-			errorChan <- err
-			return
-		}
+	if err != nil {
+		errorChan <- err
+		return
+	}
 
-		message := BroadcastMessage{
-			Payload: *notification,
-			UserID:  userID,
-		}
+	message := BroadcastMessage{
+		Payload: *notification,
+		UserID:  userID,
+	}
 
-		json, err := json.Marshal(message)
+	json, err := json.Marshal(message)
 
-		if err != nil {
-			errorChan <- err
-			return
-		}
+	if err != nil {
+		errorChan <- err
+		return
+	}
 
-		err = s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err()
+	err = s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err()
 
-		if err != nil {
-			errorChan <- err
-		}
+	if err != nil {
+		errorChan <- err
 	}
 }
 
-func (s *notificationService) broadcast(ids []uuid.UUID, worker workerFunc) error {
+func (s *notificationService) broadcast(ids []uuid.UUID, buildMessage buildFunc) error {
 	sem := make(chan struct{}, 100)
 	errorChan := make(chan error, len(ids))
 	var wg sync.WaitGroup
 	wg.Add(len(ids))
 	for _, id := range ids {
-		go worker(id, &wg, sem, errorChan)
+		go s.worker(id, &wg, sem, errorChan, buildMessage)
 	}
 	wg.Wait()
 	close(errorChan)
 
-	for er := range errorChan {
-		fmt.Println(er)
+	for err := range errorChan {
+		fmt.Println(err)
 	}
 
 	return nil
@@ -110,7 +108,7 @@ func (s *notificationService) SendToConversation(conversationId uuid.UUID, build
 		return err
 	}
 
-	return s.broadcast(ids, s.createWorker(buildMessage))
+	return s.broadcast(ids, buildMessage)
 }
 
 func (s *notificationService) RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) {
