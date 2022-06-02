@@ -21,6 +21,7 @@ type BroadcastMessage struct {
 }
 
 type buildFunc func(userID uuid.UUID) (*ws.OutgoingNotification, error)
+type workerFunc func(uuid.UUID, *sync.WaitGroup, chan struct{}, chan error)
 
 type NotificationService interface {
 	SendToConversation(conversationId uuid.UUID, buildMessage buildFunc) error
@@ -48,53 +49,49 @@ func NewNotificationService(
 	}
 }
 
-func (s *notificationService) sendWorker(
-	userID uuid.UUID,
-	buildMessage buildFunc,
-	wg *sync.WaitGroup,
-	sem chan struct{},
-	errorChan chan error,
-) {
-	defer func() {
-		wg.Done()
-		<-sem
-	}()
+func (s *notificationService) createWorker(buildMessage buildFunc) workerFunc {
+	return func(userID uuid.UUID, wg *sync.WaitGroup, sem chan struct{}, errorChan chan error) {
+		defer func() {
+			wg.Done()
+			<-sem
+		}()
 
-	sem <- struct{}{}
+		sem <- struct{}{}
 
-	notification, err := buildMessage(userID)
+		notification, err := buildMessage(userID)
 
-	if err != nil {
-		errorChan <- err
-		return
-	}
+		if err != nil {
+			errorChan <- err
+			return
+		}
 
-	message := BroadcastMessage{
-		Payload: *notification,
-		UserID:  userID,
-	}
+		message := BroadcastMessage{
+			Payload: *notification,
+			UserID:  userID,
+		}
 
-	json, err := json.Marshal(message)
+		json, err := json.Marshal(message)
 
-	if err != nil {
-		errorChan <- err
-		return
-	}
+		if err != nil {
+			errorChan <- err
+			return
+		}
 
-	err = s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err()
+		err = s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err()
 
-	if err != nil {
-		errorChan <- err
+		if err != nil {
+			errorChan <- err
+		}
 	}
 }
 
-func (s *notificationService) broadcast(ids []uuid.UUID, buildMessage buildFunc) error {
+func (s *notificationService) broadcast(ids []uuid.UUID, worker workerFunc) error {
 	sem := make(chan struct{}, 100)
 	errorChan := make(chan error, len(ids))
 	var wg sync.WaitGroup
 	wg.Add(len(ids))
 	for _, id := range ids {
-		go s.sendWorker(id, buildMessage, &wg, sem, errorChan)
+		go worker(id, &wg, sem, errorChan)
 	}
 	wg.Wait()
 	close(errorChan)
@@ -113,7 +110,7 @@ func (s *notificationService) SendToConversation(conversationId uuid.UUID, build
 		return err
 	}
 
-	return s.broadcast(ids, buildMessage)
+	return s.broadcast(ids, s.createWorker(buildMessage))
 }
 
 func (s *notificationService) RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) {
