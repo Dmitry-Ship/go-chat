@@ -3,17 +3,15 @@ package domain
 import "github.com/google/uuid"
 
 const (
-	MessageSentName               = "message_sent"
-	DirectConversationCreatedName = "direct_conversation_created"
-	GroupConversationCreatedName  = "group_conversation_created"
-	GroupConversationRenamedName  = "group_conversation_renamed"
-	GroupConversationDeletedName  = "group_conversation_deleted"
-	GroupConversationLeftName     = "group_conversation_left"
-	GroupConversationJoinedName   = "group_conversation_joined"
-	GroupConversationInvitedName  = "group_conversation_invited"
+	MessageSentEventName               = "message_sent"
+	DirectConversationCreatedEventName = "direct_conversation_created"
+	GroupConversationCreatedEventName  = "group_conversation_created"
+	GroupConversationRenamedEventName  = "group_conversation_renamed"
+	GroupConversationDeletedEventName  = "group_conversation_deleted"
+	GroupConversationLeftEventName     = "group_conversation_left"
+	GroupConversationJoinedEventName   = "group_conversation_joined"
+	GroupConversationInvitedEventName  = "group_conversation_invited"
 )
-
-const DomainEventChannel = "domain_event"
 
 type DomainEvent interface {
 	GetName() string
@@ -50,7 +48,7 @@ type MessageSent struct {
 func NewMessageSent(conversationID uuid.UUID, messageID uuid.UUID, userID uuid.UUID) *MessageSent {
 	return &MessageSent{
 		domainEvent: domainEvent{
-			name: MessageSentName,
+			name: MessageSentEventName,
 		},
 		conversationEvent: conversationEvent{
 			conversationID: conversationID,
@@ -68,7 +66,7 @@ type GroupConversationDeleted struct {
 func newGroupConversationDeletedEvent(conversationID uuid.UUID) *GroupConversationDeleted {
 	return &GroupConversationDeleted{
 		domainEvent: domainEvent{
-			name: GroupConversationDeletedName,
+			name: GroupConversationDeletedEventName,
 		},
 		conversationEvent: conversationEvent{
 			conversationID: conversationID,
@@ -86,7 +84,7 @@ type GroupConversationRenamed struct {
 func newGroupConversationRenamedEvent(conversationID uuid.UUID, userID uuid.UUID, newName string) *GroupConversationRenamed {
 	return &GroupConversationRenamed{
 		domainEvent: domainEvent{
-			name: GroupConversationRenamedName,
+			name: GroupConversationRenamedEventName,
 		},
 		conversationEvent: conversationEvent{
 			conversationID: conversationID,
@@ -105,7 +103,7 @@ type GroupConversationCreated struct {
 func newGroupConversationCreatedEvent(conversationID uuid.UUID, ownerId uuid.UUID) *GroupConversationCreated {
 	return &GroupConversationCreated{
 		domainEvent: domainEvent{
-			name: GroupConversationCreatedName,
+			name: GroupConversationCreatedEventName,
 		},
 		conversationEvent: conversationEvent{
 			conversationID: conversationID,
@@ -123,7 +121,7 @@ type GroupConversationLeft struct {
 func newGroupConversationLeftEvent(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationLeft {
 	return &GroupConversationLeft{
 		domainEvent: domainEvent{
-			name: GroupConversationLeftName,
+			name: GroupConversationLeftEventName,
 		},
 		conversationEvent: conversationEvent{
 			conversationID: conversationID,
@@ -141,7 +139,7 @@ type GroupConversationJoined struct {
 func newGroupConversationJoinedEvent(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationJoined {
 	return &GroupConversationJoined{
 		domainEvent: domainEvent{
-			name: GroupConversationJoinedName,
+			name: GroupConversationJoinedEventName,
 		},
 		conversationEvent: conversationEvent{
 			conversationID: conversationID,
@@ -160,7 +158,7 @@ type GroupConversationInvited struct {
 func newGroupConversationInvitedEvent(conversationID uuid.UUID, userID uuid.UUID, invitee uuid.UUID) *GroupConversationInvited {
 	return &GroupConversationInvited{
 		domainEvent: domainEvent{
-			name: GroupConversationInvitedName,
+			name: GroupConversationInvitedEventName,
 		},
 		conversationEvent: conversationEvent{
 			conversationID: conversationID,
@@ -179,7 +177,7 @@ type DirectConversationCreated struct {
 func newDirectConversationCreatedEvent(conversationID uuid.UUID, userIDs []uuid.UUID) *DirectConversationCreated {
 	return &DirectConversationCreated{
 		domainEvent: domainEvent{
-			name: DirectConversationCreatedName,
+			name: DirectConversationCreatedEventName,
 		},
 		conversationEvent: conversationEvent{
 			conversationID: conversationID,

@@ -2,45 +2,43 @@ package server
 
 import (
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/infra"
+	"fmt"
 	"log"
 )
 
-func (h *Server) logHandlerError(e domain.DomainEvent, err error) {
-	log.Println("Error occurred event: ", e.GetName(), err)
+func genericWorker[T domain.DomainEvent](eventChan <-chan infra.Event, handler func(T) error) {
+	for event := range eventChan {
+		e, ok := event.Data.(T)
+
+		if !ok {
+			fmt.Println("invalid event type: ", event.Topic)
+			continue
+		}
+
+		err := handler(e)
+
+		if err != nil {
+			log.Println("Error occurred while handling event: ", e.GetName(), err)
+		}
+	}
+}
+
+func spawnWorkers[T domain.DomainEvent](numberOfWorkers int, topic string, handler func(T) error, subscriber infra.EventsSubscriber) {
+	eventChan := subscriber.Subscribe(topic)
+	for i := 0; i < numberOfWorkers; i++ {
+		go genericWorker(eventChan, handler)
+	}
 }
 
 func (h *Server) listenForEvents() {
-	for {
-		select {
-		case event, more := <-h.subscriber.Subscribe(domain.DomainEventChannel):
-			if !more {
-				return
-			}
-
-			switch e := event.Data.(type) {
-			case *domain.GroupConversationRenamed:
-				go h.sendRenamedConversationMessage(e)
-				go h.sendUpdatedConversationNotification(e)
-			case *domain.GroupConversationDeleted:
-				go h.sendGroupConversationDeletedNotification(e)
-			case *domain.GroupConversationLeft:
-				go h.sendGroupConversationLeftMessage(e)
-				go h.sendUpdatedConversationNotification(e)
-			case *domain.GroupConversationJoined:
-				go h.sendGroupConversationJoinedMessage(e)
-			case *domain.GroupConversationInvited:
-				go h.sendGroupConversationInvitedMessage(e)
-				go h.sendUpdatedConversationNotification(e)
-			case *domain.GroupConversationCreated:
-				continue
-			case *domain.MessageSent:
-				go h.sendMessageNotification(e)
-			case *domain.DirectConversationCreated:
-				continue
-			}
-
-		case <-h.ctx.Done():
-			return
-		}
-	}
+	spawnWorkers(10, domain.MessageSentEventName, h.sendMessageNotification, h.subscriber)
+	spawnWorkers(1, domain.GroupConversationRenamedEventName, h.sendRenamedConversationMessage, h.subscriber)
+	spawnWorkers(1, domain.GroupConversationRenamedEventName, h.sendUpdatedConversationNotification, h.subscriber)
+	spawnWorkers(1, domain.GroupConversationDeletedEventName, h.sendGroupConversationDeletedNotification, h.subscriber)
+	spawnWorkers(1, domain.GroupConversationLeftEventName, h.sendGroupConversationLeftMessage, h.subscriber)
+	spawnWorkers(1, domain.GroupConversationLeftEventName, h.sendUpdatedConversationNotification, h.subscriber)
+	spawnWorkers(1, domain.GroupConversationJoinedEventName, h.sendGroupConversationJoinedMessage, h.subscriber)
+	spawnWorkers(1, domain.GroupConversationInvitedEventName, h.sendGroupConversationInvitedMessage, h.subscriber)
+	spawnWorkers(1, domain.GroupConversationInvitedEventName, h.sendUpdatedConversationNotification, h.subscriber)
 }

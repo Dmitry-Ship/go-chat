@@ -40,6 +40,6 @@ func NewServer(
 
 func (s *Server) Run() {
 	s.initRoutes()
-	go s.listenForEvents()
+	s.listenForEvents()
 	go s.notificationCommands.Run()
 }

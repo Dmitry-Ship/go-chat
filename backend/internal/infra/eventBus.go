@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-type event struct {
+type Event struct {
 	Topic string
 	Data  interface{}
 }
@@ -14,27 +14,27 @@ type EventPublisher interface {
 }
 
 type EventsSubscriber interface {
-	Subscribe(topic string) <-chan event
+	Subscribe(topic string) <-chan Event
 }
 
 type eventBus struct {
 	mu                  sync.RWMutex
-	topicSubscribersMap map[string][]chan event
+	topicSubscribersMap map[string][]chan Event
 	isClosed            bool
 }
 
 func NewEventBus() *eventBus {
 	return &eventBus{
 		mu:                  sync.RWMutex{},
-		topicSubscribersMap: make(map[string][]chan event),
+		topicSubscribersMap: make(map[string][]chan Event),
 	}
 }
 
-func (eb *eventBus) Subscribe(topic string) <-chan event {
+func (eb *eventBus) Subscribe(topic string) <-chan Event {
 	eb.mu.Lock()
 	defer eb.mu.Unlock()
 
-	subscriptionChannel := make(chan event, 100)
+	subscriptionChannel := make(chan Event, 100)
 
 	eb.topicSubscribersMap[topic] = append(eb.topicSubscribersMap[topic], subscriptionChannel)
 
@@ -50,7 +50,7 @@ func (eb *eventBus) Publish(topic string, data interface{}) {
 	}
 
 	for _, subscriptionChannel := range eb.topicSubscribersMap[topic] {
-		subscriptionChannel <- event{Topic: topic, Data: data}
+		subscriptionChannel <- Event{Topic: topic, Data: data}
 	}
 }
 

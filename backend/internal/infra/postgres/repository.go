@@ -21,7 +21,7 @@ func newRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *repository
 
 func (r *repository) dispatchEvents(aggregate domain.Aggregate) {
 	for _, event := range aggregate.GetEvents() {
-		r.eventPublisher.Publish(domain.DomainEventChannel, event)
+		r.eventPublisher.Publish(event.GetName(), event)
 	}
 }
 
