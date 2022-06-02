@@ -152,6 +152,30 @@ func (groupConversation *GroupConversation) Invite(inviter *Participant, invitee
 	return participant, nil
 }
 
+func (groupConversation *GroupConversation) Kick(kicker *Participant, target *Participant) (*Participant, error) {
+	if !groupConversation.isJoined(target) {
+		return nil, errors.New("user is not in conversation")
+	}
+
+	if !groupConversation.Conversation.IsActive {
+		return nil, errors.New("conversation is not active")
+	}
+
+	if groupConversation.Owner.UserID != kicker.UserID {
+		return nil, errors.New("user is not owner")
+	}
+
+	if kicker.UserID == target.UserID {
+		return nil, errors.New("cannot kick yourself")
+	}
+
+	target.IsActive = false
+
+	target.AddEvent(newGroupConversationLeftEvent(groupConversation.Conversation.ID, target.UserID))
+
+	return target, nil
+}
+
 func (groupConversation *GroupConversation) SendTextMessage(messageID uuid.UUID, text string, participant *Participant) (*Message, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, errors.New("conversation is not active")
@@ -204,10 +228,6 @@ func (groupConversation *GroupConversation) SendRenamedConversationMessage(messa
 }
 
 func (groupConversation *GroupConversation) SendLeftConversationMessage(messageID uuid.UUID, participant *Participant) (*Message, error) {
-	if !groupConversation.isJoined(participant) {
-		return nil, errors.New("user is not in conversation")
-	}
-
 	message := newLeftConversationMessage(messageID, groupConversation.Conversation.ID, participant.UserID)
 
 	return message, nil

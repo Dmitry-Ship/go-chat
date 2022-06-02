@@ -11,7 +11,7 @@ func (h *Server) sendRenamedConversationMessage(e *domain.GroupConversationRenam
 	err := h.conversationCommands.SendRenamedConversationMessage(e.GetConversationID(), e.UserID, e.NewName)
 
 	if err != nil {
-		h.logHandlerError(err)
+		h.logHandlerError(e, err)
 	}
 }
 
@@ -19,7 +19,7 @@ func (h *Server) sendGroupConversationLeftMessage(e *domain.GroupConversationLef
 	err := h.conversationCommands.SendLeftConversationMessage(e.GetConversationID(), e.UserID)
 
 	if err != nil {
-		h.logHandlerError(err)
+		h.logHandlerError(e, err)
 		return
 	}
 }
@@ -28,7 +28,7 @@ func (h *Server) sendGroupConversationJoinedMessage(e *domain.GroupConversationJ
 	err := h.conversationCommands.SendJoinedConversationMessage(e.GetConversationID(), e.UserID)
 
 	if err != nil {
-		h.logHandlerError(err)
+		h.logHandlerError(e, err)
 	}
 }
 
@@ -36,7 +36,7 @@ func (h *Server) sendGroupConversationInvitedMessage(e *domain.GroupConversation
 	err := h.conversationCommands.SendInvitedConversationMessage(e.GetConversationID(), e.UserID)
 
 	if err != nil {
-		h.logHandlerError(err)
+		h.logHandlerError(e, err)
 	}
 }
 
@@ -55,7 +55,7 @@ func (h *Server) sendGroupConversationDeletedNotification(e *domain.GroupConvers
 	})
 
 	if err != nil {
-		h.logHandlerError(err)
+		h.logHandlerError(e, err)
 	}
 }
 
@@ -76,7 +76,7 @@ func (h *Server) sendUpdatedConversationNotification(e domain.ConversationEvent)
 	})
 
 	if err != nil {
-		h.logHandlerError(err)
+		h.logHandlerError(e, err)
 	}
 }
 
@@ -97,6 +97,6 @@ func (h *Server) sendMessageNotification(e *domain.MessageSent) {
 	})
 
 	if err != nil {
-		h.logHandlerError(err)
+		h.logHandlerError(e, err)
 	}
 }

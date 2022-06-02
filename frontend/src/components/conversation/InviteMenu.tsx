@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import styles from "./EditConversationBtn.module.css";
 import SlideIn from "../common/SlideIn";
 import { Contact } from "../../types/coreTypes";
 import ContactItem from "../contacts/ContactItem";
@@ -39,10 +38,7 @@ const InviteMenu: React.FC<{}> = () => {
 
   return (
     <>
-      <button
-        onClick={handleToggleInviteMenu}
-        className={`btn ${styles.menuItem}`}
-      >
+      <button onClick={handleToggleInviteMenu} className={`btn m-b`}>
         🤙 Invite
       </button>
       <SlideIn onClose={handleToggleInviteMenu} isOpen={isInviteMenuOpen}>

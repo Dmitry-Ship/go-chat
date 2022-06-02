@@ -36,6 +36,7 @@ func (e *conversationEvent) GetConversationID() uuid.UUID {
 }
 
 type ConversationEvent interface {
+	DomainEvent
 	GetConversationID() uuid.UUID
 }
 

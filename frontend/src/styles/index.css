@@ -122,3 +122,7 @@ code {
   color: white;
   border-color: var(--accent-color);
 }
+
+.m-b {
+  margin-bottom: 10px;
+}

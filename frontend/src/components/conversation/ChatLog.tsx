@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./ChatLog.module.css";
-import { MessageRaw } from "../../types/coreTypes";
+import { ConversationFull, MessageRaw } from "../../types/coreTypes";
 import MessageComponent from "./MessageComponent";
 import Loader from "../common/Loader";
 import { usePaginatedQuery } from "../../api/hooks";
@@ -8,15 +8,15 @@ import { parseMessage } from "../../messages";
 import { useWebSocket } from "../../contexts/WSContext";
 import InviteMenu from "./InviteMenu";
 
-const ChatLog: React.FC<{ conversationId: string; isEmpty: boolean }> = ({
-  conversationId,
-  isEmpty,
-}) => {
+const ChatLog: React.FC<{
+  conversation: ConversationFull;
+  isEmpty: boolean;
+}> = ({ conversation, isEmpty }) => {
   const { onNotification } = useWebSocket();
   const [lastScrollHeight, setLastScrollHeight] = useState<number>(0);
 
   const [messagesQuery, append, loadNext] = usePaginatedQuery<MessageRaw>(
-    `/getConversationsMessages?conversation_id=${conversationId}`,
+    `/getConversationsMessages?conversation_id=${conversation.id}`,
     true
   );
 
@@ -38,7 +38,7 @@ const ChatLog: React.FC<{ conversationId: string; isEmpty: boolean }> = ({
 
   useEffect(() => {
     onNotification("message", (event) => {
-      if (event.data.conversation_id === conversationId) {
+      if (event.data.conversation_id === conversation.id) {
         append([event.data]);
       }
     });
@@ -82,6 +82,7 @@ const ChatLog: React.FC<{ conversationId: string; isEmpty: boolean }> = ({
               return (
                 <MessageComponent
                   key={i}
+                  conversation={conversation}
                   message={item}
                   isFistInAGroup={isFistInAGroup}
                   isLastInAGroup={isLastInAGroup}

@@ -9,10 +9,11 @@ import (
 type ConversationService interface {
 	CreateGroupConversation(conversationID uuid.UUID, name string, userID uuid.UUID) error
 	DeleteGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error
-	RenameGroupConversation(conversationID uuid.UUID, userID uuid.UUID, name string) error
-	JoinGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error
-	LeaveGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error
-	InviteToGroupConversation(conversationID uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error
+	Rename(conversationID uuid.UUID, userID uuid.UUID, name string) error
+	Join(conversationID uuid.UUID, userID uuid.UUID) error
+	Leave(conversationID uuid.UUID, userID uuid.UUID) error
+	Invite(conversationID uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error
+	Kick(conversationID uuid.UUID, kickerID uuid.UUID, targetID uuid.UUID) error
 	StartDirectConversation(fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error)
 	SendDirectTextMessage(conversationID uuid.UUID, userID uuid.UUID, messageText string) error
 	SendGroupTextMessage(conversationID uuid.UUID, userID uuid.UUID, messageText string) error
@@ -110,7 +111,7 @@ func (s *conversationService) DeleteGroupConversation(conversationID uuid.UUID, 
 	return s.groupConversations.Update(conversation)
 }
 
-func (s *conversationService) RenameGroupConversation(conversationID uuid.UUID, userID uuid.UUID, name string) error {
+func (s *conversationService) Rename(conversationID uuid.UUID, userID uuid.UUID, name string) error {
 	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
@@ -280,7 +281,7 @@ func (s *conversationService) SendLeftConversationMessage(conversationID uuid.UU
 	return s.messages.Store(message)
 }
 
-func (s *conversationService) JoinGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error {
+func (s *conversationService) Join(conversationID uuid.UUID, userID uuid.UUID) error {
 	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
@@ -302,7 +303,7 @@ func (s *conversationService) JoinGroupConversation(conversationID uuid.UUID, us
 	return s.participants.Store(participant)
 }
 
-func (s *conversationService) LeaveGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error {
+func (s *conversationService) Leave(conversationID uuid.UUID, userID uuid.UUID) error {
 	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
 
 	if err != nil {
@@ -324,7 +325,7 @@ func (s *conversationService) LeaveGroupConversation(conversationID uuid.UUID, u
 	return s.participants.Update(participant)
 }
 
-func (s *conversationService) InviteToGroupConversation(conversationID uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error {
+func (s *conversationService) Invite(conversationID uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error {
 	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
@@ -350,4 +351,32 @@ func (s *conversationService) InviteToGroupConversation(conversationID uuid.UUID
 	}
 
 	return s.participants.Store(newParticipant)
+}
+
+func (s *conversationService) Kick(conversationID uuid.UUID, kickerID uuid.UUID, targetID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(conversationID)
+
+	if err != nil {
+		return err
+	}
+
+	kicker, err := s.participants.GetByConversationIDAndUserID(conversationID, kickerID)
+
+	if err != nil {
+		return err
+	}
+
+	target, err := s.participants.GetByConversationIDAndUserID(conversationID, targetID)
+
+	if err != nil {
+		return err
+	}
+
+	kicked, err := conversation.Kick(kicker, target)
+
+	if err != nil {
+		return err
+	}
+
+	return s.participants.Update(kicked)
 }

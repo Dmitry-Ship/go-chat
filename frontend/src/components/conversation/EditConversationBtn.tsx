@@ -73,12 +73,12 @@ const EditConversationBtn: React.FC<{
         <>
           {conversation.is_owner && (
             <>
-              <form className={styles.menuItem} onSubmit={handleRename}>
+              <form className={"m-b"} onSubmit={handleRename}>
                 <input
                   type="text"
                   placeholder="New name"
                   size={32}
-                  className={`${styles.menuItem} input`}
+                  className={`m-b input`}
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                 />
@@ -90,10 +90,7 @@ const EditConversationBtn: React.FC<{
                   Rename
                 </button>
               </form>
-              <button
-                onClick={handleDelete}
-                className={`btn ${styles.menuItem}`}
-              >
+              <button onClick={handleDelete} className={`btn m-b`}>
                 🗑 Delete
               </button>
             </>
@@ -102,7 +99,7 @@ const EditConversationBtn: React.FC<{
           <InviteMenu />
 
           {conversation.joined && (
-            <button onClick={handleLeave} className={`btn ${styles.menuItem}`}>
+            <button onClick={handleLeave} className={`btn m-b`}>
               ✌️ Leave
             </button>
           )}

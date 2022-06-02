@@ -1,14 +1,15 @@
 import React from "react";
 import styles from "./MessageComponent.module.css";
-import { Message } from "../../types/coreTypes";
+import { ConversationFull, Message } from "../../types/coreTypes";
 import Avatar from "../common/Avatar";
 import UserInfoSlideIn from "./UserInfoSlideIn";
 
 const MessageComponent: React.FC<{
   message: Message;
+  conversation: ConversationFull;
   isFistInAGroup: boolean;
   isLastInAGroup: boolean;
-}> = ({ message, isFistInAGroup, isLastInAGroup }) => {
+}> = ({ message, isFistInAGroup, isLastInAGroup, conversation }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const toggleUserInfo = () => {
@@ -33,6 +34,7 @@ const MessageComponent: React.FC<{
               >
                 <UserInfoSlideIn
                   toggleUserInfo={toggleUserInfo}
+                  isOwner={conversation.is_owner}
                   user={message.user}
                   isOpen={isOpen}
                 />

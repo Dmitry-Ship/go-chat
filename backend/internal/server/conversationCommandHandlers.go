@@ -104,7 +104,7 @@ func (s *Server) handleDeleteConversation(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (s *Server) handleJoinGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleJoin(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		ConversationId uuid.UUID `json:"conversation_id"`
 	}{}
@@ -120,7 +120,7 @@ func (s *Server) handleJoinGroupConversation(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err := s.conversationCommands.JoinGroupConversation(request.ConversationId, userID)
+	err := s.conversationCommands.Join(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -133,7 +133,7 @@ func (s *Server) handleJoinGroupConversation(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (s *Server) handleLeaveGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleLeave(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -150,7 +150,7 @@ func (s *Server) handleLeaveGroupConversation(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err := s.conversationCommands.LeaveGroupConversation(request.ConversationId, userID)
+	err := s.conversationCommands.Leave(request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -163,7 +163,7 @@ func (s *Server) handleLeaveGroupConversation(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func (s *Server) handleRenameGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleRename(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -181,7 +181,7 @@ func (s *Server) handleRenameGroupConversation(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err := s.conversationCommands.RenameGroupConversation(request.ConversationId, userID, request.ConversationName)
+	err := s.conversationCommands.Rename(request.ConversationId, userID, request.ConversationName)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -194,7 +194,7 @@ func (s *Server) handleRenameGroupConversation(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (s *Server) handleInviteToGroupConversation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleInvite(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 
 	if !ok {
@@ -212,7 +212,38 @@ func (s *Server) handleInviteToGroupConversation(w http.ResponseWriter, r *http.
 		return
 	}
 
-	err := s.conversationCommands.InviteToGroupConversation(request.ConversationId, userID, request.InviteeId)
+	err := s.conversationCommands.Invite(request.ConversationId, userID, request.InviteeId)
+
+	if err != nil {
+		returnError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err = json.NewEncoder(w).Encode("OK"); err != nil {
+		returnError(w, http.StatusInternalServerError, err)
+		return
+	}
+}
+
+func (s *Server) handleKick(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+
+	if !ok {
+		http.Error(w, "userID not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	request := struct {
+		ConversationId uuid.UUID `json:"conversation_id"`
+		TargetId       uuid.UUID `json:"user_id"`
+	}{}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		returnError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	err := s.conversationCommands.Kick(request.ConversationId, userID, request.TargetId)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)

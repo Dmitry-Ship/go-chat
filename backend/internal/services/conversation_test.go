@@ -167,10 +167,10 @@ func TestCreateGroupConversation(t *testing.T) {
 	assert.Equal(t, 1, groupConversationRepository.methodsCalled["Store"])
 }
 
-func TestRenameGroupConversation(t *testing.T) {
+func TestRename(t *testing.T) {
 	conversationService, groupConversationRepository, _, _, _ := createTestConversationService()
 
-	err := conversationService.RenameGroupConversation(uuid.New(), groupConversationRepository.groupConversationOwnerID, "test")
+	err := conversationService.Rename(uuid.New(), groupConversationRepository.groupConversationOwnerID, "test")
 
 	assert.Nil(t, err)
 	assert.Equal(t, 1, groupConversationRepository.methodsCalled["Update"])
@@ -242,20 +242,20 @@ func TestSendLeftConversationMessage(t *testing.T) {
 	assert.Equal(t, 1, messagesRepository.methodsCalled["Store"])
 }
 
-func TestJoinGroupConversation(t *testing.T) {
+func TestJoin(t *testing.T) {
 	conversationService, _, _, _, participantRepository := createTestConversationService()
 
-	err := conversationService.JoinGroupConversation(uuid.New(), uuid.New())
+	err := conversationService.Join(uuid.New(), uuid.New())
 
 	assert.Nil(t, err)
 	assert.Equal(t, 1, participantRepository.methodsCalled["Store"])
 }
 
-func TestLeaveGroupConversation(t *testing.T) {
+func TestLeave(t *testing.T) {
 	conversationService, _, _, _, participantRepository := createTestConversationService()
 	userID := uuid.New()
 
-	err := conversationService.LeaveGroupConversation(uuid.New(), userID)
+	err := conversationService.Leave(uuid.New(), userID)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 1, participantRepository.methodsCalled["Update"])

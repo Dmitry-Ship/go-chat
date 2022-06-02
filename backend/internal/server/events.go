@@ -5,8 +5,8 @@ import (
 	"log"
 )
 
-func (h *Server) logHandlerError(err error) {
-	log.Panicln("Error occurred event", err)
+func (h *Server) logHandlerError(e domain.DomainEvent, err error) {
+	log.Println("Error occurred event: ", e.GetName(), err)
 }
 
 func (h *Server) listenForEvents() {

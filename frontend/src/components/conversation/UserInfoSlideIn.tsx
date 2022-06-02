@@ -10,12 +10,13 @@ const UserInfoSlideIn: React.FC<{
     avatar: string;
     name: string;
   };
+  isOwner: boolean;
   isOpen: boolean;
   toggleUserInfo: () => void;
-}> = ({ user, toggleUserInfo, isOpen }) => {
+}> = ({ user, toggleUserInfo, isOpen, isOwner }) => {
   const { makeCommand } = useAPI();
 
-  const handleClick = async (
+  const handleChatClick = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
     e.preventDefault();
@@ -31,14 +32,34 @@ const UserInfoSlideIn: React.FC<{
     }
   };
 
+  const handleKickClick = async (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    e.preventDefault();
+
+    const result = await makeCommand("/kick", {
+      user_id: user.id,
+    });
+
+    if (result.status) {
+      toggleUserInfo();
+    }
+  };
+
   return (
     <SlideIn onClose={toggleUserInfo} isOpen={isOpen}>
       <div className={styles.userInfo}>
         <Avatar src={user.avatar} size={100} />
         <h3>{user.name}</h3>
-        <button className={`btn`} onClick={handleClick}>
+        <button className={`btn m-b`} onClick={handleChatClick}>
           💬 Chat
         </button>
+
+        {isOwner && (
+          <button className={`btn`} onClick={handleKickClick}>
+            🫵 Kick
+          </button>
+        )}
       </div>
     </SlideIn>
   );

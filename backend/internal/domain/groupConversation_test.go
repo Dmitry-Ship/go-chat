@@ -247,6 +247,49 @@ func TestInvite(t *testing.T) {
 	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationInvitedEvent(conversation.Conversation.ID, creatorParticipant.UserID, user.ID))
 }
 
+func TestKick(t *testing.T) {
+	conversation, _, creatorParticipant := createTestGroupConversation()
+	user := createTestUser()
+	participant, _ := conversation.Join(user)
+
+	participant, err := conversation.Kick(creatorParticipant, participant)
+
+	assert.Nil(t, err)
+	assert.Equal(t, participant.IsActive, false)
+	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationLeftEvent(conversation.Conversation.ID, user.ID))
+}
+
+func TestKickNotOwner(t *testing.T) {
+	conversation, _, _ := createTestGroupConversation()
+	user := createTestUser()
+	participant, _ := conversation.Join(user)
+	user2 := createTestUser()
+	participant2, _ := conversation.Join(user2)
+
+	_, err := conversation.Kick(participant2, participant)
+
+	assert.Equal(t, err.Error(), "user is not owner")
+}
+
+func TestKickNotInConversation(t *testing.T) {
+	conversation, _, creatorParticipant := createTestGroupConversation()
+	conversation2, _, _ := createTestGroupConversation()
+	user := createTestUser()
+	participant, _ := conversation2.Join(user)
+
+	_, err := conversation.Kick(creatorParticipant, participant)
+
+	assert.Equal(t, err.Error(), "user is not in conversation")
+}
+
+func TestKickOneself(t *testing.T) {
+	conversation, _, creatorParticipant := createTestGroupConversation()
+
+	_, err := conversation.Kick(creatorParticipant, creatorParticipant)
+
+	assert.Equal(t, err.Error(), "cannot kick yourself")
+}
+
 func TestInviteNotActive(t *testing.T) {
 	conversation, _, creatorParticipant := createTestGroupConversation()
 	user := createTestUser()

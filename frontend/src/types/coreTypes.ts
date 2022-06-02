@@ -90,6 +90,12 @@ export type Conversation = {
   type: "direct" | "group";
 };
 
+export type ConversationFull = Conversation & {
+  joined: boolean;
+  participants_count: number;
+  is_owner: boolean;
+};
+
 export type ConversationListItem = Conversation & {
   last_message: MessageRaw | null;
 };

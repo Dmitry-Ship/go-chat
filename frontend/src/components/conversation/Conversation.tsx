@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Conversation } from "../../types/coreTypes";
+import { ConversationFull } from "../../types/coreTypes";
 import styles from "./Conversation.module.css";
 import ChatForm from "./ChatForm";
 import ChatLog from "./ChatLog";
@@ -17,13 +17,9 @@ const Conversation: React.FC = () => {
   const conversationId = router.query.conversationId as string;
   const { onNotification } = useWebSocket();
 
-  const [conversationQuery, updateConversation] = useQuery<
-    Conversation & {
-      joined: boolean;
-      participants_count: number;
-      is_owner: boolean;
-    }
-  >(`/getConversation?conversation_id=${conversationId}`);
+  const [conversationQuery, updateConversation] = useQuery<ConversationFull>(
+    `/getConversation?conversation_id=${conversationId}`
+  );
 
   useEffect(() => {
     onNotification("conversation_deleted", (event) => {
@@ -96,7 +92,7 @@ const Conversation: React.FC = () => {
 
       <section className="wrap">
         <ChatLog
-          conversationId={conversationId}
+          conversation={conversation}
           isEmpty={conversation.participants_count < 2}
         />
 

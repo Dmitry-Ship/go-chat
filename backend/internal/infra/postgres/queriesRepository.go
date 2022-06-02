@@ -65,7 +65,7 @@ func (r *queriesRepository) GetParticipants(conversationID uuid.UUID, userID uui
 func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
 	users := []*readModel.ContactDTO{}
 
-	subQuery := r.db.Select("user_id").Where("conversation_id = ?", conversationID).Table("participants")
+	subQuery := r.db.Select("user_id").Where("conversation_id = ?", conversationID).Where("is_active = ?", true).Table("participants")
 	err := r.db.Scopes(r.paginate(paginationInfo)).Model(&User{}).Where("id NOT IN (?)", subQuery).Find(&users).Error
 
 	return users, err
