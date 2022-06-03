@@ -13,8 +13,11 @@ const (
 	GroupConversationInvitedEventName  = "group_conversation_invited"
 )
 
+const DomainEventTopic = "domain_event"
+
 type DomainEvent interface {
 	GetName() string
+	GetTopic() string
 }
 
 type domainEvent struct {
@@ -23,6 +26,10 @@ type domainEvent struct {
 
 func (e *domainEvent) GetName() string {
 	return e.name
+}
+
+func (e *domainEvent) GetTopic() string {
+	return DomainEventTopic
 }
 
 type conversationEvent struct {

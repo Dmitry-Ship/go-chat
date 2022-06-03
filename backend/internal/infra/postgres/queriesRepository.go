@@ -201,16 +201,16 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 			conversationDTO.Avatar = userQueryResult.UserAvatar
 			conversationDTO.Name = userQueryResult.UserName
 		case domain.ConversationTypeGroup:
-			groupConversationQueryResult := &GroupConversation{}
+			groupConversation := &GroupConversation{}
 
-			err := r.db.Where(&GroupConversation{ConversationID: conversation.ID}).First(&groupConversationQueryResult).Error
+			err := r.db.Where(&GroupConversation{ConversationID: conversation.ID}).First(&groupConversation).Error
 
 			if err != nil {
 				return nil, err
 			}
 
-			conversationDTO.Avatar = groupConversationQueryResult.Avatar
-			conversationDTO.Name = groupConversationQueryResult.Name
+			conversationDTO.Avatar = groupConversation.Avatar
+			conversationDTO.Name = groupConversation.Name
 		}
 
 		conversationDTOs[i] = conversationDTO
@@ -258,17 +258,17 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 		conversationDTO.Avatar = userQueryResult.UserAvatar
 		conversationDTO.Name = userQueryResult.UserName
 	case domain.ConversationTypeGroup:
-		groupConversationQueryResult := &GroupConversation{}
+		groupConversation := &GroupConversation{}
 
-		err := r.db.Where(&GroupConversation{ConversationID: groupConversationQueryResult.ConversationID}).First(&groupConversationQueryResult).Error
+		err := r.db.Where(&GroupConversation{ConversationID: id}).First(&groupConversation).Error
 
 		if err != nil {
 			return nil, err
 		}
 
-		conversationDTO.Avatar = groupConversationQueryResult.Avatar
-		conversationDTO.Name = groupConversationQueryResult.Name
-		conversationDTO.IsOwner = groupConversationQueryResult.OwnerID == userID
+		conversationDTO.Avatar = groupConversation.Avatar
+		conversationDTO.Name = groupConversation.Name
+		conversationDTO.IsOwner = groupConversation.OwnerID == userID
 
 		var participantsCount int64
 
@@ -282,7 +282,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 		hasUserJoined := true
 
 		participant := Participant{}
-		if err := r.db.Where(&Participant{ConversationID: groupConversationQueryResult.ConversationID, IsActive: true, UserID: userID}).First(&participant).Error; err != nil {
+		if err := r.db.Where(&Participant{ConversationID: groupConversation.ConversationID, IsActive: true, UserID: userID}).First(&participant).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				hasUserJoined = false
 			} else {
