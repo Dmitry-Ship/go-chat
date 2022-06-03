@@ -35,10 +35,21 @@ func main() {
 		usersRepository,
 		messagesRepository,
 	)
-	notificationService := services.NewNotificationService(ctx, participantRepository, redisClient)
+	notificationService := services.NewNotificationService(ctx, redisClient)
+	notificationResolverService := services.NewNotificationResolverService(participantRepository)
 	queries := postgres.NewQueriesRepository(db)
+	notificationBuilderService := services.NewNotificationBuilderService(queries)
 
-	server := server.NewServer(ctx, authService, conversationService, notificationService, queries, eventBus)
+	server := server.NewServer(
+		ctx,
+		authService,
+		conversationService,
+		notificationResolverService,
+		notificationBuilderService,
+		notificationService,
+		queries,
+		eventBus,
+	)
 	server.Run()
 
 	s := gracefulServer.NewGracefulServer()

@@ -7,61 +7,50 @@ import (
 	"github.com/google/uuid"
 )
 
-func (h *Server) sendRenamedConversationMessage(e *domain.GroupConversationRenamed) error {
-	return h.conversationCommands.SendRenamedConversationMessage(e.GetConversationID(), e.UserID, e.NewName)
+func (h *Server) sendMessage(event domain.DomainEvent) error {
+	switch e := event.(type) {
+	case *domain.GroupConversationRenamed:
+		return h.conversationCommands.SendRenamedConversationMessage(e.GetConversationID(), e.UserID, e.NewName)
+	case *domain.GroupConversationLeft:
+		return h.conversationCommands.SendLeftConversationMessage(e.GetConversationID(), e.UserID)
+	case *domain.GroupConversationJoined:
+		return h.conversationCommands.SendJoinedConversationMessage(e.GetConversationID(), e.UserID)
+	case *domain.GroupConversationInvited:
+		return h.conversationCommands.SendInvitedConversationMessage(e.GetConversationID(), e.UserID)
+	}
+
+	return nil
 }
 
-func (h *Server) sendGroupConversationLeftMessage(e *domain.GroupConversationLeft) error {
-	return h.conversationCommands.SendLeftConversationMessage(e.GetConversationID(), e.UserID)
-}
+func (h *Server) sendWSNotification(event domain.DomainEvent) error {
+	var targetIDs []uuid.UUID
+	var err error
+	var buildMessage func(userID uuid.UUID) (*ws.OutgoingNotification, error)
 
-func (h *Server) sendGroupConversationJoinedMessage(e *domain.GroupConversationJoined) error {
-	return h.conversationCommands.SendJoinedConversationMessage(e.GetConversationID(), e.UserID)
-}
+	switch e := event.(type) {
+	case *domain.GroupConversationRenamed:
+		targetIDs, err = h.notificationResolver.GetConversationRecipients(e.GetConversationID())
+		buildMessage = h.notificationBuilder.GetConversationUpdatedBuilder(e.GetConversationID())
+	case *domain.GroupConversationLeft:
+		targetIDs, err = h.notificationResolver.GetConversationRecipients(e.GetConversationID())
+		buildMessage = h.notificationBuilder.GetConversationUpdatedBuilder(e.GetConversationID())
+	case *domain.GroupConversationJoined:
+		targetIDs, err = h.notificationResolver.GetConversationRecipients(e.GetConversationID())
+		buildMessage = h.notificationBuilder.GetConversationUpdatedBuilder(e.GetConversationID())
+	case *domain.GroupConversationInvited:
+		targetIDs, err = h.notificationResolver.GetConversationRecipients(e.GetConversationID())
+		buildMessage = h.notificationBuilder.GetConversationUpdatedBuilder(e.GetConversationID())
+	case *domain.GroupConversationDeleted:
+		targetIDs, err = h.notificationResolver.GetConversationRecipients(e.GetConversationID())
+		buildMessage = h.notificationBuilder.GetConversationDeletedBuilder(e.GetConversationID())
+	case *domain.MessageSent:
+		targetIDs, err = h.notificationResolver.GetConversationRecipients(e.GetConversationID())
+		buildMessage = h.notificationBuilder.GetMessageSentBuilder(e.MessageID)
+	}
 
-func (h *Server) sendGroupConversationInvitedMessage(e *domain.GroupConversationInvited) error {
-	return h.conversationCommands.SendInvitedConversationMessage(e.GetConversationID(), e.UserID)
-}
+	if err != nil {
+		return err
+	}
 
-func (h *Server) sendGroupConversationDeletedNotification(e *domain.GroupConversationDeleted) error {
-	return h.notificationCommands.SendToConversation(e.GetConversationID(), func(userID uuid.UUID) (*ws.OutgoingNotification, error) {
-		return &ws.OutgoingNotification{
-			Type: "conversation_deleted",
-			Payload: struct {
-				ConversationId uuid.UUID `json:"conversation_id"`
-			}{
-				ConversationId: e.GetConversationID(),
-			},
-		}, nil
-	})
-}
-
-func (h *Server) sendUpdatedConversationNotification(e domain.ConversationEvent) error {
-	return h.notificationCommands.SendToConversation(e.GetConversationID(), func(userID uuid.UUID) (*ws.OutgoingNotification, error) {
-		conversation, err := h.queries.GetConversation(e.GetConversationID(), userID)
-
-		if err != nil {
-			return nil, err
-		}
-
-		return &ws.OutgoingNotification{
-			Type:    "conversation_updated",
-			Payload: conversation,
-		}, nil
-	})
-}
-
-func (h *Server) sendMessageNotification(e *domain.MessageSent) error {
-	return h.notificationCommands.SendToConversation(e.GetConversationID(), func(userID uuid.UUID) (*ws.OutgoingNotification, error) {
-		messageDTO, err := h.queries.GetNotificationMessage(e.MessageID, userID)
-
-		if err != nil {
-			return nil, err
-		}
-
-		return &ws.OutgoingNotification{
-			Type:    "message",
-			Payload: messageDTO,
-		}, nil
-	})
+	return h.notificationCommands.Broadcast(targetIDs, buildMessage)
 }

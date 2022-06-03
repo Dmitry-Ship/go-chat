@@ -1,7 +1,6 @@
 package services
 
 import (
-	"GitHub/go-chat/backend/internal/domain"
 	pubsub "GitHub/go-chat/backend/internal/infra/redis"
 	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
@@ -24,26 +23,23 @@ type buildFunc func(userID uuid.UUID) (*ws.OutgoingNotification, error)
 type workerFunc func(uuid.UUID, *sync.WaitGroup, chan struct{}, chan error)
 
 type NotificationService interface {
-	SendToConversation(conversationId uuid.UUID, buildMessage buildFunc) error
+	Broadcast(ids []uuid.UUID, buildMessage buildFunc) error
 	RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte))
 	Run()
 }
 
 type notificationService struct {
 	ctx           context.Context
-	participants  domain.ParticipantRepository
 	activeClients ws.ActiveClients
 	redisClient   *redis.Client
 }
 
 func NewNotificationService(
 	ctx context.Context,
-	participants domain.ParticipantRepository,
 	redisClient *redis.Client,
 ) *notificationService {
 	return &notificationService{
 		ctx:           ctx,
-		participants:  participants,
 		activeClients: ws.NewActiveClients(),
 		redisClient:   redisClient,
 	}
@@ -83,7 +79,7 @@ func (s *notificationService) worker(userID uuid.UUID, wg *sync.WaitGroup, sem c
 	}
 }
 
-func (s *notificationService) broadcast(ids []uuid.UUID, buildMessage buildFunc) error {
+func (s *notificationService) Broadcast(ids []uuid.UUID, buildMessage buildFunc) error {
 	sem := make(chan struct{}, 100)
 	errorChan := make(chan error, len(ids))
 	var wg sync.WaitGroup
@@ -99,16 +95,6 @@ func (s *notificationService) broadcast(ids []uuid.UUID, buildMessage buildFunc)
 	}
 
 	return nil
-}
-
-func (s *notificationService) SendToConversation(conversationId uuid.UUID, buildMessage buildFunc) error {
-	ids, err := s.participants.GetIDsByConversationID(conversationId)
-
-	if err != nil {
-		return err
-	}
-
-	return s.broadcast(ids, buildMessage)
 }
 
 func (s *notificationService) RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) {
