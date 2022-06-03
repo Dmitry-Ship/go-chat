@@ -20,7 +20,6 @@ type BroadcastMessage struct {
 }
 
 type buildFunc func(userID uuid.UUID) (*ws.OutgoingNotification, error)
-type workerFunc func(uuid.UUID, *sync.WaitGroup, chan struct{}, chan error)
 
 type NotificationService interface {
 	Broadcast(ids []uuid.UUID, buildMessage buildFunc) error
