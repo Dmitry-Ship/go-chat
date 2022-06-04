@@ -17,7 +17,7 @@ const Navigation = () => {
       {links.map((link) => (
         <Link href={link.href} key={link.href}>
           <a
-            className={`${styles.navBtn} ${
+            className={`${styles.navBtn} shadow ${
               router.pathname === link.href ? styles.active : ""
             }`}
           >

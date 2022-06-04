@@ -13,7 +13,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
 }) => {
   return (
     <Link href={"conversations/" + conversation.id}>
-      <a className={`${styles.wrap} rounded`}>
+      <a className={`${styles.wrap} rounded shadow`}>
         <Avatar src={conversation.avatar} size={65} />
         <div className={styles.conversationInfo}>
           <h3 className={styles.conversationName}>{conversation.name}</h3>

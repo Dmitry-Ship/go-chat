@@ -44,7 +44,7 @@ const MessageComponent: React.FC<{
                   </div>
                 )}
 
-                <div className={styles.messageBubble}>
+                <div className={`${styles.messageBubble} shadow`}>
                   {message.isInbound && isFistInAGroup && (
                     <div className={styles.userName} onClick={toggleUserInfo}>
                       {message.user.name}

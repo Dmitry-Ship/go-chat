@@ -16,7 +16,6 @@ code {
 :root {
   --br: 20px;
   --warn-color: #7ea3a5;
-  /* --warn-color: #a8dadc; */
   --accent-color: #e63946;
   --primary-color: #f1faee;
   --secondary-color: #457b9d;
@@ -25,6 +24,8 @@ code {
   --bar-height: calc(9 * var(--vh));
   --max-width: 520px;
   --avatar-size: 36px;
+  --shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  --inner-shadow: inset 0px 0px 20px rgba(0, 0, 0, 0.5);
 }
 
 .m-top-1 {
@@ -94,10 +95,12 @@ code {
   border: none;
   width: 100%;
   display: block;
+  box-shadow: var(--shadow);
 }
 
 .btn:disabled {
   background-color: grey;
+  box-shadow: none;
 }
 
 .btn:active {
@@ -116,6 +119,7 @@ code {
   color: white;
   background-color: var(--tertiary-color);
   margin-right: 10px;
+  box-shadow: var(--inner-shadow);
 }
 
 .input:focus {
@@ -125,4 +129,12 @@ code {
 
 .m-b {
   margin-bottom: 10px;
+}
+
+.shadow {
+  box-shadow: var(--shadow);
+}
+
+.inner-shadow {
+  box-shadow: var(--inner-shadow);
 }

@@ -47,7 +47,7 @@ const ChatLog: React.FC<{
 
   return (
     <main
-      className={`${styles.log} scrollable-content`}
+      className={`${styles.log} scrollable-content inner-shadow`}
       onScroll={handleScroll}
       ref={containerRef}
     >
