@@ -18,16 +18,16 @@ func FanOut[T any](numberOfWorkers int, worker func() (chan T, chan error)) ([]c
 	return outputChanSlice, errorChanSlice
 }
 
-func MergeChannels[T any](ctx context.Context, cs ...chan T) <-chan T {
+func MergeChannels[T any](ctx context.Context, channels ...chan T) <-chan T {
 	var wg sync.WaitGroup
-	wg.Add(len(cs))
-	out := make(chan T)
+	wg.Add(len(channels))
+	outChannel := make(chan T)
 
-	output := func(c <-chan T) {
+	worker := func(channel <-chan T) {
 		defer wg.Done()
-		for n := range c {
+		for item := range channel {
 			select {
-			case out <- n:
+			case outChannel <- item:
 			case <-ctx.Done():
 				return
 			}
@@ -35,13 +35,14 @@ func MergeChannels[T any](ctx context.Context, cs ...chan T) <-chan T {
 
 	}
 
-	for _, c := range cs {
-		go output(c)
+	for _, channel := range channels {
+		go worker(channel)
 	}
 
 	go func() {
 		wg.Wait()
-		close(out)
+		close(outChannel)
 	}()
-	return out
+
+	return outChannel
 }

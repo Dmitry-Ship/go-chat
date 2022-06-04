@@ -29,22 +29,36 @@ func TestNewUsername(t *testing.T) {
 	assert.Equal(t, name.String(), "John")
 }
 
-func TestNewUsernameEmpty(t *testing.T) {
-	_, err := NewUserName("")
-
-	assert.Equal(t, err.Error(), "username is empty")
-}
-
-func TestNewUsernameEmptyLong(t *testing.T) {
-	name := ""
-
-	for i := 0; i < 101; i++ {
-		name += "a"
+func TestNewUsernameErrors(t *testing.T) {
+	type testCase struct {
+		name        string
+		expectedErr error
 	}
 
-	_, err := NewUserName(name)
+	longName := ""
 
-	assert.Equal(t, err.Error(), "username is too long")
+	for i := 0; i < 101; i++ {
+		longName += "a"
+	}
+
+	testCases := []testCase{
+		{
+			name:        "",
+			expectedErr: errors.New("username is empty"),
+		}, {
+			name:        longName,
+			expectedErr: errors.New("username is too long"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			name, err := NewUserName(tc.name)
+
+			assert.Nil(t, name)
+			assert.Equal(t, err, tc.expectedErr)
+		})
+	}
 }
 
 func TestNewUserPassword(t *testing.T) {
@@ -56,20 +70,32 @@ func TestNewUserPassword(t *testing.T) {
 	assert.Equal(t, password.String(), "asdasdasdasdasdasd")
 }
 
-func TestNewUserPasswordEmpty(t *testing.T) {
-	_, err := NewUserPassword("", func(p []byte) ([]byte, error) {
-		return []byte(p), nil
-	})
+func TestNewUserPasswordErrors(t *testing.T) {
+	type testCase struct {
+		password    string
+		expectedErr error
+	}
 
-	assert.Equal(t, err.Error(), "password is empty")
-}
+	testCases := []testCase{
+		{
+			password:    "",
+			expectedErr: errors.New("password is empty"),
+		}, {
+			password:    "123",
+			expectedErr: errors.New("password is too short"),
+		},
+	}
 
-func TestNewUserPasswordShort(t *testing.T) {
-	_, err := NewUserPassword("123", func(p []byte) ([]byte, error) {
-		return []byte(p), nil
-	})
+	for _, tc := range testCases {
+		t.Run(tc.password, func(t *testing.T) {
+			password, err := NewUserPassword(tc.password, func(p []byte) ([]byte, error) {
+				return []byte(p), nil
+			})
 
-	assert.Equal(t, err.Error(), "password is too short")
+			assert.Nil(t, password)
+			assert.Equal(t, err, tc.expectedErr)
+		})
+	}
 }
 
 func TestNewUserPasswordCompare(t *testing.T) {

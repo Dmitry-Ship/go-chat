@@ -59,5 +59,5 @@ func TestSendDirectTextMessageNotAMember(t *testing.T) {
 
 	_, err := conversation.SendTextMessage(messageID, text, participant)
 
-	assert.Equal(t, err.Error(), "user is not participant")
+	assert.Equal(t, ErrorUserNotInConversation, err)
 }

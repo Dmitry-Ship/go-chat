@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -57,22 +58,36 @@ func TestNewConversationName(t *testing.T) {
 	assert.Equal(t, "test", name.String())
 }
 
-func TestNewConversationNameEmptyName(t *testing.T) {
-	_, err := NewConversationName("")
-
-	assert.Equal(t, "name is empty", err.Error())
-}
-
-func TestNewConversationNameLongName(t *testing.T) {
-	name := ""
-
-	for i := 0; i < 101; i++ {
-		name += "a"
+func TestNewConversationNameErrors(t *testing.T) {
+	type testCase struct {
+		name        string
+		expectedErr error
 	}
 
-	_, err := NewConversationName(name)
+	longName := ""
 
-	assert.Equal(t, "name is too long", err.Error())
+	for i := 0; i < 101; i++ {
+		longName += "a"
+	}
+
+	testCases := []testCase{
+		{
+			name:        "",
+			expectedErr: errors.New("name is empty"),
+		}, {
+			name:        longName,
+			expectedErr: errors.New("name is too long"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			name, err := NewConversationName(tc.name)
+
+			assert.Nil(t, name)
+			assert.Equal(t, err, tc.expectedErr)
+		})
+	}
 }
 
 func TestRename(t *testing.T) {
@@ -106,7 +121,7 @@ func TestSendTextMessageUserNotParticipant(t *testing.T) {
 
 	_, err := conversation.SendTextMessage(messageID, "new message", participant)
 
-	assert.Equal(t, "user is not in conversation", err.Error())
+	assert.Equal(t, ErrorUserNotInConversation, err)
 }
 
 func TestSendTextMessageNotActive(t *testing.T) {
@@ -116,7 +131,7 @@ func TestSendTextMessageNotActive(t *testing.T) {
 
 	_, err := conversation.SendTextMessage(messageID, "new message", creatorParticipant)
 
-	assert.Equal(t, "conversation is not active", err.Error())
+	assert.Equal(t, ErrorConversationNotActive, err)
 }
 
 func TestSendJoinedConversationMessage(t *testing.T) {
@@ -172,7 +187,7 @@ func TestRenameNotOwner(t *testing.T) {
 	err := conversation.Rename(newName, participant)
 
 	assert.NotNil(t, err)
-	assert.Equal(t, "user is not owner", err.Error())
+	assert.Equal(t, ErrorUserNotOwner, err)
 	assert.NotEqual(t, newName.String(), conversation.Name.String())
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationCreatedEvent(conversation.Conversation.ID, creator.ID))
 }
@@ -195,7 +210,7 @@ func TestDeleteNotOwner(t *testing.T) {
 	err := conversation.Delete(participant)
 
 	assert.NotNil(t, err)
-	assert.Equal(t, "user is not owner", err.Error())
+	assert.Equal(t, ErrorUserNotOwner, err)
 	assert.Equal(t, true, conversation.IsActive)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationCreatedEvent(conversation.Conversation.ID, creator.ID))
 }
@@ -206,7 +221,7 @@ func TestDeleteNotActive(t *testing.T) {
 
 	err := conversation.Delete(creatorParticipant)
 
-	assert.Equal(t, "conversation is not active", err.Error())
+	assert.Equal(t, ErrorConversationNotActive, err)
 }
 
 func TestJoin(t *testing.T) {
@@ -230,7 +245,64 @@ func TestJoinNotActive(t *testing.T) {
 
 	_, err := conversation.Join(creator)
 
-	assert.Equal(t, err.Error(), "conversation is not active")
+	assert.Equal(t, ErrorConversationNotActive, err)
+}
+
+func TestKick(t *testing.T) {
+	conversation, _, creatorParticipant := createTestGroupConversation()
+	user := createTestUser()
+	participant, _ := conversation.Join(user)
+
+	participant, err := conversation.Kick(creatorParticipant, participant)
+
+	assert.Nil(t, err)
+	assert.Equal(t, participant.IsActive, false)
+	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationLeftEvent(conversation.Conversation.ID, user.ID))
+}
+
+func TestKickErrors(t *testing.T) {
+	conversation, _, owner := createTestGroupConversation()
+	conversation2, _, _ := createTestGroupConversation()
+	user := createTestUser()
+	participant, _ := conversation.Join(user)
+	user2 := createTestUser()
+	participant2, _ := conversation.Join(user2)
+	participantFromAnotherConversation, _ := conversation2.Join(user)
+
+	type testCase struct {
+		name        string
+		kicker      Participant
+		target      Participant
+		expectedErr error
+	}
+
+	testCases := []testCase{
+		{
+			name:        "not owner",
+			kicker:      *participant,
+			target:      *participant2,
+			expectedErr: ErrorUserNotOwner,
+		}, {
+			name:        "not in conversation",
+			kicker:      *owner,
+			target:      *participantFromAnotherConversation,
+			expectedErr: ErrorUserNotInConversation,
+		}, {
+			name:        "kick oneself",
+			kicker:      *owner,
+			target:      *owner,
+			expectedErr: ErrorCannotKickOneself,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			kicked, err := conversation.Kick(&tc.kicker, &tc.target)
+
+			assert.Nil(t, kicked)
+			assert.Equal(t, err, tc.expectedErr)
+		})
+	}
 }
 
 func TestInvite(t *testing.T) {
@@ -247,49 +319,6 @@ func TestInvite(t *testing.T) {
 	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationInvitedEvent(conversation.Conversation.ID, creatorParticipant.UserID, user.ID))
 }
 
-func TestKick(t *testing.T) {
-	conversation, _, creatorParticipant := createTestGroupConversation()
-	user := createTestUser()
-	participant, _ := conversation.Join(user)
-
-	participant, err := conversation.Kick(creatorParticipant, participant)
-
-	assert.Nil(t, err)
-	assert.Equal(t, participant.IsActive, false)
-	assert.Equal(t, participant.GetEvents()[len(participant.GetEvents())-1], newGroupConversationLeftEvent(conversation.Conversation.ID, user.ID))
-}
-
-func TestKickNotOwner(t *testing.T) {
-	conversation, _, _ := createTestGroupConversation()
-	user := createTestUser()
-	participant, _ := conversation.Join(user)
-	user2 := createTestUser()
-	participant2, _ := conversation.Join(user2)
-
-	_, err := conversation.Kick(participant2, participant)
-
-	assert.Equal(t, err.Error(), "user is not owner")
-}
-
-func TestKickNotInConversation(t *testing.T) {
-	conversation, _, creatorParticipant := createTestGroupConversation()
-	conversation2, _, _ := createTestGroupConversation()
-	user := createTestUser()
-	participant, _ := conversation2.Join(user)
-
-	_, err := conversation.Kick(creatorParticipant, participant)
-
-	assert.Equal(t, err.Error(), "user is not in conversation")
-}
-
-func TestKickOneself(t *testing.T) {
-	conversation, _, creatorParticipant := createTestGroupConversation()
-
-	_, err := conversation.Kick(creatorParticipant, creatorParticipant)
-
-	assert.Equal(t, err.Error(), "cannot kick yourself")
-}
-
 func TestInviteNotActive(t *testing.T) {
 	conversation, _, creatorParticipant := createTestGroupConversation()
 	user := createTestUser()
@@ -297,15 +326,7 @@ func TestInviteNotActive(t *testing.T) {
 
 	_, err := conversation.Invite(creatorParticipant, user)
 
-	assert.Equal(t, err.Error(), "conversation is not active")
-}
-
-func TestInviteOwner(t *testing.T) {
-	conversation, creator, creatorParticipant := createTestGroupConversation()
-
-	_, err := conversation.Invite(creatorParticipant, creator)
-
-	assert.Equal(t, err.Error(), "user is owner")
+	assert.Equal(t, ErrorConversationNotActive, err)
 }
 
 func TestInviteSelf(t *testing.T) {
@@ -315,7 +336,7 @@ func TestInviteSelf(t *testing.T) {
 
 	_, err := conversation.Invite(participant, user)
 
-	assert.Equal(t, err.Error(), "cannot invite yourself")
+	assert.Equal(t, err, ErrorCannotInviteOneself)
 }
 
 func TestLeave(t *testing.T) {
@@ -333,7 +354,7 @@ func TestLeaveNotActive(t *testing.T) {
 
 	_, err := conversation.Leave(&conversation.Owner)
 
-	assert.Equal(t, err.Error(), "conversation is not active")
+	assert.Equal(t, ErrorConversationNotActive, err)
 }
 
 func TestLeaveNotMember(t *testing.T) {
@@ -343,7 +364,7 @@ func TestLeaveNotMember(t *testing.T) {
 
 	_, err := conversation.Leave(participant)
 
-	assert.Equal(t, err.Error(), "user is not in conversation")
+	assert.Equal(t, ErrorUserNotInConversation, err)
 }
 
 func TestLeaveAlreadyLeft(t *testing.T) {
@@ -352,5 +373,5 @@ func TestLeaveAlreadyLeft(t *testing.T) {
 
 	_, err := conversation.Leave(&conversation.Owner)
 
-	assert.Equal(t, err.Error(), "user is not in conversation")
+	assert.Equal(t, ErrorUserNotInConversation, err)
 }
