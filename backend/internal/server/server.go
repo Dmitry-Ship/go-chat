@@ -12,35 +12,32 @@ type EventHandlers interface {
 }
 
 type Server struct {
-	ctx                  context.Context
-	authCommands         services.AuthService
-	conversationCommands services.ConversationService
-	notificationCommands services.NotificationService
-	notificationResolver services.NotificationResolverService
-	notificationBuilder  services.NotificationBuilderService
-	queries              readModel.QueriesRepository
-	subscriber           infra.EventsSubscriber
+	ctx                         context.Context
+	authCommands                services.AuthService
+	conversationCommands        services.ConversationService
+	notificationPipelineService services.NotificationsPipeline
+	notificationCommands        services.NotificationService
+	queries                     readModel.QueriesRepository
+	subscriber                  infra.EventsSubscriber
 }
 
 func NewServer(
 	ctx context.Context,
 	authCommands services.AuthService,
 	conversationCommands services.ConversationService,
-	notificationResolver services.NotificationResolverService,
-	notificationBuilder services.NotificationBuilderService,
+	notificationPipelineService services.NotificationsPipeline,
 	notificationCommands services.NotificationService,
 	queries readModel.QueriesRepository,
 	eventBus infra.EventsSubscriber,
 ) *Server {
 	return &Server{
-		ctx:                  ctx,
-		authCommands:         authCommands,
-		conversationCommands: conversationCommands,
-		notificationCommands: notificationCommands,
-		notificationResolver: notificationResolver,
-		notificationBuilder:  notificationBuilder,
-		queries:              queries,
-		subscriber:           eventBus,
+		ctx:                         ctx,
+		authCommands:                authCommands,
+		conversationCommands:        conversationCommands,
+		notificationPipelineService: notificationPipelineService,
+		notificationCommands:        notificationCommands,
+		queries:                     queries,
+		subscriber:                  eventBus,
 	}
 }
 

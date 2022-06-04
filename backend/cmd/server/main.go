@@ -40,12 +40,13 @@ func main() {
 	queries := postgres.NewQueriesRepository(db)
 	notificationBuilderService := services.NewNotificationBuilderService(queries)
 
+	notificationPipelineService := services.NewNotificationsPipeline(notificationService, notificationResolverService, notificationBuilderService)
+
 	server := server.NewServer(
 		ctx,
 		authService,
 		conversationService,
-		notificationResolverService,
-		notificationBuilderService,
+		notificationPipelineService,
 		notificationService,
 		queries,
 		eventBus,

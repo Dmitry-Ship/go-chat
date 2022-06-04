@@ -11,6 +11,7 @@ import (
 
 type OutgoingNotification struct {
 	Type    string      `json:"type"`
+	UserID  uuid.UUID   `json:"user_id"`
 	Payload interface{} `json:"data"`
 }
 

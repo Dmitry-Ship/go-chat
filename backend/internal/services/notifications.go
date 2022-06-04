@@ -5,9 +5,7 @@ import (
 	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
-	"sync"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
@@ -22,7 +20,7 @@ type BroadcastMessage struct {
 type buildFunc func(userID uuid.UUID) (*ws.OutgoingNotification, error)
 
 type NotificationService interface {
-	Broadcast(ids []uuid.UUID, buildMessage buildFunc) error
+	Send(message ws.OutgoingNotification) error
 	RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte))
 	Run()
 }
@@ -44,56 +42,19 @@ func NewNotificationService(
 	}
 }
 
-func (s *notificationService) worker(userID uuid.UUID, wg *sync.WaitGroup, sem chan struct{}, errorChan chan error, buildMessage buildFunc) {
-	defer func() {
-		wg.Done()
-		<-sem
-	}()
+func (s *notificationService) Send(message ws.OutgoingNotification) error {
+	bMessage := BroadcastMessage{
+		Payload: message,
+		UserID:  message.UserID,
+	}
 
-	sem <- struct{}{}
-
-	notification, err := buildMessage(userID)
+	json, err := json.Marshal(bMessage)
 
 	if err != nil {
-		errorChan <- err
-		return
+		return err
 	}
 
-	message := BroadcastMessage{
-		Payload: *notification,
-		UserID:  userID,
-	}
-
-	json, err := json.Marshal(message)
-
-	if err != nil {
-		errorChan <- err
-		return
-	}
-
-	err = s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err()
-
-	if err != nil {
-		errorChan <- err
-	}
-}
-
-func (s *notificationService) Broadcast(ids []uuid.UUID, buildMessage buildFunc) error {
-	sem := make(chan struct{}, 100)
-	errorChan := make(chan error, len(ids))
-	var wg sync.WaitGroup
-	wg.Add(len(ids))
-	for _, id := range ids {
-		go s.worker(id, &wg, sem, errorChan, buildMessage)
-	}
-	wg.Wait()
-	close(errorChan)
-
-	for err := range errorChan {
-		fmt.Println(err)
-	}
-
-	return nil
+	return s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err()
 }
 
 func (s *notificationService) RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) {
