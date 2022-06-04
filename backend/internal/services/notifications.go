@@ -17,8 +17,6 @@ type BroadcastMessage struct {
 	UserID  uuid.UUID               `json:"user_id"`
 }
 
-type buildFunc func(userID uuid.UUID) (*ws.OutgoingNotification, error)
-
 type NotificationService interface {
 	Send(message ws.OutgoingNotification) error
 	RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte))
