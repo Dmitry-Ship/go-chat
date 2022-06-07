@@ -31,7 +31,7 @@ type client struct {
 	Id                         uuid.UUID
 	connection                 *websocket.Conn
 	UserID                     uuid.UUID
-	sendChannel                chan *OutgoingNotification
+	sendChannel                chan OutgoingNotification
 	handleIncomingNotification func(userID uuid.UUID, message []byte)
 	unregisterClient           func(client *client)
 	connectionOptions          connectionOptions
@@ -42,7 +42,7 @@ func NewClient(conn *websocket.Conn, unregisterClient func(client *client), hand
 		Id:                         uuid.New(),
 		UserID:                     userID,
 		connection:                 conn,
-		sendChannel:                make(chan *OutgoingNotification, 1024),
+		sendChannel:                make(chan OutgoingNotification, 1024),
 		unregisterClient:           unregisterClient,
 		handleIncomingNotification: handleIncomingNotification,
 		connectionOptions: connectionOptions{
@@ -81,7 +81,7 @@ func (c *client) ReadPump() {
 			break
 		}
 
-		go c.handleIncomingNotification(c.UserID, message)
+		c.handleIncomingNotification(c.UserID, message)
 	}
 }
 
@@ -124,6 +124,6 @@ func (c *client) WritePump() {
 	}
 }
 
-func (c *client) sendNotification(notification *OutgoingNotification) {
+func (c *client) sendNotification(notification OutgoingNotification) {
 	c.sendChannel <- notification
 }

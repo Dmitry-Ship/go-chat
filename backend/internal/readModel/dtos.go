@@ -42,7 +42,7 @@ type MessageDTO struct {
 	CreatedAt      time.Time `json:"created_at"`
 	Text           string    `json:"text,omitempty"`
 	Type           string    `json:"type"`
-	User           *UserDTO  `json:"user"`
+	User           UserDTO   `json:"user"`
 	IsInbound      bool      `json:"is_inbound,omitempty"`
 	ConversationId uuid.UUID `json:"conversation_id"`
 }

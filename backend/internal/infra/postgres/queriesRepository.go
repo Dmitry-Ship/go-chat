@@ -41,16 +41,30 @@ func (r *queriesRepository) paginate(paginationInfo readModel.PaginationInfo) fu
 	}
 }
 
-func (r *queriesRepository) GetContacts(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
-	users := []*readModel.ContactDTO{}
+func (r *queriesRepository) GetContacts(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ContactDTO, error) {
+	users := []*User{}
 
 	err := r.db.Scopes(r.paginate(paginationInfo)).Model(&User{}).Not(&User{ID: userID}).Find(&users).Error
 
-	return users, err
+	if err != nil {
+		return nil, err
+	}
+
+	usersDTO := make([]readModel.ContactDTO, len(users))
+
+	for i, user := range users {
+		usersDTO[i] = readModel.ContactDTO{
+			ID:     user.ID,
+			Name:   user.Name,
+			Avatar: user.Avatar,
+		}
+	}
+
+	return usersDTO, nil
 }
 
-func (r *queriesRepository) GetParticipants(conversationID uuid.UUID, userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
-	users := []*readModel.ContactDTO{}
+func (r *queriesRepository) GetParticipants(conversationID uuid.UUID, userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ContactDTO, error) {
+	users := []*User{}
 
 	err := r.db.Scopes(r.paginate(paginationInfo)).
 		Model(&User{}).
@@ -59,28 +73,56 @@ func (r *queriesRepository) GetParticipants(conversationID uuid.UUID, userID uui
 		Where("participants.is_active = ?", true).
 		Find(&users).Error
 
-	return users, err
+	if err != nil {
+		return nil, err
+	}
+
+	usersDTO := make([]readModel.ContactDTO, len(users))
+
+	for i, user := range users {
+		usersDTO[i] = readModel.ContactDTO{
+			ID:     user.ID,
+			Name:   user.Name,
+			Avatar: user.Avatar,
+		}
+	}
+
+	return usersDTO, nil
 }
 
-func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ContactDTO, error) {
-	users := []*readModel.ContactDTO{}
+func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ContactDTO, error) {
+	users := []*User{}
 
 	subQuery := r.db.Select("user_id").Where("conversation_id = ?", conversationID).Where("is_active = ?", true).Table("participants")
 	err := r.db.Scopes(r.paginate(paginationInfo)).Model(&User{}).Where("id NOT IN (?)", subQuery).Find(&users).Error
-
-	return users, err
-}
-
-func (r *queriesRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error) {
-	user := User{}
-
-	err := r.db.Where(&User{ID: id}).First(&user).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	userDTO := &readModel.UserDTO{
+	usersDTO := make([]readModel.ContactDTO, len(users))
+
+	for i, user := range users {
+		usersDTO[i] = readModel.ContactDTO{
+			ID:     user.ID,
+			Name:   user.Name,
+			Avatar: user.Avatar,
+		}
+	}
+
+	return usersDTO, nil
+}
+
+func (r *queriesRepository) GetUserByID(id uuid.UUID) (readModel.UserDTO, error) {
+	user := User{}
+
+	err := r.db.Where(&User{ID: id}).First(&user).Error
+
+	if err != nil {
+		return readModel.UserDTO{}, err
+	}
+
+	userDTO := readModel.UserDTO{
 		ID:     user.ID,
 		Name:   user.Name,
 		Avatar: user.Avatar,
@@ -89,7 +131,7 @@ func (r *queriesRepository) GetUserByID(id uuid.UUID) (*readModel.UserDTO, error
 	return userDTO, nil
 }
 
-func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.MessageDTO, error) {
+func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.MessageDTO, error) {
 	queryResults := []*messageQuery{}
 
 	err := r.db.Scopes(r.paginate(paginationInfo)).
@@ -107,16 +149,16 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 		return nil, err
 	}
 
-	messages := make([]*readModel.MessageDTO, len(queryResults))
+	messages := make([]readModel.MessageDTO, len(queryResults))
 
 	for i, result := range queryResults {
-		messages[i] = toMessageDTO(result, requestUserID)
+		messages[i] = toMessageDTO(*result, requestUserID)
 	}
 
 	return messages, nil
 }
 
-func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (*readModel.MessageDTO, error) {
+func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
 	message := &messageQuery{}
 
 	err := r.db.Model(&Message{}).
@@ -129,13 +171,13 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 		Find(&message).Error
 
 	if err != nil {
-		return nil, err
+		return readModel.MessageDTO{}, err
 	}
 
-	return toMessageDTO(message, requestUserID), nil
+	return toMessageDTO(*message, requestUserID), nil
 }
 
-func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]*readModel.ConversationDTO, error) {
+func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ConversationDTO, error) {
 	conversations := []*Conversation{}
 
 	err := r.db.Scopes(r.paginate(paginationInfo)).
@@ -151,10 +193,10 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 		return nil, err
 	}
 
-	conversationDTOs := make([]*readModel.ConversationDTO, len(conversations))
+	conversationDTOs := make([]readModel.ConversationDTO, len(conversations))
 
 	for i, conversation := range conversations {
-		conversationDTO := &readModel.ConversationDTO{
+		conversationDTO := readModel.ConversationDTO{
 			ID:   conversation.ID,
 			Type: conversationTypesMap[conversation.Type].String(),
 		}
@@ -173,7 +215,7 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 			First(&message).Error
 
 		if err == nil {
-			conversationDTO.LastMessage = *toMessageDTO(message, userID)
+			conversationDTO.LastMessage = toMessageDTO(*message, userID)
 		}
 
 		switch conversationTypesMap[conversation.Type] {
@@ -219,16 +261,16 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 	return conversationDTOs, nil
 }
 
-func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*readModel.ConversationFullDTO, error) {
+func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (readModel.ConversationFullDTO, error) {
 	conversation := Conversation{}
 
 	err := r.db.Where(&Conversation{ID: id, IsActive: true}).First(&conversation).Error
 
 	if err != nil {
-		return nil, err
+		return readModel.ConversationFullDTO{}, err
 	}
 
-	conversationDTO := &readModel.ConversationFullDTO{
+	conversationDTO := readModel.ConversationFullDTO{
 		ID:        conversation.ID,
 		CreatedAt: conversation.CreatedAt,
 		Type:      conversationTypesMap[conversation.Type].String(),
@@ -252,7 +294,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 			First(&userQueryResult).Error
 
 		if err != nil {
-			return nil, err
+			return readModel.ConversationFullDTO{}, err
 		}
 
 		conversationDTO.Avatar = userQueryResult.UserAvatar
@@ -263,7 +305,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 		err := r.db.Where(&GroupConversation{ConversationID: id}).First(&groupConversation).Error
 
 		if err != nil {
-			return nil, err
+			return readModel.ConversationFullDTO{}, err
 		}
 
 		conversationDTO.Avatar = groupConversation.Avatar
@@ -275,7 +317,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 		err = r.db.Model(&Participant{}).Where(&Participant{ConversationID: conversation.ID, IsActive: true}).Count(&participantsCount).Error
 
 		if err != nil {
-			return nil, err
+			return readModel.ConversationFullDTO{}, err
 		}
 		conversationDTO.ParticipantsCount = participantsCount
 
@@ -286,7 +328,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (*re
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				hasUserJoined = false
 			} else {
-				return nil, err
+				return readModel.ConversationFullDTO{}, err
 			}
 		}
 

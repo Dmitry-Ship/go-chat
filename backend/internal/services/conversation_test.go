@@ -33,7 +33,7 @@ func (m *groupConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.GroupCo
 
 	creator := domain.NewUser(m.groupConversationOwnerID, userName, newPassword)
 
-	conversation, err := domain.NewGroupConversation(id, name, creator)
+	conversation, err := domain.NewGroupConversation(id, name, *creator)
 
 	return conversation, err
 }

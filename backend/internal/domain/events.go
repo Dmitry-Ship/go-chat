@@ -24,11 +24,11 @@ type domainEvent struct {
 	name string
 }
 
-func (e *domainEvent) GetName() string {
+func (e domainEvent) GetName() string {
 	return e.name
 }
 
-func (e *domainEvent) GetTopic() string {
+func (e domainEvent) GetTopic() string {
 	return DomainEventTopic
 }
 
@@ -36,7 +36,7 @@ type conversationEvent struct {
 	conversationID uuid.UUID
 }
 
-func (e *conversationEvent) GetConversationID() uuid.UUID {
+func (e conversationEvent) GetConversationID() uuid.UUID {
 	return e.conversationID
 }
 
@@ -52,8 +52,8 @@ type MessageSent struct {
 	MessageID uuid.UUID
 }
 
-func NewMessageSent(conversationID uuid.UUID, messageID uuid.UUID, userID uuid.UUID) *MessageSent {
-	return &MessageSent{
+func NewMessageSent(conversationID uuid.UUID, messageID uuid.UUID, userID uuid.UUID) MessageSent {
+	return MessageSent{
 		domainEvent: domainEvent{
 			name: MessageSentEventName,
 		},
@@ -70,8 +70,8 @@ type GroupConversationDeleted struct {
 	conversationEvent
 }
 
-func newGroupConversationDeletedEvent(conversationID uuid.UUID) *GroupConversationDeleted {
-	return &GroupConversationDeleted{
+func newGroupConversationDeletedEvent(conversationID uuid.UUID) GroupConversationDeleted {
+	return GroupConversationDeleted{
 		domainEvent: domainEvent{
 			name: GroupConversationDeletedEventName,
 		},
@@ -88,8 +88,8 @@ type GroupConversationRenamed struct {
 	NewName string
 }
 
-func newGroupConversationRenamedEvent(conversationID uuid.UUID, userID uuid.UUID, newName string) *GroupConversationRenamed {
-	return &GroupConversationRenamed{
+func newGroupConversationRenamedEvent(conversationID uuid.UUID, userID uuid.UUID, newName string) GroupConversationRenamed {
+	return GroupConversationRenamed{
 		domainEvent: domainEvent{
 			name: GroupConversationRenamedEventName,
 		},
@@ -107,8 +107,8 @@ type GroupConversationCreated struct {
 	OwnerID uuid.UUID
 }
 
-func newGroupConversationCreatedEvent(conversationID uuid.UUID, ownerId uuid.UUID) *GroupConversationCreated {
-	return &GroupConversationCreated{
+func newGroupConversationCreatedEvent(conversationID uuid.UUID, ownerId uuid.UUID) GroupConversationCreated {
+	return GroupConversationCreated{
 		domainEvent: domainEvent{
 			name: GroupConversationCreatedEventName,
 		},
@@ -125,8 +125,8 @@ type GroupConversationLeft struct {
 	UserID uuid.UUID
 }
 
-func newGroupConversationLeftEvent(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationLeft {
-	return &GroupConversationLeft{
+func newGroupConversationLeftEvent(conversationID uuid.UUID, userID uuid.UUID) GroupConversationLeft {
+	return GroupConversationLeft{
 		domainEvent: domainEvent{
 			name: GroupConversationLeftEventName,
 		},
@@ -143,8 +143,8 @@ type GroupConversationJoined struct {
 	UserID uuid.UUID
 }
 
-func newGroupConversationJoinedEvent(conversationID uuid.UUID, userID uuid.UUID) *GroupConversationJoined {
-	return &GroupConversationJoined{
+func newGroupConversationJoinedEvent(conversationID uuid.UUID, userID uuid.UUID) GroupConversationJoined {
+	return GroupConversationJoined{
 		domainEvent: domainEvent{
 			name: GroupConversationJoinedEventName,
 		},
@@ -162,8 +162,8 @@ type GroupConversationInvited struct {
 	InvitedBy uuid.UUID
 }
 
-func newGroupConversationInvitedEvent(conversationID uuid.UUID, userID uuid.UUID, invitee uuid.UUID) *GroupConversationInvited {
-	return &GroupConversationInvited{
+func newGroupConversationInvitedEvent(conversationID uuid.UUID, userID uuid.UUID, invitee uuid.UUID) GroupConversationInvited {
+	return GroupConversationInvited{
 		domainEvent: domainEvent{
 			name: GroupConversationInvitedEventName,
 		},
@@ -181,8 +181,8 @@ type DirectConversationCreated struct {
 	UserIDs []uuid.UUID
 }
 
-func newDirectConversationCreatedEvent(conversationID uuid.UUID, userIDs []uuid.UUID) *DirectConversationCreated {
-	return &DirectConversationCreated{
+func newDirectConversationCreatedEvent(conversationID uuid.UUID, userIDs []uuid.UUID) DirectConversationCreated {
+	return DirectConversationCreated{
 		domainEvent: domainEvent{
 			name: DirectConversationCreatedEventName,
 		},

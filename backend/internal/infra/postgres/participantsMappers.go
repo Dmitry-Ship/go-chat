@@ -4,7 +4,7 @@ import (
 	"GitHub/go-chat/backend/internal/domain"
 )
 
-func toParticipantPersistence(participant *domain.Participant) *Participant {
+func toParticipantPersistence(participant domain.Participant) *Participant {
 	return &Participant{
 		ID:             participant.ID,
 		ConversationID: participant.ConversationID,
@@ -13,7 +13,7 @@ func toParticipantPersistence(participant *domain.Participant) *Participant {
 	}
 }
 
-func toParticipantDomain(participant *Participant) *domain.Participant {
+func toParticipantDomain(participant Participant) *domain.Participant {
 	return &domain.Participant{
 		ID:             participant.ID,
 		ConversationID: participant.ConversationID,

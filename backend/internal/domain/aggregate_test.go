@@ -7,15 +7,15 @@ import (
 )
 
 func TestDefaultGetEvents(t *testing.T) {
-	aggregate := &aggregate{}
+	aggregate := aggregate{}
 
 	assert.Equal(t, len(aggregate.GetEvents()), 0)
 }
 
 func TestAddEvents(t *testing.T) {
-	aggregate := &aggregate{}
+	aggregate := aggregate{}
 
-	event := &domainEvent{
+	event := domainEvent{
 		name: "event",
 	}
 

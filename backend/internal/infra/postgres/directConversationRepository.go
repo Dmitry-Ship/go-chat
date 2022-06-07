@@ -25,7 +25,7 @@ func (r *directConversationRepository) Store(conversation *domain.DirectConversa
 		}
 
 		for _, participant := range conversation.Participants {
-			if err := tx.Create(toParticipantPersistence(&participant)).Error; err != nil {
+			if err := tx.Create(toParticipantPersistence(participant)).Error; err != nil {
 				return err
 			}
 		}

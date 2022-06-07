@@ -57,25 +57,25 @@ type textMessageContent struct {
 	text string
 }
 
-func newTextMessageContent(text string) (*textMessageContent, error) {
+func newTextMessageContent(text string) (textMessageContent, error) {
 	if text == "" {
-		return nil, errors.New("text is empty")
+		return textMessageContent{}, errors.New("text is empty")
 	}
 
 	if len(text) > 1000 {
-		return nil, errors.New("text is too long")
+		return textMessageContent{}, errors.New("text is too long")
 	}
 
-	return &textMessageContent{
+	return textMessageContent{
 		text: text,
 	}, nil
 }
 
-func (m *textMessageContent) String() string {
+func (m textMessageContent) String() string {
 	return m.text
 }
 
-func newTextMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, text *textMessageContent) *Message {
+func newTextMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, text textMessageContent) *Message {
 	return newMessage(messageID, conversationID, userID, MessageTypeText, text)
 }
 
@@ -83,32 +83,29 @@ type renamedMessageContent struct {
 	newName string
 }
 
-func newRenamedMessageContent(newName string) *renamedMessageContent {
-	return &renamedMessageContent{
+func newRenamedMessageContent(newName string) renamedMessageContent {
+	return renamedMessageContent{
 		newName: newName,
 	}
 }
 
-func (m *renamedMessageContent) String() string {
+func (m renamedMessageContent) String() string {
 	return m.newName
 }
 
-func newConversationRenamedMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content *renamedMessageContent) *Message {
+func newConversationRenamedMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content renamedMessageContent) *Message {
 	return newMessage(messageID, conversationID, userID, MessageTypeRenamedConversation, content)
 }
 
 type emptyMessageContent struct {
-	text string
 }
 
-func newEmptyMessageContent() *emptyMessageContent {
-	return &emptyMessageContent{
-		text: "newName",
-	}
+func newEmptyMessageContent() emptyMessageContent {
+	return emptyMessageContent{}
 }
 
-func (m *emptyMessageContent) String() string {
-	return m.text
+func (m emptyMessageContent) String() string {
+	return ""
 }
 
 func newLeftConversationMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID) *Message {

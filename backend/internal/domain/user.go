@@ -20,16 +20,16 @@ func (n *userName) String() string {
 	return n.name
 }
 
-func NewUserName(name string) (*userName, error) {
+func NewUserName(name string) (userName, error) {
 	if name == "" {
-		return nil, errors.New("username is empty")
+		return userName{}, errors.New("username is empty")
 	}
 
 	if len(name) > 100 {
-		return nil, errors.New("username is too long")
+		return userName{}, errors.New("username is too long")
 	}
 
-	return &userName{
+	return userName{
 		name: name,
 	}, nil
 }
@@ -38,11 +38,11 @@ type userPassword struct {
 	password string
 }
 
-func (n *userPassword) String() string {
+func (n userPassword) String() string {
 	return n.password
 }
 
-func (n *userPassword) Compare(password *userPassword, compare func(p1 []byte, p2 []byte) error) error {
+func (n *userPassword) Compare(password userPassword, compare func(p1 []byte, p2 []byte) error) error {
 	err := compare([]byte(n.password), []byte(password.String()))
 
 	if err != nil {
@@ -52,24 +52,24 @@ func (n *userPassword) Compare(password *userPassword, compare func(p1 []byte, p
 	return nil
 }
 
-func NewUserPassword(password string, hash func(p []byte) ([]byte, error)) (*userPassword, error) {
+func NewUserPassword(password string, hash func(p []byte) ([]byte, error)) (userPassword, error) {
 	if password == "" {
-		return nil, errors.New("password is empty")
+		return userPassword{}, errors.New("password is empty")
 	}
 
 	if len(password) < 8 {
-		return nil, errors.New("password is too short")
+		return userPassword{}, errors.New("password is too short")
 	}
 
 	bytes, err := hash([]byte(password))
 
 	if err != nil {
-		return nil, err
+		return userPassword{}, err
 	}
 
 	hashedPassword := string(bytes)
 
-	return &userPassword{
+	return userPassword{
 		password: hashedPassword,
 	}, nil
 }
@@ -78,12 +78,12 @@ type User struct {
 	aggregate
 	ID           uuid.UUID
 	Avatar       string
-	Name         *userName
-	Password     *userPassword
+	Name         userName
+	Password     userPassword
 	RefreshToken string
 }
 
-func NewUser(userID uuid.UUID, username *userName, password *userPassword) *User {
+func NewUser(userID uuid.UUID, username userName, password userPassword) *User {
 	return &User{
 		ID:       userID,
 		Avatar:   string(username.String()[0]),

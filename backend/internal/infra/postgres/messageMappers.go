@@ -47,7 +47,7 @@ type messageQuery struct {
 	Content        string
 }
 
-func toMessageDTO(message *messageQuery, requestUserID uuid.UUID) *readModel.MessageDTO {
+func toMessageDTO(message messageQuery, requestUserID uuid.UUID) readModel.MessageDTO {
 	text := ""
 
 	switch messageTypesMap[message.Type] {
@@ -65,13 +65,13 @@ func toMessageDTO(message *messageQuery, requestUserID uuid.UUID) *readModel.Mes
 		text = "Unknown message type"
 	}
 
-	massageDTO := &readModel.MessageDTO{
+	massageDTO := readModel.MessageDTO{
 		ID:             message.ID,
 		CreatedAt:      message.CreatedAt,
 		Text:           text,
 		Type:           messageTypesMap[message.Type].String(),
 		ConversationId: message.ConversationID,
-		User: &readModel.UserDTO{
+		User: readModel.UserDTO{
 			ID:     message.UserID,
 			Avatar: message.UserAvatar,
 			Name:   message.UserName,

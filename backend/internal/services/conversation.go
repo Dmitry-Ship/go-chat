@@ -60,7 +60,7 @@ func (s *conversationService) CreateGroupConversation(conversationID uuid.UUID, 
 		return err
 	}
 
-	conversation, err := domain.NewGroupConversation(conversationID, conversationName, user)
+	conversation, err := domain.NewGroupConversation(conversationID, conversationName, *user)
 
 	if err != nil {
 		return err
@@ -152,7 +152,7 @@ func (s *conversationService) SendDirectTextMessage(conversationID uuid.UUID, us
 		return err
 	}
 
-	message, err := conversation.SendTextMessage(messageID, messageText, participant)
+	message, err := conversation.SendTextMessage(messageID, messageText, *participant)
 
 	if err != nil {
 		return err
@@ -294,7 +294,7 @@ func (s *conversationService) Join(conversationID uuid.UUID, userID uuid.UUID) e
 		return err
 	}
 
-	participant, err := conversation.Join(user)
+	participant, err := conversation.Join(*user)
 
 	if err != nil {
 		return err

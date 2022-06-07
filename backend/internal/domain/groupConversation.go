@@ -27,16 +27,16 @@ func (n *conversationName) String() string {
 	return n.name
 }
 
-func NewConversationName(name string) (*conversationName, error) {
+func NewConversationName(name string) (conversationName, error) {
 	if name == "" {
-		return nil, errors.New("name is empty")
+		return conversationName{}, errors.New("name is empty")
 	}
 
 	if len(name) > 100 {
-		return nil, errors.New("name is too long")
+		return conversationName{}, errors.New("name is too long")
 	}
 
-	return &conversationName{
+	return conversationName{
 		name: name,
 	}, nil
 }
@@ -49,7 +49,7 @@ type GroupConversation struct {
 	Owner  Participant
 }
 
-func NewGroupConversation(id uuid.UUID, name *conversationName, creator *User) (*GroupConversation, error) {
+func NewGroupConversation(id uuid.UUID, name conversationName, creator User) (*GroupConversation, error) {
 	groupConversation := &GroupConversation{
 		Conversation: Conversation{
 			ID:       id,
@@ -57,7 +57,7 @@ func NewGroupConversation(id uuid.UUID, name *conversationName, creator *User) (
 			IsActive: true,
 		},
 		ID:     uuid.New(),
-		Name:   *name,
+		Name:   name,
 		Avatar: string(name.String()[0]),
 		Owner:  *NewParticipant(uuid.New(), id, creator.ID),
 	}
@@ -91,7 +91,7 @@ func (groupConversation *GroupConversation) Delete(participant *Participant) err
 	return nil
 }
 
-func (groupConversation *GroupConversation) Rename(newName *conversationName, participant *Participant) error {
+func (groupConversation *GroupConversation) Rename(newName conversationName, participant *Participant) error {
 	if !groupConversation.isJoined(participant) {
 		return ErrorUserNotInConversation
 	}
@@ -100,7 +100,7 @@ func (groupConversation *GroupConversation) Rename(newName *conversationName, pa
 		return ErrorUserNotOwner
 	}
 
-	groupConversation.Name = *newName
+	groupConversation.Name = newName
 	groupConversation.Avatar = string(newName.String()[0])
 
 	groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.Conversation.ID, participant.UserID, newName.String()))
@@ -108,7 +108,7 @@ func (groupConversation *GroupConversation) Rename(newName *conversationName, pa
 	return nil
 }
 
-func (groupConversation *GroupConversation) Join(user *User) (*Participant, error) {
+func (groupConversation *GroupConversation) Join(user User) (*Participant, error) {
 	if !groupConversation.Conversation.IsActive {
 		return nil, ErrorConversationNotActive
 	}

@@ -59,6 +59,6 @@ func (ac *activeClients) SendToUserClients(userID uuid.UUID, notification Outgoi
 	}
 
 	for _, client := range userClients {
-		client.sendNotification(&notification)
+		client.sendNotification(notification)
 	}
 }

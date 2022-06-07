@@ -53,9 +53,8 @@ func TestNewUsernameErrors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			name, err := NewUserName(tc.name)
+			_, err := NewUserName(tc.name)
 
-			assert.Nil(t, name)
 			assert.Equal(t, err, tc.expectedErr)
 		})
 	}
@@ -88,11 +87,10 @@ func TestNewUserPasswordErrors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.password, func(t *testing.T) {
-			password, err := NewUserPassword(tc.password, func(p []byte) ([]byte, error) {
+			_, err := NewUserPassword(tc.password, func(p []byte) ([]byte, error) {
 				return []byte(p), nil
 			})
 
-			assert.Nil(t, password)
 			assert.Equal(t, err, tc.expectedErr)
 		})
 	}

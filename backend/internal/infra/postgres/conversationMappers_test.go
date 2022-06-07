@@ -14,7 +14,7 @@ func TestToGroupConversationPersistence(t *testing.T) {
 	userPassword, _ := domain.NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
 	creator := domain.NewUser(uuid.New(), userName, userPassword)
 
-	conversation, _ := domain.NewGroupConversation(uuid.New(), name, creator)
+	conversation, _ := domain.NewGroupConversation(uuid.New(), name, *creator)
 
 	persistence := toGroupConversationPersistence(conversation)
 
@@ -29,7 +29,7 @@ func TestToGroupConversationDomain(t *testing.T) {
 	conversationId := uuid.New()
 	userID := uuid.New()
 
-	groupConversation := &GroupConversation{
+	groupConversation := GroupConversation{
 		ID:             uuid.New(),
 		ConversationID: conversationId,
 		Name:           "cool room",
@@ -37,12 +37,12 @@ func TestToGroupConversationDomain(t *testing.T) {
 		OwnerID:        userID,
 	}
 
-	conversation := &Conversation{
+	conversation := Conversation{
 		ID:   conversationId,
 		Type: 0,
 	}
 
-	participant := &Participant{
+	participant := Participant{
 		ID:             uuid.New(),
 		ConversationID: conversationId,
 		UserID:         userID,

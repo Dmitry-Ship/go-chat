@@ -44,7 +44,7 @@ func TestSendDirectTextMessage(t *testing.T) {
 	messageID := uuid.New()
 	text := "Hello world"
 
-	message, err := conversation.SendTextMessage(messageID, text, &conversation.Participants[0])
+	message, err := conversation.SendTextMessage(messageID, text, conversation.Participants[0])
 
 	assert.Nil(t, err)
 	assert.Equal(t, message.Content.String(), text)
@@ -57,7 +57,7 @@ func TestSendDirectTextMessageNotAMember(t *testing.T) {
 	text := "Hello world"
 	participant := NewParticipant(uuid.New(), uuid.New(), uuid.New())
 
-	_, err := conversation.SendTextMessage(messageID, text, participant)
+	_, err := conversation.SendTextMessage(messageID, text, *participant)
 
 	assert.Equal(t, ErrorUserNotInConversation, err)
 }

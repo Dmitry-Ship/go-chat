@@ -34,12 +34,12 @@ func (s *notificationResolverService) GetReceiversFromEvent(event domain.DomainE
 	// find notification receivers
 	switch e := event.(type) {
 	case
-		*domain.GroupConversationRenamed,
-		*domain.GroupConversationLeft,
-		*domain.GroupConversationJoined,
-		*domain.GroupConversationInvited,
-		*domain.MessageSent,
-		*domain.GroupConversationDeleted:
+		domain.GroupConversationRenamed,
+		domain.GroupConversationLeft,
+		domain.GroupConversationJoined,
+		domain.GroupConversationInvited,
+		domain.MessageSent,
+		domain.GroupConversationDeleted:
 		if e, ok := e.(domain.ConversationEvent); ok {
 			receiversIDs, err = s.GetConversationRecipients(e.GetConversationID())
 

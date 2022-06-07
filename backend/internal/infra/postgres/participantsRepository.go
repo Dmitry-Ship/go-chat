@@ -19,11 +19,11 @@ func NewParticipantRepository(db *gorm.DB, eventPublisher infra.EventPublisher) 
 }
 
 func (r *participantRepository) Store(participant *domain.Participant) error {
-	return r.store(participant, toParticipantPersistence(participant))
+	return r.store(participant, toParticipantPersistence(*participant))
 }
 
 func (r *participantRepository) Update(participant *domain.Participant) error {
-	return r.update(participant, toParticipantPersistence(participant))
+	return r.update(participant, toParticipantPersistence(*participant))
 }
 
 func (r *participantRepository) GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
@@ -35,7 +35,7 @@ func (r *participantRepository) GetByConversationIDAndUserID(conversationID uuid
 		return nil, err
 	}
 
-	return toParticipantDomain(&participantPersistence), nil
+	return toParticipantDomain(participantPersistence), nil
 }
 
 func (r *participantRepository) GetIDsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error) {

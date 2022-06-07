@@ -15,13 +15,13 @@ type gracefulServer struct {
 	httpServer *http.Server
 }
 
-func NewGracefulServer() *gracefulServer {
+func NewGracefulServer() gracefulServer {
 	port := os.Getenv("PORT")
 
 	httpServer := &http.Server{
 		Addr: ":" + port,
 	}
-	return &gracefulServer{
+	return gracefulServer{
 		httpServer: httpServer,
 	}
 }

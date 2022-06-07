@@ -68,7 +68,7 @@ func (h *notificationsPipeline) BuildMessage(ctx context.Context, receiverIDsCha
 			}
 
 			select {
-			case messageChan <- *message:
+			case messageChan <- message:
 			case <-ctx.Done():
 				return
 

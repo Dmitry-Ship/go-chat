@@ -38,7 +38,7 @@ func toGroupConversationPersistence(conversation *domain.GroupConversation) *Gro
 	}
 }
 
-func toGroupConversationDomain(conversation *Conversation, groupConversation *GroupConversation, participant *Participant) *domain.GroupConversation {
+func toGroupConversationDomain(conversation Conversation, groupConversation GroupConversation, participant Participant) *domain.GroupConversation {
 	name, err := domain.NewConversationName(groupConversation.Name)
 
 	if err != nil {
@@ -47,7 +47,7 @@ func toGroupConversationDomain(conversation *Conversation, groupConversation *Gr
 
 	return &domain.GroupConversation{
 		ID:     groupConversation.ID,
-		Name:   *name,
+		Name:   name,
 		Avatar: groupConversation.Avatar,
 		Owner: domain.Participant{
 			UserID:         participant.UserID,

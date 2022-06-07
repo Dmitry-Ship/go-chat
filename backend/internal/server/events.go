@@ -40,13 +40,13 @@ func (h *Server) listenForEvents() {
 
 func (h *Server) createMessage(event domain.DomainEvent) error {
 	switch e := event.(type) {
-	case *domain.GroupConversationRenamed:
+	case domain.GroupConversationRenamed:
 		return h.conversationCommands.SendRenamedConversationMessage(e.GetConversationID(), e.UserID, e.NewName)
-	case *domain.GroupConversationLeft:
+	case domain.GroupConversationLeft:
 		return h.conversationCommands.SendLeftConversationMessage(e.GetConversationID(), e.UserID)
-	case *domain.GroupConversationJoined:
+	case domain.GroupConversationJoined:
 		return h.conversationCommands.SendJoinedConversationMessage(e.GetConversationID(), e.UserID)
-	case *domain.GroupConversationInvited:
+	case domain.GroupConversationInvited:
 		return h.conversationCommands.SendInvitedConversationMessage(e.GetConversationID(), e.UserID)
 	}
 

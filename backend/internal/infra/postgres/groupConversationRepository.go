@@ -28,7 +28,7 @@ func (r *groupConversationRepository) Store(conversation *domain.GroupConversati
 			return err
 		}
 
-		if err := tx.Create(toParticipantPersistence(&conversation.Owner)).Error; err != nil {
+		if err := tx.Create(toParticipantPersistence(conversation.Owner)).Error; err != nil {
 			return err
 		}
 
@@ -75,5 +75,5 @@ func (r *groupConversationRepository) GetByID(id uuid.UUID) (*domain.GroupConver
 		return nil, err
 	}
 
-	return toGroupConversationDomain(&conversation, &groupConversation, &participant), nil
+	return toGroupConversationDomain(conversation, groupConversation, participant), nil
 }

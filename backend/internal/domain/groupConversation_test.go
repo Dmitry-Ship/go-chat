@@ -15,7 +15,7 @@ func createTestGroupConversation() (*GroupConversation, *User, *Participant) {
 	userName, _ := NewUserName("test")
 	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
 	creatorUser := NewUser(creatorId, userName, userPassword)
-	conversation, _ := NewGroupConversation(conversationID, name, creatorUser)
+	conversation, _ := NewGroupConversation(conversationID, name, *creatorUser)
 
 	return conversation, creatorUser, &conversation.Owner
 }
@@ -37,10 +37,10 @@ func TestNewGroupConversation(t *testing.T) {
 	creator := NewUser(creatorId, userName, userPassword)
 	name, _ := NewConversationName("test")
 
-	conversation, err := NewGroupConversation(conversationID, name, creator)
+	conversation, err := NewGroupConversation(conversationID, name, *creator)
 
 	assert.Equal(t, conversation.Conversation.ID, conversationID)
-	assert.Equal(t, name, &conversation.Name)
+	assert.Equal(t, name, conversation.Name)
 	assert.Equal(t, string(name.String()[0]), conversation.Avatar)
 	assert.Equal(t, conversation.Type, ConversationTypeGroup)
 	assert.Equal(t, conversation.Conversation.ID, conversation.Owner.ConversationID)
@@ -82,9 +82,8 @@ func TestNewConversationNameErrors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			name, err := NewConversationName(tc.name)
+			_, err := NewConversationName(tc.name)
 
-			assert.Nil(t, name)
 			assert.Equal(t, err, tc.expectedErr)
 		})
 	}
@@ -182,7 +181,7 @@ func TestRenameNotOwner(t *testing.T) {
 	conversation, creator, _ := createTestGroupConversation()
 	newName, _ := NewConversationName("new name")
 	user := createTestUser()
-	participant, _ := conversation.Join(user)
+	participant, _ := conversation.Join(*user)
 
 	err := conversation.Rename(newName, participant)
 
@@ -205,7 +204,7 @@ func TestDelete(t *testing.T) {
 func TestDeleteNotOwner(t *testing.T) {
 	conversation, creator, _ := createTestGroupConversation()
 	user := createTestUser()
-	participant, _ := conversation.Join(user)
+	participant, _ := conversation.Join(*user)
 
 	err := conversation.Delete(participant)
 
@@ -228,7 +227,7 @@ func TestJoin(t *testing.T) {
 	conversation, _, _ := createTestGroupConversation()
 	user := createTestUser()
 
-	participant, err := conversation.Join(user)
+	participant, err := conversation.Join(*user)
 
 	assert.Nil(t, err)
 	assert.Equal(t, conversation.Conversation.ID, participant.ConversationID)
@@ -243,7 +242,7 @@ func TestJoinNotActive(t *testing.T) {
 
 	_ = conversation.Delete(creatorParticipant)
 
-	_, err := conversation.Join(creator)
+	_, err := conversation.Join(*creator)
 
 	assert.Equal(t, ErrorConversationNotActive, err)
 }
@@ -251,7 +250,7 @@ func TestJoinNotActive(t *testing.T) {
 func TestKick(t *testing.T) {
 	conversation, _, creatorParticipant := createTestGroupConversation()
 	user := createTestUser()
-	participant, _ := conversation.Join(user)
+	participant, _ := conversation.Join(*user)
 
 	participant, err := conversation.Kick(creatorParticipant, participant)
 
@@ -264,10 +263,10 @@ func TestKickErrors(t *testing.T) {
 	conversation, _, owner := createTestGroupConversation()
 	conversation2, _, _ := createTestGroupConversation()
 	user := createTestUser()
-	participant, _ := conversation.Join(user)
+	participant, _ := conversation.Join(*user)
 	user2 := createTestUser()
-	participant2, _ := conversation.Join(user2)
-	participantFromAnotherConversation, _ := conversation2.Join(user)
+	participant2, _ := conversation.Join(*user2)
+	participantFromAnotherConversation, _ := conversation2.Join(*user)
 
 	type testCase struct {
 		name        string
@@ -332,7 +331,7 @@ func TestInviteNotActive(t *testing.T) {
 func TestInviteSelf(t *testing.T) {
 	conversation, _, _ := createTestGroupConversation()
 	user := createTestUser()
-	participant, _ := conversation.Join(user)
+	participant, _ := conversation.Join(*user)
 
 	_, err := conversation.Invite(participant, user)
 
