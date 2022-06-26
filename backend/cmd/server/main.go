@@ -8,16 +8,28 @@ import (
 	"GitHub/go-chat/backend/internal/server"
 	"GitHub/go-chat/backend/internal/services"
 	"context"
+	"os"
 )
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	redisClient := redisPubsub.GetRedisClient(ctx)
+	redisClient := redisPubsub.GetRedisClient(ctx, redisPubsub.RedisConfig{
+		Host:     os.Getenv("REDIS_HOST"),
+		Port:     os.Getenv("REDIS_PORT"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+	})
 	defer redisClient.Close()
 
-	db := postgres.NewDatabaseConnection()
+	db := postgres.NewDatabaseConnection(postgres.DbConfig{
+		Host:     os.Getenv("DB_HOST"),
+		Port:     os.Getenv("DB_PORT"),
+		User:     os.Getenv("DB_USER"),
+		Name:     os.Getenv("DB_NAME"),
+		Password: os.Getenv("DB_PASSWORD"),
+	})
+
 	eventBus := infra.NewEventBus()
 	defer eventBus.Close()
 

@@ -3,20 +3,22 @@ package postgres
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func NewDatabaseConnection() *gorm.DB {
-	port := os.Getenv("DB_PORT")
-	host := os.Getenv("DB_HOST")
-	user := os.Getenv("DB_USER")
-	dbname := os.Getenv("DB_NAME")
-	dbpassword := os.Getenv("DB_PASSWORD")
+type DbConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Name     string
+}
 
-	options := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s", host, port, user, dbname, dbpassword)
+func NewDatabaseConnection(conf DbConfig) *gorm.DB {
+
+	options := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s", conf.Host, conf.Port, conf.User, conf.Name, conf.Password)
 
 	db, err := gorm.Open(postgres.Open(options), &gorm.Config{})
 	if err != nil {
@@ -29,7 +31,7 @@ func NewDatabaseConnection() *gorm.DB {
 		panic("⛔️ Could not migrate database")
 	}
 
-	log.Printf("💿 Connected to database %s", dbname)
+	log.Printf("💿 Connected to database %s", conf.Name)
 
 	return db
 }
