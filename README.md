@@ -5,13 +5,8 @@ Real time multi room chat app, built solely for educational purposes.
 ## ⚡️ Quick Start
 
 1. Install and boot up Docker
-2. Create `.env` file at the root directory taking `.env.example` as a base.
-3. Run the following command:
-
-```
-docker-compose up --build
-```
-
+2. Run `cp .env.example .env` and tweak it to your needs
+3. Run `docker-compose up --build`
 4. Go to http://localhost:8080
 
 ## ⚙️ Architecture overview

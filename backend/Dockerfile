@@ -1,5 +1,5 @@
 # stage 1: install dependencies
-FROM golang:1.18.0-alpine3.15 AS base
+FROM golang:1.18.3-alpine3.16 AS base
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ FROM base as build
 RUN go build -v -o main ./cmd/server
 
 # stage 3: run binary
-FROM alpine:3.15 as prod
+FROM alpine:3.16 as prod
 
 RUN apk --no-cache add ca-certificates
 
