@@ -17,7 +17,6 @@ type DbConfig struct {
 }
 
 func NewDatabaseConnection(conf DbConfig) *gorm.DB {
-
 	options := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s", conf.Host, conf.Port, conf.User, conf.Name, conf.Password)
 
 	db, err := gorm.Open(postgres.Open(options), &gorm.Config{})
@@ -36,24 +35,27 @@ func NewDatabaseConnection(conf DbConfig) *gorm.DB {
 	return db
 }
 
+var models = []interface{}{
+	&User{},
+	&GroupConversation{},
+	&Participant{},
+	&Message{},
+	&Conversation{},
+}
+
+func Drop(db *gorm.DB) error {
+	for _, model := range models {
+		err := db.Migrator().DropTable(&model)
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Printf("Dropped database %s", db.Name())
+
+	return autoMigrate(db)
+}
+
 func autoMigrate(db *gorm.DB) error {
-	models := []interface{}{
-		&User{},
-		&GroupConversation{},
-		&Participant{},
-		&Message{},
-		&Conversation{},
-	}
-
-	// for _, model := range models {
-	// 	db.Migrator().DropTable(&model)
-	// }
-
-	err := db.AutoMigrate(models...)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.AutoMigrate(models...)
 }
