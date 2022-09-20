@@ -50,7 +50,7 @@ services:
     volumes:
       - ./backend:/app
     depends_on:
-      - database
+      - postgres
       - redis
 
   frontend:
