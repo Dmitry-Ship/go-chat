@@ -65,8 +65,8 @@ const Conversation: React.FC = () => {
   return (
     <>
       <header className={`header header-for-scrollable`}>
-        <Link href="/">
-          <a className={styles.backButton}>👈</a>
+        <Link href="/" className={styles.backButton}>
+          👈
         </Link>
         <div className={styles.conversationInfo}>
           <div className={styles.conversationGroupInfo}>

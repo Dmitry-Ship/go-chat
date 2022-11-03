@@ -15,14 +15,14 @@ const Navigation = () => {
   return (
     <div className="controls-for-scrollable">
       {links.map((link) => (
-        <Link href={link.href} key={link.href}>
-          <a
-            className={`${styles.navBtn} shadow ${
-              router.pathname === link.href ? styles.active : ""
-            }`}
-          >
-            {link.label}
-          </a>
+        <Link
+          href={link.href}
+          key={link.href}
+          className={`${styles.navBtn} shadow ${
+            router.pathname === link.href ? styles.active : ""
+          }`}
+        >
+          {link.label}
         </Link>
       ))}
     </div>

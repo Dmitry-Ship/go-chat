@@ -45,8 +45,8 @@ function Login() {
             Login
           </button>
 
-          <Link href="/signup">
-            <a className={`m-top-1 ${styles.signUpLink}`}>or Sign Up</a>
+          <Link href="/signup" className={`m-top-1 ${styles.signUpLink}`}>
+            or Sign Up
           </Link>
         </form>
       </section>

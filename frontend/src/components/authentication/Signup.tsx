@@ -44,10 +44,8 @@ function SignUp() {
           >
             SignUp
           </button>
-          <Link href="/login">
-            <a className={`m-top-1 ${styles.signUpLink}`}>
-              I already have an account
-            </a>
+          <Link href="/login" className={`m-top-1 ${styles.signUpLink}`}>
+            I already have an account
           </Link>
         </form>
       </section>
