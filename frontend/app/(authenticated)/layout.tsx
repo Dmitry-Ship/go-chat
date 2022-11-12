@@ -7,19 +7,32 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../src/contexts/authContext";
 import Loader from "../../src/components/common/Loader";
 
-export default function Template({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isChecking } = useAuth();
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user, isChecking } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated && !isChecking) {
+    if (!(user || isChecking)) {
       router.push("/login");
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isChecking]);
+  }, [user, isChecking]);
 
-  if (isChecking) {
+  useEffect(() => {
+    const appHeight = () => {
+      const doc = document.documentElement;
+      doc.style.setProperty("--vh", `${window.innerHeight}px / 100`);
+    };
+    window.addEventListener("resize", appHeight);
+    appHeight();
+  }, []);
+
+  if (isChecking || !user) {
     return <Loader />;
   }
 

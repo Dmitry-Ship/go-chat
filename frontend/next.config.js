@@ -1,7 +1,7 @@
 module.exports = {
-  swcMinify: true,
+  // swcMinify: true,
   experimental: {
     appDir: true,
-    outputStandalone: true,
+    // outputStandalone: true,
   },
 };

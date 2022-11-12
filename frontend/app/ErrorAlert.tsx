@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { useAPI } from "../src/contexts/apiContext";
 import styles from "./ErrorAlert.module.css";

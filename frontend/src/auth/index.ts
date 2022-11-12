@@ -5,42 +5,32 @@ export interface IAuthenticationService {
   login(username: string, password: string): Promise<void>;
   signup(username: string, password: string): Promise<void>;
   logout(): Promise<void>;
-  onLogin(callback: () => void): void;
-  onLogout(callback: () => void): void;
-  onError(callback: (error: string) => void): void;
-  fetchUser(): Promise<User>;
-  rotateTokens(): NodeJS.Timeout;
+  onStateChanged(callback: (user: User | null, error: string) => void): void;
+  rotateTokens(): void;
 }
+
 export class AuthenticationService implements IAuthenticationService {
-  private onLoginCallback: () => void;
-  private onLogoutCallback: () => void;
-  private onErrorCallback: (error: string) => void;
+  private onStateChangedCallback: (user: User | null, error: string) => void;
+  private timeout!: NodeJS.Timeout;
 
   constructor() {
-    this.onLoginCallback = () => {};
-    this.onLogoutCallback = () => {};
-    this.onErrorCallback = (error: string) => {};
+    this.onStateChangedCallback = (user: User | null, error: string) => {};
   }
 
-  onLogin = (callback: () => void) => {
-    this.onLoginCallback = callback;
-  };
+  onStateChanged = (callback: (user: User | null, error: string) => void) => {
+    this.onStateChangedCallback = callback;
 
-  onLogout = (callback: () => void) => {
-    this.onLogoutCallback = callback;
-  };
-
-  onError = (callback: (error: string) => void) => {
-    this.onErrorCallback = callback;
+    return () => clearTimeout(this.timeout);
   };
 
   logout = async () => {
     const result = await makeCommand("/logout");
 
     if (result.status) {
-      this.onLogoutCallback();
+      this.onStateChangedCallback(null, "");
+      clearTimeout(this.timeout);
     } else {
-      this.onErrorCallback(result.error || "Unknown error");
+      this.onStateChangedCallback(null, result.error || "Unknown error");
     }
   };
 
@@ -51,9 +41,10 @@ export class AuthenticationService implements IAuthenticationService {
     });
 
     if (result.status) {
-      this.onLoginCallback();
+      this.fetchUser();
+      this.rotateTokens();
     } else {
-      this.onErrorCallback(result.error || "Unknown error");
+      this.onStateChangedCallback(null, result.error || "Unknown error");
     }
   };
 
@@ -64,9 +55,10 @@ export class AuthenticationService implements IAuthenticationService {
     });
 
     if (result.status) {
-      this.onLoginCallback();
+      this.fetchUser();
+      this.rotateTokens();
     } else {
-      this.onErrorCallback(result.error || "Unknown error");
+      this.onStateChangedCallback(null, result.error || "Unknown error");
     }
   };
 
@@ -74,31 +66,29 @@ export class AuthenticationService implements IAuthenticationService {
     const refresh = async () => {
       const result = await makeCommand("/refreshToken");
 
-      const accessTokenRefreshInterval =
-        result.data?.access_token_expiration / 1000000 / 2;
-
       if (result.status) {
-        this.onLoginCallback();
+        const accessTokenRefreshInterval =
+          result.data?.access_token_expiration / 1000000 / 2;
+
+        this.fetchUser();
+
         setTimeout(refresh, accessTokenRefreshInterval);
       } else {
-        this.onLogoutCallback();
+        clearTimeout(this.timeout);
+        this.onStateChangedCallback(null, "");
       }
     };
 
-    const timeoutId = setTimeout(refresh, 0);
-
-    return timeoutId;
+    if (!this.timeout) {
+      this.timeout = setTimeout(refresh, 0);
+    }
   };
 
-  fetchUser = async () => {
+  private fetchUser = async () => {
     const getUserResult = await makeQuery("/getUser");
 
     if (getUserResult.status) {
-      return getUserResult.data;
+      this.onStateChangedCallback(getUserResult.data, "");
     }
-
-    this.onErrorCallback(getUserResult.error || "Unknown error");
-
-    return null;
   };
 }

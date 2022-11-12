@@ -1,7 +1,7 @@
 import "./globals.css";
 import "./normalize.css";
 import styles from "./Layout.module.css";
-import Template from "./template";
+import Layouts from "./Layouts";
 
 export default function RootLayout({
   children,
@@ -13,7 +13,7 @@ export default function RootLayout({
       <head></head>
       <body>
         <div className={styles.app}>
-          <Template>{children}</Template>
+          <Layouts>{children}</Layouts>
         </div>
       </body>
     </html>

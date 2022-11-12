@@ -1,5 +1,5 @@
 .wrap {
-  height: calc(var(--vh) * 100 - var(--bar-height));
+  height: calc(100vh - var(--bar-height));;
   display: flex;
   flex-direction: column;
   justify-content: center;
