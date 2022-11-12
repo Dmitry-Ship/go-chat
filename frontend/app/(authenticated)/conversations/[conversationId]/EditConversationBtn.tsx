@@ -1,7 +1,7 @@
 import React, { FormEvent, useEffect, useState } from "react";
 import styles from "./EditConversationBtn.module.css";
 import SlideIn from "../../../../src/components/common/SlideIn";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import InviteMenu from "./InviteMenu";
 import { useAPI } from "../../../../src/contexts/apiContext";
 import { Conversation } from "../../../../src/types/coreTypes";

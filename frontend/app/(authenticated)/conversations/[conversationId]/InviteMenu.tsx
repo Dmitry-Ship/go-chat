@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import SlideIn from "../../../../src/components/common/SlideIn";
 import { Contact } from "../../../../src/types/coreTypes";
 import ContactItem from "../../(main)/contacts/ContactItem";
-import { useRouter } from "next/router";
 import { useQueryOnDemand } from "../../../../src/api/hooks";
 import Loader from "../../../../src/components/common/Loader";
 import { useAPI } from "../../../../src/contexts/apiContext";
@@ -11,7 +10,6 @@ const InviteMenu: React.FC<{ conversationId: string }> = ({
   conversationId,
 }) => {
   const [isInviteMenuOpen, setIsInviteMenuOpen] = useState(false);
-  const router = useRouter();
   const [response, load] = useQueryOnDemand<Contact[]>(
     `/getPotentialInvitees?conversation_id=${conversationId}`
   );
