@@ -14,7 +14,7 @@ function Settings() {
       </header>
       <div className={styles.settingsPage}>
         <div className={styles.accountInfo}>
-          <Avatar src={user?.avatar || ""} size={100} />
+          <Avatar src={user?.avatar || ""} size={"lg"} />
           <h3>{user?.name}</h3>
         </div>
         <button onClick={logout} className={`btn`}>

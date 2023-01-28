@@ -49,7 +49,7 @@ const UserInfoSlideIn: React.FC<{
   return (
     <SlideIn onClose={toggleUserInfo} isOpen={isOpen}>
       <div className={styles.userInfo}>
-        <Avatar src={user.avatar} size={100} />
+        <Avatar src={user.avatar} size={"lg"} />
         <h3>{user.name}</h3>
         <button className={`btn m-b`} onClick={handleChatClick}>
           💬 Chat

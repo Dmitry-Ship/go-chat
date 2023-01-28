@@ -17,7 +17,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
       className={`${styles.wrap} rounded shadow`}
     >
       <>
-        <Avatar src={conversation.avatar} size={65} />
+        <Avatar src={conversation.avatar} />
         <div className={styles.conversationInfo}>
           <h3 className={styles.conversationName}>{conversation.name}</h3>
 
