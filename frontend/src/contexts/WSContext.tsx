@@ -9,7 +9,9 @@ type ws = {
 
 const wsContext = createContext<ws | null>(null);
 
-export const ProvideWS: React.FC = ({ children }) => {
+export const ProvideWS: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const wsService = WSService.getInstance();
 
   const [status, setStatus] = useState<ConnectionState>(
