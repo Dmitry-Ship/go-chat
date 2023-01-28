@@ -1,3 +1,4 @@
+import { reducer } from "next/dist/client/components/reducer";
 import { useEffect, useState } from "react";
 import { useAPI } from "../contexts/apiContext";
 
@@ -93,12 +94,24 @@ export const usePaginatedQuery = <T,>(
         return;
       }
 
-      setCurrentResponse((prevState) => ({
-        status: "done",
-        items: inverted
-          ? [...response.data, ...prevState.items]
-          : [...prevState.items, ...response.data],
-      }));
+      setCurrentResponse((prevState) => {
+        const uniqItems = inverted
+          ? new Set(
+              [...response.data, ...prevState.items].map((val) =>
+                JSON.stringify(val)
+              )
+            )
+          : new Set(
+              [...prevState.items, ...response.data].map((val) =>
+                JSON.stringify(val)
+              )
+            );
+
+        return {
+          status: "done",
+          items: Array.from(uniqItems).map((val) => JSON.parse(val)),
+        };
+      });
     };
 
     fetchData(url, page);
