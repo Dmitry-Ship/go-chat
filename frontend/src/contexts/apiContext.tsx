@@ -20,7 +20,9 @@ type api = {
 
 const apiContext = createContext<api | null>(null);
 
-export const ProvideAPI: React.FC = ({ children }) => {
+export const ProvideAPI: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
