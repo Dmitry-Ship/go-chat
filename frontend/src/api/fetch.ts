@@ -1,88 +1,113 @@
-type FetchResult = {
-  status: boolean;
-  data: any;
-  error: string | null;
-};
+"use client";
+import axios from "axios";
+import {
+  Contact,
+  ConversationFull,
+  ConversationListItem,
+  MessageRaw,
+  User,
+} from "../types/coreTypes";
 
-const returnResult = async (response: Response): Promise<FetchResult> => {
-  const data = await response.json();
+export const makeCommand =
+  <T>(url: string) =>
+  async (body?: T): Promise<any> => {
+    const result = await axios.post("/api" + url, body);
 
-  if (response.ok) {
-    return {
-      status: true,
-      data,
-      error: null,
-    };
-  } else {
-    return {
-      status: false,
-      data: null,
-      error: data.error,
-    };
-  }
-};
+    return result.data;
+  };
 
-export const makeQuery = async (url: string): Promise<FetchResult> => {
-  url = "/api" + url;
-  try {
-    const result = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+type conversationRequest = { conversation_id: string };
 
-    return await returnResult(result);
-  } catch (error) {
-    console.error(error);
-    return {
-      status: false,
-      data: null,
-      // @ts-ignore
-      error: error.message,
-    };
-  }
-};
+export const login = makeCommand<{
+  username: string;
+  password: string;
+}>("/login");
 
-export const makePaginatedQuery = async (
+export const logout = makeCommand("/logout");
+export const signup = makeCommand<{
+  username: string;
+  password: string;
+}>("/signup");
+
+export const refreshToken = makeCommand("/refreshToken");
+
+export const createConversation = makeCommand<
+  {
+    conversation_name: string;
+  } & conversationRequest
+>("/createConversation");
+
+export const deleteConversation = makeCommand<conversationRequest>(
+  "/deleteConversation"
+);
+
+export const renameConversation = makeCommand<
+  {
+    new_name: string;
+  } & conversationRequest
+>("/renameConversation");
+
+export const leaveConversation =
+  makeCommand<conversationRequest>("/leaveConversation");
+
+export const startDirectConversation = makeCommand<{
+  to_user_id: string;
+}>("/startDirectConversation");
+
+export const inviteUserToConversation = makeCommand<
+  {
+    user_id: string;
+  } & conversationRequest
+>("/inviteUserToConversation");
+
+export const joinConversation =
+  makeCommand<conversationRequest>("/joinConversation");
+
+export const kick = makeCommand<{ user_id: string }>("/kick");
+
+export const makeQuery =
+  <T>(url: string) =>
+  (param = "") =>
+  async (): Promise<T> => {
+    const { data } = await axios.get("/api" + url + param);
+    console.log("data", data);
+
+    return data as T;
+  };
+
+export const getConversation = makeQuery<ConversationFull>("/getConversation");
+export const getPotentialInvitees = makeQuery<Contact[]>(
+  "/getPotentialInvitees"
+);
+export const getParticipants = makeQuery<Contact[]>("/getParticipants");
+export const getUser = makeQuery<User>("/getUser");
+
+export const makePaginatedQuery = async <T>(
   url: string,
   page: number,
   pageSize = 50
-): Promise<{ status: boolean; data: any; nextPage: number }> => {
+): Promise<T[]> => {
   const paginationParams =
     (url.includes("?") ? "&" : "?") + "page=" + page + "&page_size=" + pageSize;
 
-  const result = await makeQuery(url + paginationParams);
+  const result = await makeQuery<T[]>(url)(paginationParams)();
 
-  const nextPage = result.data?.status ? page + 1 : page;
-
-  return { ...result, nextPage };
+  return result;
 };
 
-export const makeCommand = async (
-  url: string,
-  body?: Record<string, any>
-): Promise<FetchResult> => {
-  url = "/api" + url;
-  try {
-    const result = await fetch(url, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: body ? JSON.stringify(body) : null,
-    });
+export const getContacts = (page: number, params: string = "") =>
+  makePaginatedQuery<Contact>("/getContacts" + params, page, 50);
 
-    return await returnResult(result);
-  } catch (error) {
-    console.error(error);
-    return {
-      status: false,
-      data: null,
-      // @ts-ignore
-      error: error.message || null,
-    };
-  }
-};
+export const getConversations = (page: number, params: string = "") =>
+  makePaginatedQuery<ConversationListItem>(
+    "/getConversations" + params,
+    page,
+    50
+  );
+
+export const getConversationsMessages = (page: number, params: string = "") =>
+  makePaginatedQuery<MessageRaw>(
+    "/getConversationsMessages" + params,
+    page,
+    50
+  );

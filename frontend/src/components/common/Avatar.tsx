@@ -6,7 +6,7 @@ const sizesMap = {
   lg: 100,
 };
 
-const Avatar: React.FC<{
+export const Avatar: React.FC<{
   src: string;
   size?: keyof typeof sizesMap;
 }> = ({ src, size = "md" }) => {
@@ -16,5 +16,3 @@ const Avatar: React.FC<{
     </div>
   );
 };
-
-export default Avatar;

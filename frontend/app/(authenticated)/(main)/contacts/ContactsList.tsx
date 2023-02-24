@@ -1,42 +1,49 @@
 "use client";
 import { useRouter } from "next/navigation";
-import React from "react";
-import { usePaginatedQuery } from "../../../../src/api/hooks";
-import { useAPI } from "../../../../src/contexts/apiContext";
-import { Contact } from "../../../../src/types/coreTypes";
-import Loader from "../../../../src/components/common/Loader";
-import ContactItem from "./ContactItem";
+import React, { useState } from "react";
+import { Loader } from "../../../../src/components/common/Loader";
+import { ContactItem } from "./ContactItem";
 import styles from "./ContactsList.module.css";
-import EmptyScreen from "../../../../src/components/common/EmptyScreen";
+import { EmptyScreen } from "../../../../src/components/common/EmptyScreen";
+import { useMutation, useQuery } from "react-query";
+import {
+  getContacts,
+  startDirectConversation,
+} from "../../../../src/api/fetch";
 
-function ContactsList() {
-  const [contactsQuery, , loadNext] =
-    usePaginatedQuery<Contact>("/getContacts");
+export function ContactsList() {
+  const [page, setPage] = useState(1);
+
+  const { data, status } = useQuery({
+    queryKey: ["contacts", page],
+    queryFn: () => getContacts(page),
+    keepPreviousData: true,
+  });
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     if (
       e.currentTarget.scrollHeight - e.currentTarget.scrollTop ===
       e.currentTarget.clientHeight
     ) {
-      loadNext();
+      setPage(page + 1);
     }
   };
 
   const router = useRouter();
 
-  const { makeCommand } = useAPI();
+  const startDirectConversationRequest = useMutation(startDirectConversation, {
+    onSuccess: (data) => {
+      router.push(`/conversations/${data.conversation_id}`);
+    },
+  });
+
   const handleClick =
     (id: string) =>
     async (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
       e.preventDefault();
-
-      const result = await makeCommand("/startDirectConversation", {
+      startDirectConversationRequest.mutate({
         to_user_id: id,
       });
-
-      if (result.status) {
-        router.push(`/conversations/${result.data.conversation_id}`);
-      }
     };
 
   return (
@@ -49,14 +56,14 @@ function ContactsList() {
         onScroll={handleScroll}
       >
         {(() => {
-          switch (contactsQuery.status) {
-            case "fetching":
+          switch (status) {
+            case "loading":
               return <Loader />;
-            case "done":
+            case "success":
               return (
                 <>
-                  {contactsQuery.items?.length ? (
-                    contactsQuery.items?.map((user, i) => (
+                  {data?.length ? (
+                    data?.map((user, i) => (
                       <ContactItem
                         key={i}
                         onClick={handleClick(user.id)}
@@ -76,5 +83,3 @@ function ContactsList() {
     </>
   );
 }
-
-export default ContactsList;

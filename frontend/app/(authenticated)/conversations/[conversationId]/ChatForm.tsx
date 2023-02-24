@@ -1,10 +1,11 @@
 import React, { FormEvent, useState } from "react";
 import styles from "./ChatForm.module.css";
-import Loader from "../../../../src/components/common/Loader";
+import { Loader } from "../../../../src/components/common/Loader";
 import { useWebSocket } from "../../../../src/contexts/WSContext";
-import { useAPI } from "../../../../src/contexts/apiContext";
+import { useMutation } from "react-query";
+import { joinConversation } from "../../../../src/api/fetch";
 
-const ChatForm: React.FC<{
+export const ChatForm: React.FC<{
   loading: boolean;
   joined: boolean;
   conversationType: "group" | "direct";
@@ -14,7 +15,12 @@ const ChatForm: React.FC<{
   const [message, setMessage] = useState<string>("");
 
   const { sendNotification } = useWebSocket();
-  const { makeCommand } = useAPI();
+
+  const joinConversationRequest = useMutation(joinConversation, {
+    onSuccess: (data) => {
+      onJoin();
+    },
+  });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -31,8 +37,7 @@ const ChatForm: React.FC<{
   };
 
   const handleJoin = async () => {
-    await makeCommand("/joinConversation", { conversation_id: conversationId });
-    onJoin();
+    joinConversationRequest.mutate({ conversation_id: conversationId });
   };
 
   return (
@@ -68,5 +73,3 @@ const ChatForm: React.FC<{
     </div>
   );
 };
-
-export default ChatForm;

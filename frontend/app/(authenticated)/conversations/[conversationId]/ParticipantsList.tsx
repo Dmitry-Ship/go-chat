@@ -1,26 +1,39 @@
 import React, { useState } from "react";
-import SlideIn from "../../../../src/components/common/SlideIn";
+import { SlideIn } from "../../../../src/components/common/SlideIn";
 import styles from "./ParticipantsList.module.css";
-import { Contact } from "../../../../src/types/coreTypes";
-import ContactItem from "../../(main)/contacts/ContactItem";
-import { useQueryOnDemand } from "../../../../src/api/hooks";
-import Loader from "../../../../src/components/common/Loader";
-import { useAPI } from "../../../../src/contexts/apiContext";
-import InviteMenu from "./InviteMenu";
+import { ContactItem } from "../../(main)/contacts/ContactItem";
+import { Loader } from "../../../../src/components/common/Loader";
+import { InviteMenu } from "./InviteMenu";
+import { useMutation, useQuery } from "react-query";
+import {
+  getParticipants,
+  startDirectConversation,
+} from "../../../../src/api/fetch";
 
-const ParticipantsList: React.FC<{
+export const ParticipantsList: React.FC<{
   participantsCount: number;
   conversationId: string;
 }> = ({ participantsCount, conversationId }) => {
   const [isParticipantsListOpen, setIsParticipantsListOpen] = useState(false);
-  const [response, load] = useQueryOnDemand<Contact[]>(
-    `/getParticipants?conversation_id=${conversationId}`
+
+  const { data, status, refetch } = useQuery(
+    "participants",
+    getParticipants(`?conversation_id=${conversationId}`),
+    {
+      refetchOnWindowFocus: false,
+      enabled: false,
+    }
   );
 
-  const { makeCommand } = useAPI();
+  const startDirectConversationRequest = useMutation(startDirectConversation, {
+    onSuccess: (data) => {
+      handleTogglesParticipantsListOpen();
+      window.location.href = `/conversations/${data.conversation_id}`;
+    },
+  });
 
   const handleTogglesParticipantsListOpen = () => {
-    load();
+    refetch();
     setIsParticipantsListOpen(!isParticipantsListOpen);
   };
 
@@ -29,15 +42,9 @@ const ParticipantsList: React.FC<{
     async (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
       e.preventDefault();
 
-      const result = await makeCommand("/startDirectConversation", {
+      startDirectConversationRequest.mutate({
         to_user_id: id,
       });
-
-      if (result.status) {
-        handleTogglesParticipantsListOpen();
-
-        window.location.href = `/conversations/${result.data.conversation_id}`;
-      }
     };
 
   return (
@@ -53,14 +60,14 @@ const ParticipantsList: React.FC<{
         isOpen={isParticipantsListOpen}
       >
         {(() => {
-          switch (response.status) {
-            case "fetching":
+          switch (status) {
+            case "loading":
               return <Loader />;
-            case "done":
+            case "success":
               return (
                 <>
                   <InviteMenu conversationId={conversationId} />
-                  {response.data.map((contact, i) => (
+                  {data.map((contact, i) => (
                     <ContactItem
                       key={i}
                       onClick={handleClick(contact.id)}
@@ -77,5 +84,3 @@ const ParticipantsList: React.FC<{
     </>
   );
 };
-
-export default ParticipantsList;

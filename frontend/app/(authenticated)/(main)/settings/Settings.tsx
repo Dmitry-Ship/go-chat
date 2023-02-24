@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
 import styles from "./Settings.module.css";
-import Avatar from "../../../../src/components/common/Avatar";
+import { Avatar } from "../../../../src/components/common/Avatar";
 import { useAuth } from "../../../../src/contexts/authContext";
 
-function Settings() {
+export function SettingsPage() {
   const { user, logout } = useAuth();
 
   return (
@@ -24,5 +24,3 @@ function Settings() {
     </>
   );
 }
-
-export default Settings;

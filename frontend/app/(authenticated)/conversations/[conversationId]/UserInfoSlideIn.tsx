@@ -1,10 +1,11 @@
 import React from "react";
 import styles from "./UserInfoSlideIn.module.css";
-import Avatar from "../../../../src/components/common/Avatar";
-import SlideIn from "../../../../src/components/common/SlideIn";
-import { useAPI } from "../../../../src/contexts/apiContext";
+import { Avatar } from "../../../../src/components/common/Avatar";
+import { SlideIn } from "../../../../src/components/common/SlideIn";
+import { useMutation } from "react-query";
+import { kick, startDirectConversation } from "../../../../src/api/fetch";
 
-const UserInfoSlideIn: React.FC<{
+export const UserInfoSlideIn: React.FC<{
   user: {
     id: string;
     avatar: string;
@@ -14,22 +15,28 @@ const UserInfoSlideIn: React.FC<{
   isOpen: boolean;
   toggleUserInfo: () => void;
 }> = ({ user, toggleUserInfo, isOpen, isOwner }) => {
-  const { makeCommand } = useAPI();
+  const startDirectConversationRequest = useMutation(startDirectConversation, {
+    onSuccess: (data) => {
+      toggleUserInfo();
+
+      window.location.href = `/conversations/${data.conversation_id}`;
+    },
+  });
+
+  const kickRequest = useMutation(kick, {
+    onSuccess: (data) => {
+      toggleUserInfo();
+    },
+  });
 
   const handleChatClick = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
     e.preventDefault();
 
-    const result = await makeCommand("/startDirectConversation", {
+    startDirectConversationRequest.mutate({
       to_user_id: user.id,
     });
-
-    if (result.status) {
-      toggleUserInfo();
-
-      window.location.href = `/conversations/${result.data.conversation_id}`;
-    }
   };
 
   const handleKickClick = async (
@@ -37,13 +44,9 @@ const UserInfoSlideIn: React.FC<{
   ) => {
     e.preventDefault();
 
-    const result = await makeCommand("/kick", {
+    kickRequest.mutate({
       user_id: user.id,
     });
-
-    if (result.status) {
-      toggleUserInfo();
-    }
   };
 
   return (
@@ -64,5 +67,3 @@ const UserInfoSlideIn: React.FC<{
     </SlideIn>
   );
 };
-
-export default UserInfoSlideIn;

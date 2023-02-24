@@ -1,10 +1,10 @@
 import React from "react";
 import styles from "./MessageComponent.module.css";
 import { ConversationFull, Message } from "../../../../src/types/coreTypes";
-import Avatar from "../../../../src/components/common/Avatar";
-import UserInfoSlideIn from "./UserInfoSlideIn";
+import { Avatar } from "../../../../src/components/common/Avatar";
+import { UserInfoSlideIn } from "./UserInfoSlideIn";
 
-const MessageComponent: React.FC<{
+export const MessageComponent: React.FC<{
   message: Message;
   conversation: ConversationFull;
   isFistInAGroup: boolean;
@@ -67,5 +67,3 @@ const MessageComponent: React.FC<{
     </div>
   );
 };
-
-export default MessageComponent;

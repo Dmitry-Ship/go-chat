@@ -1,26 +1,27 @@
 "use client";
 import React, { useEffect } from "react";
-import { ConversationFull } from "../../../../src/types/coreTypes";
 import styles from "./Conversation.module.css";
-import ChatForm from "./ChatForm";
-import ChatLog from "./ChatLog";
-import { useQuery } from "../../../../src/api/hooks";
-import EditConversationBtn from "./EditConversationBtn";
+import { ChatForm } from "./ChatForm";
+import { ChatLog } from "./ChatLog";
+import { EditConversationBtn } from "./EditConversationBtn";
 import { useWebSocket } from "../../../../src/contexts/WSContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Avatar from "../../../../src/components/common/Avatar";
-import Loader from "../../../../src/components/common/Loader";
-import ParticipantsList from "./ParticipantsList";
+import { Avatar } from "../../../../src/components/common/Avatar";
+import { Loader } from "../../../../src/components/common/Loader";
+import { ParticipantsList } from "./ParticipantsList";
+import { useQuery } from "react-query";
+import { getConversation } from "../../../../src/api/fetch";
 
-const Conversation: React.FC<{ conversationId: string }> = ({
+export const Conversation: React.FC<{ conversationId: string }> = ({
   conversationId,
 }) => {
   const router = useRouter();
   const { onNotification } = useWebSocket();
 
-  const [conversationQuery, updateConversation] = useQuery<ConversationFull>(
-    `/getConversation?conversation_id=${conversationId}`
+  const { data, status, refetch } = useQuery(
+    "conversation",
+    getConversation(`?conversation_id=${conversationId}`)
   );
 
   useEffect(() => {
@@ -32,84 +33,81 @@ const Conversation: React.FC<{ conversationId: string }> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, router]);
 
-  const setIsJoined = (isJoined: boolean) => {
-    updateConversation({
-      joined: isJoined,
-    });
+  const setIsJoined = () => {
+    refetch();
   };
 
   useEffect(() => {
     onNotification("conversation_updated", (event) => {
-      if (
-        conversationQuery.status === "done" &&
-        event.data.id === conversationQuery.data.id
-      ) {
-        updateConversation({
-          ...conversationQuery.data,
-          ...event.data,
-        });
+      if (status === "success" && event.data.id === data.id) {
+        refetch();
       }
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationQuery]);
-
-  if (conversationQuery.status === "fetching") {
-    return <Loader />;
-  }
-
-  if (conversationQuery.status === "error") {
-    return <div>Error</div>;
-  }
-
-  const conversation = conversationQuery.data;
+  }, [data]);
 
   return (
     <>
-      <header className={`header header-for-scrollable`}>
-        <Link href="/main" className={styles.backButton}>
-          👈
-        </Link>
-        <div className={styles.conversationInfo}>
-          <div className={styles.conversationGroupInfo}>
-            <Avatar src={conversation?.avatar} />
-            <h3 className={styles.conversationName}>{conversation?.name}</h3>
-          </div>
+      {(() => {
+        switch (status) {
+          case "error":
+            return <div>Error</div>;
+          case "loading":
+            return <Loader />;
+          case "success": {
+            return (
+              <>
+                <header className={`header header-for-scrollable`}>
+                  <Link href="/main" className={styles.backButton}>
+                    👈
+                  </Link>
 
-          {conversation?.type === "group" && (
-            <ParticipantsList
-              conversationId={conversationId}
-              participantsCount={conversationQuery.data.participants_count}
-            />
-          )}
-        </div>
-        {conversation?.type === "group" ? (
-          <EditConversationBtn
-            conversationId={conversationId}
-            conversation={conversationQuery.data}
-            onLeave={() => setIsJoined(false)}
-          />
-        ) : (
-          <div />
-        )}
-      </header>
+                  <div className={styles.conversationInfo}>
+                    <div className={styles.conversationGroupInfo}>
+                      <Avatar src={data?.avatar} />
+                      <h3 className={styles.conversationName}>{data?.name}</h3>
+                    </div>
 
-      <section className="wrap">
-        <ChatLog
-          conversation={conversation}
-          isEmpty={conversation?.participants_count < 2}
-        />
+                    {data?.type === "group" && (
+                      <ParticipantsList
+                        conversationId={conversationId}
+                        participantsCount={data.participants_count}
+                      />
+                    )}
+                  </div>
+                  {data?.type === "group" ? (
+                    <EditConversationBtn
+                      conversationId={conversationId}
+                      conversation={data}
+                      onLeave={() => setIsJoined()}
+                    />
+                  ) : (
+                    <div />
+                  )}
+                </header>
 
-        <ChatForm
-          conversationId={conversationId}
-          conversationType={conversation?.type}
-          loading={false}
-          joined={conversationQuery.data?.joined}
-          onJoin={() => setIsJoined(true)}
-        />
-      </section>
+                <section className="wrap">
+                  <ChatLog
+                    conversation={data}
+                    isEmpty={data?.participants_count < 2}
+                  />
+
+                  <ChatForm
+                    conversationId={conversationId}
+                    conversationType={data?.type}
+                    loading={false}
+                    joined={data?.joined}
+                    onJoin={() => setIsJoined()}
+                  />
+                </section>
+              </>
+            );
+          }
+          default:
+            return null;
+        }
+      })()}
     </>
   );
 };
-
-export default Conversation;

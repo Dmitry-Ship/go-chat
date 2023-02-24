@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import styles from "./Login.module.css";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../src/contexts/authContext";
-import Loader from "../../src/components/common/Loader";
+import { Loader } from "../../src/components/common/Loader";
 
 function AuthLayout({ children }: { children: React.ReactNode }) {
   const { user, isChecking } = useAuth();

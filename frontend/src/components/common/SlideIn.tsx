@@ -1,8 +1,8 @@
 import React, { useRef } from "react";
-import Portal from "./Portal";
+import { Portal } from "./Portal";
 import styles from "./SlideIn.module.css";
 
-const SlideIn: React.FC<{
+export const SlideIn: React.FC<{
   children: React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
@@ -33,5 +33,3 @@ const SlideIn: React.FC<{
     </Portal>
   );
 };
-
-export default SlideIn;
