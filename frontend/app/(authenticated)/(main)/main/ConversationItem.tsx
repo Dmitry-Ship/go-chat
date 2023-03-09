@@ -8,7 +8,7 @@ type ConversationItemProps = {
   conversation: ConversationListItem;
 };
 
-export const ConversationItem = ({ conversation }: ConversationItemProps) => {
+export function ConversationItem({ conversation }: ConversationItemProps) {
   return (
     <Link
       href={"conversations/" + conversation.id}
@@ -36,4 +36,4 @@ export const ConversationItem = ({ conversation }: ConversationItemProps) => {
       </>
     </Link>
   );
-};
+}

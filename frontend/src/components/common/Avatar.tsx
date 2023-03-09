@@ -6,16 +6,16 @@ const sizesMap = {
   lg: 100,
 };
 
-export const Avatar = ({
+export function Avatar({
   src,
   size = "md",
 }: {
   src: string;
   size?: keyof typeof sizesMap;
-}) => {
+}) {
   return (
     <div className={styles.avatar} style={{ width: size, height: size }}>
       {src}
     </div>
   );
-};
+}

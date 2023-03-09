@@ -1,19 +1,19 @@
-import React, { useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 
-const createRootElement = (id: string) => {
+function createRootElement(id: string) {
   const rootContainer = document.createElement("div");
   rootContainer.setAttribute("id", id);
   return rootContainer;
-};
+}
 
-const addRootElement = (rootElem: Element) => {
+function addRootElement(rootElem: Element) {
   document.body.insertBefore(
     rootElem,
     document.body.lastElementChild?.nextElementSibling || null
   );
-};
+}
 
-export const usePortal = (id: string) => {
+export function usePortal(id: string) {
   const rootElemRef = useRef<Element>(null);
 
   useEffect(() => {
@@ -49,4 +49,4 @@ export const usePortal = (id: string) => {
   };
 
   return getRootElem();
-};
+}

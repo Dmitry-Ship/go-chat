@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { Portal } from "./Portal";
 import styles from "./SlideIn.module.css";
 
-export const SlideIn = ({
+export function SlideIn({
   children,
   isOpen,
   onClose,
@@ -10,19 +10,19 @@ export const SlideIn = ({
   children: React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
-}) => {
+}) {
   const node = useRef(null);
 
   if (!isOpen) {
     return null;
   }
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  function handleClick(e: React.MouseEvent<HTMLDivElement>) {
     // @ts-ignore
     if (!node?.current?.contains(e.target as Node)) {
       onClose();
     }
-  };
+  }
 
   return (
     <Portal id="modal">
@@ -36,4 +36,4 @@ export const SlideIn = ({
       </div>
     </Portal>
   );
-};
+}

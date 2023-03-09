@@ -13,11 +13,7 @@ import { ParticipantsList } from "./ParticipantsList";
 import { useQuery } from "react-query";
 import { getConversation } from "../../../../src/api/fetch";
 
-export const Conversation = ({
-  conversationId,
-}: {
-  conversationId: string;
-}) => {
+export function Conversation({ conversationId }: { conversationId: string }) {
   const router = useRouter();
   const { onNotification } = useWebSocket();
 
@@ -112,4 +108,4 @@ export const Conversation = ({
       })()}
     </>
   );
-};
+}

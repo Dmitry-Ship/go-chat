@@ -9,13 +9,13 @@ import { InviteMenu } from "./InviteMenu";
 import { useQuery } from "react-query";
 import { getConversationsMessages } from "../../../../src/api/fetch";
 
-export const ChatLog = ({
+export function ChatLog({
   conversation,
   isEmpty,
 }: {
   conversation: ConversationFull;
   isEmpty: boolean;
-}) => {
+}) {
   const { onNotification } = useWebSocket();
   const [lastScrollHeight, setLastScrollHeight] = useState<number>(0);
 
@@ -44,12 +44,12 @@ export const ChatLog = ({
     containerRef.current?.scrollTo(0, currentScroll);
   }, [data?.length, lastScrollHeight]);
 
-  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+  function handleScroll(e: React.UIEvent<HTMLElement>) {
     if (e.currentTarget.scrollTop === 0) {
       setLastScrollHeight(e.currentTarget.scrollHeight);
       setPage(page + 1);
     }
-  };
+  }
 
   useEffect(() => {
     onNotification("message", (event) => {
@@ -121,4 +121,4 @@ export const ChatLog = ({
       })()}
     </main>
   );
-};
+}

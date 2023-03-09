@@ -5,7 +5,7 @@ import { useWebSocket } from "../../../../src/contexts/WSContext";
 import { useMutation } from "react-query";
 import { joinConversation } from "../../../../src/api/fetch";
 
-export const ChatForm = ({
+export function ChatForm({
   loading,
   joined,
   onJoin,
@@ -17,7 +17,7 @@ export const ChatForm = ({
   conversationType: "group" | "direct";
   conversationId: string;
   onJoin: () => void;
-}) => {
+}) {
   const [message, setMessage] = useState<string>("");
 
   const { sendNotification } = useWebSocket();
@@ -28,7 +28,7 @@ export const ChatForm = ({
     },
   });
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     const notification =
@@ -40,11 +40,11 @@ export const ChatForm = ({
     });
 
     setMessage("");
-  };
+  }
 
-  const handleJoin = async () => {
+  async function handleJoin() {
     joinConversationRequest.mutate({ conversation_id: conversationId });
-  };
+  }
 
   return (
     <div className={"controls-for-scrollable"}>
@@ -78,4 +78,4 @@ export const ChatForm = ({
       )}
     </div>
   );
-};
+}

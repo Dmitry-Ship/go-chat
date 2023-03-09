@@ -17,14 +17,14 @@ export function Conversations() {
     keepPreviousData: true,
   });
 
-  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+  function handleScroll(e: React.UIEvent<HTMLElement>) {
     if (
       e.currentTarget.scrollHeight - e.currentTarget.scrollTop ===
       e.currentTarget.clientHeight
     ) {
       setPage(page + 1);
     }
-  };
+  }
   return (
     <>
       <header className={`header header-for-scrollable`}>

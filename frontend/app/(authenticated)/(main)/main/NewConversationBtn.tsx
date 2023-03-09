@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "react-query";
 import { createConversation } from "../../../../src/api/fetch";
 
-export const NewConversationBtn = ({ text }: { text: string }) => {
+export function NewConversationBtn({ text }: { text: string }) {
   const [isCreating, toggleCreating] = useReducer((open) => !open, false);
   const [conversationName, setConversationName] = useState("");
   const [newId, setNewId] = useState("");
@@ -22,7 +22,7 @@ export const NewConversationBtn = ({ text }: { text: string }) => {
     },
   });
 
-  const handleCreate = () => {
+  function handleCreate() {
     const conversationId = uuidv4();
     setNewId(conversationId);
 
@@ -30,12 +30,12 @@ export const NewConversationBtn = ({ text }: { text: string }) => {
       conversation_name: conversationName,
       conversation_id: conversationId,
     });
-  };
+  }
 
-  const handleStartCreating = () => {
+  function handleStartCreating() {
     toggleCreating();
     input.current?.focus();
-  };
+  }
 
   return (
     <div>
@@ -60,4 +60,4 @@ export const NewConversationBtn = ({ text }: { text: string }) => {
       </SlideIn>
     </div>
   );
-};
+}

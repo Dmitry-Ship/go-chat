@@ -4,7 +4,7 @@ import { ConversationFull, Message } from "../../../../src/types/coreTypes";
 import { Avatar } from "../../../../src/components/common/Avatar";
 import { UserInfoSlideIn } from "./UserInfoSlideIn";
 
-export const MessageComponent = ({
+export function MessageComponent({
   message,
   isFistInAGroup,
   isLastInAGroup,
@@ -14,7 +14,7 @@ export const MessageComponent = ({
   conversation: ConversationFull;
   isFistInAGroup: boolean;
   isLastInAGroup: boolean;
-}) => {
+}) {
   const [isOpen, toggleOpen] = useReducer((open) => !open, false);
 
   const date = new Date(message.createdAt);
@@ -67,4 +67,4 @@ export const MessageComponent = ({
       })()}
     </div>
   );
-};
+}

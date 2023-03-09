@@ -5,7 +5,7 @@ import { SlideIn } from "../../../../src/components/common/SlideIn";
 import { useMutation } from "react-query";
 import { kick, startDirectConversation } from "../../../../src/api/fetch";
 
-export const UserInfoSlideIn = ({
+export function UserInfoSlideIn({
   user,
   toggleUserInfo,
   isOpen,
@@ -19,7 +19,7 @@ export const UserInfoSlideIn = ({
   isOwner: boolean;
   isOpen: boolean;
   toggleUserInfo: () => void;
-}) => {
+}) {
   const startDirectConversationRequest = useMutation(startDirectConversation, {
     onSuccess: (data) => {
       toggleUserInfo();
@@ -34,25 +34,25 @@ export const UserInfoSlideIn = ({
     },
   });
 
-  const handleChatClick = async (
+  async function handleChatClick(
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
+  ) {
     e.preventDefault();
 
     startDirectConversationRequest.mutate({
       to_user_id: user.id,
     });
-  };
+  }
 
-  const handleKickClick = async (
+  async function handleKickClick(
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
+  ) {
     e.preventDefault();
 
     kickRequest.mutate({
       user_id: user.id,
     });
-  };
+  }
 
   return (
     <SlideIn onClose={toggleUserInfo} isOpen={isOpen}>
@@ -71,4 +71,4 @@ export const UserInfoSlideIn = ({
       </div>
     </SlideIn>
   );
-};
+}

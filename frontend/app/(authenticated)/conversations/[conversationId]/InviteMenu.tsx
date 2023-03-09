@@ -8,7 +8,7 @@ import {
   inviteUserToConversation,
 } from "../../../../src/api/fetch";
 
-export const InviteMenu = ({ conversationId }: { conversationId: string }) => {
+export function InviteMenu({ conversationId }: { conversationId: string }) {
   const [isInviteMenuOpen, toggleInviteMenu] = useReducer(
     (open) => !open,
     false
@@ -31,19 +31,20 @@ export const InviteMenu = ({ conversationId }: { conversationId: string }) => {
     }
   );
 
-  const handleToggleInviteMenu = () => {
+  function handleToggleInviteMenu() {
     refetch();
     toggleInviteMenu();
-  };
+  }
 
-  const handleClick =
-    (id: string) => (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+  function handleClick(id: string) {
+    return function (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
       e.preventDefault();
       inviteUserToConversationRequest.mutate({
         user_id: id,
         conversation_id: conversationId,
       });
     };
+  }
 
   return (
     <>
@@ -78,4 +79,4 @@ export const InviteMenu = ({ conversationId }: { conversationId: string }) => {
       </SlideIn>
     </>
   );
-};
+}

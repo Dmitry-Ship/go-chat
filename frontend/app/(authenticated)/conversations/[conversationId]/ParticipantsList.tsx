@@ -10,13 +10,13 @@ import {
   startDirectConversation,
 } from "../../../../src/api/fetch";
 
-export const ParticipantsList = ({
+export function ParticipantsList({
   participantsCount,
   conversationId,
 }: {
   participantsCount: number;
   conversationId: string;
-}) => {
+}) {
   const [isParticipantsListOpen, toggleParticipantsList] = useReducer(
     (open) => !open,
     false
@@ -37,20 +37,20 @@ export const ParticipantsList = ({
     },
   });
 
-  const handleTogglesParticipantsListOpen = () => {
+  function handleTogglesParticipantsListOpen() {
     refetch();
     toggleParticipantsList();
-  };
+  }
 
-  const handleClick =
-    (id: string) =>
-    async (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+  function handleClick(id: string) {
+    return async function (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
       e.preventDefault();
 
       startDirectConversationRequest.mutate({
         to_user_id: id,
       });
     };
+  }
 
   return (
     <>
@@ -88,4 +88,4 @@ export const ParticipantsList = ({
       </SlideIn>
     </>
   );
-};
+}

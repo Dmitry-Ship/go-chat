@@ -9,7 +9,7 @@ type ws = {
 
 const wsContext = createContext<ws | null>(null);
 
-export const ProvideWS = ({ children }: { children: React.ReactNode }) => {
+export function ProvideWS({ children }: { children: React.ReactNode }) {
   const wsService = WSService.getInstance();
 
   const [status, setStatus] = useState<ConnectionState>(
@@ -25,8 +25,8 @@ export const ProvideWS = ({ children }: { children: React.ReactNode }) => {
   };
 
   return <wsContext.Provider value={value}>{children}</wsContext.Provider>;
-};
+}
 
-export const useWebSocket = () => {
+export function useWebSocket() {
   return useContext(wsContext) as ws;
-};
+}

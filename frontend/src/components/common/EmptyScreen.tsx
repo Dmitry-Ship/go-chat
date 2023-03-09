@@ -1,13 +1,13 @@
 import React from "react";
 import styles from "./EmptyScreen.module.css";
 
-export const EmptyScreen = ({
+export function EmptyScreen({
   text,
   children,
 }: {
   text: string;
   children?: React.ReactNode;
-}) => {
+}) {
   return (
     <div className={styles.wrap}>
       <h3>{text}</h3>
@@ -15,4 +15,4 @@ export const EmptyScreen = ({
       {children}
     </div>
   );
-};
+}

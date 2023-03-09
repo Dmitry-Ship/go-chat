@@ -10,10 +10,10 @@ function SignUp() {
   const [password, setPassword] = useState("");
   const { signup } = useAuth();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     signup(username, password);
-  };
+  }
 
   return (
     <form onSubmit={handleSubmit}>

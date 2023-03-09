@@ -11,7 +11,7 @@ import {
   renameConversation,
 } from "../../../../src/api/fetch";
 
-export const EditConversationBtn = ({
+export function EditConversationBtn({
   onLeave,
   conversation,
   conversationId,
@@ -23,7 +23,7 @@ export const EditConversationBtn = ({
   };
   conversationId: string;
   onLeave: () => void;
-}) => {
+}) {
   const [isEditing, toggleEditing] = useReducer((editing) => !editing, false);
   const [newName, setNewName] = useState(conversation.name);
   const router = useRouter();
@@ -49,19 +49,19 @@ export const EditConversationBtn = ({
     },
   });
 
-  const handleLeave = () => {
+  function handleLeave() {
     leaveConversationRequest.mutate({
       conversation_id: conversation.id,
     });
-  };
+  }
 
-  const handleDelete = () => {
+  function handleDelete() {
     deleteConversationRequest.mutate({
       conversation_id: conversation.id,
     });
-  };
+  }
 
-  const handleRename = async (e: FormEvent<HTMLFormElement>) => {
+  async function handleRename(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     renameConversationRequest.mutate({
@@ -70,12 +70,12 @@ export const EditConversationBtn = ({
     });
 
     setNewName(conversation.name);
-  };
+  }
 
-  const handleStartEditing = () => {
+  function handleStartEditing() {
     toggleEditing();
     setNewName(conversation.name);
-  };
+  }
 
   return (
     <>
@@ -121,4 +121,4 @@ export const EditConversationBtn = ({
       </SlideIn>
     </>
   );
-};
+}

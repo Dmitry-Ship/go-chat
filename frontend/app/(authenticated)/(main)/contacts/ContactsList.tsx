@@ -20,14 +20,14 @@ export function ContactsList() {
     keepPreviousData: true,
   });
 
-  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+  function handleScroll(e: React.UIEvent<HTMLElement>) {
     if (
       e.currentTarget.scrollHeight - e.currentTarget.scrollTop ===
       e.currentTarget.clientHeight
     ) {
       setPage(page + 1);
     }
-  };
+  }
 
   const router = useRouter();
 
@@ -37,14 +37,14 @@ export function ContactsList() {
     },
   });
 
-  const handleClick =
-    (id: string) =>
-    async (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+  function handleClick(id: string) {
+    return async function (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
       e.preventDefault();
       startDirectConversationRequest.mutate({
         to_user_id: id,
       });
     };
+  }
 
   return (
     <>

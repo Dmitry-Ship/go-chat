@@ -24,10 +24,10 @@ export default function AuthLayout({
   }, [user, isChecking]);
 
   useEffect(() => {
-    const appHeight = () => {
+    function appHeight() {
       const doc = document.documentElement;
       doc.style.setProperty("--vh", `${window.innerHeight}px / 100`);
-    };
+    }
     window.addEventListener("resize", appHeight);
     appHeight();
   }, []);
