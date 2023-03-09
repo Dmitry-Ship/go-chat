@@ -1,10 +1,13 @@
 import React from "react";
 import styles from "./EmptyScreen.module.css";
 
-const EmptyScreen: React.FC<{ text: string; children?: React.ReactNode }> = ({
+export function EmptyScreen({
   text,
   children,
-}) => {
+}: {
+  text: string;
+  children?: React.ReactNode;
+}) {
   return (
     <div className={styles.wrap}>
       <h3>{text}</h3>
@@ -12,6 +15,4 @@ const EmptyScreen: React.FC<{ text: string; children?: React.ReactNode }> = ({
       {children}
     </div>
   );
-};
-
-export default EmptyScreen;
+}

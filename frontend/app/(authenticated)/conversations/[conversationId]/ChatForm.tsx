@@ -1,22 +1,34 @@
 import React, { FormEvent, useState } from "react";
 import styles from "./ChatForm.module.css";
-import Loader from "../../../../src/components/common/Loader";
+import { Loader } from "../../../../src/components/common/Loader";
 import { useWebSocket } from "../../../../src/contexts/WSContext";
-import { useAPI } from "../../../../src/contexts/apiContext";
+import { useMutation } from "react-query";
+import { joinConversation } from "../../../../src/api/fetch";
 
-const ChatForm: React.FC<{
+export function ChatForm({
+  loading,
+  joined,
+  onJoin,
+  conversationId,
+  conversationType,
+}: {
   loading: boolean;
   joined: boolean;
   conversationType: "group" | "direct";
   conversationId: string;
   onJoin: () => void;
-}> = ({ loading, joined, onJoin, conversationId, conversationType }) => {
+}) {
   const [message, setMessage] = useState<string>("");
 
   const { sendNotification } = useWebSocket();
-  const { makeCommand } = useAPI();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const joinConversationRequest = useMutation(joinConversation, {
+    onSuccess: (data) => {
+      onJoin();
+    },
+  });
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     const notification =
@@ -28,12 +40,11 @@ const ChatForm: React.FC<{
     });
 
     setMessage("");
-  };
+  }
 
-  const handleJoin = async () => {
-    await makeCommand("/joinConversation", { conversation_id: conversationId });
-    onJoin();
-  };
+  async function handleJoin() {
+    joinConversationRequest.mutate({ conversation_id: conversationId });
+  }
 
   return (
     <div className={"controls-for-scrollable"}>
@@ -67,6 +78,4 @@ const ChatForm: React.FC<{
       )}
     </div>
   );
-};
-
-export default ChatForm;
+}

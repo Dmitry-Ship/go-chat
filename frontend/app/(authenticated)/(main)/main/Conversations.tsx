@@ -1,26 +1,30 @@
 "use client";
 
-import React from "react";
-import { ConversationListItem } from "../../../../src/types/coreTypes";
-import { usePaginatedQuery } from "../../../../src/api/hooks";
-import NewConversationBtn from "./NewConversationBtn";
-import Loader from "../../../../src/components/common/Loader";
-import ConversationItem from "./ConversationItem";
-import EmptyScreen from "../../../../src/components/common/EmptyScreen";
+import React, { useState } from "react";
+import { NewConversationBtn } from "./NewConversationBtn";
+import { Loader } from "../../../../src/components/common/Loader";
+import { ConversationItem } from "./ConversationItem";
+import { EmptyScreen } from "../../../../src/components/common/EmptyScreen";
+import { useQuery } from "react-query";
+import { getConversations } from "../../../../src/api/fetch";
 
-function Conversations() {
-  const [conversationsQuery, , loadNext] =
-    usePaginatedQuery<ConversationListItem>("/getConversations");
+export function Conversations() {
+  const [page, setPage] = useState(1);
 
-  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+  const { data, status } = useQuery({
+    queryKey: ["conversation", page],
+    queryFn: () => getConversations(page),
+    keepPreviousData: true,
+  });
+
+  function handleScroll(e: React.UIEvent<HTMLElement>) {
     if (
       e.currentTarget.scrollHeight - e.currentTarget.scrollTop ===
       e.currentTarget.clientHeight
     ) {
-      loadNext();
+      setPage(page + 1);
     }
-  };
-
+  }
   return (
     <>
       <header className={`header header-for-scrollable`}>
@@ -30,17 +34,17 @@ function Conversations() {
       <section className="wrap">
         <div className={`scrollable-content`} onScroll={handleScroll}>
           {(() => {
-            switch (conversationsQuery.status) {
-              case "fetching":
+            switch (status) {
+              case "loading":
                 return <Loader />;
-              case "done": {
-                return conversationsQuery.items.length === 0 ? (
+              case "success": {
+                return data.length === 0 ? (
                   <EmptyScreen text="No one to talk to yet 🤷🏼">
                     <NewConversationBtn text={"+ New Group Chat"} />
                   </EmptyScreen>
                 ) : (
                   <>
-                    {conversationsQuery.items?.map((conversation, i) => (
+                    {data?.map((conversation, i) => (
                       <ConversationItem key={i} conversation={conversation} />
                     ))}
                   </>
@@ -55,5 +59,3 @@ function Conversations() {
     </>
   );
 }
-
-export default Conversations;

@@ -1,5 +1,5 @@
 import React from "react";
-import ContactsList from "./ContactsList";
+import { ContactsList } from "./ContactsList";
 
 function Contacts() {
   return <ContactsList />;

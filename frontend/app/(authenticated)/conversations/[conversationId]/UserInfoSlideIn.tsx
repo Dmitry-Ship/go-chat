@@ -1,10 +1,16 @@
 import React from "react";
 import styles from "./UserInfoSlideIn.module.css";
-import Avatar from "../../../../src/components/common/Avatar";
-import SlideIn from "../../../../src/components/common/SlideIn";
-import { useAPI } from "../../../../src/contexts/apiContext";
+import { Avatar } from "../../../../src/components/common/Avatar";
+import { SlideIn } from "../../../../src/components/common/SlideIn";
+import { useMutation } from "react-query";
+import { kick, startDirectConversation } from "../../../../src/api/fetch";
 
-const UserInfoSlideIn: React.FC<{
+export function UserInfoSlideIn({
+  user,
+  toggleUserInfo,
+  isOpen,
+  isOwner,
+}: {
   user: {
     id: string;
     avatar: string;
@@ -13,38 +19,40 @@ const UserInfoSlideIn: React.FC<{
   isOwner: boolean;
   isOpen: boolean;
   toggleUserInfo: () => void;
-}> = ({ user, toggleUserInfo, isOpen, isOwner }) => {
-  const { makeCommand } = useAPI();
+}) {
+  const startDirectConversationRequest = useMutation(startDirectConversation, {
+    onSuccess: (data) => {
+      toggleUserInfo();
 
-  const handleChatClick = async (
+      window.location.href = `/conversations/${data.conversation_id}`;
+    },
+  });
+
+  const kickRequest = useMutation(kick, {
+    onSuccess: (data) => {
+      toggleUserInfo();
+    },
+  });
+
+  async function handleChatClick(
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
+  ) {
     e.preventDefault();
 
-    const result = await makeCommand("/startDirectConversation", {
+    startDirectConversationRequest.mutate({
       to_user_id: user.id,
     });
+  }
 
-    if (result.status) {
-      toggleUserInfo();
-
-      window.location.href = `/conversations/${result.data.conversation_id}`;
-    }
-  };
-
-  const handleKickClick = async (
+  async function handleKickClick(
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
+  ) {
     e.preventDefault();
 
-    const result = await makeCommand("/kick", {
+    kickRequest.mutate({
       user_id: user.id,
     });
-
-    if (result.status) {
-      toggleUserInfo();
-    }
-  };
+  }
 
   return (
     <SlideIn onClose={toggleUserInfo} isOpen={isOpen}>
@@ -63,6 +71,4 @@ const UserInfoSlideIn: React.FC<{
       </div>
     </SlideIn>
   );
-};
-
-export default UserInfoSlideIn;
+}

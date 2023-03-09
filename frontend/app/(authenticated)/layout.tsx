@@ -5,7 +5,7 @@ import "../../src/api/ws";
 import { ProvideWS } from "../../src/contexts/WSContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../src/contexts/authContext";
-import Loader from "../../src/components/common/Loader";
+import { Loader } from "../../src/components/common/Loader";
 
 export default function AuthLayout({
   children,
@@ -24,10 +24,10 @@ export default function AuthLayout({
   }, [user, isChecking]);
 
   useEffect(() => {
-    const appHeight = () => {
+    function appHeight() {
       const doc = document.documentElement;
       doc.style.setProperty("--vh", `${window.innerHeight}px / 100`);
-    };
+    }
     window.addEventListener("resize", appHeight);
     appHeight();
   }, []);

@@ -1,15 +1,18 @@
+"use client";
 import React from "react";
 import { ProvideAuth } from "../src/contexts/authContext";
-import { ProvideAPI } from "../src/contexts/apiContext";
 import ErrorAlert from "./ErrorAlert";
+import { QueryClient, QueryClientProvider } from "react-query";
+
+const queryClient = new QueryClient();
 
 export default function Layouts({ children }: { children: React.ReactNode }) {
   return (
-    <ProvideAuth>
-      <ProvideAPI>
+    <QueryClientProvider client={queryClient}>
+      <ProvideAuth>
         <ErrorAlert />
         {children}
-      </ProvideAPI>
-    </ProvideAuth>
+      </ProvideAuth>
+    </QueryClientProvider>
   );
 }

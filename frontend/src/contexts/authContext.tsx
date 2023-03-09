@@ -1,8 +1,8 @@
 "use client";
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { AuthenticationService, IAuthenticationService } from "../auth";
 import { User } from "../types/coreTypes";
-// import { useAPI } from "./apiContext";
 
 type auth = {
   user: null | User;
@@ -12,9 +12,9 @@ type auth = {
   logout: () => void;
 };
 
-export const useProvideAuth = (
+export function useProvideAuth(
   authenticationService: IAuthenticationService
-): auth => {
+): auth {
   const [isChecking, setIsChecking] = useState<boolean>(true);
   const [user, setUser] = useState<User | null>(null);
 
@@ -37,7 +37,7 @@ export const useProvideAuth = (
     logout: authenticationService.logout,
     signup: authenticationService.signup,
   };
-};
+}
 
 const authContext = createContext<auth>({
   user: null,
@@ -49,14 +49,12 @@ const authContext = createContext<auth>({
 
 const authenticationService = new AuthenticationService();
 
-export const ProvideAuth: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export function ProvideAuth({ children }: { children: React.ReactNode }) {
   const auth = useProvideAuth(authenticationService);
 
   return <authContext.Provider value={auth}>{children}</authContext.Provider>;
-};
+}
 
-export const useAuth = () => {
+export function useAuth() {
   return useContext(authContext);
-};
+}

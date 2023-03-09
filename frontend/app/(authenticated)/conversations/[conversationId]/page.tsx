@@ -1,5 +1,5 @@
 import React from "react";
-import Conversation from "./Conversation";
+import { Conversation } from "./Conversation";
 
 function ChatConversationPage({
   params,

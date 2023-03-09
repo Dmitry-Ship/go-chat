@@ -1,4 +1,4 @@
-import { makeCommand, makeQuery } from "../api/fetch";
+import { getUser, login, logout, refreshToken, signup } from "../api/fetch";
 import { User } from "../types/coreTypes";
 
 export interface IAuthenticationService {
@@ -24,7 +24,7 @@ export class AuthenticationService implements IAuthenticationService {
   };
 
   logout = async () => {
-    const result = await makeCommand("/logout");
+    const result = await logout();
 
     if (result.status) {
       this.onStateChangedCallback(null, "");
@@ -35,7 +35,7 @@ export class AuthenticationService implements IAuthenticationService {
   };
 
   login = async (username: string, password: string) => {
-    const result = await makeCommand("/login", {
+    const result = await login({
       username,
       password,
     });
@@ -49,7 +49,7 @@ export class AuthenticationService implements IAuthenticationService {
   };
 
   signup = async (username: string, password: string) => {
-    const result = await makeCommand("/signup", {
+    const result = await signup({
       username,
       password,
     });
@@ -64,11 +64,10 @@ export class AuthenticationService implements IAuthenticationService {
 
   rotateTokens = () => {
     const refresh = async () => {
-      const result = await makeCommand("/refreshToken");
-
-      if (result.status) {
+      const result = await refreshToken();
+      if (result.access_token_expiration) {
         const accessTokenRefreshInterval =
-          result.data?.access_token_expiration / 1000000 / 2;
+          result?.access_token_expiration / 1000000 / 2;
 
         this.fetchUser();
 
@@ -85,10 +84,10 @@ export class AuthenticationService implements IAuthenticationService {
   };
 
   private fetchUser = async () => {
-    const getUserResult = await makeQuery("/getUser");
+    const getUserResult = await getUser()();
 
-    if (getUserResult.status) {
-      this.onStateChangedCallback(getUserResult.data, "");
+    if (getUserResult) {
+      this.onStateChangedCallback(getUserResult, "");
     }
   };
 }

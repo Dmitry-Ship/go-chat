@@ -1,16 +1,14 @@
 import React from "react";
 import styles from "./ConversationItem.module.css";
 import Link from "next/link";
-import Avatar from "../../../../src/components/common/Avatar";
+import { Avatar } from "../../../../src/components/common/Avatar";
 import { ConversationListItem } from "../../../../src/types/coreTypes";
 
 type ConversationItemProps = {
   conversation: ConversationListItem;
 };
 
-const ConversationItem: React.FC<ConversationItemProps> = ({
-  conversation,
-}) => {
+export function ConversationItem({ conversation }: ConversationItemProps) {
   return (
     <Link
       href={"conversations/" + conversation.id}
@@ -38,6 +36,4 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
       </>
     </Link>
   );
-};
-
-export default ConversationItem;
+}

@@ -1,6 +1,6 @@
 import { Message, MessageRaw, BaseMessage } from "./types/coreTypes";
 
-const ParseBaseMessage = (raw: MessageRaw): BaseMessage => {
+function ParseBaseMessage(raw: MessageRaw): BaseMessage {
   return {
     id: raw.id,
     conversationId: raw.conversation_id,
@@ -12,9 +12,9 @@ const ParseBaseMessage = (raw: MessageRaw): BaseMessage => {
     text: raw.text,
     createdAt: raw.created_at,
   };
-};
+}
 
-export const parseMessage = (data: MessageRaw): Message => {
+export function parseMessage(data: MessageRaw): Message {
   const base = ParseBaseMessage(data);
   switch (data.type) {
     case "joined_conversation":
@@ -51,4 +51,4 @@ export const parseMessage = (data: MessageRaw): Message => {
         type: "unknown",
       };
   }
-};
+}

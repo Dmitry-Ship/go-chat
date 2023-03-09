@@ -1,39 +1,50 @@
-import React, { useState } from "react";
-import SlideIn from "../../../../src/components/common/SlideIn";
-import { Contact } from "../../../../src/types/coreTypes";
-import ContactItem from "../../(main)/contacts/ContactItem";
-import { useQueryOnDemand } from "../../../../src/api/hooks";
-import Loader from "../../../../src/components/common/Loader";
-import { useAPI } from "../../../../src/contexts/apiContext";
+import React, { useReducer } from "react";
+import { SlideIn } from "../../../../src/components/common/SlideIn";
+import { ContactItem } from "../../(main)/contacts/ContactItem";
+import { Loader } from "../../../../src/components/common/Loader";
+import { useMutation, useQuery } from "react-query";
+import {
+  getPotentialInvitees,
+  inviteUserToConversation,
+} from "../../../../src/api/fetch";
 
-const InviteMenu: React.FC<{ conversationId: string }> = ({
-  conversationId,
-}) => {
-  const [isInviteMenuOpen, setIsInviteMenuOpen] = useState(false);
-  const [response, load] = useQueryOnDemand<Contact[]>(
-    `/getPotentialInvitees?conversation_id=${conversationId}`
+export function InviteMenu({ conversationId }: { conversationId: string }) {
+  const [isInviteMenuOpen, toggleInviteMenu] = useReducer(
+    (open) => !open,
+    false
+  );
+  const { data, status, refetch } = useQuery(
+    "invitees",
+    getPotentialInvitees(`?conversation_id=${conversationId}`),
+    {
+      refetchOnWindowFocus: false,
+      enabled: false,
+    }
   );
 
-  const { makeCommand } = useAPI();
+  const inviteUserToConversationRequest = useMutation(
+    inviteUserToConversation,
+    {
+      onSuccess: (data) => {
+        toggleInviteMenu();
+      },
+    }
+  );
 
-  const handleToggleInviteMenu = () => {
-    load();
-    setIsInviteMenuOpen(!isInviteMenuOpen);
-  };
+  function handleToggleInviteMenu() {
+    refetch();
+    toggleInviteMenu();
+  }
 
-  const handleClick =
-    (id: string) =>
-    async (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+  function handleClick(id: string) {
+    return function (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
       e.preventDefault();
-      const result = await makeCommand("/inviteUserToConversation", {
+      inviteUserToConversationRequest.mutate({
         user_id: id,
         conversation_id: conversationId,
       });
-
-      if (result.status) {
-        setIsInviteMenuOpen(false);
-      }
     };
+  }
 
   return (
     <>
@@ -42,14 +53,14 @@ const InviteMenu: React.FC<{ conversationId: string }> = ({
       </button>
       <SlideIn onClose={handleToggleInviteMenu} isOpen={isInviteMenuOpen}>
         {(() => {
-          switch (response.status) {
-            case "fetching":
+          switch (status) {
+            case "loading":
               return <Loader />;
-            case "done":
+            case "success":
               return (
                 <>
-                  {response.data.length > 0 ? (
-                    response.data.map((contact, i) => (
+                  {data.length > 0 ? (
+                    data.map((contact, i) => (
                       <ContactItem
                         key={i}
                         onClick={handleClick(contact.id)}
@@ -68,6 +79,4 @@ const InviteMenu: React.FC<{ conversationId: string }> = ({
       </SlideIn>
     </>
   );
-};
-
-export default InviteMenu;
+}

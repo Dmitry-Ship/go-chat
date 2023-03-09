@@ -1,12 +1,21 @@
-import React, { FormEvent, useEffect, useState } from "react";
+import React, { FormEvent, useReducer, useState } from "react";
 import styles from "./EditConversationBtn.module.css";
-import SlideIn from "../../../../src/components/common/SlideIn";
+import { SlideIn } from "../../../../src/components/common/SlideIn";
 import { useRouter } from "next/navigation";
-import InviteMenu from "./InviteMenu";
-import { useAPI } from "../../../../src/contexts/apiContext";
+import { InviteMenu } from "./InviteMenu";
 import { Conversation } from "../../../../src/types/coreTypes";
+import { useMutation } from "react-query";
+import {
+  deleteConversation,
+  leaveConversation,
+  renameConversation,
+} from "../../../../src/api/fetch";
 
-const EditConversationBtn: React.FC<{
+export function EditConversationBtn({
+  onLeave,
+  conversation,
+  conversationId,
+}: {
   conversation: Conversation & {
     joined: boolean;
     participants_count: number;
@@ -14,63 +23,67 @@ const EditConversationBtn: React.FC<{
   };
   conversationId: string;
   onLeave: () => void;
-}> = ({ onLeave, conversation, conversationId }) => {
-  const [isEditing, setIsEditing] = useState(false);
+}) {
+  const [isEditing, toggleEditing] = useReducer((editing) => !editing, false);
   const [newName, setNewName] = useState(conversation.name);
   const router = useRouter();
-  const { makeCommand } = useAPI();
 
-  const handleClose = () => {
-    setIsEditing(false);
-  };
-
-  const handleLeave = async () => {
-    await makeCommand("/leaveConversation", {
-      conversation_id: conversation.id,
-    });
-    onLeave();
-    router.push("/");
-    setIsEditing(false);
-  };
-
-  const handleDelete = async () => {
-    const result = await makeCommand("/deleteConversation", {
-      conversation_id: conversation.id,
-    });
-
-    if (result.status) {
+  const leaveConversationRequest = useMutation(leaveConversation, {
+    onSuccess: (data) => {
+      onLeave();
       router.push("/");
-      setIsEditing(false);
-    }
-  };
+      toggleEditing();
+    },
+  });
 
-  const handleRename = async (e: FormEvent<HTMLFormElement>) => {
+  const deleteConversationRequest = useMutation(deleteConversation, {
+    onSuccess: (data) => {
+      router.push("/");
+      toggleEditing();
+    },
+  });
+
+  const renameConversationRequest = useMutation(renameConversation, {
+    onSuccess: (data) => {
+      toggleEditing();
+    },
+  });
+
+  function handleLeave() {
+    leaveConversationRequest.mutate({
+      conversation_id: conversation.id,
+    });
+  }
+
+  function handleDelete() {
+    deleteConversationRequest.mutate({
+      conversation_id: conversation.id,
+    });
+  }
+
+  async function handleRename(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const result = await makeCommand("/renameConversation", {
+
+    renameConversationRequest.mutate({
       conversation_id: conversation.id,
       new_name: newName,
     });
 
-    if (result.status) {
-      setIsEditing(false);
-    }
-
     setNewName(conversation.name);
-  };
+  }
 
-  useEffect(() => {
-    if (!isEditing) {
-      setNewName(conversation.name);
-    }
-  }, [isEditing, conversation.name]);
+  function handleStartEditing() {
+    toggleEditing();
+    setNewName(conversation.name);
+  }
 
   return (
     <>
-      <button onClick={() => setIsEditing(true)} className={styles.editButton}>
+      <button onClick={handleStartEditing} className={styles.editButton}>
         ⚙️
       </button>
 
-      <SlideIn onClose={handleClose} isOpen={isEditing}>
+      <SlideIn onClose={toggleEditing} isOpen={isEditing}>
         <>
           {conversation.is_owner && (
             <>
@@ -108,6 +121,4 @@ const EditConversationBtn: React.FC<{
       </SlideIn>
     </>
   );
-};
-
-export default EditConversationBtn;
+}
