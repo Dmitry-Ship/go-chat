@@ -9,10 +9,13 @@ import { InviteMenu } from "./InviteMenu";
 import { useQuery } from "react-query";
 import { getConversationsMessages } from "../../../../src/api/fetch";
 
-export const ChatLog: React.FC<{
+export const ChatLog = ({
+  conversation,
+  isEmpty,
+}: {
   conversation: ConversationFull;
   isEmpty: boolean;
-}> = ({ conversation, isEmpty }) => {
+}) => {
   const { onNotification } = useWebSocket();
   const [lastScrollHeight, setLastScrollHeight] = useState<number>(0);
 
@@ -20,7 +23,7 @@ export const ChatLog: React.FC<{
   const [localMessages, setLocalMessages] = useState<MessageRaw[]>([]);
 
   const { data, status } = useQuery({
-    queryKey: ["messages", page],
+    queryKey: [`${conversation?.id}/messages`, page],
     queryFn: async () => {
       const result = await getConversationsMessages(
         page,

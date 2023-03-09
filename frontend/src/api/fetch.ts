@@ -1,4 +1,3 @@
-"use client";
 import axios from "axios";
 import {
   Contact,
@@ -70,7 +69,6 @@ export const makeQuery =
   (param = "") =>
   async (): Promise<T> => {
     const { data } = await axios.get("/api" + url + param);
-    console.log("data", data);
 
     return data as T;
   };

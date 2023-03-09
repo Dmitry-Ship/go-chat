@@ -1,4 +1,3 @@
-"use client";
 import { getUser, login, logout, refreshToken, signup } from "../api/fetch";
 import { User } from "../types/coreTypes";
 

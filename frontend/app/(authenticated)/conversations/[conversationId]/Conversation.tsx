@@ -13,14 +13,16 @@ import { ParticipantsList } from "./ParticipantsList";
 import { useQuery } from "react-query";
 import { getConversation } from "../../../../src/api/fetch";
 
-export const Conversation: React.FC<{ conversationId: string }> = ({
+export const Conversation = ({
   conversationId,
+}: {
+  conversationId: string;
 }) => {
   const router = useRouter();
   const { onNotification } = useWebSocket();
 
   const { data, status, refetch } = useQuery(
-    "conversation",
+    `conversation${conversationId}`,
     getConversation(`?conversation_id=${conversationId}`)
   );
 

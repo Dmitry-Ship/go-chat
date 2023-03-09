@@ -8,10 +8,7 @@ type ContactItemProps = {
   onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
 };
 
-export const ContactItem: React.FC<ContactItemProps> = ({
-  contact,
-  onClick,
-}) => {
+export const ContactItem = ({ contact, onClick }: ContactItemProps) => {
   return (
     <a onClick={onClick} className={`${styles.contact} rounded shadow`}>
       <Avatar src={contact.avatar} />

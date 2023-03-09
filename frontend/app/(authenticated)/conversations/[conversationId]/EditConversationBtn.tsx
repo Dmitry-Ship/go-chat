@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useReducer, useState } from "react";
 import styles from "./EditConversationBtn.module.css";
 import { SlideIn } from "../../../../src/components/common/SlideIn";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,11 @@ import {
   renameConversation,
 } from "../../../../src/api/fetch";
 
-export const EditConversationBtn: React.FC<{
+export const EditConversationBtn = ({
+  onLeave,
+  conversation,
+  conversationId,
+}: {
   conversation: Conversation & {
     joined: boolean;
     participants_count: number;
@@ -19,8 +23,8 @@ export const EditConversationBtn: React.FC<{
   };
   conversationId: string;
   onLeave: () => void;
-}> = ({ onLeave, conversation, conversationId }) => {
-  const [isEditing, setIsEditing] = useState(false);
+}) => {
+  const [isEditing, toggleEditing] = useReducer((editing) => !editing, false);
   const [newName, setNewName] = useState(conversation.name);
   const router = useRouter();
 
@@ -28,26 +32,22 @@ export const EditConversationBtn: React.FC<{
     onSuccess: (data) => {
       onLeave();
       router.push("/");
-      setIsEditing(false);
+      toggleEditing();
     },
   });
 
   const deleteConversationRequest = useMutation(deleteConversation, {
     onSuccess: (data) => {
       router.push("/");
-      setIsEditing(false);
+      toggleEditing();
     },
   });
 
   const renameConversationRequest = useMutation(renameConversation, {
     onSuccess: (data) => {
-      setIsEditing(false);
+      toggleEditing();
     },
   });
-
-  const handleClose = () => {
-    setIsEditing(false);
-  };
 
   const handleLeave = () => {
     leaveConversationRequest.mutate({
@@ -73,7 +73,7 @@ export const EditConversationBtn: React.FC<{
   };
 
   const handleStartEditing = () => {
-    setIsEditing(true);
+    toggleEditing();
     setNewName(conversation.name);
   };
 
@@ -83,7 +83,7 @@ export const EditConversationBtn: React.FC<{
         ⚙️
       </button>
 
-      <SlideIn onClose={handleClose} isOpen={isEditing}>
+      <SlideIn onClose={toggleEditing} isOpen={isEditing}>
         <>
           {conversation.is_owner && (
             <>

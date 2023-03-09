@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useReducer, useState } from "react";
 import { SlideIn } from "../../../../src/components/common/SlideIn";
 import styles from "./ParticipantsList.module.css";
 import { ContactItem } from "../../(main)/contacts/ContactItem";
@@ -10,12 +10,17 @@ import {
   startDirectConversation,
 } from "../../../../src/api/fetch";
 
-export const ParticipantsList: React.FC<{
+export const ParticipantsList = ({
+  participantsCount,
+  conversationId,
+}: {
   participantsCount: number;
   conversationId: string;
-}> = ({ participantsCount, conversationId }) => {
-  const [isParticipantsListOpen, setIsParticipantsListOpen] = useState(false);
-
+}) => {
+  const [isParticipantsListOpen, toggleParticipantsList] = useReducer(
+    (open) => !open,
+    false
+  );
   const { data, status, refetch } = useQuery(
     "participants",
     getParticipants(`?conversation_id=${conversationId}`),
@@ -34,7 +39,7 @@ export const ParticipantsList: React.FC<{
 
   const handleTogglesParticipantsListOpen = () => {
     refetch();
-    setIsParticipantsListOpen(!isParticipantsListOpen);
+    toggleParticipantsList();
   };
 
   const handleClick =

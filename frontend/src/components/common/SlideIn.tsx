@@ -2,11 +2,15 @@ import React, { useRef } from "react";
 import { Portal } from "./Portal";
 import styles from "./SlideIn.module.css";
 
-export const SlideIn: React.FC<{
+export const SlideIn = ({
+  children,
+  isOpen,
+  onClose,
+}: {
   children: React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
-}> = ({ children, isOpen, onClose }) => {
+}) => {
   const node = useRef(null);
 
   if (!isOpen) {

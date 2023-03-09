@@ -49,9 +49,7 @@ const authContext = createContext<auth>({
 
 const authenticationService = new AuthenticationService();
 
-export const ProvideAuth: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const ProvideAuth = ({ children }: { children: React.ReactNode }) => {
   const auth = useProvideAuth(authenticationService);
 
   return <authContext.Provider value={auth}>{children}</authContext.Provider>;

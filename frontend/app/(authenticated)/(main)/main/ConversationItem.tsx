@@ -8,9 +8,7 @@ type ConversationItemProps = {
   conversation: ConversationListItem;
 };
 
-export const ConversationItem: React.FC<ConversationItemProps> = ({
-  conversation,
-}) => {
+export const ConversationItem = ({ conversation }: ConversationItemProps) => {
   return (
     <Link
       href={"conversations/" + conversation.id}

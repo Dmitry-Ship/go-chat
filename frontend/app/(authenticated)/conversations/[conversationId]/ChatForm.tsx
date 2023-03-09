@@ -5,13 +5,19 @@ import { useWebSocket } from "../../../../src/contexts/WSContext";
 import { useMutation } from "react-query";
 import { joinConversation } from "../../../../src/api/fetch";
 
-export const ChatForm: React.FC<{
+export const ChatForm = ({
+  loading,
+  joined,
+  onJoin,
+  conversationId,
+  conversationType,
+}: {
   loading: boolean;
   joined: boolean;
   conversationType: "group" | "direct";
   conversationId: string;
   onJoin: () => void;
-}> = ({ loading, joined, onJoin, conversationId, conversationType }) => {
+}) => {
   const [message, setMessage] = useState<string>("");
 
   const { sendNotification } = useWebSocket();

@@ -1,20 +1,21 @@
-import React from "react";
+import React, { useReducer } from "react";
 import styles from "./MessageComponent.module.css";
 import { ConversationFull, Message } from "../../../../src/types/coreTypes";
 import { Avatar } from "../../../../src/components/common/Avatar";
 import { UserInfoSlideIn } from "./UserInfoSlideIn";
 
-export const MessageComponent: React.FC<{
+export const MessageComponent = ({
+  message,
+  isFistInAGroup,
+  isLastInAGroup,
+  conversation,
+}: {
   message: Message;
   conversation: ConversationFull;
   isFistInAGroup: boolean;
   isLastInAGroup: boolean;
-}> = ({ message, isFistInAGroup, isLastInAGroup, conversation }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-
-  const toggleUserInfo = () => {
-    setIsOpen(!isOpen);
-  };
+}) => {
+  const [isOpen, toggleOpen] = useReducer((open) => !open, false);
 
   const date = new Date(message.createdAt);
   const time = `${date.getHours()}:${date.getMinutes()}`;
@@ -33,20 +34,20 @@ export const MessageComponent: React.FC<{
                 } ${styles.textMessage}`}
               >
                 <UserInfoSlideIn
-                  toggleUserInfo={toggleUserInfo}
+                  toggleUserInfo={toggleOpen}
                   isOwner={conversation.is_owner}
                   user={message.user}
                   isOpen={isOpen}
                 />
                 {message.isInbound && (
-                  <div className={styles.avatarColumn} onClick={toggleUserInfo}>
+                  <div className={styles.avatarColumn} onClick={toggleOpen}>
                     {isLastInAGroup && <Avatar src={message.user.avatar} />}
                   </div>
                 )}
 
                 <div className={`${styles.messageBubble} shadow`}>
                   {message.isInbound && isFistInAGroup && (
-                    <div className={styles.userName} onClick={toggleUserInfo}>
+                    <div className={styles.userName} onClick={toggleOpen}>
                       {message.user.name}
                     </div>
                   )}

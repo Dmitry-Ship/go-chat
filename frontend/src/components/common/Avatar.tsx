@@ -6,10 +6,13 @@ const sizesMap = {
   lg: 100,
 };
 
-export const Avatar: React.FC<{
+export const Avatar = ({
+  src,
+  size = "md",
+}: {
   src: string;
   size?: keyof typeof sizesMap;
-}> = ({ src, size = "md" }) => {
+}) => {
   return (
     <div className={styles.avatar} style={{ width: size, height: size }}>
       {src}

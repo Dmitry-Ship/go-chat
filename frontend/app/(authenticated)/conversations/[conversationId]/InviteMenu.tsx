@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useReducer } from "react";
 import { SlideIn } from "../../../../src/components/common/SlideIn";
 import { ContactItem } from "../../(main)/contacts/ContactItem";
 import { Loader } from "../../../../src/components/common/Loader";
@@ -8,10 +8,11 @@ import {
   inviteUserToConversation,
 } from "../../../../src/api/fetch";
 
-export const InviteMenu: React.FC<{ conversationId: string }> = ({
-  conversationId,
-}) => {
-  const [isInviteMenuOpen, setIsInviteMenuOpen] = useState(false);
+export const InviteMenu = ({ conversationId }: { conversationId: string }) => {
+  const [isInviteMenuOpen, toggleInviteMenu] = useReducer(
+    (open) => !open,
+    false
+  );
   const { data, status, refetch } = useQuery(
     "invitees",
     getPotentialInvitees(`?conversation_id=${conversationId}`),
@@ -25,14 +26,14 @@ export const InviteMenu: React.FC<{ conversationId: string }> = ({
     inviteUserToConversation,
     {
       onSuccess: (data) => {
-        setIsInviteMenuOpen(false);
+        toggleInviteMenu();
       },
     }
   );
 
   const handleToggleInviteMenu = () => {
     refetch();
-    setIsInviteMenuOpen(!isInviteMenuOpen);
+    toggleInviteMenu();
   };
 
   const handleClick =

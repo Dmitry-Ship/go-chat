@@ -5,7 +5,12 @@ import { SlideIn } from "../../../../src/components/common/SlideIn";
 import { useMutation } from "react-query";
 import { kick, startDirectConversation } from "../../../../src/api/fetch";
 
-export const UserInfoSlideIn: React.FC<{
+export const UserInfoSlideIn = ({
+  user,
+  toggleUserInfo,
+  isOpen,
+  isOwner,
+}: {
   user: {
     id: string;
     avatar: string;
@@ -14,7 +19,7 @@ export const UserInfoSlideIn: React.FC<{
   isOwner: boolean;
   isOpen: boolean;
   toggleUserInfo: () => void;
-}> = ({ user, toggleUserInfo, isOpen, isOwner }) => {
+}) => {
   const startDirectConversationRequest = useMutation(startDirectConversation, {
     onSuccess: (data) => {
       toggleUserInfo();

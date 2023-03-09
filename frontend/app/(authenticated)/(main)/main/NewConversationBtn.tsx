@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useReducer, useRef, useState } from "react";
 import styles from "./NewConversationBtn.module.css";
 import { SlideIn } from "../../../../src/components/common/SlideIn";
 import { v4 as uuidv4 } from "uuid";
@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "react-query";
 import { createConversation } from "../../../../src/api/fetch";
 
-export const NewConversationBtn: React.FC<{ text: string }> = ({ text }) => {
-  const [isCreating, setIsCreating] = useState(false);
+export const NewConversationBtn = ({ text }: { text: string }) => {
+  const [isCreating, toggleCreating] = useReducer((open) => !open, false);
   const [conversationName, setConversationName] = useState("");
   const [newId, setNewId] = useState("");
 
@@ -33,7 +33,7 @@ export const NewConversationBtn: React.FC<{ text: string }> = ({ text }) => {
   };
 
   const handleStartCreating = () => {
-    setIsCreating(true);
+    toggleCreating();
     input.current?.focus();
   };
 
@@ -42,7 +42,7 @@ export const NewConversationBtn: React.FC<{ text: string }> = ({ text }) => {
       <button className={"btn"} onClick={handleStartCreating}>
         {text}
       </button>
-      <SlideIn isOpen={isCreating} onClose={() => setIsCreating(false)}>
+      <SlideIn isOpen={isCreating} onClose={toggleCreating}>
         <form className={styles.form} onSubmit={handleCreate}>
           <input
             type="text"

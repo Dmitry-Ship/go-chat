@@ -3,7 +3,7 @@
 import React from "react";
 import styles from "./ErrorAlert.module.css";
 
-const ErrorAlert: React.FC = () => {
+const ErrorAlert = () => {
   return null;
 
   // return (
