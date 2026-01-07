@@ -1,11 +1,13 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"GitHub/go-chat/backend/internal/infra/postgres/db"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DbConfig struct {
@@ -16,46 +18,36 @@ type DbConfig struct {
 	Name     string
 }
 
-func NewDatabaseConnection(conf DbConfig) *gorm.DB {
-	options := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s", conf.Host, conf.Port, conf.User, conf.Name, conf.Password)
+func NewDatabaseConnection(ctx context.Context, conf DbConfig) (*pgxpool.Pool, error) {
+	connString := fmt.Sprintf(
+		"host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+		conf.Host, conf.Port, conf.User, conf.Name, conf.Password,
+	)
 
-	db, err := gorm.Open(postgres.Open(options), &gorm.Config{})
+	config, err := pgxpool.ParseConfig(connString)
 	if err != nil {
-		panic("⛔️ Could not connect to database")
+		return nil, fmt.Errorf("parse config error: %w", err)
 	}
 
-	err = autoMigrate(db)
-
+	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		panic("⛔️ Could not migrate database")
+		return nil, fmt.Errorf("create pool error: %w", err)
+	}
+
+	if err := pool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("ping error: %w", err)
+	}
+
+	migrationsDir := "./migrations"
+	if err := RunMigrations(ctx, pool, migrationsDir); err != nil {
+		return nil, fmt.Errorf("migrate error: %w", err)
 	}
 
 	log.Printf("💿 Connected to database %s", conf.Name)
 
-	return db
+	return pool, nil
 }
 
-var models = []interface{}{
-	&User{},
-	&GroupConversation{},
-	&Participant{},
-	&Message{},
-	&Conversation{},
-}
-
-func Drop(db *gorm.DB) error {
-	for _, model := range models {
-		err := db.Migrator().DropTable(&model)
-		if err != nil {
-			return fmt.Errorf("drop table error: %w", err)
-		}
-	}
-
-	log.Printf("Dropped database %s", db.Name())
-
-	return autoMigrate(db)
-}
-
-func autoMigrate(db *gorm.DB) error {
-	return db.AutoMigrate(models...)
+func NewQueries(pool *pgxpool.Pool) *db.Queries {
+	return db.New(pool)
 }

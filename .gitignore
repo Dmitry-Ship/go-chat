@@ -38,6 +38,6 @@ yarn-error.log*
 
 .env
 go-bin
-db
+/db
 tmp
 /cache

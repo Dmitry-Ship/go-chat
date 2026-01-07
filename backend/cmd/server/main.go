@@ -12,6 +12,7 @@ import (
 	"GitHub/go-chat/backend/internal/services"
 	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -30,13 +31,17 @@ func main() {
 		_ = redisClient.Close()
 	}()
 
-	db := postgres.NewDatabaseConnection(postgres.DbConfig{
+	pool, err := postgres.NewDatabaseConnection(ctx, postgres.DbConfig{
 		Host:     os.Getenv("DB_HOST"),
 		Port:     os.Getenv("DB_PORT"),
 		User:     os.Getenv("DB_USER"),
 		Name:     os.Getenv("DB_NAME"),
 		Password: os.Getenv("DB_PASSWORD"),
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close()
 
 	eventBus := infra.NewEventBus()
 	defer eventBus.Close()
@@ -45,11 +50,11 @@ func main() {
 		Prefix: "cache:",
 	})
 
-	messagesRepository := postgres.NewMessageRepository(db, eventBus)
-	groupConversationsRepository := postgres.NewGroupConversationRepository(db, eventBus)
-	directConversationsRepository := postgres.NewDirectConversationRepository(db, eventBus)
-	participantRepository := postgres.NewParticipantRepository(db, eventBus)
-	usersRepository := postgres.NewUserRepository(db, eventBus)
+	messagesRepository := postgres.NewMessageRepository(pool, eventBus)
+	groupConversationsRepository := postgres.NewGroupConversationRepository(pool, eventBus)
+	directConversationsRepository := postgres.NewDirectConversationRepository(pool, eventBus)
+	participantRepository := postgres.NewParticipantRepository(pool, eventBus)
+	usersRepository := postgres.NewUserRepository(pool, eventBus)
 
 	cachedUsersRepository := cache.NewUserCacheDecorator(usersRepository, cacheClient)
 	cachedGroupConversationsRepository := cache.NewGroupConversationCacheDecorator(groupConversationsRepository, cacheClient)
@@ -71,7 +76,7 @@ func main() {
 	subscriptionSync := ws.NewSubscriptionSync(redisClient, redisPubsub.SubscriptionChannel)
 
 	activeClients := ws.NewActiveClients()
-	queries := postgres.NewQueriesRepository(db)
+	queries := postgres.NewQueriesRepository(pool)
 	notificationService := services.NewNotificationServiceWithClients(ctx, redisClient, cachedParticipantRepository, subscriptionSync, queries, activeClients)
 
 	cacheInvalidationService := cache.NewCacheInvalidationService(cacheClient, eventBus)

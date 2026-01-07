@@ -1,22 +1,29 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra"
+	"GitHub/go-chat/backend/internal/infra/postgres/db"
 
-	"gorm.io/gorm"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type repository struct {
-	db             *gorm.DB
+	pool           *pgxpool.Pool
+	queries        *db.Queries
 	eventPublisher *infra.EventBus
 }
 
-func newRepository(db *gorm.DB, eventPublisher *infra.EventBus) *repository {
+func newRepository(pool *pgxpool.Pool, queries *db.Queries, eventPublisher *infra.EventBus) *repository {
 	return &repository{
-		db:             db,
+		pool:           pool,
+		queries:        queries,
 		eventPublisher: eventPublisher,
 	}
 }
@@ -27,48 +34,59 @@ func (r *repository) dispatchEvents(aggregate domain.Aggregate) {
 	}
 }
 
-func (r *repository) beginTransaction(aggregate domain.Aggregate, callback func(tx *gorm.DB) error) error {
-	tx := r.db.Begin()
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	err := callback(tx)
-
+func (r *repository) withTx(ctx context.Context, fn func(tx pgx.Tx) error) error {
+	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("callback error: %w", err)
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if err := fn(tx); err != nil {
+		return err
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
+	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit error: %w", err)
 	}
 
-	r.dispatchEvents(aggregate)
-
 	return nil
 }
 
-func (r *repository) store(aggregate domain.Aggregate, persistence interface{}) error {
-	if err := r.db.Create(persistence).Error; err != nil {
-		return fmt.Errorf("create error: %w", err)
-	}
-
-	r.dispatchEvents(aggregate)
-
-	return nil
+func uuidToPgtype(u uuid.UUID) pgtype.UUID {
+	return pgtype.UUID{Bytes: u, Valid: true}
 }
 
-func (r *repository) update(aggregate domain.Aggregate, persistence interface{}) error {
-	if err := r.db.Save(persistence).Error; err != nil {
-		return fmt.Errorf("save error: %w", err)
+func pgtypeToUUID(u pgtype.UUID) uuid.UUID {
+	return uuid.UUID(u.Bytes)
+}
+
+var conversationTypesMap = map[uint8]domain.ConversationType{
+	0: domain.ConversationTypeGroup,
+	1: domain.ConversationTypeDirect,
+}
+
+func toConversationTypePersistence(conversationType domain.ConversationType) uint8 {
+	for k, v := range conversationTypesMap {
+		if v == conversationType {
+			return k
+		}
 	}
+	return 0
+}
 
-	r.dispatchEvents(aggregate)
+var messageTypesMap = map[uint8]domain.MessageType{
+	0: domain.MessageTypeText,
+	1: domain.MessageTypeRenamedConversation,
+	2: domain.MessageTypeLeftConversation,
+	3: domain.MessageTypeJoinedConversation,
+	4: domain.MessageTypeInvitedConversation,
+}
 
-	return nil
+func toMessageTypePersistence(messageType domain.MessageType) uint8 {
+	for k, v := range messageTypesMap {
+		if v == messageType {
+			return k
+		}
+	}
+	return 0
 }

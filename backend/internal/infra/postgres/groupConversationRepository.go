@@ -1,41 +1,64 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra"
+	"GitHub/go-chat/backend/internal/infra/postgres/db"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type groupConversationRepository struct {
-	repository
+	*repository
 }
 
-func NewGroupConversationRepository(db *gorm.DB, eventPublisher *infra.EventBus) *groupConversationRepository {
+func NewGroupConversationRepository(pool *pgxpool.Pool, eventPublisher *infra.EventBus) *groupConversationRepository {
 	return &groupConversationRepository{
-		repository: *newRepository(db, eventPublisher),
+		repository: newRepository(pool, db.New(pool), eventPublisher),
 	}
 }
 
 func (r *groupConversationRepository) Store(conversation *domain.GroupConversation) error {
-	return r.beginTransaction(conversation, func(tx *gorm.DB) error {
-		if err := tx.Create(toConversationPersistence(conversation)).Error; err != nil {
+	ctx := context.Background()
+	return r.withTx(ctx, func(tx pgx.Tx) error {
+		qtx := r.queries.WithTx(tx)
+
+		conversationParams := db.StoreConversationParams{
+			ID:       uuidToPgtype(conversation.ID),
+			Type:     int32(toConversationTypePersistence(conversation.Type)),
+			IsActive: conversation.IsActive,
+		}
+
+		if err := qtx.StoreConversation(ctx, conversationParams); err != nil {
 			return fmt.Errorf("create conversation error: %w", err)
 		}
 
-		if err := tx.Create(toGroupConversationPersistence(conversation)).Error; err != nil {
+		groupConversationParams := db.StoreGroupConversationParams{
+			ID:             uuidToPgtype(conversation.ID),
+			Name:           conversation.Name,
+			Avatar:         pgtype.Text{String: conversation.Avatar, Valid: conversation.Avatar != ""},
+			ConversationID: uuidToPgtype(conversation.Conversation.ID),
+			OwnerID:        uuidToPgtype(conversation.Owner.UserID),
+		}
+
+		if err := qtx.StoreGroupConversation(ctx, groupConversationParams); err != nil {
 			return fmt.Errorf("create group conversation error: %w", err)
 		}
 
-		if err := tx.Create(&Participant{
-			ID:             conversation.Owner.ID,
-			ConversationID: conversation.Owner.ConversationID,
-			UserID:         conversation.Owner.UserID,
+		participantParams := db.StoreParticipantParams{
+			ID:             uuidToPgtype(conversation.Owner.ID),
+			ConversationID: uuidToPgtype(conversation.Owner.ConversationID),
+			UserID:         uuidToPgtype(conversation.Owner.UserID),
 			IsActive:       conversation.Owner.IsActive,
-		}).Error; err != nil {
+		}
+
+		if err := qtx.StoreParticipant(ctx, participantParams); err != nil {
 			return fmt.Errorf("create participant error: %w", err)
 		}
 
@@ -44,13 +67,27 @@ func (r *groupConversationRepository) Store(conversation *domain.GroupConversati
 }
 
 func (r *groupConversationRepository) Update(conversation *domain.GroupConversation) error {
-	return r.beginTransaction(conversation, func(tx *gorm.DB) error {
-		if err := tx.Save(toConversationPersistence(conversation)).Error; err != nil {
-			return fmt.Errorf("save conversation error: %w", err)
+	ctx := context.Background()
+	return r.withTx(ctx, func(tx pgx.Tx) error {
+		qtx := r.queries.WithTx(tx)
+
+		updateConvParams := db.UpdateConversationParams{
+			ID:       uuidToPgtype(conversation.ID),
+			Type:     int32(toConversationTypePersistence(conversation.Type)),
+			IsActive: conversation.IsActive,
 		}
 
-		if err := tx.Save(toGroupConversationPersistence(conversation)).Error; err != nil {
-			return fmt.Errorf("save group conversation error: %w", err)
+		if err := qtx.UpdateConversation(ctx, updateConvParams); err != nil {
+			return fmt.Errorf("update conversation error: %w", err)
+		}
+
+		updateGroupParams := db.UpdateGroupConversationParams{
+			Name:   conversation.Name,
+			Avatar: pgtype.Text{String: conversation.Avatar, Valid: conversation.Avatar != ""},
+		}
+
+		if err := qtx.UpdateGroupConversation(ctx, updateGroupParams); err != nil {
+			return fmt.Errorf("update group conversation error: %w", err)
 		}
 
 		return nil
@@ -58,25 +95,27 @@ func (r *groupConversationRepository) Update(conversation *domain.GroupConversat
 }
 
 func (r *groupConversationRepository) GetByID(id uuid.UUID) (*domain.GroupConversation, error) {
-	type result struct {
-		Conversation      Conversation
-		GroupConversation GroupConversation
-		Participant       Participant
-	}
+	ctx := context.Background()
 
-	var res result
-
-	err := r.db.
-		Table("conversations").
-		Select("conversations.*, group_conversations.*, participants.*").
-		Joins("INNER JOIN group_conversations ON group_conversations.conversation_id = conversations.id").
-		Joins("INNER JOIN participants ON participants.conversation_id = conversations.id AND participants.user_id = group_conversations.owner_id").
-		Where("conversations.id = ? AND conversations.is_active = ?", id, true).
-		Scan(&res).Error
-
+	result, err := r.queries.GetGroupConversationWithOwner(ctx, uuidToPgtype(id))
 	if err != nil {
 		return nil, fmt.Errorf("get group conversation error: %w", err)
 	}
 
-	return toGroupConversationDomain(res.Conversation, res.GroupConversation, res.Participant), nil
+	return &domain.GroupConversation{
+		ID:     pgtypeToUUID(result.ID),
+		Name:   result.Name,
+		Avatar: result.Avatar.String,
+		Owner: domain.Participant{
+			UserID:         pgtypeToUUID(result.OwnerUserID),
+			ID:             pgtypeToUUID(result.OwnerParticipantID),
+			ConversationID: pgtypeToUUID(result.OwnerConversationID),
+			IsActive:       result.OwnerIsActive,
+		},
+		Conversation: domain.Conversation{
+			ID:       pgtypeToUUID(result.ConversationID),
+			Type:     conversationTypesMap[uint8(result.ConversationType)],
+			IsActive: result.ConversationIsActive,
+		},
+	}, nil
 }
