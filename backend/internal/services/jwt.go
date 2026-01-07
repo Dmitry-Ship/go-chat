@@ -2,8 +2,9 @@ package services
 
 import (
 	"errors"
-	"os"
 	"time"
+
+	"GitHub/go-chat/backend/internal/config"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -22,8 +23,7 @@ type tokens struct {
 }
 
 type jwTokens struct {
-	refreshTokenExpiration time.Duration
-	accessTokenExpiration  time.Duration
+	config config.Auth
 }
 
 type JWTokens interface {
@@ -32,24 +32,23 @@ type JWTokens interface {
 	CreateTokens(userid uuid.UUID) (tokens, error)
 }
 
-func NewJWTokens() *jwTokens {
+func NewJWTokens(config config.Auth) *jwTokens {
 	return &jwTokens{
-		refreshTokenExpiration: 24 * 90 * time.Hour,
-		accessTokenExpiration:  10 * time.Minute,
+		config: config,
 	}
 }
 
 func (a *jwTokens) createAccessToken(userid uuid.UUID) (string, error) {
 	claims := tokenClaims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(a.accessTokenExpiration).Unix(),
+			ExpiresAt: time.Now().Add(a.config.AccessToken.TTL).Unix(),
 		},
 		UserID: userid,
 	}
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	token, err := at.SignedString([]byte(os.Getenv("ACCESS_TOKEN_SECRET")))
+	token, err := at.SignedString([]byte(a.config.AccessToken.Secret))
 
 	if err != nil {
 		return "", err
@@ -61,14 +60,14 @@ func (a *jwTokens) createAccessToken(userid uuid.UUID) (string, error) {
 func (a *jwTokens) createRefreshToken(userid uuid.UUID) (string, error) {
 	claims := tokenClaims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(a.refreshTokenExpiration).Unix(),
+			ExpiresAt: time.Now().Add(a.config.RefreshToken.TTL).Unix(),
 		},
 		UserID: userid,
 	}
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	token, err := at.SignedString([]byte(os.Getenv("REFRESH_TOKEN_SECRET")))
+	token, err := at.SignedString([]byte(a.config.RefreshToken.Secret))
 
 	if err != nil {
 		return "", err
@@ -94,15 +93,15 @@ func (a *jwTokens) CreateTokens(userid uuid.UUID) (tokens, error) {
 
 	newTokens.AccessToken = accessToken
 	newTokens.RefreshToken = refreshToken
-	newTokens.AccessTokenExpiration = a.accessTokenExpiration
-	newTokens.RefreshTokenExpiration = a.refreshTokenExpiration
+	newTokens.AccessTokenExpiration = a.config.AccessToken.TTL
+	newTokens.RefreshTokenExpiration = a.config.RefreshToken.TTL
 
 	return newTokens, nil
 }
 
 func (a *jwTokens) ParseAccessToken(tokenString string) (uuid.UUID, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("ACCESS_TOKEN_SECRET")), nil
+		return []byte(a.config.AccessToken.Secret), nil
 	})
 
 	if token.Valid {
@@ -127,7 +126,7 @@ func (a *jwTokens) ParseAccessToken(tokenString string) (uuid.UUID, error) {
 
 func (a *jwTokens) ParseRefreshToken(tokenString string) (uuid.UUID, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("REFRESH_TOKEN_SECRET")), nil
+		return []byte(a.config.RefreshToken.Secret), nil
 	})
 
 	if err != nil {

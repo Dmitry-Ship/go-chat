@@ -47,7 +47,7 @@ func Drop(db *gorm.DB) error {
 	for _, model := range models {
 		err := db.Migrator().DropTable(&model)
 		if err != nil {
-			return err
+			return fmt.Errorf("drop table error: %w", err)
 		}
 	}
 

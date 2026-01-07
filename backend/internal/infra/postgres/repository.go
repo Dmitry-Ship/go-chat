@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"fmt"
+
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra"
 
@@ -38,12 +40,12 @@ func (r *repository) beginTransaction(aggregate domain.Aggregate, callback func(
 
 	if err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("callback error: %w", err)
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("commit error: %w", err)
 	}
 
 	r.dispatchEvents(aggregate)
@@ -53,7 +55,7 @@ func (r *repository) beginTransaction(aggregate domain.Aggregate, callback func(
 
 func (r *repository) store(aggregate domain.Aggregate, persistence interface{}) error {
 	if err := r.db.Create(persistence).Error; err != nil {
-		return err
+		return fmt.Errorf("create error: %w", err)
 	}
 
 	r.dispatchEvents(aggregate)
@@ -63,7 +65,7 @@ func (r *repository) store(aggregate domain.Aggregate, persistence interface{}) 
 
 func (r *repository) update(aggregate domain.Aggregate, persistence interface{}) error {
 	if err := r.db.Save(persistence).Error; err != nil {
-		return err
+		return fmt.Errorf("save error: %w", err)
 	}
 
 	r.dispatchEvents(aggregate)

@@ -1,93 +1,62 @@
-import { getUser, login, logout, refreshToken, signup } from "../api/fetch";
-import { User } from "../types/coreTypes";
+// import { getUser, login, logout, refreshToken, signup } from "../api/fetch";
+import { useState } from "react";
+import { useMutation, useQuery } from "react-query";
+import * as api from "../api/fetch";
+// import { User } from "../types/coreTypes";
 
-export interface IAuthenticationService {
-  login(username: string, password: string): Promise<void>;
-  signup(username: string, password: string): Promise<void>;
-  logout(): Promise<void>;
-  onStateChanged(callback: (user: User | null, error: string) => void): void;
-  rotateTokens(): void;
+let timeoutId: NodeJS.Timeout | null = null;
+
+export function rotateTokens(): void {
+  const refresh = async () => {
+    const result = await api.refreshToken();
+    if (result.access_token_expiration) {
+      const accessTokenRefreshInterval =
+        result.access_token_expiration / 1000000 / 2;
+      timeoutId = setTimeout(refresh, accessTokenRefreshInterval);
+    } else {
+      clearTimeout(timeoutId!);
+    }
+  };
+
+  if (!timeoutId) {
+    timeoutId = setTimeout(refresh, 0);
+  }
 }
 
-export class AuthenticationService implements IAuthenticationService {
-  private onStateChangedCallback: (user: User | null, error: string) => void;
-  private timeout!: NodeJS.Timeout;
+// async function fetchUser(): Promise<void> {
+//   const getUserResult = await api.getUser()();
+//   if (getUserResult) {
+//     onStateChangedCallback(getUserResult, "");
+//   }
+// }
 
-  constructor() {
-    this.onStateChangedCallback = (user: User | null, error: string) => {};
-  }
+export function useAuth2() {
+  const [isLoggenIn, setIsLoggedIn] = useState(false);
+  const userQuery = useQuery(["user", isLoggenIn], api.getUser(), {
+    enabled: isLoggenIn,
+  });
 
-  onStateChanged = (callback: (user: User | null, error: string) => void) => {
-    this.onStateChangedCallback = callback;
+  const login = useMutation(api.login, {
+    onSuccess: () => {
+      setIsLoggedIn(true);
+    },
+  });
+  const signup = useMutation(api.signup, {
+    onSuccess: () => {
+      setIsLoggedIn(true);
+    },
+  });
 
-    return () => clearTimeout(this.timeout);
-  };
+  const logout = useMutation(api.logout, {
+    onSuccess: () => {
+      setIsLoggedIn(false);
+    },
+  });
 
-  logout = async () => {
-    const result = await logout();
-
-    if (result.status) {
-      this.onStateChangedCallback(null, "");
-      clearTimeout(this.timeout);
-    } else {
-      this.onStateChangedCallback(null, result.error || "Unknown error");
-    }
-  };
-
-  login = async (username: string, password: string) => {
-    const result = await login({
-      username,
-      password,
-    });
-
-    if (result.status) {
-      this.fetchUser();
-      this.rotateTokens();
-    } else {
-      this.onStateChangedCallback(null, result.error || "Unknown error");
-    }
-  };
-
-  signup = async (username: string, password: string) => {
-    const result = await signup({
-      username,
-      password,
-    });
-
-    if (result.status) {
-      this.fetchUser();
-      this.rotateTokens();
-    } else {
-      this.onStateChangedCallback(null, result.error || "Unknown error");
-    }
-  };
-
-  rotateTokens = () => {
-    const refresh = async () => {
-      const result = await refreshToken();
-      if (result.access_token_expiration) {
-        const accessTokenRefreshInterval =
-          result?.access_token_expiration / 1000000 / 2;
-
-        this.fetchUser();
-
-        setTimeout(refresh, accessTokenRefreshInterval);
-      } else {
-        clearTimeout(this.timeout);
-        this.onStateChangedCallback(null, "");
-      }
-    };
-
-    if (!this.timeout) {
-      this.timeout = setTimeout(refresh, 0);
-    }
-  };
-
-  private fetchUser = async () => {
-    const getUserResult = await getUser()();
-
-    if (getUserResult) {
-      this.onStateChangedCallback(getUserResult, "");
-    }
+  return {
+    login: login.mutate,
+    signup: signup.mutate,
+    logout: logout.mutate,
+    user: userQuery.data,
   };
 }

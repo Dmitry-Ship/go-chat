@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"GitHub/go-chat/backend/internal/domain"
 
 	"github.com/google/uuid"
@@ -44,7 +46,7 @@ func (s *notificationResolverService) GetReceiversFromEvent(event domain.DomainE
 			receiversIDs, err = s.GetConversationRecipients(e.GetConversationID())
 
 			if err != nil {
-				return receiversIDs, err
+				return receiversIDs, fmt.Errorf("get conversation recipients error: %w", err)
 			}
 		}
 	}

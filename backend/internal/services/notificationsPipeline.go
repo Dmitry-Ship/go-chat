@@ -1,9 +1,11 @@
 package services
 
 import (
+	"context"
+	"fmt"
+
 	"GitHub/go-chat/backend/internal/domain"
 	ws "GitHub/go-chat/backend/internal/websocket"
-	"context"
 
 	"github.com/google/uuid"
 )
@@ -38,14 +40,14 @@ func (h *notificationsPipeline) GetReceivers(ctx context.Context, event domain.D
 	defer close(receiverIDsChan)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get receivers error: %w", err)
 	}
 
 	for _, receiverID := range receiversIDs {
 		select {
 		case receiverIDsChan <- receiverID:
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, fmt.Errorf("context done error: %w", ctx.Err())
 		}
 	}
 

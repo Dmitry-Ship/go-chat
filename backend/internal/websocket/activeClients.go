@@ -6,6 +6,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type clientKey struct {
+	userID   uuid.UUID
+	clientID uuid.UUID
+}
+
 type ActiveClients interface {
 	AddClient(c *client)
 	RemoveClient(c *client)
@@ -13,14 +18,14 @@ type ActiveClients interface {
 }
 
 type activeClients struct {
-	mu             sync.RWMutex
-	userClientsMap map[uuid.UUID]map[uuid.UUID]*client
+	mu      sync.RWMutex
+	clients map[clientKey]*client
 }
 
 func NewActiveClients() *activeClients {
 	return &activeClients{
-		userClientsMap: make(map[uuid.UUID]map[uuid.UUID]*client),
-		mu:             sync.RWMutex{},
+		clients: make(map[clientKey]*client),
+		mu:      sync.RWMutex{},
 	}
 }
 
@@ -28,37 +33,26 @@ func (ac *activeClients) AddClient(c *client) {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 
-	userClients, ok := ac.userClientsMap[c.UserID]
-
-	if !ok {
-		userClients = make(map[uuid.UUID]*client)
-		ac.userClientsMap[c.UserID] = userClients
-	}
-
-	userClients[c.Id] = c
+	key := clientKey{userID: c.UserID, clientID: c.Id}
+	ac.clients[key] = c
 }
 
 func (ac *activeClients) RemoveClient(c *client) {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 
-	if _, ok := ac.userClientsMap[c.UserID]; ok {
-		close(c.sendChannel)
-		delete(ac.userClientsMap[c.UserID], c.Id)
-	}
+	key := clientKey{userID: c.UserID, clientID: c.Id}
+	close(c.sendChannel)
+	delete(ac.clients, key)
 }
 
 func (ac *activeClients) SendToUserClients(userID uuid.UUID, notification OutgoingNotification) {
 	ac.mu.RLock()
 	defer ac.mu.RUnlock()
 
-	userClients, ok := ac.userClientsMap[userID]
-
-	if !ok {
-		return
-	}
-
-	for _, client := range userClients {
-		client.sendNotification(notification)
+	for key, client := range ac.clients {
+		if key.userID == userID {
+			client.sendNotification(notification)
+		}
 	}
 }

@@ -1,11 +1,13 @@
 package services
 
 import (
-	pubsub "GitHub/go-chat/backend/internal/infra/redis"
-	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
+
+	pubsub "GitHub/go-chat/backend/internal/infra/redis"
+	ws "GitHub/go-chat/backend/internal/websocket"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
@@ -49,10 +51,14 @@ func (s *notificationService) Send(message ws.OutgoingNotification) error {
 	json, err := json.Marshal(bMessage)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("json marshal error: %w", err)
 	}
 
-	return s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err()
+	if err := s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err(); err != nil {
+		return fmt.Errorf("redis publish error: %w", err)
+	}
+
+	return nil
 }
 
 func (s *notificationService) RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) {
@@ -67,7 +73,9 @@ func (s *notificationService) RegisterClient(conn *websocket.Conn, userID uuid.U
 func (s *notificationService) Run() {
 	redisPubsub := s.redisClient.Subscribe(s.ctx, pubsub.ChatChannel)
 	chatChannel := redisPubsub.Channel()
-	defer redisPubsub.Close()
+	defer func() {
+		_ = redisPubsub.Close()
+	}()
 
 	for {
 		select {

@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"fmt"
+
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra"
 
@@ -21,12 +23,12 @@ func NewDirectConversationRepository(db *gorm.DB, eventPublisher infra.EventPubl
 func (r *directConversationRepository) Store(conversation *domain.DirectConversation) error {
 	return r.beginTransaction(conversation, func(tx *gorm.DB) error {
 		if err := tx.Create(toConversationPersistence(conversation)).Error; err != nil {
-			return err
+			return fmt.Errorf("create conversation error: %w", err)
 		}
 
 		for _, participant := range conversation.Participants {
 			if err := tx.Create(toParticipantPersistence(participant)).Error; err != nil {
-				return err
+				return fmt.Errorf("create participant error: %w", err)
 			}
 		}
 
@@ -40,7 +42,7 @@ func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConv
 	err := r.db.Where(&Conversation{ID: id, IsActive: true}).First(&conversation).Error
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get conversation error: %w", err)
 	}
 
 	participants := []*Participant{}
@@ -48,7 +50,7 @@ func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConv
 	err = r.db.Where(&Participant{ConversationID: id}).Find(&participants).Error
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get participants error: %w", err)
 	}
 
 	return toDirectConversationDomain(&conversation, participants), nil
@@ -66,7 +68,7 @@ func (r *directConversationRepository) GetID(firstUserID uuid.UUID, secondUserID
 		First(&conversation).Error
 
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, fmt.Errorf("get conversation id error: %w", err)
 	}
 
 	return conversation.ID, nil

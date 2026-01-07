@@ -10,7 +10,7 @@ func (s *Server) initRoutes() {
 	http.HandleFunc("/refreshToken", s.post(s.handleRefreshToken))
 	http.HandleFunc("/logout", s.post(s.private(s.handleLogout)))
 
-	http.HandleFunc("/ws", s.private(s.handleOpenWSConnection()))
+	http.HandleFunc("/ws", s.wsRateLimit(s.private(s.handleOpenWSConnection())))
 
 	http.HandleFunc("/createConversation", s.post(s.private(s.handleCreateGroupConversation)))
 	http.HandleFunc("/startDirectConversation", s.post(s.private(s.handleStartDirectConversation)))

@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/readModel"
 	ws "GitHub/go-chat/backend/internal/websocket"
@@ -48,7 +50,7 @@ func (s *notificationBuilderService) GetConversationUpdatedBuilder(conversationI
 		conversation, err := s.queries.GetConversation(conversationID, userID)
 
 		if err != nil {
-			return ws.OutgoingNotification{}, err
+			return ws.OutgoingNotification{}, fmt.Errorf("get conversation error: %w", err)
 		}
 
 		return ws.OutgoingNotification{

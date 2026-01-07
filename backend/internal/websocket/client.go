@@ -57,7 +57,7 @@ func NewClient(conn *websocket.Conn, unregisterClient func(client *client), hand
 func (c *client) ReadPump() {
 	defer func() {
 		c.unregisterClient(c)
-		c.connection.Close()
+		_ = c.connection.Close()
 	}()
 
 	c.connection.SetReadLimit(c.connectionOptions.maxMessageSize)
@@ -89,7 +89,7 @@ func (c *client) WritePump() {
 	pingTicker := time.NewTicker(c.connectionOptions.pingPeriod)
 	defer func() {
 		pingTicker.Stop()
-		c.connection.Close()
+		_ = c.connection.Close()
 	}()
 
 	for {

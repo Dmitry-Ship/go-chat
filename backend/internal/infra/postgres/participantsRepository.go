@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"fmt"
+
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra"
 
@@ -32,7 +34,7 @@ func (r *participantRepository) GetByConversationIDAndUserID(conversationID uuid
 	err := r.db.Where(&Participant{ConversationID: conversationID, UserID: userID}).First(&participantPersistence).Error
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get participant error: %w", err)
 	}
 
 	return toParticipantDomain(participantPersistence), nil
@@ -44,7 +46,7 @@ func (r *participantRepository) GetIDsByConversationID(conversationID uuid.UUID)
 	err := r.db.Where(&Participant{ConversationID: conversationID}).Find(&participants).Error
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get participants error: %w", err)
 	}
 
 	ids := make([]uuid.UUID, len(participants))

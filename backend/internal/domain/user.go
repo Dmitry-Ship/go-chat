@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -22,11 +22,11 @@ func (n *userName) String() string {
 
 func NewUserName(name string) (userName, error) {
 	if name == "" {
-		return userName{}, errors.New("username is empty")
+		return userName{}, fmt.Errorf("username is empty")
 	}
 
 	if len(name) > 100 {
-		return userName{}, errors.New("username is too long")
+		return userName{}, fmt.Errorf("username is too long")
 	}
 
 	return userName{
@@ -46,7 +46,7 @@ func (n *userPassword) Compare(password userPassword, compare func(p1 []byte, p2
 	err := compare([]byte(n.password), []byte(password.String()))
 
 	if err != nil {
-		return errors.New("password is incorrect")
+		return fmt.Errorf("password is incorrect")
 	}
 
 	return nil
@@ -54,17 +54,17 @@ func (n *userPassword) Compare(password userPassword, compare func(p1 []byte, p2
 
 func NewUserPassword(password string, hash func(p []byte) ([]byte, error)) (userPassword, error) {
 	if password == "" {
-		return userPassword{}, errors.New("password is empty")
+		return userPassword{}, fmt.Errorf("password is empty")
 	}
 
 	if len(password) < 8 {
-		return userPassword{}, errors.New("password is too short")
+		return userPassword{}, fmt.Errorf("password is too short")
 	}
 
 	bytes, err := hash([]byte(password))
 
 	if err != nil {
-		return userPassword{}, err
+		return userPassword{}, fmt.Errorf("hash password error: %w", err)
 	}
 
 	hashedPassword := string(bytes)

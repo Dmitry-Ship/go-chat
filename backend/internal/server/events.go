@@ -59,7 +59,7 @@ func (h *Server) sendWSNotification(event domain.DomainEvent) error {
 	receiversChan, err := h.notificationPipelineService.GetReceivers(ctx, event)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("get receivers error: %w", err)
 	}
 
 	messageChans, buildErrorChans := infra.FanOut(100, func() (chan ws.OutgoingNotification, chan error) {

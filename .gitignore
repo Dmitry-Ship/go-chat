@@ -40,4 +40,4 @@ yarn-error.log*
 go-bin
 db
 tmp
-cache
+/cache

@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"fmt"
+
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra"
 
@@ -31,7 +33,7 @@ func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
 	err := r.db.Where(&User{ID: id}).First(&user).Error
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get user by id error: %w", err)
 	}
 
 	return toUserDomain(user), nil
@@ -43,7 +45,7 @@ func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
 	err := r.db.Where(&User{Name: username}).First(&user).Error
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("find user by username error: %w", err)
 	}
 
 	return toUserDomain(user), nil

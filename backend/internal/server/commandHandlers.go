@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -13,9 +12,7 @@ func (s *Server) handleOpenWSConnection() http.HandlerFunc {
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
-			origin := os.Getenv("CLIENT_ORIGIN")
-
-			return r.Header.Get("Origin") == origin
+			return r.Header.Get("Origin") == s.config.ClientOrigin
 		},
 	}
 

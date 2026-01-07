@@ -3,7 +3,7 @@ package postgres
 import (
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/readModel"
-	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -178,81 +178,124 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 }
 
 func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ConversationDTO, error) {
-	conversations := []*Conversation{}
+	type conversationQuery struct {
+		ConversationID    uuid.UUID
+		CreatedAt         string
+		Type              uint8
+		MessageID         *uuid.UUID
+		MessageType       *uint8
+		MessageContent    *string
+		MessageCreatedAt  *string
+		MessageUserID     *uuid.UUID
+		MessageUserName   *string
+		MessageUserAvatar *string
+		GroupAvatar       *string
+		GroupName         *string
+		OtherUserID       *uuid.UUID
+		OtherUserName     *string
+		OtherUserAvatar   *string
+	}
+
+	queryResults := []*conversationQuery{}
+
+	lastMessagesSubquery := r.db.Table("messages").
+		Select("conversation_id, MAX(created_at) as max_created_at").
+		Group("conversation_id")
 
 	err := r.db.Scopes(r.paginate(paginationInfo)).
-		Model(&Conversation{}).
-		Select("conversations.id", "conversations.created_at", "conversations.type").
+		Table("conversations").
+		Select(`
+			conversations.id as conversation_id,
+			conversations.created_at,
+			conversations.type,
+			messages.id as message_id,
+			messages.type as message_type,
+			messages.content as message_content,
+			messages.created_at as message_created_at,
+			messages.user_id as message_user_id,
+			msg_users.name as message_user_name,
+			msg_users.avatar as message_user_avatar,
+			group_conversations.avatar as group_avatar,
+			group_conversations.name as group_name,
+			other_users.id as other_user_id,
+			other_users.name as other_user_name,
+			other_users.avatar as other_user_avatar
+		`).
 		Joins("JOIN participants ON participants.conversation_id = conversations.id").
+		Joins("LEFT JOIN (?) AS last_messages ON last_messages.conversation_id = conversations.id", lastMessagesSubquery).
+		Joins("LEFT JOIN messages ON messages.conversation_id = conversations.id AND messages.created_at = last_messages.max_created_at").
+		Joins("LEFT JOIN users msg_users ON msg_users.id = messages.user_id").
+		Joins("LEFT JOIN group_conversations ON group_conversations.conversation_id = conversations.id").
+		Joins(`LEFT JOIN participants other_participants 
+			ON other_participants.conversation_id = conversations.id 
+			AND other_participants.user_id <> ? 
+			AND other_participants.is_active = ?`, userID, true).
+		Joins("LEFT JOIN users other_users ON other_users.id = other_participants.user_id").
 		Where("participants.user_id = ? ", userID).
 		Where(&Conversation{IsActive: true}).
 		Where("participants.is_active = ?", true).
-		Find(&conversations).Error
+		Find(&queryResults).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	conversationDTOs := make([]readModel.ConversationDTO, len(conversations))
+	conversationDTOs := make([]readModel.ConversationDTO, len(queryResults))
 
-	for i, conversation := range conversations {
+	for i, result := range queryResults {
 		conversationDTO := readModel.ConversationDTO{
-			ID:   conversation.ID,
-			Type: conversationTypesMap[conversation.Type].String(),
+			ID:   result.ConversationID,
+			Type: conversationTypesMap[result.Type].String(),
 		}
 
-		message := &messageQuery{}
+		if result.MessageID != nil {
+			createdAt, _ := time.Parse(time.RFC3339, *result.MessageCreatedAt)
 
-		err := r.db.Model(&Message{}).
-			Select(
-				"messages.id", "messages.type as type", "messages.created_at", "messages.content", "messages.conversation_id",
-				"users.id as user_id", "users.name as user_name", "users.avatar as user_avatar",
-			).
-			Joins("LEFT JOIN users ON messages.user_id = users.id").
-			Where(&Message{ConversationID: conversation.ID}).
-			Order("messages.created_at desc").
-			Limit(1).
-			First(&message).Error
+			text := ""
+			switch messageTypesMap[*result.MessageType] {
+			case domain.MessageTypeText:
+				text = *result.MessageContent
+			case domain.MessageTypeRenamedConversation:
+				text = *result.MessageUserName + " renamed chat to " + *result.MessageContent
+			case domain.MessageTypeJoinedConversation:
+				text = *result.MessageUserName + " joined"
+			case domain.MessageTypeLeftConversation:
+				text = *result.MessageUserName + " left"
+			case domain.MessageTypeInvitedConversation:
+				text = *result.MessageUserName + " was invited"
+			}
 
-		if err == nil {
-			conversationDTO.LastMessage = toMessageDTO(*message, userID)
+			messageDTO := readModel.MessageDTO{
+				ID:             *result.MessageID,
+				CreatedAt:      createdAt,
+				Text:           text,
+				Type:           messageTypesMap[*result.MessageType].String(),
+				ConversationId: result.ConversationID,
+				User: readModel.UserDTO{
+					ID:     *result.MessageUserID,
+					Avatar: *result.MessageUserAvatar,
+					Name:   *result.MessageUserName,
+				},
+			}
+
+			if messageTypesMap[*result.MessageType] == domain.MessageTypeText {
+				messageDTO.IsInbound = *result.MessageUserID != userID
+			}
+
+			conversationDTO.LastMessage = messageDTO
 		}
 
-		switch conversationTypesMap[conversation.Type] {
+		switch conversationTypesMap[result.Type] {
 		case domain.ConversationTypeDirect:
-
-			type userQuery struct {
-				UserID     uuid.UUID
-				UserAvatar string
-				UserName   string
+			if result.OtherUserID != nil {
+				conversationDTO.Avatar = *result.OtherUserAvatar
+				conversationDTO.Name = *result.OtherUserName
 			}
-
-			userQueryResult := &userQuery{}
-
-			err := r.db.Model(&Participant{}).
-				Select("users.id as user_id", "users.name as user_name", "users.avatar as user_avatar").
-				Joins("JOIN users ON participants.user_id = users.id").
-				Where("users.id <> ?", userID).
-				Where(&Participant{ConversationID: conversation.ID, IsActive: true}).
-				First(&userQueryResult).Error
-
-			if err != nil {
-				return nil, err
-			}
-
-			conversationDTO.Avatar = userQueryResult.UserAvatar
-			conversationDTO.Name = userQueryResult.UserName
 		case domain.ConversationTypeGroup:
-			groupConversation := &GroupConversation{}
-
-			err := r.db.Where(&GroupConversation{ConversationID: conversation.ID}).First(&groupConversation).Error
-
-			if err != nil {
-				return nil, err
+			if result.GroupAvatar != nil && result.GroupName != nil {
+				conversationDTO.Avatar = *result.GroupAvatar
+				conversationDTO.Name = *result.GroupName
 			}
-
-			conversationDTO.Avatar = groupConversation.Avatar
-			conversationDTO.Name = groupConversation.Name
 		}
 
 		conversationDTOs[i] = conversationDTO
@@ -262,77 +305,82 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 }
 
 func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (readModel.ConversationFullDTO, error) {
-	conversation := Conversation{}
+	type conversationQuery struct {
+		ConversationID    uuid.UUID
+		CreatedAt         time.Time
+		Type              uint8
+		OtherUserID       *uuid.UUID
+		OtherUserName     *string
+		OtherUserAvatar   *string
+		GroupAvatar       *string
+		GroupName         *string
+		GroupOwnerID      *uuid.UUID
+		ParticipantsCount *int64
+		UserParticipantID *uuid.UUID
+	}
 
-	err := r.db.Where(&Conversation{ID: id, IsActive: true}).First(&conversation).Error
+	queryResult := &conversationQuery{}
+
+	participantsCountSubquery := r.db.Table("participants").
+		Select("COUNT(*)").
+		Where("participants.conversation_id = conversations.id").
+		Where("participants.is_active = ?", true)
+
+	err := r.db.Table("conversations").
+		Select(`
+			conversations.id as conversation_id,
+			conversations.created_at,
+			conversations.type,
+			other_users.id as other_user_id,
+			other_users.name as other_user_name,
+			other_users.avatar as other_user_avatar,
+			group_conversations.avatar as group_avatar,
+			group_conversations.name as group_name,
+			group_conversations.owner_id as group_owner_id,
+			(?) as participants_count,
+			user_participants.id as user_participant_id
+		`, participantsCountSubquery).
+		Joins(`LEFT JOIN participants other_participants 
+			ON other_participants.conversation_id = conversations.id 
+			AND other_participants.user_id <> ? 
+			AND other_participants.is_active = ?`, userID, true).
+		Joins("LEFT JOIN users other_users ON other_users.id = other_participants.user_id").
+		Joins("LEFT JOIN group_conversations ON group_conversations.conversation_id = conversations.id").
+		Joins(`LEFT JOIN participants user_participants 
+			ON user_participants.conversation_id = conversations.id 
+			AND user_participants.user_id = ? 
+			AND user_participants.is_active = ?`, userID, true).
+		Where(&Conversation{ID: id, IsActive: true}).
+		First(&queryResult).Error
 
 	if err != nil {
 		return readModel.ConversationFullDTO{}, err
 	}
 
 	conversationDTO := readModel.ConversationFullDTO{
-		ID:        conversation.ID,
-		CreatedAt: conversation.CreatedAt,
-		Type:      conversationTypesMap[conversation.Type].String(),
+		ID:        queryResult.ConversationID,
+		CreatedAt: queryResult.CreatedAt,
+		Type:      conversationTypesMap[queryResult.Type].String(),
 	}
 
-	switch conversationTypesMap[conversation.Type] {
+	switch conversationTypesMap[queryResult.Type] {
 	case domain.ConversationTypeDirect:
-		type userQuery struct {
-			UserID     uuid.UUID
-			UserAvatar string
-			UserName   string
+		if queryResult.OtherUserID != nil {
+			conversationDTO.Avatar = *queryResult.OtherUserAvatar
+			conversationDTO.Name = *queryResult.OtherUserName
 		}
-
-		userQueryResult := &userQuery{}
-
-		err := r.db.Model(&Participant{}).
-			Select("users.id as user_id", "users.name as user_name", "users.avatar as user_avatar").
-			Joins("JOIN users ON participants.user_id = users.id").
-			Where("users.id <> ?", userID).
-			Where(&Participant{ConversationID: conversation.ID, IsActive: true}).
-			First(&userQueryResult).Error
-
-		if err != nil {
-			return readModel.ConversationFullDTO{}, err
-		}
-
-		conversationDTO.Avatar = userQueryResult.UserAvatar
-		conversationDTO.Name = userQueryResult.UserName
 	case domain.ConversationTypeGroup:
-		groupConversation := &GroupConversation{}
-
-		err := r.db.Where(&GroupConversation{ConversationID: id}).First(&groupConversation).Error
-
-		if err != nil {
-			return readModel.ConversationFullDTO{}, err
+		if queryResult.GroupAvatar != nil && queryResult.GroupName != nil {
+			conversationDTO.Avatar = *queryResult.GroupAvatar
+			conversationDTO.Name = *queryResult.GroupName
 		}
-
-		conversationDTO.Avatar = groupConversation.Avatar
-		conversationDTO.Name = groupConversation.Name
-		conversationDTO.IsOwner = groupConversation.OwnerID == userID
-
-		var participantsCount int64
-
-		err = r.db.Model(&Participant{}).Where(&Participant{ConversationID: conversation.ID, IsActive: true}).Count(&participantsCount).Error
-
-		if err != nil {
-			return readModel.ConversationFullDTO{}, err
+		if queryResult.GroupOwnerID != nil {
+			conversationDTO.IsOwner = *queryResult.GroupOwnerID == userID
 		}
-		conversationDTO.ParticipantsCount = participantsCount
-
-		hasUserJoined := true
-
-		participant := Participant{}
-		if err := r.db.Where(&Participant{ConversationID: groupConversation.ConversationID, IsActive: true, UserID: userID}).First(&participant).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				hasUserJoined = false
-			} else {
-				return readModel.ConversationFullDTO{}, err
-			}
+		if queryResult.ParticipantsCount != nil {
+			conversationDTO.ParticipantsCount = *queryResult.ParticipantsCount
 		}
-
-		conversationDTO.HasJoined = hasUserJoined
+		conversationDTO.HasJoined = queryResult.UserParticipantID != nil
 	}
 
 	return conversationDTO, nil

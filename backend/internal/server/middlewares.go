@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"os"
 	"strconv"
 )
 
@@ -62,8 +61,7 @@ func (s *Server) get(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		clientURL := os.Getenv("CLIENT_ORIGIN")
-		w.Header().Set("Access-Control-Allow-Origin", clientURL)
+		w.Header().Set("Access-Control-Allow-Origin", s.config.ClientOrigin)
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
 		w.Header().Set("Access-Control-Allow-Methods", "GET")
@@ -80,9 +78,7 @@ func (s *Server) post(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		clientURL := os.Getenv("CLIENT_ORIGIN")
-
-		w.Header().Set("Access-Control-Allow-Origin", clientURL)
+		w.Header().Set("Access-Control-Allow-Origin", s.config.ClientOrigin)
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
