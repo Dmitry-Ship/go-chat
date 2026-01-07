@@ -27,18 +27,19 @@ type connectionOptions struct {
 	pingPeriod     time.Duration
 	maxMessageSize int64
 }
-type client struct {
+
+type Client struct {
 	Id                         uuid.UUID
-	connection                 *websocket.Conn
 	UserID                     uuid.UUID
+	connection                 *websocket.Conn
 	sendChannel                chan OutgoingNotification
 	handleIncomingNotification func(userID uuid.UUID, message []byte)
-	unregisterClient           func(client *client)
+	unregisterClient           func(*Client)
 	connectionOptions          connectionOptions
 }
 
-func NewClient(conn *websocket.Conn, unregisterClient func(client *client), handleIncomingNotification func(userID uuid.UUID, message []byte), userID uuid.UUID) *client {
-	return &client{
+func NewClient(conn *websocket.Conn, unregisterClient func(*Client), handleIncomingNotification func(userID uuid.UUID, message []byte), userID uuid.UUID) *Client {
+	return &Client{
 		Id:                         uuid.New(),
 		UserID:                     userID,
 		connection:                 conn,
@@ -54,7 +55,7 @@ func NewClient(conn *websocket.Conn, unregisterClient func(client *client), hand
 	}
 }
 
-func (c *client) ReadPump() {
+func (c *Client) ReadPump() {
 	defer func() {
 		c.unregisterClient(c)
 		_ = c.connection.Close()
@@ -85,7 +86,7 @@ func (c *client) ReadPump() {
 	}
 }
 
-func (c *client) WritePump() {
+func (c *Client) WritePump() {
 	pingTicker := time.NewTicker(c.connectionOptions.pingPeriod)
 	defer func() {
 		pingTicker.Stop()
@@ -124,6 +125,6 @@ func (c *client) WritePump() {
 	}
 }
 
-func (c *client) sendNotification(notification OutgoingNotification) {
+func (c *Client) sendNotification(notification OutgoingNotification) {
 	c.sendChannel <- notification
 }

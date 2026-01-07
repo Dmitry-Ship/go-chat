@@ -26,10 +26,10 @@ func (m *groupConversationRepositoryMock) Update(conversation *domain.GroupConve
 func (m *groupConversationRepositoryMock) GetByID(id uuid.UUID) (*domain.GroupConversation, error) {
 	m.methodsCalled["GetByID"]++
 
-	name, _ := domain.NewConversationName("cool room")
+	name := "cool room"
 
-	newPassword, _ := domain.NewUserPassword("12345678", func(p []byte) ([]byte, error) { return p, nil })
-	userName, _ := domain.NewUserName("test")
+	newPassword, _ := domain.HashPassword("12345678")
+	userName := "test"
 
 	creator := domain.NewUser(m.groupConversationOwnerID, userName, newPassword)
 
@@ -100,6 +100,12 @@ func (m *participantsRepositoryMock) GetIDsByConversationID(conversationID uuid.
 	return []uuid.UUID{uuid.New()}, nil
 }
 
+func (m *participantsRepositoryMock) GetConversationIDsByUserID(userID uuid.UUID) ([]uuid.UUID, error) {
+	m.methodsCalled["GetConversationIDsByUserID"]++
+
+	return []uuid.UUID{uuid.New()}, nil
+}
+
 type userRepositoryMock struct {
 	methodsCalled map[string]int
 }
@@ -117,8 +123,8 @@ func (m *userRepositoryMock) Update(user *domain.User) error {
 func (m *userRepositoryMock) FindByUsername(name string) (*domain.User, error) {
 	m.methodsCalled["FindByUserName"]++
 
-	newPassword, _ := domain.NewUserPassword("12345678", func(p []byte) ([]byte, error) { return p, nil })
-	userName, _ := domain.NewUserName(name)
+	newPassword, _ := domain.HashPassword("12345678")
+	userName := name
 
 	user := domain.NewUser(uuid.New(), userName, newPassword)
 
@@ -128,8 +134,8 @@ func (m *userRepositoryMock) FindByUsername(name string) (*domain.User, error) {
 func (m *userRepositoryMock) GetByID(id uuid.UUID) (*domain.User, error) {
 	m.methodsCalled["GetByID"]++
 
-	newPassword, _ := domain.NewUserPassword("12345678", func(p []byte) ([]byte, error) { return p, nil })
-	userName, _ := domain.NewUserName("name")
+	newPassword, _ := domain.HashPassword("12345678")
+	userName := "name"
 
 	user := domain.NewUser(id, userName, newPassword)
 

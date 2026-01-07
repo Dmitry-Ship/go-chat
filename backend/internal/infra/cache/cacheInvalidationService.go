@@ -10,10 +10,10 @@ import (
 
 type CacheInvalidationService struct {
 	cache    CacheClient
-	eventBus infra.EventsSubscriber
+	eventBus *infra.EventBus
 }
 
-func NewCacheInvalidationService(cache CacheClient, eventBus infra.EventsSubscriber) *CacheInvalidationService {
+func NewCacheInvalidationService(cache CacheClient, eventBus *infra.EventBus) *CacheInvalidationService {
 	return &CacheInvalidationService{
 		cache:    cache,
 		eventBus: eventBus,

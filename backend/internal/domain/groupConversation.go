@@ -7,7 +7,8 @@ import (
 )
 
 type GroupConversationRepository interface {
-	GenericRepository[*GroupConversation]
+	Store(conversation *GroupConversation) error
+	Update(conversation *GroupConversation) error
 	GetByID(id uuid.UUID) (*GroupConversation, error)
 }
 
@@ -19,37 +20,27 @@ var (
 	ErrorCannotKickOneself     = errors.New("cannot kick yourself")
 )
 
-type conversationName struct {
-	name string
-}
-
-func (n *conversationName) String() string {
-	return n.name
-}
-
-func NewConversationName(name string) (conversationName, error) {
+func ValidateConversationName(name string) error {
 	if name == "" {
-		return conversationName{}, errors.New("name is empty")
+		return errors.New("name is empty")
 	}
 
 	if len(name) > 100 {
-		return conversationName{}, errors.New("name is too long")
+		return errors.New("name is too long")
 	}
 
-	return conversationName{
-		name: name,
-	}, nil
+	return nil
 }
 
 type GroupConversation struct {
 	Conversation
 	ID     uuid.UUID
-	Name   conversationName
+	Name   string
 	Avatar string
 	Owner  Participant
 }
 
-func NewGroupConversation(id uuid.UUID, name conversationName, creator User) (*GroupConversation, error) {
+func NewGroupConversation(id uuid.UUID, name string, creator User) (*GroupConversation, error) {
 	groupConversation := &GroupConversation{
 		Conversation: Conversation{
 			ID:       id,
@@ -58,7 +49,7 @@ func NewGroupConversation(id uuid.UUID, name conversationName, creator User) (*G
 		},
 		ID:     uuid.New(),
 		Name:   name,
-		Avatar: string(name.String()[0]),
+		Avatar: string(name[0]),
 		Owner:  *NewParticipant(uuid.New(), id, creator.ID),
 	}
 
@@ -91,7 +82,7 @@ func (groupConversation *GroupConversation) Delete(participant *Participant) err
 	return nil
 }
 
-func (groupConversation *GroupConversation) Rename(newName conversationName, participant *Participant) error {
+func (groupConversation *GroupConversation) Rename(newName string, participant *Participant) error {
 	if !groupConversation.isJoined(participant) {
 		return ErrorUserNotInConversation
 	}
@@ -101,9 +92,9 @@ func (groupConversation *GroupConversation) Rename(newName conversationName, par
 	}
 
 	groupConversation.Name = newName
-	groupConversation.Avatar = string(newName.String()[0])
+	groupConversation.Avatar = string(newName[0])
 
-	groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.Conversation.ID, participant.UserID, newName.String()))
+	groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.Conversation.ID, participant.UserID, newName))
 
 	return nil
 }

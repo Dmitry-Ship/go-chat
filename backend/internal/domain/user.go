@@ -1,94 +1,59 @@
 package domain
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserRepository interface {
-	GenericRepository[*User]
+	Store(user *User) error
+	Update(user *User) error
 	GetByID(id uuid.UUID) (*User, error)
 	FindByUsername(username string) (*User, error)
 }
 
-type userName struct {
-	name string
-}
-
-func (n *userName) String() string {
-	return n.name
-}
-
-func NewUserName(name string) (userName, error) {
-	if name == "" {
-		return userName{}, fmt.Errorf("username is empty")
+func ValidateUsername(username string) error {
+	if username == "" {
+		return errors.New("username is empty")
 	}
 
-	if len(name) > 100 {
-		return userName{}, fmt.Errorf("username is too long")
-	}
-
-	return userName{
-		name: name,
-	}, nil
-}
-
-type userPassword struct {
-	password string
-}
-
-func (n userPassword) String() string {
-	return n.password
-}
-
-func (n *userPassword) Compare(password userPassword, compare func(p1 []byte, p2 []byte) error) error {
-	err := compare([]byte(n.password), []byte(password.String()))
-
-	if err != nil {
-		return fmt.Errorf("password is incorrect")
+	if len(username) > 100 {
+		return errors.New("username too long")
 	}
 
 	return nil
 }
 
-func NewUserPassword(password string, hash func(p []byte) ([]byte, error)) (userPassword, error) {
-	if password == "" {
-		return userPassword{}, fmt.Errorf("password is empty")
-	}
-
+func HashPassword(password string) (string, error) {
 	if len(password) < 8 {
-		return userPassword{}, fmt.Errorf("password is too short")
+		return "", errors.New("password too short")
 	}
 
-	bytes, err := hash([]byte(password))
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
 
-	if err != nil {
-		return userPassword{}, fmt.Errorf("hash password error: %w", err)
-	}
-
-	hashedPassword := string(bytes)
-
-	return userPassword{
-		password: hashedPassword,
-	}, nil
+func ComparePassword(hashed, plain string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain))
 }
 
 type User struct {
 	aggregate
 	ID           uuid.UUID
 	Avatar       string
-	Name         userName
-	Password     userPassword
+	Name         string
+	PasswordHash string
 	RefreshToken string
 }
 
-func NewUser(userID uuid.UUID, username userName, password userPassword) *User {
+func NewUser(userID uuid.UUID, username string, passwordHash string) *User {
 	return &User{
-		ID:       userID,
-		Avatar:   string(username.String()[0]),
-		Name:     username,
-		Password: password,
+		ID:           userID,
+		Avatar:       string(username[0]),
+		Name:         username,
+		PasswordHash: passwordHash,
 	}
 }
 

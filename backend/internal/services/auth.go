@@ -6,7 +6,6 @@ import (
 	"GitHub/go-chat/backend/internal/config"
 	"GitHub/go-chat/backend/internal/domain"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type authService struct {
@@ -36,17 +35,7 @@ func (a *authService) Login(username string, password string) (tokens, error) {
 		return tokens{}, fmt.Errorf("find by username error: %w", err)
 	}
 
-	userPassword, err := domain.NewUserPassword(password, func(p []byte) ([]byte, error) {
-		return []byte(p), nil
-	})
-
-	if err != nil {
-		return tokens{}, fmt.Errorf("new user password error: %w", err)
-	}
-
-	if err = user.Password.Compare(userPassword, func(p1 []byte, p2 []byte) error {
-		return bcrypt.CompareHashAndPassword(p1, p2)
-	}); err != nil {
+	if err := domain.ComparePassword(user.PasswordHash, password); err != nil {
 		return tokens{}, fmt.Errorf("compare password error: %w", err)
 	}
 
@@ -84,23 +73,19 @@ func (a *authService) Logout(userID uuid.UUID) error {
 }
 
 func (a *authService) SignUp(username string, password string) (tokens, error) {
-	name, err := domain.NewUserName(username)
-
-	if err != nil {
-		return tokens{}, fmt.Errorf("new user name error: %w", err)
+	if err := domain.ValidateUsername(username); err != nil {
+		return tokens{}, fmt.Errorf("validate username error: %w", err)
 	}
 
-	hashedPassword, err := domain.NewUserPassword(password, func(p []byte) ([]byte, error) {
-		return bcrypt.GenerateFromPassword(p, 14)
-	})
+	hashedPassword, err := domain.HashPassword(password)
 
 	if err != nil {
-		return tokens{}, fmt.Errorf("new user password error: %w", err)
+		return tokens{}, fmt.Errorf("hash password error: %w", err)
 	}
 
 	userID := uuid.New()
 
-	user := domain.NewUser(userID, name, hashedPassword)
+	user := domain.NewUser(userID, username, hashedPassword)
 
 	newTokens, err := a.jwTokens.CreateTokens(user.ID)
 

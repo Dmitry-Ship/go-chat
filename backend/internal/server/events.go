@@ -3,8 +3,6 @@ package server
 import (
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra"
-	ws "GitHub/go-chat/backend/internal/websocket"
-	"context"
 	"fmt"
 	"log"
 )
@@ -26,7 +24,7 @@ func genericWorker[T domain.DomainEvent](eventChan <-chan infra.Event, handler f
 	}
 }
 
-func spawnWorkers[T domain.DomainEvent](numberOfWorkers int, topic string, handler func(T) error, subscriber infra.EventsSubscriber) {
+func spawnWorkers[T domain.DomainEvent](numberOfWorkers int, topic string, handler func(T) error, subscriber *infra.EventBus) {
 	eventChan := subscriber.Subscribe(topic)
 	for i := 0; i < numberOfWorkers; i++ {
 		go genericWorker(eventChan, handler)
@@ -36,6 +34,7 @@ func spawnWorkers[T domain.DomainEvent](numberOfWorkers int, topic string, handl
 func (h *Server) listenForEvents() {
 	spawnWorkers(1, domain.DomainEventTopic, h.sendWSNotification, h.subscriber)
 	spawnWorkers(1, domain.DomainEventTopic, h.createMessage, h.subscriber)
+	spawnWorkers(1, domain.DomainEventTopic, h.handleSubscriptionChanges, h.subscriber)
 }
 
 func (h *Server) createMessage(event domain.DomainEvent) error {
@@ -54,26 +53,23 @@ func (h *Server) createMessage(event domain.DomainEvent) error {
 }
 
 func (h *Server) sendWSNotification(event domain.DomainEvent) error {
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	defer cancelFunc()
-	receiversChan, err := h.notificationPipelineService.GetReceivers(ctx, event)
+	return h.notificationCommands.Notify(event)
+}
 
-	if err != nil {
-		return fmt.Errorf("get receivers error: %w", err)
-	}
-
-	messageChans, buildErrorChans := infra.FanOut(100, func() (chan ws.OutgoingNotification, chan error) {
-		return h.notificationPipelineService.BuildMessage(ctx, receiversChan, event)
-	})
-
-	sendError := h.notificationPipelineService.BroadcastMessage(ctx, infra.MergeChannels(ctx, messageChans...))
-
-	for err := range infra.MergeChannels(ctx, buildErrorChans...) {
-		log.Println("Error occurred while building message: ", err)
-	}
-
-	for err := range sendError {
-		log.Println("Error occurred while sending message: ", err)
+func (h *Server) handleSubscriptionChanges(event domain.DomainEvent) error {
+	switch e := event.(type) {
+	case domain.GroupConversationJoined:
+		return h.notificationCommands.SubscribeUserToChannel(e.UserID, e.GetConversationID())
+	case domain.GroupConversationLeft:
+		return h.notificationCommands.UnsubscribeUserFromChannel(e.UserID, e.GetConversationID())
+	case domain.GroupConversationInvited:
+		return h.notificationCommands.SubscribeUserToChannel(e.UserID, e.GetConversationID())
+	case domain.DirectConversationCreated:
+		for _, userID := range e.UserIDs {
+			if err := h.notificationCommands.SubscribeUserToChannel(userID, e.GetConversationID()); err != nil {
+				log.Printf("Error subscribing user %s to direct conversation: %v", userID, err)
+			}
+		}
 	}
 
 	return nil

@@ -50,10 +50,8 @@ func NewConversationService(
 }
 
 func (s *conversationService) CreateGroupConversation(conversationID uuid.UUID, name string, userID uuid.UUID) error {
-	conversationName, err := domain.NewConversationName(name)
-
-	if err != nil {
-		return fmt.Errorf("new conversation name error: %w", err)
+	if err := domain.ValidateConversationName(name); err != nil {
+		return fmt.Errorf("validate conversation name error: %w", err)
 	}
 
 	user, err := s.users.GetByID(userID)
@@ -62,7 +60,7 @@ func (s *conversationService) CreateGroupConversation(conversationID uuid.UUID, 
 		return fmt.Errorf("get user by id error: %w", err)
 	}
 
-	conversation, err := domain.NewGroupConversation(conversationID, conversationName, *user)
+	conversation, err := domain.NewGroupConversation(conversationID, name, *user)
 
 	if err != nil {
 		return fmt.Errorf("new group conversation error: %w", err)
@@ -122,16 +120,14 @@ func (s *conversationService) DeleteGroupConversation(conversationID uuid.UUID, 
 }
 
 func (s *conversationService) Rename(conversationID uuid.UUID, userID uuid.UUID, name string) error {
+	if err := domain.ValidateConversationName(name); err != nil {
+		return fmt.Errorf("validate conversation name error: %w", err)
+	}
+
 	conversation, err := s.groupConversations.GetByID(conversationID)
 
 	if err != nil {
 		return fmt.Errorf("get conversation by id error: %w", err)
-	}
-
-	conversationName, err := domain.NewConversationName(name)
-
-	if err != nil {
-		return fmt.Errorf("new conversation name error: %w", err)
 	}
 
 	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
@@ -140,7 +136,7 @@ func (s *conversationService) Rename(conversationID uuid.UUID, userID uuid.UUID,
 		return fmt.Errorf("get participant error: %w", err)
 	}
 
-	if err = conversation.Rename(conversationName, participant); err != nil {
+	if err = conversation.Rename(name, participant); err != nil {
 		return fmt.Errorf("rename conversation error: %w", err)
 	}
 

@@ -15,7 +15,7 @@ type UserCache struct {
 func SerializeUser(user *domain.User) ([]byte, error) {
 	cacheUser := UserCache{
 		ID:     user.ID.String(),
-		Name:   user.Name.String(),
+		Name:   user.Name,
 		Avatar: user.Avatar,
 	}
 	return json.Marshal(cacheUser)
@@ -42,7 +42,7 @@ func SerializeGroupConversation(conv *domain.GroupConversation) ([]byte, error) 
 	cacheConv := ConversationCache{
 		ID:       conv.ID.String(),
 		Type:     "group",
-		Name:     conv.Name.String(),
+		Name:     conv.Name,
 		Avatar:   conv.Avatar,
 		IsActive: conv.IsActive,
 	}

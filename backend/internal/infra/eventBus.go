@@ -9,28 +9,20 @@ type Event struct {
 	Data  interface{}
 }
 
-type EventPublisher interface {
-	Publish(topic string, data interface{})
-}
-
-type EventsSubscriber interface {
-	Subscribe(topic string) <-chan Event
-}
-
-type eventBus struct {
+type EventBus struct {
 	mu                  sync.RWMutex
 	topicSubscribersMap map[string][]chan Event
 	isClosed            bool
 }
 
-func NewEventBus() *eventBus {
-	return &eventBus{
+func NewEventBus() *EventBus {
+	return &EventBus{
 		mu:                  sync.RWMutex{},
 		topicSubscribersMap: make(map[string][]chan Event),
 	}
 }
 
-func (eb *eventBus) Subscribe(topic string) <-chan Event {
+func (eb *EventBus) Subscribe(topic string) <-chan Event {
 	eb.mu.Lock()
 	defer eb.mu.Unlock()
 
@@ -41,7 +33,7 @@ func (eb *eventBus) Subscribe(topic string) <-chan Event {
 	return subscriptionChannel
 }
 
-func (eb *eventBus) Publish(topic string, data interface{}) {
+func (eb *EventBus) Publish(topic string, data interface{}) {
 	eb.mu.RLock()
 	defer eb.mu.RUnlock()
 
@@ -54,7 +46,7 @@ func (eb *eventBus) Publish(topic string, data interface{}) {
 	}
 }
 
-func (eb *eventBus) Close() {
+func (eb *EventBus) Close() {
 	eb.mu.Lock()
 	defer eb.mu.Unlock()
 

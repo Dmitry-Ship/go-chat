@@ -5,9 +5,11 @@ import (
 )
 
 type ParticipantRepository interface {
-	GenericRepository[*Participant]
+	Store(participant *Participant) error
+	Update(participant *Participant) error
 	GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*Participant, error)
 	GetIDsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error)
+	GetConversationIDsByUserID(userID uuid.UUID) ([]uuid.UUID, error)
 }
 
 type Participant struct {

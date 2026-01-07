@@ -9,20 +9,19 @@ import (
 )
 
 func createTestGroupConversation() (*GroupConversation, *User, *Participant) {
-	name, _ := NewConversationName("test")
 	conversationID := uuid.New()
 	creatorId := uuid.New()
-	userName, _ := NewUserName("test")
-	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
+	userName := "test"
+	userPassword, _ := HashPassword("test")
 	creatorUser := NewUser(creatorId, userName, userPassword)
-	conversation, _ := NewGroupConversation(conversationID, name, *creatorUser)
+	conversation, _ := NewGroupConversation(conversationID, "test", *creatorUser)
 
 	return conversation, creatorUser, &conversation.Owner
 }
 
 func createTestUser() *User {
-	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
-	userName, _ := NewUserName("test")
+	userPassword, _ := HashPassword("test")
+	userName := "test"
 	userID := uuid.New()
 	user := NewUser(userID, userName, userPassword)
 
@@ -32,16 +31,16 @@ func createTestUser() *User {
 func TestNewGroupConversation(t *testing.T) {
 	conversationID := uuid.New()
 	creatorId := uuid.New()
-	userName, _ := NewUserName("test")
-	userPassword, _ := NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
+	userName := "test"
+	userPassword, _ := HashPassword("test")
 	creator := NewUser(creatorId, userName, userPassword)
-	name, _ := NewConversationName("test")
+	name := "test"
 
 	conversation, err := NewGroupConversation(conversationID, name, *creator)
 
 	assert.Equal(t, conversation.Conversation.ID, conversationID)
 	assert.Equal(t, name, conversation.Name)
-	assert.Equal(t, string(name.String()[0]), conversation.Avatar)
+	assert.Equal(t, string(name[0]), conversation.Avatar)
 	assert.Equal(t, conversation.Type, ConversationTypeGroup)
 	assert.Equal(t, conversation.Conversation.ID, conversation.Owner.ConversationID)
 	assert.Equal(t, creatorId, conversation.Owner.UserID)
@@ -51,11 +50,12 @@ func TestNewGroupConversation(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestNewConversationName(t *testing.T) {
-	name, err := NewConversationName("test")
+func TestValidateConversationName(t *testing.T) {
+	name := "test"
+	err := ValidateConversationName(name)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "test", name.String())
+	assert.Equal(t, "test", name)
 }
 
 func TestNewConversationNameErrors(t *testing.T) {
@@ -82,7 +82,7 @@ func TestNewConversationNameErrors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := NewConversationName(tc.name)
+			err := ValidateConversationName(tc.name)
 
 			assert.Equal(t, err, tc.expectedErr)
 		})
@@ -92,12 +92,12 @@ func TestNewConversationNameErrors(t *testing.T) {
 func TestRename(t *testing.T) {
 	conversation, _, creatorParticipant := createTestGroupConversation()
 
-	newName, _ := NewConversationName("new name")
+	newName := "new name"
 
 	err := conversation.Rename(newName, creatorParticipant)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "new name", conversation.Name.String())
+	assert.Equal(t, "new name", conversation.Name)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationRenamedEvent(conversation.Conversation.ID, creatorParticipant.UserID, "new name"))
 }
 
@@ -179,7 +179,7 @@ func TestSendLeftConversationMessage(t *testing.T) {
 
 func TestRenameNotOwner(t *testing.T) {
 	conversation, creator, _ := createTestGroupConversation()
-	newName, _ := NewConversationName("new name")
+	newName := "new name"
 	user := createTestUser()
 	participant, _ := conversation.Join(*user)
 
@@ -187,7 +187,7 @@ func TestRenameNotOwner(t *testing.T) {
 
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrorUserNotOwner, err)
-	assert.NotEqual(t, newName.String(), conversation.Name.String())
+	assert.NotEqual(t, newName, conversation.Name)
 	assert.Equal(t, conversation.GetEvents()[len(conversation.GetEvents())-1], newGroupConversationCreatedEvent(conversation.Conversation.ID, creator.ID))
 }
 

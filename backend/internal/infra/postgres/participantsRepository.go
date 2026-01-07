@@ -14,18 +14,28 @@ type participantRepository struct {
 	repository
 }
 
-func NewParticipantRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *participantRepository {
+func NewParticipantRepository(db *gorm.DB, eventPublisher *infra.EventBus) *participantRepository {
 	return &participantRepository{
 		repository: *newRepository(db, eventPublisher),
 	}
 }
 
 func (r *participantRepository) Store(participant *domain.Participant) error {
-	return r.store(participant, toParticipantPersistence(*participant))
+	return r.store(participant, &Participant{
+		ID:             participant.ID,
+		ConversationID: participant.ConversationID,
+		UserID:         participant.UserID,
+		IsActive:       participant.IsActive,
+	})
 }
 
 func (r *participantRepository) Update(participant *domain.Participant) error {
-	return r.update(participant, toParticipantPersistence(*participant))
+	return r.update(participant, &Participant{
+		ID:             participant.ID,
+		ConversationID: participant.ConversationID,
+		UserID:         participant.UserID,
+		IsActive:       participant.IsActive,
+	})
 }
 
 func (r *participantRepository) GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
@@ -37,7 +47,12 @@ func (r *participantRepository) GetByConversationIDAndUserID(conversationID uuid
 		return nil, fmt.Errorf("get participant error: %w", err)
 	}
 
-	return toParticipantDomain(participantPersistence), nil
+	return &domain.Participant{
+		ID:             participantPersistence.ID,
+		ConversationID: participantPersistence.ConversationID,
+		UserID:         participantPersistence.UserID,
+		IsActive:       participantPersistence.IsActive,
+	}, nil
 }
 
 func (r *participantRepository) GetIDsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error) {
@@ -53,6 +68,24 @@ func (r *participantRepository) GetIDsByConversationID(conversationID uuid.UUID)
 
 	for i, participant := range participants {
 		ids[i] = participant.UserID
+	}
+
+	return ids, nil
+}
+
+func (r *participantRepository) GetConversationIDsByUserID(userID uuid.UUID) ([]uuid.UUID, error) {
+	var participants []Participant
+
+	err := r.db.Where(&Participant{UserID: userID, IsActive: true}).Find(&participants).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("get user conversations error: %w", err)
+	}
+
+	ids := make([]uuid.UUID, len(participants))
+
+	for i, participant := range participants {
+		ids[i] = participant.ConversationID
 	}
 
 	return ids, nil

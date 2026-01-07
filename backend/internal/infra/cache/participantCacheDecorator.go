@@ -112,6 +112,7 @@ func (d *ParticipantCacheDecorator) Store(participant *domain.Participant) error
 	}
 
 	d.invalidateParticipantsCache(participant.ConversationID.String())
+	d.invalidateUserConvListCache(participant.UserID.String())
 
 	return nil
 }
@@ -122,10 +123,49 @@ func (d *ParticipantCacheDecorator) Update(participant *domain.Participant) erro
 	}
 
 	d.invalidateParticipantsCache(participant.ConversationID.String())
+	d.invalidateUserConvListCache(participant.UserID.String())
 
 	return nil
 }
 
 func (d *ParticipantCacheDecorator) invalidateParticipantsCache(conversationID string) {
 	_ = d.cache.Delete(context.Background(), ParticipantsKey(conversationID))
+}
+
+func (d *ParticipantCacheDecorator) GetConversationIDsByUserID(userID uuid.UUID) ([]uuid.UUID, error) {
+	key := UserConvListKey(userID.String())
+
+	data, err := d.cache.Get(context.Background(), key)
+	if err != nil {
+		return nil, fmt.Errorf("cache get error: %w", err)
+	}
+
+	if data != nil {
+		var cachedData []uuid.UUID
+		if err := json.Unmarshal(data, &cachedData); err != nil {
+			return nil, fmt.Errorf("json unmarshal error: %w", err)
+		}
+
+		return cachedData, nil
+	}
+
+	ids, err := d.repo.GetConversationIDsByUserID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("repo get conversation ids by user id error: %w", err)
+	}
+
+	data, err = json.Marshal(ids)
+	if err != nil {
+		return nil, fmt.Errorf("json marshal error: %w", err)
+	}
+
+	if err := d.cache.Set(context.Background(), key, data, TTLUserConvList); err != nil {
+		return nil, fmt.Errorf("cache set error: %w", err)
+	}
+
+	return ids, nil
+}
+
+func (d *ParticipantCacheDecorator) invalidateUserConvListCache(userID string) {
+	_ = d.cache.Delete(context.Background(), UserConvListKey(userID))
 }

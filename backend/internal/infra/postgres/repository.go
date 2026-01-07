@@ -11,10 +11,10 @@ import (
 
 type repository struct {
 	db             *gorm.DB
-	eventPublisher infra.EventPublisher
+	eventPublisher *infra.EventBus
 }
 
-func newRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *repository {
+func newRepository(db *gorm.DB, eventPublisher *infra.EventBus) *repository {
 	return &repository{
 		db:             db,
 		eventPublisher: eventPublisher,

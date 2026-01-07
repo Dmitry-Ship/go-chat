@@ -14,16 +14,15 @@ type EventHandlers interface {
 }
 
 type Server struct {
-	ctx                         context.Context
-	config                      config.ServerConfig
-	authCommands                services.AuthService
-	conversationCommands        services.ConversationService
-	notificationPipelineService services.NotificationsPipeline
-	notificationCommands        services.NotificationService
-	queries                     readModel.QueriesRepository
-	subscriber                  infra.EventsSubscriber
-	ipRateLimiter               ratelimit.RateLimiter
-	userRateLimiter             ratelimit.RateLimiter
+	ctx                  context.Context
+	config               config.ServerConfig
+	authCommands         services.AuthService
+	conversationCommands services.ConversationService
+	notificationCommands services.NotificationService
+	queries              readModel.QueriesRepository
+	subscriber           *infra.EventBus
+	ipRateLimiter        ratelimit.RateLimiter
+	userRateLimiter      ratelimit.RateLimiter
 }
 
 func NewServer(
@@ -31,24 +30,22 @@ func NewServer(
 	config config.ServerConfig,
 	authCommands services.AuthService,
 	conversationCommands services.ConversationService,
-	notificationPipelineService services.NotificationsPipeline,
 	notificationCommands services.NotificationService,
 	queries readModel.QueriesRepository,
-	eventBus infra.EventsSubscriber,
+	eventBus *infra.EventBus,
 	ipRateLimiter ratelimit.RateLimiter,
 	userRateLimiter ratelimit.RateLimiter,
 ) *Server {
 	return &Server{
-		ctx:                         ctx,
-		config:                      config,
-		authCommands:                authCommands,
-		conversationCommands:        conversationCommands,
-		notificationPipelineService: notificationPipelineService,
-		notificationCommands:        notificationCommands,
-		queries:                     queries,
-		subscriber:                  eventBus,
-		ipRateLimiter:               ipRateLimiter,
-		userRateLimiter:             userRateLimiter,
+		ctx:                  ctx,
+		config:               config,
+		authCommands:         authCommands,
+		conversationCommands: conversationCommands,
+		notificationCommands: notificationCommands,
+		queries:              queries,
+		subscriber:           eventBus,
+		ipRateLimiter:        ipRateLimiter,
+		userRateLimiter:      userRateLimiter,
 	}
 }
 

@@ -9,27 +9,26 @@ import (
 )
 
 func TestNewUser(t *testing.T) {
-	name, _ := NewUserName("John")
-	password, _ := NewUserPassword("12345678", func(p []byte) ([]byte, error) {
-		return []byte(p), nil
-	})
+	name := "John"
+	password, _ := HashPassword("12345678")
 	userID := uuid.New()
 	user := NewUser(userID, name, password)
 
 	assert.Equal(t, user.ID, userID)
-	assert.Equal(t, user.Avatar, string(name.String()[0]))
-	assert.NotNil(t, user.Password, password)
+	assert.Equal(t, user.Avatar, string(name[0]))
+	assert.NotNil(t, user.PasswordHash, password)
 	assert.Equal(t, user.Name, name)
 }
 
-func TestNewUsername(t *testing.T) {
-	name, err := NewUserName("John")
+func TestValidateUsername(t *testing.T) {
+	name := "John"
+	err := ValidateUsername(name)
 
 	assert.Nil(t, err)
-	assert.Equal(t, name.String(), "John")
+	assert.Equal(t, name, "John")
 }
 
-func TestNewUsernameErrors(t *testing.T) {
+func TestValidateUsernameErrors(t *testing.T) {
 	type testCase struct {
 		name        string
 		expectedErr error
@@ -47,29 +46,27 @@ func TestNewUsernameErrors(t *testing.T) {
 			expectedErr: errors.New("username is empty"),
 		}, {
 			name:        longName,
-			expectedErr: errors.New("username is too long"),
+			expectedErr: errors.New("username too long"),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := NewUserName(tc.name)
+			err := ValidateUsername(tc.name)
 
 			assert.Equal(t, err, tc.expectedErr)
 		})
 	}
 }
 
-func TestNewUserPassword(t *testing.T) {
-	password, err := NewUserPassword("asdasdasdasdasdasd", func(p []byte) ([]byte, error) {
-		return []byte(p), nil
-	})
+func TestHashPassword(t *testing.T) {
+	password, err := HashPassword("asdasdasdasdasdasd")
 
 	assert.Nil(t, err)
-	assert.Equal(t, password.String(), "asdasdasdasdasdasd")
+	assert.NotEqual(t, password, "asdasdasdasdasdasd")
 }
 
-func TestNewUserPasswordErrors(t *testing.T) {
+func TestHashPasswordErrors(t *testing.T) {
 	type testCase struct {
 		password    string
 		expectedErr error
@@ -78,61 +75,41 @@ func TestNewUserPasswordErrors(t *testing.T) {
 	testCases := []testCase{
 		{
 			password:    "",
-			expectedErr: errors.New("password is empty"),
+			expectedErr: errors.New("password too short"),
 		}, {
 			password:    "123",
-			expectedErr: errors.New("password is too short"),
+			expectedErr: errors.New("password too short"),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.password, func(t *testing.T) {
-			_, err := NewUserPassword(tc.password, func(p []byte) ([]byte, error) {
-				return []byte(p), nil
-			})
+			_, err := HashPassword(tc.password)
 
 			assert.Equal(t, err, tc.expectedErr)
 		})
 	}
 }
 
-func TestNewUserPasswordCompare(t *testing.T) {
-	password, _ := NewUserPassword("12345678", func(p []byte) ([]byte, error) {
-		return []byte(p), nil
-	})
+func TestComparePassword(t *testing.T) {
+	hashed, _ := HashPassword("12345678")
 
-	anotherPassword, _ := NewUserPassword("12345678", func(p []byte) ([]byte, error) {
-		return []byte(p), nil
-	})
-
-	err := password.Compare(anotherPassword, func(p1 []byte, p2 []byte) error {
-		return nil
-	})
+	err := ComparePassword(hashed, "12345678")
 
 	assert.Nil(t, err)
 }
 
-func TestNewUserPasswordCompareFail(t *testing.T) {
-	password, _ := NewUserPassword("12345678", func(p []byte) ([]byte, error) {
-		return []byte(p), nil
-	})
+func TestComparePasswordFail(t *testing.T) {
+	hashed, _ := HashPassword("12345678")
 
-	anotherPassword, _ := NewUserPassword("12345678123", func(p []byte) ([]byte, error) {
-		return []byte(p), nil
-	})
+	err := ComparePassword(hashed, "wrongpassword")
 
-	err := password.Compare(anotherPassword, func(p1 []byte, p2 []byte) error {
-		return errors.New("")
-	})
-
-	assert.Equal(t, err.Error(), "password is incorrect")
+	assert.NotNil(t, err)
 }
 
 func TestSetRefreshToken(t *testing.T) {
-	password, _ := NewUserPassword("12345678", func(p []byte) ([]byte, error) {
-		return []byte(p), nil
-	})
-	name, _ := NewUserName("John")
+	password, _ := HashPassword("12345678")
+	name := "John"
 	userID := uuid.New()
 	user := NewUser(userID, name, password)
 

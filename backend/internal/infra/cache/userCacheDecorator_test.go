@@ -73,15 +73,13 @@ func TestUserCacheDecorator_GetByID_CacheHit(t *testing.T) {
 	mockCache := new(MockCacheClient)
 
 	userID := uuid.New()
-	userName, _ := domain.NewUserName("testuser")
-	userPassword, _ := domain.NewUserPassword("password123", func(p []byte) ([]byte, error) {
-		return p, nil
-	})
+	userName := "testuser"
+	userPassword, _ := domain.HashPassword("password123")
 	user := &domain.User{
-		ID:       userID,
-		Name:     userName,
-		Password: userPassword,
-		Avatar:   "T",
+		ID:           userID,
+		Name:         userName,
+		PasswordHash: userPassword,
+		Avatar:       "T",
 	}
 
 	userData, _ := SerializeUser(user)
@@ -104,15 +102,13 @@ func TestUserCacheDecorator_GetByID_CacheMiss(t *testing.T) {
 	mockCache := new(MockCacheClient)
 
 	userID := uuid.New()
-	userName, _ := domain.NewUserName("testuser")
-	userPassword, _ := domain.NewUserPassword("password123", func(p []byte) ([]byte, error) {
-		return p, nil
-	})
+	userName := "testuser"
+	userPassword, _ := domain.HashPassword("password123")
 	user := &domain.User{
-		ID:       userID,
-		Name:     userName,
-		Password: userPassword,
-		Avatar:   "T",
+		ID:           userID,
+		Name:         userName,
+		PasswordHash: userPassword,
+		Avatar:       "T",
 	}
 
 	mockCache.On("Get", mock.Anything, UserKey(userID.String())).Return(nil, nil)
@@ -135,15 +131,13 @@ func TestUserCacheDecorator_Store_InvalidatesCache(t *testing.T) {
 	mockCache := new(MockCacheClient)
 
 	userID := uuid.New()
-	userName, _ := domain.NewUserName("testuser")
-	userPassword, _ := domain.NewUserPassword("password123", func(p []byte) ([]byte, error) {
-		return p, nil
-	})
+	userName := "testuser"
+	userPassword, _ := domain.HashPassword("password123")
 	user := &domain.User{
-		ID:       userID,
-		Name:     userName,
-		Password: userPassword,
-		Avatar:   "T",
+		ID:           userID,
+		Name:         userName,
+		PasswordHash: userPassword,
+		Avatar:       "T",
 	}
 
 	mockRepo.On("Store", user).Return(nil)
@@ -163,15 +157,13 @@ func TestUserCacheDecorator_Update_InvalidatesCache(t *testing.T) {
 	mockCache := new(MockCacheClient)
 
 	userID := uuid.New()
-	userName, _ := domain.NewUserName("testuser")
-	userPassword, _ := domain.NewUserPassword("password123", func(p []byte) ([]byte, error) {
-		return p, nil
-	})
+	userName := "testuser"
+	userPassword, _ := domain.HashPassword("password123")
 	user := &domain.User{
-		ID:       userID,
-		Name:     userName,
-		Password: userPassword,
-		Avatar:   "T",
+		ID:           userID,
+		Name:         userName,
+		PasswordHash: userPassword,
+		Avatar:       "T",
 	}
 
 	mockRepo.On("Update", user).Return(nil)

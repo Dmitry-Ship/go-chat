@@ -9,9 +9,9 @@ import (
 )
 
 func TestToGroupConversationPersistence(t *testing.T) {
-	name, _ := domain.NewConversationName("cool room")
-	userName, _ := domain.NewUserName("test")
-	userPassword, _ := domain.NewUserPassword("test", func(p []byte) ([]byte, error) { return p, nil })
+	name := "cool room"
+	userName := "test"
+	userPassword, _ := domain.HashPassword("test")
 	creator := domain.NewUser(uuid.New(), userName, userPassword)
 
 	conversation, _ := domain.NewGroupConversation(uuid.New(), name, *creator)
@@ -20,7 +20,7 @@ func TestToGroupConversationPersistence(t *testing.T) {
 
 	assert.Equal(t, persistence.ID, conversation.ID)
 	assert.Equal(t, persistence.ConversationID, conversation.GetBaseData().ID)
-	assert.Equal(t, persistence.Name, conversation.Name.String())
+	assert.Equal(t, persistence.Name, conversation.Name)
 	assert.Equal(t, persistence.Avatar, conversation.Avatar)
 	assert.Equal(t, persistence.OwnerID, conversation.Owner.UserID)
 }
@@ -52,7 +52,7 @@ func TestToGroupConversationDomain(t *testing.T) {
 
 	assert.Equal(t, domain.ID, groupConversation.ID)
 	assert.Equal(t, domain.GetBaseData().ID, groupConversation.ConversationID)
-	assert.Equal(t, domain.Name.String(), groupConversation.Name)
+	assert.Equal(t, domain.Name, groupConversation.Name)
 	assert.Equal(t, domain.Avatar, groupConversation.Avatar)
 	assert.Equal(t, domain.Owner.UserID, groupConversation.OwnerID)
 }

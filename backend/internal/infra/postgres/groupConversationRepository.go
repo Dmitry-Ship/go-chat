@@ -14,7 +14,7 @@ type groupConversationRepository struct {
 	repository
 }
 
-func NewGroupConversationRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *groupConversationRepository {
+func NewGroupConversationRepository(db *gorm.DB, eventPublisher *infra.EventBus) *groupConversationRepository {
 	return &groupConversationRepository{
 		repository: *newRepository(db, eventPublisher),
 	}
@@ -30,7 +30,12 @@ func (r *groupConversationRepository) Store(conversation *domain.GroupConversati
 			return fmt.Errorf("create group conversation error: %w", err)
 		}
 
-		if err := tx.Create(toParticipantPersistence(conversation.Owner)).Error; err != nil {
+		if err := tx.Create(&Participant{
+			ID:             conversation.Owner.ID,
+			ConversationID: conversation.Owner.ConversationID,
+			UserID:         conversation.Owner.UserID,
+			IsActive:       conversation.Owner.IsActive,
+		}).Error; err != nil {
 			return fmt.Errorf("create participant error: %w", err)
 		}
 

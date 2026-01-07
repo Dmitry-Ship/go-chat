@@ -14,7 +14,7 @@ type directConversationRepository struct {
 	repository
 }
 
-func NewDirectConversationRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *directConversationRepository {
+func NewDirectConversationRepository(db *gorm.DB, eventPublisher *infra.EventBus) *directConversationRepository {
 	return &directConversationRepository{
 		repository: *newRepository(db, eventPublisher),
 	}
@@ -27,7 +27,12 @@ func (r *directConversationRepository) Store(conversation *domain.DirectConversa
 		}
 
 		for _, participant := range conversation.Participants {
-			if err := tx.Create(toParticipantPersistence(participant)).Error; err != nil {
+			if err := tx.Create(&Participant{
+				ID:             participant.ID,
+				ConversationID: participant.ConversationID,
+				UserID:         participant.UserID,
+				IsActive:       participant.IsActive,
+			}).Error; err != nil {
 				return fmt.Errorf("create participant error: %w", err)
 			}
 		}
@@ -37,23 +42,39 @@ func (r *directConversationRepository) Store(conversation *domain.DirectConversa
 }
 
 func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConversation, error) {
-	conversation := Conversation{}
-
-	err := r.db.Where(&Conversation{ID: id, IsActive: true}).First(&conversation).Error
-
-	if err != nil {
-		return nil, fmt.Errorf("get conversation error: %w", err)
+	type result struct {
+		Conversation  Conversation
+		ParticipantID uuid.UUID
+		UserID        uuid.UUID
 	}
 
-	participants := []*Participant{}
+	results := []*result{}
 
-	err = r.db.Where(&Participant{ConversationID: id}).Find(&participants).Error
+	err := r.db.
+		Table("conversations").
+		Select("conversations.*, participants.id as participant_id, participants.user_id").
+		Joins("LEFT JOIN participants ON participants.conversation_id = conversations.id").
+		Where("conversations.id = ? AND conversations.is_active = ?", id, true).
+		Find(&results).Error
 
 	if err != nil {
-		return nil, fmt.Errorf("get participants error: %w", err)
+		return nil, fmt.Errorf("get direct conversation error: %w", err)
 	}
 
-	return toDirectConversationDomain(&conversation, participants), nil
+	if len(results) == 0 {
+		return nil, fmt.Errorf("direct conversation not found")
+	}
+
+	participants := make([]*Participant, len(results))
+	for i, res := range results {
+		participants[i] = &Participant{
+			ID:             res.ParticipantID,
+			ConversationID: results[0].Conversation.ID,
+			UserID:         res.UserID,
+		}
+	}
+
+	return toDirectConversationDomain(&results[0].Conversation, participants), nil
 }
 
 func (r *directConversationRepository) GetID(firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {

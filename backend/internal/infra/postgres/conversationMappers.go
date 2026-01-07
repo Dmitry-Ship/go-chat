@@ -32,22 +32,16 @@ func toGroupConversationPersistence(conversation *domain.GroupConversation) *Gro
 	return &GroupConversation{
 		ID:             conversation.ID,
 		ConversationID: conversation.Conversation.ID,
-		Name:           conversation.Name.String(),
+		Name:           conversation.Name,
 		Avatar:         conversation.Avatar,
 		OwnerID:        conversation.Owner.UserID,
 	}
 }
 
 func toGroupConversationDomain(conversation Conversation, groupConversation GroupConversation, participant Participant) *domain.GroupConversation {
-	name, err := domain.NewConversationName(groupConversation.Name)
-
-	if err != nil {
-		name, _ = domain.NewConversationName("Name Corrupted")
-	}
-
 	return &domain.GroupConversation{
 		ID:     groupConversation.ID,
-		Name:   name,
+		Name:   groupConversation.Name,
 		Avatar: groupConversation.Avatar,
 		Owner: domain.Participant{
 			UserID:         participant.UserID,

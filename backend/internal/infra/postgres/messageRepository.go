@@ -11,7 +11,7 @@ type messageRepository struct {
 	repository
 }
 
-func NewMessageRepository(db *gorm.DB, eventPublisher infra.EventPublisher) *messageRepository {
+func NewMessageRepository(db *gorm.DB, eventPublisher *infra.EventBus) *messageRepository {
 	return &messageRepository{
 		repository: *newRepository(db, eventPublisher),
 	}

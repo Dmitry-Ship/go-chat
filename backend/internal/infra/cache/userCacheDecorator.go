@@ -39,23 +39,11 @@ func (d *UserCacheDecorator) GetByID(id uuid.UUID) (*domain.User, error) {
 			return nil, fmt.Errorf("parse user id error: %w", err)
 		}
 
-		userName, err := domain.NewUserName(cachedUser.Name)
-		if err != nil {
-			return nil, fmt.Errorf("new user name error: %w", err)
-		}
-
-		userPassword, err := domain.NewUserPassword("cached_dummy_password_hash", func(p []byte) ([]byte, error) {
-			return []byte("cached_dummy_password_hash"), nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf("new user password error: %w", err)
-		}
-
 		return &domain.User{
-			ID:       userID,
-			Name:     userName,
-			Password: userPassword,
-			Avatar:   cachedUser.Avatar,
+			ID:           userID,
+			Name:         cachedUser.Name,
+			PasswordHash: "cached_dummy_password_hash",
+			Avatar:       cachedUser.Avatar,
 		}, nil
 	}
 
@@ -95,23 +83,11 @@ func (d *UserCacheDecorator) FindByUsername(username string) (*domain.User, erro
 			return nil, fmt.Errorf("parse user id error: %w", err)
 		}
 
-		userName, err := domain.NewUserName(cachedUser.Name)
-		if err != nil {
-			return nil, fmt.Errorf("new user name error: %w", err)
-		}
-
-		userPassword, err := domain.NewUserPassword("cached_dummy_password_hash", func(p []byte) ([]byte, error) {
-			return []byte("cached_dummy_password_hash"), nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf("new user password error: %w", err)
-		}
-
 		return &domain.User{
-			ID:       userID,
-			Name:     userName,
-			Password: userPassword,
-			Avatar:   cachedUser.Avatar,
+			ID:           userID,
+			Name:         cachedUser.Name,
+			PasswordHash: "cached_dummy_password_hash",
+			Avatar:       cachedUser.Avatar,
 		}, nil
 	}
 
@@ -154,5 +130,5 @@ func (d *UserCacheDecorator) Update(user *domain.User) error {
 
 func (d *UserCacheDecorator) invalidateUserCache(user *domain.User) {
 	_ = d.cache.Delete(context.Background(), UserKey(user.ID.String()))
-	_ = d.cache.Delete(context.Background(), UsernameKey(user.Name.String()))
+	_ = d.cache.Delete(context.Background(), UsernameKey(user.Name))
 }

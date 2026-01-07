@@ -10,6 +10,7 @@ import (
 	"GitHub/go-chat/backend/internal/ratelimit"
 	"GitHub/go-chat/backend/internal/server"
 	"GitHub/go-chat/backend/internal/services"
+	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
 	"os"
 	"strconv"
@@ -66,12 +67,12 @@ func main() {
 		cachedUsersRepository,
 		messagesRepository,
 	)
-	notificationService := services.NewNotificationService(ctx, redisClient)
-	notificationResolverService := services.NewNotificationResolverService(cachedParticipantRepository)
-	queries := postgres.NewQueriesRepository(db)
-	notificationBuilderService := services.NewNotificationBuilderService(queries)
 
-	notificationPipelineService := services.NewNotificationsPipeline(notificationService, notificationResolverService, notificationBuilderService)
+	subscriptionSync := ws.NewSubscriptionSync(redisClient, redisPubsub.SubscriptionChannel)
+
+	activeClients := ws.NewActiveClients()
+	queries := postgres.NewQueriesRepository(db)
+	notificationService := services.NewNotificationServiceWithClients(ctx, redisClient, cachedParticipantRepository, subscriptionSync, queries, activeClients)
 
 	cacheInvalidationService := cache.NewCacheInvalidationService(cacheClient, eventBus)
 	go cacheInvalidationService.Run(ctx)
@@ -108,7 +109,6 @@ func main() {
 		},
 		authService,
 		conversationService,
-		notificationPipelineService,
 		notificationService,
 		queries,
 		eventBus,
