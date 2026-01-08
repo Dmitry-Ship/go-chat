@@ -125,6 +125,6 @@ func (c *Client) WritePump() {
 	}
 }
 
-func (c *Client) sendNotification(notification OutgoingNotification) {
+func (c *Client) SendNotification(notification OutgoingNotification) {
 	c.sendChannel <- notification
 }

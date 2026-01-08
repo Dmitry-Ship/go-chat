@@ -8,7 +8,6 @@ import (
 
 	"GitHub/go-chat/backend/internal/domain"
 	pubsub "GitHub/go-chat/backend/internal/infra/redis"
-	"GitHub/go-chat/backend/internal/readModel"
 	ws "GitHub/go-chat/backend/internal/websocket"
 
 	"github.com/go-redis/redis/v8"
@@ -21,69 +20,70 @@ type BroadcastMessage struct {
 	UserID  uuid.UUID               `json:"user_id"`
 }
 
+type SubscriptionEvent struct {
+	Action string    `json:"action"`
+	UserID uuid.UUID `json:"user_id"`
+}
+
 type NotificationService interface {
-	Send(ctx context.Context, message ws.OutgoingNotification) error
+	Broadcast(ctx context.Context, channelID uuid.UUID, notification ws.OutgoingNotification) error
 	RegisterClient(ctx context.Context, conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) uuid.UUID
 	Run()
-	SubscribeUserToChannel(ctx context.Context, userID uuid.UUID, channelID uuid.UUID) error
-	UnsubscribeUserFromChannel(ctx context.Context, userID uuid.UUID, channelID uuid.UUID) error
-	NotifyConversationUpdated(ctx context.Context, conversation readModel.ConversationFullDTO) error
-	NotifyConversationDeleted(ctx context.Context, conversationID uuid.UUID) error
-	NotifyMessageSent(ctx context.Context, conversationID uuid.UUID, message readModel.MessageDTO) error
+	InvalidateMembership(ctx context.Context, userID uuid.UUID) error
 }
 
 type notificationService struct {
-	ctx              context.Context
-	activeClients    ws.ActiveClients
-	redisClient      *redis.Client
-	participants     domain.ParticipantRepository
-	subscriptionSync ws.SubscriptionSync
+	ctx                 context.Context
+	activeClients       ws.ActiveClients
+	redisClient         *redis.Client
+	subscriptionChannel string
 }
 
 func NewNotificationService(
 	ctx context.Context,
 	redisClient *redis.Client,
 	participants domain.ParticipantRepository,
-	subscriptionSync ws.SubscriptionSync,
 ) *notificationService {
 	return &notificationService{
-		ctx:              ctx,
-		activeClients:    ws.NewActiveClients(),
-		redisClient:      redisClient,
-		participants:     participants,
-		subscriptionSync: subscriptionSync,
+		ctx:                 ctx,
+		activeClients:       ws.NewActiveClients(participants),
+		redisClient:         redisClient,
+		subscriptionChannel: pubsub.SubscriptionChannel,
 	}
 }
 
 func NewNotificationServiceWithClients(
 	ctx context.Context,
 	redisClient *redis.Client,
-	participants domain.ParticipantRepository,
-	subscriptionSync ws.SubscriptionSync,
 	activeClients ws.ActiveClients,
 ) *notificationService {
 	return &notificationService{
-		ctx:              ctx,
-		activeClients:    activeClients,
-		redisClient:      redisClient,
-		participants:     participants,
-		subscriptionSync: subscriptionSync,
+		ctx:                 ctx,
+		activeClients:       activeClients,
+		redisClient:         redisClient,
+		subscriptionChannel: pubsub.SubscriptionChannel,
 	}
 }
 
-func (s *notificationService) Send(ctx context.Context, message ws.OutgoingNotification) error {
+func (s *notificationService) Broadcast(ctx context.Context, channelID uuid.UUID, notification ws.OutgoingNotification) error {
+	if channelID != uuid.Nil {
+		clients := s.activeClients.GetClientsByChannel(channelID)
+		for _, client := range clients {
+			client.SendNotification(notification)
+		}
+	}
+
 	bMessage := BroadcastMessage{
-		Payload: message,
-		UserID:  message.UserID,
+		Payload: notification,
+		UserID:  notification.UserID,
 	}
 
 	json, err := json.Marshal(bMessage)
-
 	if err != nil {
 		return fmt.Errorf("json marshal error: %w", err)
 	}
 
-	if err := s.redisClient.Publish(s.ctx, pubsub.ChatChannel, []byte(json)).Err(); err != nil {
+	if err := s.redisClient.Publish(ctx, pubsub.ChatChannel, []byte(json)).Err(); err != nil {
 		return fmt.Errorf("redis publish error: %w", err)
 	}
 
@@ -95,16 +95,8 @@ func (s *notificationService) RegisterClient(ctx context.Context, conn *websocke
 
 	clientID := s.activeClients.AddClient(newClient)
 
-	conversationIDs, err := s.participants.GetConversationIDsByUserID(ctx, userID)
-	if err != nil {
-		log.Printf("Error getting user conversations: %v", err)
-	} else {
-		for _, conversationID := range conversationIDs {
-			s.activeClients.SubscribeChannel(newClient, conversationID)
-			if err := s.subscriptionSync.PublishSubscribe(clientID, conversationID, userID); err != nil {
-				log.Printf("Error publishing subscription: %v", err)
-			}
-		}
+	if err := s.activeClients.InvalidateMembership(ctx, userID); err != nil {
+		log.Printf("Error invalidating membership: %v", err)
 	}
 
 	go newClient.WritePump()
@@ -120,20 +112,34 @@ func (s *notificationService) Run() {
 		_ = redisPubsub.Close()
 	}()
 
-	go s.subscriptionSync.Run(s.ctx, func(event ws.SubscriptionEvent) {
-		client := s.activeClients.GetClient(event.ClientID)
-		if client == nil {
-			log.Printf("Client not found for ID: %s", event.ClientID)
-			return
-		}
+	subscriptionPubsub := s.redisClient.Subscribe(s.ctx, s.subscriptionChannel)
+	subscriptionChannel := subscriptionPubsub.Channel()
+	defer func() {
+		_ = subscriptionPubsub.Close()
+	}()
 
-		switch event.Action {
-		case "subscribe":
-			s.activeClients.SubscribeChannel(client, event.ChannelID)
-		case "unsubscribe":
-			s.activeClients.UnsubscribeChannel(client, event.ChannelID)
+	go func() {
+		for {
+			select {
+			case message := <-subscriptionChannel:
+				var event SubscriptionEvent
+
+				if err := json.Unmarshal([]byte(message.Payload), &event); err != nil {
+					continue
+				}
+
+				switch event.Action {
+				case "invalidate":
+					if err := s.activeClients.InvalidateMembership(s.ctx, event.UserID); err != nil {
+						log.Printf("Error invalidating membership: %v", err)
+					}
+				}
+
+			case <-s.ctx.Done():
+				return
+			}
 		}
-	})
+	}()
 
 	for {
 		select {
@@ -150,7 +156,10 @@ func (s *notificationService) Run() {
 				continue
 			}
 
-			s.activeClients.SendToUserClients(bMessage.UserID, bMessage.Payload)
+			clients := s.activeClients.GetClientsByUser(bMessage.UserID)
+			for _, client := range clients {
+				client.SendNotification(bMessage.Payload)
+			}
 
 		case <-s.ctx.Done():
 			return
@@ -158,81 +167,32 @@ func (s *notificationService) Run() {
 	}
 }
 
-func (s *notificationService) SubscribeUserToChannel(ctx context.Context, userID uuid.UUID, channelID uuid.UUID) error {
-	s.activeClients.SubscribeUserToChannel(userID, channelID)
+func (s *notificationService) InvalidateMembership(ctx context.Context, userID uuid.UUID) error {
+	if err := s.activeClients.InvalidateMembership(ctx, userID); err != nil {
+		return err
+	}
 
-	clients := s.activeClients.GetClientsByUser(userID)
-	for _, client := range clients {
-		if err := s.subscriptionSync.PublishSubscribe(client.Id, channelID, userID); err != nil {
-			log.Printf("Error publishing subscription: %v", err)
-		}
+	if err := s.publishInvalidate(userID); err != nil {
+		log.Printf("Error publishing invalidate: %v", err)
 	}
 
 	return nil
 }
 
-func (s *notificationService) UnsubscribeUserFromChannel(ctx context.Context, userID uuid.UUID, channelID uuid.UUID) error {
-	s.activeClients.UnsubscribeUserFromChannel(userID, channelID)
+func (s *notificationService) publishInvalidate(userID uuid.UUID) error {
+	event := SubscriptionEvent{
+		Action: "invalidate",
+		UserID: userID,
+	}
 
-	clients := s.activeClients.GetClientsByUser(userID)
-	for _, client := range clients {
-		if err := s.subscriptionSync.PublishUnsubscribe(client.Id, channelID, userID); err != nil {
-			log.Printf("Error publishing unsubscription: %v", err)
-		}
+	data, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("json marshal error: %w", err)
+	}
+
+	if err := s.redisClient.Publish(context.Background(), s.subscriptionChannel, data).Err(); err != nil {
+		return fmt.Errorf("redis publish error: %w", err)
 	}
 
 	return nil
-}
-
-func (s *notificationService) NotifyConversationUpdated(ctx context.Context, conversation readModel.ConversationFullDTO) error {
-	clients := s.activeClients.GetClientsByChannel(conversation.ID)
-
-	for _, client := range clients {
-		message := ws.OutgoingNotification{
-			Type:    "conversation_updated",
-			UserID:  client.UserID,
-			Payload: conversation,
-		}
-		s.sendDirectly(client, message)
-	}
-
-	return nil
-}
-
-func (s *notificationService) NotifyConversationDeleted(ctx context.Context, conversationID uuid.UUID) error {
-	clients := s.activeClients.GetClientsByChannel(conversationID)
-
-	for _, client := range clients {
-		message := ws.OutgoingNotification{
-			Type:   "conversation_deleted",
-			UserID: client.UserID,
-			Payload: struct {
-				ConversationId uuid.UUID `json:"conversation_id"`
-			}{
-				ConversationId: conversationID,
-			},
-		}
-		s.sendDirectly(client, message)
-	}
-
-	return nil
-}
-
-func (s *notificationService) NotifyMessageSent(ctx context.Context, conversationID uuid.UUID, message readModel.MessageDTO) error {
-	clients := s.activeClients.GetClientsByChannel(conversationID)
-
-	for _, client := range clients {
-		notification := ws.OutgoingNotification{
-			Type:    "message",
-			UserID:  client.UserID,
-			Payload: message,
-		}
-		s.sendDirectly(client, notification)
-	}
-
-	return nil
-}
-
-func (s *notificationService) sendDirectly(client *ws.Client, message ws.OutgoingNotification) {
-	s.activeClients.SendToUserClients(message.UserID, message)
 }

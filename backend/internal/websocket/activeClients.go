@@ -1,7 +1,10 @@
 package ws
 
 import (
+	"context"
 	"sync"
+
+	"GitHub/go-chat/backend/internal/domain"
 
 	"github.com/google/uuid"
 )
@@ -15,30 +18,26 @@ type ActiveClients interface {
 	AddClient(c *Client) uuid.UUID
 	RemoveClient(c *Client)
 	GetClient(clientID uuid.UUID) *Client
-	SendToUserClients(userID uuid.UUID, notification OutgoingNotification)
-	SubscribeChannel(c *Client, channelID uuid.UUID)
-	UnsubscribeChannel(c *Client, channelID uuid.UUID)
-	UnsubscribeClientAllChannels(c *Client)
-	SendToChannel(channelID uuid.UUID, notification OutgoingNotification)
 	GetClientsByChannel(channelID uuid.UUID) []*Client
+	InvalidateMembership(ctx context.Context, userID uuid.UUID) error
 	GetClientsByUser(userID uuid.UUID) []*Client
-	SubscribeUserToChannel(userID uuid.UUID, channelID uuid.UUID)
-	UnsubscribeUserFromChannel(userID uuid.UUID, channelID uuid.UUID)
 }
 
 type activeClients struct {
-	mu          sync.RWMutex
-	clients     map[clientKey]*Client
-	byUserID    map[uuid.UUID]map[*Client]struct{}
-	byChannelID map[uuid.UUID]map[*Client]struct{}
+	mu           sync.RWMutex
+	clients      map[clientKey]*Client
+	byUserID     map[uuid.UUID]map[*Client]struct{}
+	byChannelID  map[uuid.UUID]map[*Client]struct{}
+	participants domain.ParticipantRepository
 }
 
-func NewActiveClients() *activeClients {
+func NewActiveClients(participants domain.ParticipantRepository) *activeClients {
 	return &activeClients{
-		clients:     make(map[clientKey]*Client),
-		byUserID:    make(map[uuid.UUID]map[*Client]struct{}),
-		byChannelID: make(map[uuid.UUID]map[*Client]struct{}),
-		mu:          sync.RWMutex{},
+		clients:      make(map[clientKey]*Client),
+		byUserID:     make(map[uuid.UUID]map[*Client]struct{}),
+		byChannelID:  make(map[uuid.UUID]map[*Client]struct{}),
+		participants: participants,
+		mu:           sync.RWMutex{},
 	}
 }
 
@@ -85,80 +84,12 @@ func (ac *activeClients) RemoveClient(c *Client) {
 		}
 	}
 
-	ac.UnsubscribeClientAllChannels(c)
-}
-
-func (ac *activeClients) SendToUserClients(userID uuid.UUID, notification OutgoingNotification) {
-	ac.mu.RLock()
-	defer ac.mu.RUnlock()
-
-	for key, client := range ac.clients {
-		if key.userID == userID {
-			client.sendNotification(notification)
-		}
-	}
-}
-
-func (ac *activeClients) SubscribeChannel(c *Client, channelID uuid.UUID) {
-	ac.mu.Lock()
-	defer ac.mu.Unlock()
-
-	if _, exists := ac.byChannelID[channelID]; !exists {
-		ac.byChannelID[channelID] = make(map[*Client]struct{})
-	}
-	ac.byChannelID[channelID][c] = struct{}{}
-}
-
-func (ac *activeClients) UnsubscribeChannel(c *Client, channelID uuid.UUID) {
-	ac.mu.Lock()
-	defer ac.mu.Unlock()
-
-	if channelClients, exists := ac.byChannelID[channelID]; exists {
-		delete(channelClients, c)
-		if len(channelClients) == 0 {
-			delete(ac.byChannelID, channelID)
-		}
-	}
-}
-
-func (ac *activeClients) UnsubscribeClientAllChannels(c *Client) {
 	for channelID, clients := range ac.byChannelID {
 		delete(clients, c)
 		if len(clients) == 0 {
 			delete(ac.byChannelID, channelID)
 		}
 	}
-}
-
-func (ac *activeClients) SendToChannel(channelID uuid.UUID, notification OutgoingNotification) {
-	ac.mu.RLock()
-	defer ac.mu.RUnlock()
-
-	channelClients, exists := ac.byChannelID[channelID]
-	if !exists {
-		return
-	}
-
-	for client := range channelClients {
-		client.sendNotification(notification)
-	}
-}
-
-func (ac *activeClients) GetClientsByChannel(channelID uuid.UUID) []*Client {
-	ac.mu.RLock()
-	defer ac.mu.RUnlock()
-
-	channelClients, exists := ac.byChannelID[channelID]
-	if !exists {
-		return nil
-	}
-
-	clients := make([]*Client, 0, len(channelClients))
-	for client := range channelClients {
-		clients = append(clients, client)
-	}
-
-	return clients
 }
 
 func (ac *activeClients) GetClientsByUser(userID uuid.UUID) []*Client {
@@ -178,43 +109,54 @@ func (ac *activeClients) GetClientsByUser(userID uuid.UUID) []*Client {
 	return clients
 }
 
-func (ac *activeClients) SubscribeUserToChannel(userID uuid.UUID, channelID uuid.UUID) {
-	ac.mu.Lock()
-	defer ac.mu.Unlock()
-
-	userClients, exists := ac.byUserID[userID]
-	if !exists {
-		return
-	}
-
-	if _, exists := ac.byChannelID[channelID]; !exists {
-		ac.byChannelID[channelID] = make(map[*Client]struct{})
-	}
-
-	for client := range userClients {
-		ac.byChannelID[channelID][client] = struct{}{}
-	}
-}
-
-func (ac *activeClients) UnsubscribeUserFromChannel(userID uuid.UUID, channelID uuid.UUID) {
-	ac.mu.Lock()
-	defer ac.mu.Unlock()
-
-	userClients, exists := ac.byUserID[userID]
-	if !exists {
-		return
-	}
+func (ac *activeClients) GetClientsByChannel(channelID uuid.UUID) []*Client {
+	ac.mu.RLock()
+	defer ac.mu.RUnlock()
 
 	channelClients, exists := ac.byChannelID[channelID]
 	if !exists {
-		return
+		return nil
+	}
+
+	clients := make([]*Client, 0, len(channelClients))
+	for client := range channelClients {
+		clients = append(clients, client)
+	}
+
+	return clients
+}
+
+func (ac *activeClients) InvalidateMembership(ctx context.Context, userID uuid.UUID) error {
+	ac.mu.Lock()
+	defer ac.mu.Unlock()
+
+	userClients, exists := ac.byUserID[userID]
+	if !exists {
+		return nil
 	}
 
 	for client := range userClients {
-		delete(channelClients, client)
+		for channelID := range ac.byChannelID {
+			delete(ac.byChannelID[channelID], client)
+			if len(ac.byChannelID[channelID]) == 0 {
+				delete(ac.byChannelID, channelID)
+			}
+		}
 	}
 
-	if len(channelClients) == 0 {
-		delete(ac.byChannelID, channelID)
+	conversationIDs, err := ac.participants.GetConversationIDsByUserID(ctx, userID)
+	if err != nil {
+		return err
 	}
+
+	for client := range userClients {
+		for _, conversationID := range conversationIDs {
+			if _, exists := ac.byChannelID[conversationID]; !exists {
+				ac.byChannelID[conversationID] = make(map[*Client]struct{})
+			}
+			ac.byChannelID[conversationID][client] = struct{}{}
+		}
+	}
+
+	return nil
 }

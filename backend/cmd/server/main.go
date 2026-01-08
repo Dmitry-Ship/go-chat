@@ -135,11 +135,9 @@ func main() {
 		RefreshToken: config.Token{Secret: os.Getenv("REFRESH_TOKEN_SECRET"), TTL: DefaultRefreshTokenTTL},
 	})
 
-	subscriptionSync := ws.NewSubscriptionSync(redisClient, redisPubsub.SubscriptionChannel)
-
-	activeClients := ws.NewActiveClients()
+	activeClients := ws.NewActiveClients(cachedParticipantRepository)
 	queries := postgres.NewQueriesRepository(pool)
-	notificationService := services.NewNotificationServiceWithClients(ctx, redisClient, cachedParticipantRepository, subscriptionSync, activeClients)
+	notificationService := services.NewNotificationServiceWithClients(ctx, redisClient, activeClients)
 
 	conversationService := services.NewConversationService(
 		cachedGroupConversationsRepository,

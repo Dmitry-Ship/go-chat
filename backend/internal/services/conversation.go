@@ -6,6 +6,7 @@ import (
 
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/readModel"
+	ws "GitHub/go-chat/backend/internal/websocket"
 
 	"github.com/google/uuid"
 )
@@ -110,8 +111,8 @@ func (s *conversationService) StartDirectConversation(ctx context.Context, fromU
 		return uuid.Nil, fmt.Errorf("invalidate cache error: %w", err)
 	}
 
-	if err := s.notifications.SubscribeUserToChannel(ctx, fromUserID, newConversationID); err != nil {
-		return uuid.Nil, fmt.Errorf("subscribe user to channel error: %w", err)
+	if err := s.notifications.InvalidateMembership(ctx, fromUserID); err != nil {
+		return uuid.Nil, fmt.Errorf("invalidate membership error: %w", err)
 	}
 
 	return newConversationID, nil
@@ -142,7 +143,7 @@ func (s *conversationService) DeleteGroupConversation(ctx context.Context, conve
 		return fmt.Errorf("invalidate cache error: %w", err)
 	}
 
-	if err := s.notifications.NotifyConversationDeleted(ctx, conversationID); err != nil {
+	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "conversation_deleted", Payload: map[string]interface{}{"conversation_id": conversationID}}); err != nil {
 		return fmt.Errorf("notify error: %w", err)
 	}
 
@@ -187,7 +188,7 @@ func (s *conversationService) Rename(ctx context.Context, conversationID uuid.UU
 		return fmt.Errorf("get conversation error: %w", err)
 	}
 
-	if err := s.notifications.NotifyConversationUpdated(ctx, conversationDTO); err != nil {
+	if err := s.notifications.Broadcast(ctx, conversationDTO.ID, ws.OutgoingNotification{Type: "conversation_updated", Payload: conversationDTO}); err != nil {
 		return fmt.Errorf("notify error: %w", err)
 	}
 
@@ -224,7 +225,7 @@ func (s *conversationService) SendDirectTextMessage(ctx context.Context, convers
 		return fmt.Errorf("get notification message error: %w", err)
 	}
 
-	if err := s.notifications.NotifyMessageSent(ctx, conversationID, messageDTO); err != nil {
+	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO}); err != nil {
 		return fmt.Errorf("notify error: %w", err)
 	}
 
@@ -261,7 +262,7 @@ func (s *conversationService) SendGroupTextMessage(ctx context.Context, conversa
 		return fmt.Errorf("get notification message error: %w", err)
 	}
 
-	if err := s.notifications.NotifyMessageSent(ctx, conversationID, messageDTO); err != nil {
+	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO}); err != nil {
 		return fmt.Errorf("notify error: %w", err)
 	}
 
@@ -304,12 +305,12 @@ func (s *conversationService) Join(ctx context.Context, conversationID uuid.UUID
 		return fmt.Errorf("get conversation error: %w", err)
 	}
 
-	if err := s.notifications.NotifyConversationUpdated(ctx, conversationDTO); err != nil {
+	if err := s.notifications.Broadcast(ctx, conversationDTO.ID, ws.OutgoingNotification{Type: "conversation_updated", Payload: conversationDTO}); err != nil {
 		return fmt.Errorf("notify error: %w", err)
 	}
 
-	if err := s.notifications.SubscribeUserToChannel(ctx, userID, conversationID); err != nil {
-		return fmt.Errorf("subscribe error: %w", err)
+	if err := s.notifications.InvalidateMembership(ctx, userID); err != nil {
+		return fmt.Errorf("invalidate membership error: %w", err)
 	}
 
 	return nil
@@ -351,12 +352,12 @@ func (s *conversationService) Leave(ctx context.Context, conversationID uuid.UUI
 		return fmt.Errorf("get conversation error: %w", err)
 	}
 
-	if err := s.notifications.NotifyConversationUpdated(ctx, conversationDTO); err != nil {
+	if err := s.notifications.Broadcast(ctx, conversationDTO.ID, ws.OutgoingNotification{Type: "conversation_updated", Payload: conversationDTO}); err != nil {
 		return fmt.Errorf("notify error: %w", err)
 	}
 
-	if err := s.notifications.UnsubscribeUserFromChannel(ctx, userID, conversationID); err != nil {
-		return fmt.Errorf("unsubscribe error: %w", err)
+	if err := s.notifications.InvalidateMembership(ctx, userID); err != nil {
+		return fmt.Errorf("invalidate membership error: %w", err)
 	}
 
 	return nil
@@ -404,12 +405,12 @@ func (s *conversationService) Invite(ctx context.Context, conversationID uuid.UU
 		return fmt.Errorf("get conversation error: %w", err)
 	}
 
-	if err := s.notifications.NotifyConversationUpdated(ctx, conversationDTO); err != nil {
+	if err := s.notifications.Broadcast(ctx, conversationDTO.ID, ws.OutgoingNotification{Type: "conversation_updated", Payload: conversationDTO}); err != nil {
 		return fmt.Errorf("notify error: %w", err)
 	}
 
-	if err := s.notifications.SubscribeUserToChannel(ctx, inviteeID, conversationID); err != nil {
-		return fmt.Errorf("subscribe error: %w", err)
+	if err := s.notifications.InvalidateMembership(ctx, inviteeID); err != nil {
+		return fmt.Errorf("invalidate membership error: %w", err)
 	}
 
 	return nil
@@ -457,12 +458,12 @@ func (s *conversationService) Kick(ctx context.Context, conversationID uuid.UUID
 		return fmt.Errorf("get conversation error: %w", err)
 	}
 
-	if err := s.notifications.NotifyConversationUpdated(ctx, conversationDTO); err != nil {
+	if err := s.notifications.Broadcast(ctx, conversationDTO.ID, ws.OutgoingNotification{Type: "conversation_updated", Payload: conversationDTO}); err != nil {
 		return fmt.Errorf("notify error: %w", err)
 	}
 
-	if err := s.notifications.UnsubscribeUserFromChannel(ctx, targetID, conversationID); err != nil {
-		return fmt.Errorf("unsubscribe error: %w", err)
+	if err := s.notifications.InvalidateMembership(ctx, targetID); err != nil {
+		return fmt.Errorf("invalidate membership error: %w", err)
 	}
 
 	return nil
