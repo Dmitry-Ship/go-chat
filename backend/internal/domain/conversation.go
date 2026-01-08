@@ -22,7 +22,6 @@ var (
 )
 
 type Conversation struct {
-	aggregate
 	ID       uuid.UUID
 	Type     ConversationType
 	IsActive bool

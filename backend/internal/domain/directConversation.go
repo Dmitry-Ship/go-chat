@@ -1,15 +1,16 @@
 package domain
 
 import (
+	"context"
 	"errors"
 
 	"github.com/google/uuid"
 )
 
 type DirectConversationRepository interface {
-	Store(conversation *DirectConversation) error
-	GetID(firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
-	GetByID(id uuid.UUID) (*DirectConversation, error)
+	Store(ctx context.Context, conversation *DirectConversation) error
+	GetID(ctx context.Context, firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*DirectConversation, error)
 }
 
 type DirectConversation struct {
@@ -33,8 +34,6 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 			*NewParticipant(uuid.New(), id, from),
 		},
 	}
-
-	directConversation.AddEvent(newDirectConversationCreatedEvent(id, []uuid.UUID{to, from}))
 
 	return &directConversation, nil
 }

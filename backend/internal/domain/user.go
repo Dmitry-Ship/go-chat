@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 	"unicode"
 
@@ -9,10 +10,10 @@ import (
 )
 
 type UserRepository interface {
-	Store(user *User) error
-	Update(user *User) error
-	GetByID(id uuid.UUID) (*User, error)
-	FindByUsername(username string) (*User, error)
+	Store(ctx context.Context, user *User) error
+	Update(ctx context.Context, user *User) error
+	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
+	FindByUsername(ctx context.Context, username string) (*User, error)
 }
 
 func ValidateUsername(username string) error {
@@ -32,21 +33,24 @@ func HashPassword(password string) (string, error) {
 		return "", errors.New("password must be at least 8 characters")
 	}
 
-	var hasUpper, hasLower, hasDigit, hasSpecial bool
+	var found int
 	for _, c := range password {
 		switch {
 		case unicode.IsUpper(c):
-			hasUpper = true
+			found |= 1 << 0
 		case unicode.IsLower(c):
-			hasLower = true
+			found |= 1 << 1
 		case unicode.IsDigit(c):
-			hasDigit = true
+			found |= 1 << 2
 		case unicode.IsPunct(c) || unicode.IsSymbol(c):
-			hasSpecial = true
+			found |= 1 << 3
+		}
+		if found == 0xF {
+			break
 		}
 	}
 
-	if !hasUpper || !hasLower || !hasDigit || !hasSpecial {
+	if found != 0xF {
 		return "", errors.New("password must contain uppercase, lowercase, digit, and special character")
 	}
 
@@ -59,7 +63,6 @@ func ComparePassword(hashed, plain string) error {
 }
 
 type User struct {
-	aggregate
 	ID           uuid.UUID
 	Avatar       string
 	Name         string

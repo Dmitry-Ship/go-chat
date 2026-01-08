@@ -1,15 +1,16 @@
 package domain
 
 import (
+	"context"
 	"errors"
 
 	"github.com/google/uuid"
 )
 
 type GroupConversationRepository interface {
-	Store(conversation *GroupConversation) error
-	Update(conversation *GroupConversation) error
-	GetByID(id uuid.UUID) (*GroupConversation, error)
+	Store(ctx context.Context, conversation *GroupConversation) error
+	Update(ctx context.Context, conversation *GroupConversation) error
+	GetByID(ctx context.Context, id uuid.UUID) (*GroupConversation, error)
 }
 
 var (
@@ -53,8 +54,6 @@ func NewGroupConversation(id uuid.UUID, name string, creator User) (*GroupConver
 		Owner:  *NewParticipant(uuid.New(), id, creator.ID),
 	}
 
-	groupConversation.AddEvent(newGroupConversationCreatedEvent(id, creator.ID))
-
 	return groupConversation, nil
 }
 
@@ -77,8 +76,6 @@ func (groupConversation *GroupConversation) Delete(participant *Participant) err
 
 	groupConversation.IsActive = false
 
-	groupConversation.AddEvent(newGroupConversationDeletedEvent(groupConversation.Conversation.ID))
-
 	return nil
 }
 
@@ -94,8 +91,6 @@ func (groupConversation *GroupConversation) Rename(newName string, participant *
 	groupConversation.Name = newName
 	groupConversation.Avatar = string(newName[0])
 
-	groupConversation.AddEvent(newGroupConversationRenamedEvent(groupConversation.Conversation.ID, participant.UserID, newName))
-
 	return nil
 }
 
@@ -105,8 +100,6 @@ func (groupConversation *GroupConversation) Join(user User) (*Participant, error
 	}
 
 	participant := NewParticipant(uuid.New(), groupConversation.Conversation.ID, user.ID)
-
-	participant.AddEvent(newGroupConversationJoinedEvent(groupConversation.Conversation.ID, user.ID))
 
 	return participant, nil
 }
@@ -121,8 +114,6 @@ func (groupConversation *GroupConversation) Leave(participant *Participant) (*Pa
 	}
 
 	participant.IsActive = false
-
-	participant.AddEvent(newGroupConversationLeftEvent(groupConversation.Conversation.ID, participant.UserID))
 
 	return participant, nil
 }
@@ -141,8 +132,6 @@ func (groupConversation *GroupConversation) Invite(inviter *Participant, invitee
 	}
 
 	participant := NewParticipant(uuid.New(), groupConversation.Conversation.ID, invitee.ID)
-
-	participant.AddEvent(newGroupConversationInvitedEvent(groupConversation.Conversation.ID, inviter.UserID, invitee.ID))
 
 	return participant, nil
 }
@@ -165,8 +154,6 @@ func (groupConversation *GroupConversation) Kick(kicker *Participant, target *Pa
 	}
 
 	target.IsActive = false
-
-	target.AddEvent(newGroupConversationLeftEvent(groupConversation.Conversation.ID, target.UserID))
 
 	return target, nil
 }

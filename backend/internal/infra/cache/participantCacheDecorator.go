@@ -21,10 +21,10 @@ func NewParticipantCacheDecorator(repo domain.ParticipantRepository, cache Cache
 	}
 }
 
-func (d *ParticipantCacheDecorator) GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
+func (d *ParticipantCacheDecorator) GetByConversationIDAndUserID(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
 	key := ParticipantsKey(conversationID.String())
 
-	data, err := d.cache.Get(context.Background(), key)
+	data, err := d.cache.Get(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("cache get error: %w", err)
 	}
@@ -51,7 +51,7 @@ func (d *ParticipantCacheDecorator) GetByConversationIDAndUserID(conversationID 
 		}
 	}
 
-	participant, err := d.repo.GetByConversationIDAndUserID(conversationID, userID)
+	participant, err := d.repo.GetByConversationIDAndUserID(ctx, conversationID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("repo get by conversation id and user id error: %w", err)
 	}
@@ -59,10 +59,10 @@ func (d *ParticipantCacheDecorator) GetByConversationIDAndUserID(conversationID 
 	return participant, nil
 }
 
-func (d *ParticipantCacheDecorator) GetIDsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error) {
+func (d *ParticipantCacheDecorator) GetIDsByConversationID(ctx context.Context, conversationID uuid.UUID) ([]uuid.UUID, error) {
 	key := ParticipantsKey(conversationID.String())
 
-	data, err := d.cache.Get(context.Background(), key)
+	data, err := d.cache.Get(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("cache get error: %w", err)
 	}
@@ -80,7 +80,7 @@ func (d *ParticipantCacheDecorator) GetIDsByConversationID(conversationID uuid.U
 		return ids, nil
 	}
 
-	ids, err := d.repo.GetIDsByConversationID(conversationID)
+	ids, err := d.repo.GetIDsByConversationID(ctx, conversationID)
 	if err != nil {
 		return nil, fmt.Errorf("repo get ids by conversation id error: %w", err)
 	}
@@ -99,43 +99,43 @@ func (d *ParticipantCacheDecorator) GetIDsByConversationID(conversationID uuid.U
 		return nil, fmt.Errorf("serialize participants error: %w", err)
 	}
 
-	if err := d.cache.Set(context.Background(), key, data, TTLParticipants); err != nil {
+	if err := d.cache.Set(ctx, key, data, TTLParticipants); err != nil {
 		return nil, fmt.Errorf("cache set error: %w", err)
 	}
 
 	return ids, nil
 }
 
-func (d *ParticipantCacheDecorator) Store(participant *domain.Participant) error {
-	if err := d.repo.Store(participant); err != nil {
+func (d *ParticipantCacheDecorator) Store(ctx context.Context, participant *domain.Participant) error {
+	if err := d.repo.Store(ctx, participant); err != nil {
 		return fmt.Errorf("repo store error: %w", err)
 	}
 
-	d.invalidateParticipantsCache(participant.ConversationID.String())
-	d.invalidateUserConvListCache(participant.UserID.String())
+	d.invalidateParticipantsCache(ctx, participant.ConversationID.String())
+	d.invalidateUserConvListCache(ctx, participant.UserID.String())
 
 	return nil
 }
 
-func (d *ParticipantCacheDecorator) Update(participant *domain.Participant) error {
-	if err := d.repo.Update(participant); err != nil {
+func (d *ParticipantCacheDecorator) Update(ctx context.Context, participant *domain.Participant) error {
+	if err := d.repo.Update(ctx, participant); err != nil {
 		return fmt.Errorf("repo update error: %w", err)
 	}
 
-	d.invalidateParticipantsCache(participant.ConversationID.String())
-	d.invalidateUserConvListCache(participant.UserID.String())
+	d.invalidateParticipantsCache(ctx, participant.ConversationID.String())
+	d.invalidateUserConvListCache(ctx, participant.UserID.String())
 
 	return nil
 }
 
-func (d *ParticipantCacheDecorator) invalidateParticipantsCache(conversationID string) {
-	_ = d.cache.Delete(context.Background(), ParticipantsKey(conversationID))
+func (d *ParticipantCacheDecorator) invalidateParticipantsCache(ctx context.Context, conversationID string) {
+	_ = d.cache.Delete(ctx, ParticipantsKey(conversationID))
 }
 
-func (d *ParticipantCacheDecorator) GetConversationIDsByUserID(userID uuid.UUID) ([]uuid.UUID, error) {
+func (d *ParticipantCacheDecorator) GetConversationIDsByUserID(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
 	key := UserConvListKey(userID.String())
 
-	data, err := d.cache.Get(context.Background(), key)
+	data, err := d.cache.Get(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("cache get error: %w", err)
 	}
@@ -149,7 +149,7 @@ func (d *ParticipantCacheDecorator) GetConversationIDsByUserID(userID uuid.UUID)
 		return cachedData, nil
 	}
 
-	ids, err := d.repo.GetConversationIDsByUserID(userID)
+	ids, err := d.repo.GetConversationIDsByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("repo get conversation ids by user id error: %w", err)
 	}
@@ -159,13 +159,13 @@ func (d *ParticipantCacheDecorator) GetConversationIDsByUserID(userID uuid.UUID)
 		return nil, fmt.Errorf("json marshal error: %w", err)
 	}
 
-	if err := d.cache.Set(context.Background(), key, data, TTLUserConvList); err != nil {
+	if err := d.cache.Set(ctx, key, data, TTLUserConvList); err != nil {
 		return nil, fmt.Errorf("cache set error: %w", err)
 	}
 
 	return ids, nil
 }
 
-func (d *ParticipantCacheDecorator) invalidateUserConvListCache(userID string) {
-	_ = d.cache.Delete(context.Background(), UserConvListKey(userID))
+func (d *ParticipantCacheDecorator) invalidateUserConvListCache(ctx context.Context, userID string) {
+	_ = d.cache.Delete(ctx, UserConvListKey(userID))
 }

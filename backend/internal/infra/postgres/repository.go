@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
-	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/postgres/db"
 
 	"github.com/google/uuid"
@@ -15,22 +14,14 @@ import (
 )
 
 type repository struct {
-	pool           *pgxpool.Pool
-	queries        *db.Queries
-	eventPublisher *infra.EventBus
+	pool    *pgxpool.Pool
+	queries *db.Queries
 }
 
-func newRepository(pool *pgxpool.Pool, queries *db.Queries, eventPublisher *infra.EventBus) *repository {
+func newRepository(pool *pgxpool.Pool, queries *db.Queries) *repository {
 	return &repository{
-		pool:           pool,
-		queries:        queries,
-		eventPublisher: eventPublisher,
-	}
-}
-
-func (r *repository) dispatchEvents(aggregate domain.Aggregate) {
-	for _, event := range aggregate.GetEvents() {
-		r.eventPublisher.Publish(event.GetTopic(), event)
+		pool:    pool,
+		queries: queries,
 	}
 }
 

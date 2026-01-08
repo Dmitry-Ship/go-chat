@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
-	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/postgres/db"
 
 	"github.com/google/uuid"
@@ -18,14 +17,13 @@ type groupConversationRepository struct {
 	*repository
 }
 
-func NewGroupConversationRepository(pool *pgxpool.Pool, eventPublisher *infra.EventBus) *groupConversationRepository {
+func NewGroupConversationRepository(pool *pgxpool.Pool) *groupConversationRepository {
 	return &groupConversationRepository{
-		repository: newRepository(pool, db.New(pool), eventPublisher),
+		repository: newRepository(pool, db.New(pool)),
 	}
 }
 
-func (r *groupConversationRepository) Store(conversation *domain.GroupConversation) error {
-	ctx := context.Background()
+func (r *groupConversationRepository) Store(ctx context.Context, conversation *domain.GroupConversation) error {
 	return r.withTx(ctx, func(tx pgx.Tx) error {
 		qtx := r.queries.WithTx(tx)
 
@@ -66,8 +64,7 @@ func (r *groupConversationRepository) Store(conversation *domain.GroupConversati
 	})
 }
 
-func (r *groupConversationRepository) Update(conversation *domain.GroupConversation) error {
-	ctx := context.Background()
+func (r *groupConversationRepository) Update(ctx context.Context, conversation *domain.GroupConversation) error {
 	return r.withTx(ctx, func(tx pgx.Tx) error {
 		qtx := r.queries.WithTx(tx)
 
@@ -94,9 +91,7 @@ func (r *groupConversationRepository) Update(conversation *domain.GroupConversat
 	})
 }
 
-func (r *groupConversationRepository) GetByID(id uuid.UUID) (*domain.GroupConversation, error) {
-	ctx := context.Background()
-
+func (r *groupConversationRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.GroupConversation, error) {
 	result, err := r.queries.GetGroupConversationWithOwner(ctx, uuidToPgtype(id))
 	if err != nil {
 		return nil, fmt.Errorf("get group conversation error: %w", err)

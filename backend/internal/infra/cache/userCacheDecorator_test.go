@@ -42,26 +42,26 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
-func (m *MockUserRepository) Store(user *domain.User) error {
-	args := m.Called(user)
+func (m *MockUserRepository) Store(ctx context.Context, user *domain.User) error {
+	args := m.Called(ctx, user)
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) Update(user *domain.User) error {
-	args := m.Called(user)
+func (m *MockUserRepository) Update(ctx context.Context, user *domain.User) error {
+	args := m.Called(ctx, user)
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) GetByID(id uuid.UUID) (*domain.User, error) {
-	args := m.Called(id)
+func (m *MockUserRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
-func (m *MockUserRepository) FindByUsername(username string) (*domain.User, error) {
-	args := m.Called(username)
+func (m *MockUserRepository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
+	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -87,7 +87,7 @@ func TestUserCacheDecorator_GetByID_CacheHit(t *testing.T) {
 	mockCache.On("Get", mock.Anything, UserKey(userID.String())).Return(userData, nil)
 
 	decorator := NewUserCacheDecorator(mockRepo, mockCache)
-	result, err := decorator.GetByID(userID)
+	result, err := decorator.GetByID(context.Background(), userID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -112,11 +112,11 @@ func TestUserCacheDecorator_GetByID_CacheMiss(t *testing.T) {
 	}
 
 	mockCache.On("Get", mock.Anything, UserKey(userID.String())).Return(nil, nil)
-	mockRepo.On("GetByID", userID).Return(user, nil)
+	mockRepo.On("GetByID", mock.Anything, userID).Return(user, nil)
 	mockCache.On("Set", mock.Anything, UserKey(userID.String()), mock.Anything, TTLUser).Return(nil)
 
 	decorator := NewUserCacheDecorator(mockRepo, mockCache)
-	result, err := decorator.GetByID(userID)
+	result, err := decorator.GetByID(context.Background(), userID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -140,12 +140,12 @@ func TestUserCacheDecorator_Store_InvalidatesCache(t *testing.T) {
 		Avatar:       "T",
 	}
 
-	mockRepo.On("Store", user).Return(nil)
+	mockRepo.On("Store", mock.Anything, user).Return(nil)
 	mockCache.On("Delete", mock.Anything, UserKey(userID.String())).Return(nil)
 	mockCache.On("Delete", mock.Anything, UsernameKey("testuser")).Return(nil)
 
 	decorator := NewUserCacheDecorator(mockRepo, mockCache)
-	err := decorator.Store(user)
+	err := decorator.Store(context.Background(), user)
 
 	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
@@ -166,12 +166,12 @@ func TestUserCacheDecorator_Update_InvalidatesCache(t *testing.T) {
 		Avatar:       "T",
 	}
 
-	mockRepo.On("Update", user).Return(nil)
+	mockRepo.On("Update", mock.Anything, user).Return(nil)
 	mockCache.On("Delete", mock.Anything, UserKey(userID.String())).Return(nil)
 	mockCache.On("Delete", mock.Anything, UsernameKey("testuser")).Return(nil)
 
 	decorator := NewUserCacheDecorator(mockRepo, mockCache)
-	err := decorator.Update(user)
+	err := decorator.Update(context.Background(), user)
 
 	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)

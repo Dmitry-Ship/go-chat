@@ -3,7 +3,6 @@ package main
 import (
 	"GitHub/go-chat/backend/internal/config"
 	"GitHub/go-chat/backend/internal/gracefulServer"
-	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/cache"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 	redisPubsub "GitHub/go-chat/backend/internal/infra/redis"
@@ -108,27 +107,39 @@ func main() {
 	}
 	defer pool.Close()
 
-	eventBus := infra.NewEventBus()
-	defer eventBus.Close()
-
 	cacheClient := cache.NewRedisCacheClient(redisClient, cache.CacheConfig{
 		Prefix: "cache:",
 	})
 
-	messagesRepository := postgres.NewMessageRepository(pool, eventBus)
-	groupConversationsRepository := postgres.NewGroupConversationRepository(pool, eventBus)
-	directConversationsRepository := postgres.NewDirectConversationRepository(pool, eventBus)
-	participantRepository := postgres.NewParticipantRepository(pool, eventBus)
-	usersRepository := postgres.NewUserRepository(pool, eventBus)
+	messagesRepository := postgres.NewMessageRepository(pool)
+	groupConversationsRepository := postgres.NewGroupConversationRepository(pool)
+	directConversationsRepository := postgres.NewDirectConversationRepository(pool)
+	participantRepository := postgres.NewParticipantRepository(pool)
+	usersRepository := postgres.NewUserRepository(pool)
 
 	cachedUsersRepository := cache.NewUserCacheDecorator(usersRepository, cacheClient)
 	cachedGroupConversationsRepository := cache.NewGroupConversationCacheDecorator(groupConversationsRepository, cacheClient)
 	cachedParticipantRepository := cache.NewParticipantCacheDecorator(participantRepository, cacheClient)
 
+	cacheService := services.NewCacheService(cacheClient)
+
+	systemMessageService := services.NewSystemMessageService(
+		cachedGroupConversationsRepository,
+		cachedUsersRepository,
+		cachedParticipantRepository,
+		messagesRepository,
+	)
+
 	authService := services.NewAuthService(cachedUsersRepository, config.Auth{
 		AccessToken:  config.Token{Secret: os.Getenv("ACCESS_TOKEN_SECRET"), TTL: DefaultAccessTokenTTL},
 		RefreshToken: config.Token{Secret: os.Getenv("REFRESH_TOKEN_SECRET"), TTL: DefaultRefreshTokenTTL},
 	})
+
+	subscriptionSync := ws.NewSubscriptionSync(redisClient, redisPubsub.SubscriptionChannel)
+
+	activeClients := ws.NewActiveClients()
+	queries := postgres.NewQueriesRepository(pool)
+	notificationService := services.NewNotificationServiceWithClients(ctx, redisClient, cachedParticipantRepository, subscriptionSync, activeClients)
 
 	conversationService := services.NewConversationService(
 		cachedGroupConversationsRepository,
@@ -136,16 +147,11 @@ func main() {
 		cachedParticipantRepository,
 		cachedUsersRepository,
 		messagesRepository,
+		notificationService,
+		cacheService,
+		systemMessageService,
+		queries,
 	)
-
-	subscriptionSync := ws.NewSubscriptionSync(redisClient, redisPubsub.SubscriptionChannel)
-
-	activeClients := ws.NewActiveClients()
-	queries := postgres.NewQueriesRepository(pool)
-	notificationService := services.NewNotificationServiceWithClients(ctx, redisClient, cachedParticipantRepository, subscriptionSync, queries, activeClients)
-
-	cacheInvalidationService := cache.NewCacheInvalidationService(cacheClient, eventBus)
-	go cacheInvalidationService.Run(ctx)
 
 	maxUserConnections, _ := strconv.Atoi(os.Getenv("WS_RATE_LIMIT_MAX_USER"))
 	maxIPConnections, _ := strconv.Atoi(os.Getenv("WS_RATE_LIMIT_MAX_IP"))
@@ -181,7 +187,6 @@ func main() {
 		conversationService,
 		notificationService,
 		queries,
-		eventBus,
 		ipRateLimiter,
 		userRateLimiter,
 	)

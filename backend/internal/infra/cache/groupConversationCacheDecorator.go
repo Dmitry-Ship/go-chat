@@ -21,10 +21,10 @@ func NewGroupConversationCacheDecorator(repo domain.GroupConversationRepository,
 	}
 }
 
-func (d *GroupConversationCacheDecorator) GetByID(id uuid.UUID) (*domain.GroupConversation, error) {
+func (d *GroupConversationCacheDecorator) GetByID(ctx context.Context, id uuid.UUID) (*domain.GroupConversation, error) {
 	key := ConversationKey(id.String())
 
-	data, err := d.cache.Get(context.Background(), key)
+	data, err := d.cache.Get(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("cache get error: %w", err)
 	}
@@ -37,7 +37,7 @@ func (d *GroupConversationCacheDecorator) GetByID(id uuid.UUID) (*domain.GroupCo
 		return &conv, nil
 	}
 
-	conv, err := d.repo.GetByID(id)
+	conv, err := d.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("repo get by id error: %w", err)
 	}
@@ -47,35 +47,35 @@ func (d *GroupConversationCacheDecorator) GetByID(id uuid.UUID) (*domain.GroupCo
 		return nil, fmt.Errorf("json marshal error: %w", err)
 	}
 
-	if err := d.cache.Set(context.Background(), key, data, TTLConversation); err != nil {
+	if err := d.cache.Set(ctx, key, data, TTLConversation); err != nil {
 		return nil, fmt.Errorf("cache set error: %w", err)
 	}
 
 	return conv, nil
 }
 
-func (d *GroupConversationCacheDecorator) Store(conversation *domain.GroupConversation) error {
-	if err := d.repo.Store(conversation); err != nil {
+func (d *GroupConversationCacheDecorator) Store(ctx context.Context, conversation *domain.GroupConversation) error {
+	if err := d.repo.Store(ctx, conversation); err != nil {
 		return fmt.Errorf("repo store error: %w", err)
 	}
 
-	d.invalidateConversationCache(conversation.ID.String())
+	d.invalidateConversationCache(ctx, conversation.ID.String())
 
 	return nil
 }
 
-func (d *GroupConversationCacheDecorator) Update(conversation *domain.GroupConversation) error {
-	if err := d.repo.Update(conversation); err != nil {
+func (d *GroupConversationCacheDecorator) Update(ctx context.Context, conversation *domain.GroupConversation) error {
+	if err := d.repo.Update(ctx, conversation); err != nil {
 		return fmt.Errorf("repo update error: %w", err)
 	}
 
-	d.invalidateConversationCache(conversation.ID.String())
+	d.invalidateConversationCache(ctx, conversation.ID.String())
 
 	return nil
 }
 
-func (d *GroupConversationCacheDecorator) invalidateConversationCache(conversationID string) {
-	_ = d.cache.Delete(context.Background(), ConversationKey(conversationID))
-	_ = d.cache.Delete(context.Background(), ConvMetaKey(conversationID))
-	_ = d.cache.DeletePattern(context.Background(), ParticipantsKey(conversationID))
+func (d *GroupConversationCacheDecorator) invalidateConversationCache(ctx context.Context, conversationID string) {
+	_ = d.cache.Delete(ctx, ConversationKey(conversationID))
+	_ = d.cache.Delete(ctx, ConvMetaKey(conversationID))
+	_ = d.cache.DeletePattern(ctx, ParticipantsKey(conversationID))
 }

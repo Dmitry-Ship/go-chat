@@ -1,28 +1,26 @@
 package services
 
 import (
+	"context"
 	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/readModel"
 
 	"github.com/google/uuid"
 )
 
 type ConversationService interface {
-	CreateGroupConversation(conversationID uuid.UUID, name string, userID uuid.UUID) error
-	DeleteGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error
-	Rename(conversationID uuid.UUID, userID uuid.UUID, name string) error
-	Join(conversationID uuid.UUID, userID uuid.UUID) error
-	Leave(conversationID uuid.UUID, userID uuid.UUID) error
-	Invite(conversationID uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error
-	Kick(conversationID uuid.UUID, kickerID uuid.UUID, targetID uuid.UUID) error
-	StartDirectConversation(fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error)
-	SendDirectTextMessage(conversationID uuid.UUID, userID uuid.UUID, messageText string) error
-	SendGroupTextMessage(conversationID uuid.UUID, userID uuid.UUID, messageText string) error
-	SendJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error
-	SendInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error
-	SendRenamedConversationMessage(conversationID uuid.UUID, userID uuid.UUID, name string) error
-	SendLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error
+	CreateGroupConversation(ctx context.Context, conversationID uuid.UUID, name string, userID uuid.UUID) error
+	DeleteGroupConversation(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) error
+	Rename(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID, name string) error
+	Join(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) error
+	Leave(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) error
+	Invite(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error
+	Kick(ctx context.Context, conversationID uuid.UUID, kickerID uuid.UUID, targetID uuid.UUID) error
+	StartDirectConversation(ctx context.Context, fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error)
+	SendDirectTextMessage(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID, messageText string) error
+	SendGroupTextMessage(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID, messageText string) error
 }
 
 type conversationService struct {
@@ -31,6 +29,10 @@ type conversationService struct {
 	participants        domain.ParticipantRepository
 	users               domain.UserRepository
 	messages            domain.MessageRepository
+	notifications       NotificationService
+	cache               CacheService
+	systemMessages      SystemMessageService
+	queries             readModel.QueriesRepository
 }
 
 func NewConversationService(
@@ -39,6 +41,10 @@ func NewConversationService(
 	participants domain.ParticipantRepository,
 	users domain.UserRepository,
 	messages domain.MessageRepository,
+	notifications NotificationService,
+	cache CacheService,
+	systemMessages SystemMessageService,
+	queries readModel.QueriesRepository,
 ) *conversationService {
 	return &conversationService{
 		groupConversations:  groupConversations,
@@ -46,15 +52,19 @@ func NewConversationService(
 		participants:        participants,
 		users:               users,
 		messages:            messages,
+		notifications:       notifications,
+		cache:               cache,
+		systemMessages:      systemMessages,
+		queries:             queries,
 	}
 }
 
-func (s *conversationService) CreateGroupConversation(conversationID uuid.UUID, name string, userID uuid.UUID) error {
+func (s *conversationService) CreateGroupConversation(ctx context.Context, conversationID uuid.UUID, name string, userID uuid.UUID) error {
 	if err := domain.ValidateConversationName(name); err != nil {
 		return fmt.Errorf("validate conversation name error: %w", err)
 	}
 
-	user, err := s.users.GetByID(userID)
+	user, err := s.users.GetByID(ctx, userID)
 
 	if err != nil {
 		return fmt.Errorf("get user by id error: %w", err)
@@ -66,15 +76,19 @@ func (s *conversationService) CreateGroupConversation(conversationID uuid.UUID, 
 		return fmt.Errorf("new group conversation error: %w", err)
 	}
 
-	if err := s.groupConversations.Store(conversation); err != nil {
+	if err := s.groupConversations.Store(ctx, conversation); err != nil {
 		return fmt.Errorf("store conversation error: %w", err)
+	}
+
+	if err := s.cache.InvalidateUserConversations(ctx, userID); err != nil {
+		return fmt.Errorf("invalidate cache error: %w", err)
 	}
 
 	return nil
 }
 
-func (s *conversationService) StartDirectConversation(fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error) {
-	existingConversationID, err := s.directConversations.GetID(fromUserID, toUserID)
+func (s *conversationService) StartDirectConversation(ctx context.Context, fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error) {
+	existingConversationID, err := s.directConversations.GetID(ctx, fromUserID, toUserID)
 
 	if err == nil {
 		return existingConversationID, nil
@@ -88,21 +102,29 @@ func (s *conversationService) StartDirectConversation(fromUserID uuid.UUID, toUs
 		return uuid.Nil, fmt.Errorf("new direct conversation error: %w", err)
 	}
 
-	if err = s.directConversations.Store(conversation); err != nil {
+	if err = s.directConversations.Store(ctx, conversation); err != nil {
 		return uuid.Nil, fmt.Errorf("store conversation error: %w", err)
+	}
+
+	if err := s.cache.InvalidateUserConversations(ctx, fromUserID); err != nil {
+		return uuid.Nil, fmt.Errorf("invalidate cache error: %w", err)
+	}
+
+	if err := s.notifications.SubscribeUserToChannel(ctx, fromUserID, newConversationID); err != nil {
+		return uuid.Nil, fmt.Errorf("subscribe user to channel error: %w", err)
 	}
 
 	return newConversationID, nil
 }
 
-func (s *conversationService) DeleteGroupConversation(conversationID uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationID)
+func (s *conversationService) DeleteGroupConversation(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(ctx, conversationID)
 
 	if err != nil {
 		return fmt.Errorf("get conversation by id error: %w", err)
 	}
 
-	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+	participant, err := s.participants.GetByConversationIDAndUserID(ctx, conversationID, userID)
 
 	if err != nil {
 		return fmt.Errorf("get participant error: %w", err)
@@ -112,25 +134,33 @@ func (s *conversationService) DeleteGroupConversation(conversationID uuid.UUID, 
 		return fmt.Errorf("delete conversation error: %w", err)
 	}
 
-	if err := s.groupConversations.Update(conversation); err != nil {
+	if err := s.groupConversations.Update(ctx, conversation); err != nil {
 		return fmt.Errorf("update conversation error: %w", err)
+	}
+
+	if err := s.cache.InvalidateConversation(ctx, conversationID); err != nil {
+		return fmt.Errorf("invalidate cache error: %w", err)
+	}
+
+	if err := s.notifications.NotifyConversationDeleted(ctx, conversationID); err != nil {
+		return fmt.Errorf("notify error: %w", err)
 	}
 
 	return nil
 }
 
-func (s *conversationService) Rename(conversationID uuid.UUID, userID uuid.UUID, name string) error {
+func (s *conversationService) Rename(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID, name string) error {
 	if err := domain.ValidateConversationName(name); err != nil {
 		return fmt.Errorf("validate conversation name error: %w", err)
 	}
 
-	conversation, err := s.groupConversations.GetByID(conversationID)
+	conversation, err := s.groupConversations.GetByID(ctx, conversationID)
 
 	if err != nil {
 		return fmt.Errorf("get conversation by id error: %w", err)
 	}
 
-	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+	participant, err := s.participants.GetByConversationIDAndUserID(ctx, conversationID, userID)
 
 	if err != nil {
 		return fmt.Errorf("get participant error: %w", err)
@@ -140,15 +170,32 @@ func (s *conversationService) Rename(conversationID uuid.UUID, userID uuid.UUID,
 		return fmt.Errorf("rename conversation error: %w", err)
 	}
 
-	if err := s.groupConversations.Update(conversation); err != nil {
+	if err := s.groupConversations.Update(ctx, conversation); err != nil {
 		return fmt.Errorf("update conversation error: %w", err)
+	}
+
+	if err := s.systemMessages.SaveRenamedMessage(ctx, conversationID, userID, name); err != nil {
+		return fmt.Errorf("send renamed message error: %w", err)
+	}
+
+	if err := s.cache.InvalidateConversation(ctx, conversationID); err != nil {
+		return fmt.Errorf("invalidate cache error: %w", err)
+	}
+
+	conversationDTO, err := s.queries.GetConversation(conversationID, userID)
+	if err != nil {
+		return fmt.Errorf("get conversation error: %w", err)
+	}
+
+	if err := s.notifications.NotifyConversationUpdated(ctx, conversationDTO); err != nil {
+		return fmt.Errorf("notify error: %w", err)
 	}
 
 	return nil
 }
 
-func (s *conversationService) SendDirectTextMessage(conversationID uuid.UUID, userID uuid.UUID, messageText string) error {
-	conversation, err := s.directConversations.GetByID(conversationID)
+func (s *conversationService) SendDirectTextMessage(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID, messageText string) error {
+	conversation, err := s.directConversations.GetByID(ctx, conversationID)
 
 	if err != nil {
 		return fmt.Errorf("get conversation by id error: %w", err)
@@ -156,7 +203,7 @@ func (s *conversationService) SendDirectTextMessage(conversationID uuid.UUID, us
 
 	messageID := uuid.New()
 
-	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+	participant, err := s.participants.GetByConversationIDAndUserID(ctx, conversationID, userID)
 
 	if err != nil {
 		return fmt.Errorf("get participant error: %w", err)
@@ -168,21 +215,30 @@ func (s *conversationService) SendDirectTextMessage(conversationID uuid.UUID, us
 		return fmt.Errorf("send text message error: %w", err)
 	}
 
-	if err := s.messages.Store(message); err != nil {
+	if err := s.messages.Store(ctx, message); err != nil {
 		return fmt.Errorf("store message error: %w", err)
+	}
+
+	messageDTO, err := s.queries.GetNotificationMessage(messageID, userID)
+	if err != nil {
+		return fmt.Errorf("get notification message error: %w", err)
+	}
+
+	if err := s.notifications.NotifyMessageSent(ctx, conversationID, messageDTO); err != nil {
+		return fmt.Errorf("notify error: %w", err)
 	}
 
 	return nil
 }
 
-func (s *conversationService) SendGroupTextMessage(conversationID uuid.UUID, userID uuid.UUID, messageText string) error {
-	conversation, err := s.groupConversations.GetByID(conversationID)
+func (s *conversationService) SendGroupTextMessage(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID, messageText string) error {
+	conversation, err := s.groupConversations.GetByID(ctx, conversationID)
 
 	if err != nil {
 		return fmt.Errorf("get conversation by id error: %w", err)
 	}
 
-	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+	participant, err := s.participants.GetByConversationIDAndUserID(ctx, conversationID, userID)
 
 	if err != nil {
 		return fmt.Errorf("get participant error: %w", err)
@@ -196,133 +252,30 @@ func (s *conversationService) SendGroupTextMessage(conversationID uuid.UUID, use
 		return fmt.Errorf("send text message error: %w", err)
 	}
 
-	if err := s.messages.Store(message); err != nil {
+	if err := s.messages.Store(ctx, message); err != nil {
 		return fmt.Errorf("store message error: %w", err)
+	}
+
+	messageDTO, err := s.queries.GetNotificationMessage(messageID, userID)
+	if err != nil {
+		return fmt.Errorf("get notification message error: %w", err)
+	}
+
+	if err := s.notifications.NotifyMessageSent(ctx, conversationID, messageDTO); err != nil {
+		return fmt.Errorf("notify error: %w", err)
 	}
 
 	return nil
 }
 
-func (s *conversationService) SendJoinedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationID)
+func (s *conversationService) Join(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(ctx, conversationID)
 
 	if err != nil {
 		return fmt.Errorf("get conversation by id error: %w", err)
 	}
 
-	messageID := uuid.New()
-
-	user, err := s.users.GetByID(userID)
-
-	if err != nil {
-		return fmt.Errorf("get user by id error: %w", err)
-	}
-
-	message, err := conversation.SendJoinedConversationMessage(messageID, user)
-
-	if err != nil {
-		return fmt.Errorf("send joined message error: %w", err)
-	}
-
-	if err := s.messages.Store(message); err != nil {
-		return fmt.Errorf("store message error: %w", err)
-	}
-
-	return nil
-}
-
-func (s *conversationService) SendInvitedConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationID)
-
-	if err != nil {
-		return fmt.Errorf("get conversation by id error: %w", err)
-	}
-
-	messageID := uuid.New()
-
-	user, err := s.users.GetByID(userID)
-
-	if err != nil {
-		return fmt.Errorf("get user by id error: %w", err)
-	}
-
-	message, err := conversation.SendInvitedConversationMessage(messageID, user)
-
-	if err != nil {
-		return fmt.Errorf("send invited message error: %w", err)
-	}
-
-	if err := s.messages.Store(message); err != nil {
-		return fmt.Errorf("store message error: %w", err)
-	}
-
-	return nil
-}
-
-func (s *conversationService) SendRenamedConversationMessage(conversationID uuid.UUID, userID uuid.UUID, name string) error {
-	conversation, err := s.groupConversations.GetByID(conversationID)
-
-	if err != nil {
-		return fmt.Errorf("get conversation by id error: %w", err)
-	}
-
-	messageID := uuid.New()
-
-	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
-
-	if err != nil {
-		return fmt.Errorf("get participant error: %w", err)
-	}
-
-	message, err := conversation.SendRenamedConversationMessage(messageID, participant, name)
-
-	if err != nil {
-		return fmt.Errorf("send renamed message error: %w", err)
-	}
-
-	if err := s.messages.Store(message); err != nil {
-		return fmt.Errorf("store message error: %w", err)
-	}
-
-	return nil
-}
-
-func (s *conversationService) SendLeftConversationMessage(conversationID uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationID)
-
-	if err != nil {
-		return fmt.Errorf("get conversation by id error: %w", err)
-	}
-
-	messageID := uuid.New()
-
-	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
-
-	if err != nil {
-		return fmt.Errorf("get participant error: %w", err)
-	}
-
-	message, err := conversation.SendLeftConversationMessage(messageID, participant)
-
-	if err != nil {
-		return fmt.Errorf("send left message error: %w", err)
-	}
-
-	if err := s.messages.Store(message); err != nil {
-		return fmt.Errorf("store message error: %w", err)
-	}
-
-	return nil
-}
-
-func (s *conversationService) Join(conversationID uuid.UUID, userID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationID)
-
-	if err != nil {
-		return fmt.Errorf("get conversation by id error: %w", err)
-	}
-
-	user, err := s.users.GetByID(userID)
+	user, err := s.users.GetByID(ctx, userID)
 
 	if err != nil {
 		return fmt.Errorf("get user by id error: %w", err)
@@ -334,21 +287,42 @@ func (s *conversationService) Join(conversationID uuid.UUID, userID uuid.UUID) e
 		return fmt.Errorf("join conversation error: %w", err)
 	}
 
-	if err := s.participants.Store(participant); err != nil {
+	if err := s.participants.Store(ctx, participant); err != nil {
 		return fmt.Errorf("store participant error: %w", err)
+	}
+
+	if err := s.systemMessages.SaveJoinedMessage(ctx, conversationID, userID); err != nil {
+		return fmt.Errorf("send joined message error: %w", err)
+	}
+
+	if err := s.cache.InvalidateParticipants(ctx, conversationID); err != nil {
+		return fmt.Errorf("invalidate cache error: %w", err)
+	}
+
+	conversationDTO, err := s.queries.GetConversation(conversationID, userID)
+	if err != nil {
+		return fmt.Errorf("get conversation error: %w", err)
+	}
+
+	if err := s.notifications.NotifyConversationUpdated(ctx, conversationDTO); err != nil {
+		return fmt.Errorf("notify error: %w", err)
+	}
+
+	if err := s.notifications.SubscribeUserToChannel(ctx, userID, conversationID); err != nil {
+		return fmt.Errorf("subscribe error: %w", err)
 	}
 
 	return nil
 }
 
-func (s *conversationService) Leave(conversationID uuid.UUID, userID uuid.UUID) error {
-	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+func (s *conversationService) Leave(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) error {
+	participant, err := s.participants.GetByConversationIDAndUserID(ctx, conversationID, userID)
 
 	if err != nil {
 		return fmt.Errorf("get participant error: %w", err)
 	}
 
-	conversation, err := s.groupConversations.GetByID(conversationID)
+	conversation, err := s.groupConversations.GetByID(ctx, conversationID)
 
 	if err != nil {
 		return fmt.Errorf("get conversation by id error: %w", err)
@@ -360,27 +334,48 @@ func (s *conversationService) Leave(conversationID uuid.UUID, userID uuid.UUID) 
 		return fmt.Errorf("leave conversation error: %w", err)
 	}
 
-	if err := s.participants.Update(participant); err != nil {
+	if err := s.participants.Update(ctx, participant); err != nil {
 		return fmt.Errorf("update participant error: %w", err)
+	}
+
+	if err := s.systemMessages.SaveLeftMessage(ctx, conversationID, userID); err != nil {
+		return fmt.Errorf("send left message error: %w", err)
+	}
+
+	if err := s.cache.InvalidateParticipants(ctx, conversationID); err != nil {
+		return fmt.Errorf("invalidate cache error: %w", err)
+	}
+
+	conversationDTO, err := s.queries.GetConversation(conversationID, userID)
+	if err != nil {
+		return fmt.Errorf("get conversation error: %w", err)
+	}
+
+	if err := s.notifications.NotifyConversationUpdated(ctx, conversationDTO); err != nil {
+		return fmt.Errorf("notify error: %w", err)
+	}
+
+	if err := s.notifications.UnsubscribeUserFromChannel(ctx, userID, conversationID); err != nil {
+		return fmt.Errorf("unsubscribe error: %w", err)
 	}
 
 	return nil
 }
 
-func (s *conversationService) Invite(conversationID uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationID)
+func (s *conversationService) Invite(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID, inviteeID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(ctx, conversationID)
 
 	if err != nil {
 		return fmt.Errorf("get conversation by id error: %w", err)
 	}
 
-	participant, err := s.participants.GetByConversationIDAndUserID(conversationID, userID)
+	participant, err := s.participants.GetByConversationIDAndUserID(ctx, conversationID, userID)
 
 	if err != nil {
 		return fmt.Errorf("get participant error: %w", err)
 	}
 
-	invitee, err := s.users.GetByID(inviteeID)
+	invitee, err := s.users.GetByID(ctx, inviteeID)
 
 	if err != nil {
 		return fmt.Errorf("get invitee by id error: %w", err)
@@ -392,27 +387,48 @@ func (s *conversationService) Invite(conversationID uuid.UUID, userID uuid.UUID,
 		return fmt.Errorf("invite user error: %w", err)
 	}
 
-	if err := s.participants.Store(newParticipant); err != nil {
+	if err := s.participants.Store(ctx, newParticipant); err != nil {
 		return fmt.Errorf("store participant error: %w", err)
+	}
+
+	if err := s.systemMessages.SaveInvitedMessage(ctx, conversationID, inviteeID); err != nil {
+		return fmt.Errorf("send invited message error: %w", err)
+	}
+
+	if err := s.cache.InvalidateParticipants(ctx, conversationID); err != nil {
+		return fmt.Errorf("invalidate cache error: %w", err)
+	}
+
+	conversationDTO, err := s.queries.GetConversation(conversationID, userID)
+	if err != nil {
+		return fmt.Errorf("get conversation error: %w", err)
+	}
+
+	if err := s.notifications.NotifyConversationUpdated(ctx, conversationDTO); err != nil {
+		return fmt.Errorf("notify error: %w", err)
+	}
+
+	if err := s.notifications.SubscribeUserToChannel(ctx, inviteeID, conversationID); err != nil {
+		return fmt.Errorf("subscribe error: %w", err)
 	}
 
 	return nil
 }
 
-func (s *conversationService) Kick(conversationID uuid.UUID, kickerID uuid.UUID, targetID uuid.UUID) error {
-	conversation, err := s.groupConversations.GetByID(conversationID)
+func (s *conversationService) Kick(ctx context.Context, conversationID uuid.UUID, kickerID uuid.UUID, targetID uuid.UUID) error {
+	conversation, err := s.groupConversations.GetByID(ctx, conversationID)
 
 	if err != nil {
 		return fmt.Errorf("get conversation by id error: %w", err)
 	}
 
-	kicker, err := s.participants.GetByConversationIDAndUserID(conversationID, kickerID)
+	kicker, err := s.participants.GetByConversationIDAndUserID(ctx, conversationID, kickerID)
 
 	if err != nil {
 		return fmt.Errorf("get kicker participant error: %w", err)
 	}
 
-	target, err := s.participants.GetByConversationIDAndUserID(conversationID, targetID)
+	target, err := s.participants.GetByConversationIDAndUserID(ctx, conversationID, targetID)
 
 	if err != nil {
 		return fmt.Errorf("get target participant error: %w", err)
@@ -424,8 +440,29 @@ func (s *conversationService) Kick(conversationID uuid.UUID, kickerID uuid.UUID,
 		return fmt.Errorf("kick user error: %w", err)
 	}
 
-	if err := s.participants.Update(kicked); err != nil {
+	if err := s.participants.Update(ctx, kicked); err != nil {
 		return fmt.Errorf("update participant error: %w", err)
+	}
+
+	if err := s.systemMessages.SaveLeftMessage(ctx, conversationID, targetID); err != nil {
+		return fmt.Errorf("send left message error: %w", err)
+	}
+
+	if err := s.cache.InvalidateParticipants(ctx, conversationID); err != nil {
+		return fmt.Errorf("invalidate cache error: %w", err)
+	}
+
+	conversationDTO, err := s.queries.GetConversation(conversationID, kickerID)
+	if err != nil {
+		return fmt.Errorf("get conversation error: %w", err)
+	}
+
+	if err := s.notifications.NotifyConversationUpdated(ctx, conversationDTO); err != nil {
+		return fmt.Errorf("notify error: %w", err)
+	}
+
+	if err := s.notifications.UnsubscribeUserFromChannel(ctx, targetID, conversationID); err != nil {
+		return fmt.Errorf("unsubscribe error: %w", err)
 	}
 
 	return nil

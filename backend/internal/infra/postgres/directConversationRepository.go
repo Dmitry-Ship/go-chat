@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
-	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/postgres/db"
 
 	"github.com/google/uuid"
@@ -17,14 +16,13 @@ type directConversationRepository struct {
 	*repository
 }
 
-func NewDirectConversationRepository(pool *pgxpool.Pool, eventPublisher *infra.EventBus) *directConversationRepository {
+func NewDirectConversationRepository(pool *pgxpool.Pool) *directConversationRepository {
 	return &directConversationRepository{
-		repository: newRepository(pool, db.New(pool), eventPublisher),
+		repository: newRepository(pool, db.New(pool)),
 	}
 }
 
-func (r *directConversationRepository) Store(conversation *domain.DirectConversation) error {
-	ctx := context.Background()
+func (r *directConversationRepository) Store(ctx context.Context, conversation *domain.DirectConversation) error {
 	return r.withTx(ctx, func(tx pgx.Tx) error {
 		qtx := r.queries.WithTx(tx)
 
@@ -55,8 +53,7 @@ func (r *directConversationRepository) Store(conversation *domain.DirectConversa
 	})
 }
 
-func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConversation, error) {
-	ctx := context.Background()
+func (r *directConversationRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.DirectConversation, error) {
 	participants, err := r.queries.GetParticipantsIDsByConversationID(ctx, uuidToPgtype(id))
 	if err != nil {
 		return nil, fmt.Errorf("get direct conversation error: %w", err)
@@ -90,8 +87,7 @@ func (r *directConversationRepository) GetByID(id uuid.UUID) (*domain.DirectConv
 	}, nil
 }
 
-func (r *directConversationRepository) GetID(firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {
-	ctx := context.Background()
+func (r *directConversationRepository) GetID(ctx context.Context, firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {
 	conv, err := r.queries.GetDirectConversationBetweenUsers(ctx, db.GetDirectConversationBetweenUsersParams{
 		UserID:   uuidToPgtype(firstUserID),
 		UserID_2: uuidToPgtype(secondUserID),

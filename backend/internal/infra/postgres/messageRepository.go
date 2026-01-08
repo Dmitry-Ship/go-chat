@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
-	"GitHub/go-chat/backend/internal/infra"
 	"GitHub/go-chat/backend/internal/infra/postgres/db"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -15,14 +14,13 @@ type messageRepository struct {
 	*repository
 }
 
-func NewMessageRepository(pool *pgxpool.Pool, eventPublisher *infra.EventBus) *messageRepository {
+func NewMessageRepository(pool *pgxpool.Pool) *messageRepository {
 	return &messageRepository{
-		repository: newRepository(pool, db.New(pool), eventPublisher),
+		repository: newRepository(pool, db.New(pool)),
 	}
 }
 
-func (r *messageRepository) Store(message *domain.Message) error {
-	ctx := context.Background()
+func (r *messageRepository) Store(ctx context.Context, message *domain.Message) error {
 	params := db.StoreMessageParams{
 		ID:             uuidToPgtype(message.ID),
 		ConversationID: uuidToPgtype(message.ConversationID),
@@ -35,6 +33,5 @@ func (r *messageRepository) Store(message *domain.Message) error {
 		return fmt.Errorf("store message error: %w", err)
 	}
 
-	r.dispatchEvents(message)
 	return nil
 }

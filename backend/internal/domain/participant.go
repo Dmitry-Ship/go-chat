@@ -1,19 +1,20 @@
 package domain
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 )
 
 type ParticipantRepository interface {
-	Store(participant *Participant) error
-	Update(participant *Participant) error
-	GetByConversationIDAndUserID(conversationID uuid.UUID, userID uuid.UUID) (*Participant, error)
-	GetIDsByConversationID(conversationID uuid.UUID) ([]uuid.UUID, error)
-	GetConversationIDsByUserID(userID uuid.UUID) ([]uuid.UUID, error)
+	Store(ctx context.Context, participant *Participant) error
+	Update(ctx context.Context, participant *Participant) error
+	GetByConversationIDAndUserID(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) (*Participant, error)
+	GetIDsByConversationID(ctx context.Context, conversationID uuid.UUID) ([]uuid.UUID, error)
+	GetConversationIDsByUserID(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 }
 
 type Participant struct {
-	aggregate
 	ID             uuid.UUID
 	ConversationID uuid.UUID
 	UserID         uuid.UUID

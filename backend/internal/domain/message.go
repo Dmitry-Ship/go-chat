@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 
 	"github.com/google/uuid"
@@ -8,7 +9,7 @@ import (
 )
 
 type MessageRepository interface {
-	Store(message *Message) error
+	Store(ctx context.Context, message *Message) error
 }
 
 type MessageType struct {
@@ -32,7 +33,6 @@ type messageContent interface {
 }
 
 type Message struct {
-	aggregate
 	ID             uuid.UUID
 	ConversationID uuid.UUID
 	UserID         uuid.UUID
@@ -48,8 +48,6 @@ func newMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID,
 		Type:           messageType,
 		Content:        content,
 	}
-
-	message.AddEvent(NewMessageSent(conversationID, message.ID, userID))
 
 	return &message
 }

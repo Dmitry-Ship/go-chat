@@ -19,7 +19,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := s.authCommands.Login(request.UserName, request.Password)
+	tokens, err := s.authCommands.Login(r.Context(), request.UserName, request.Password)
 
 	if err != nil {
 		returnError(w, http.StatusUnauthorized, err)
@@ -66,7 +66,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.authCommands.Logout(userID); err != nil {
+	if err := s.authCommands.Logout(r.Context(), userID); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -102,7 +102,7 @@ func (s *Server) handleSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := s.authCommands.SignUp(request.UserName, request.Password)
+	tokens, err := s.authCommands.SignUp(r.Context(), request.UserName, request.Password)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -154,7 +154,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newTokens, err := s.authCommands.RotateTokens(refreshToken.Value)
+	newTokens, err := s.authCommands.RotateTokens(r.Context(), refreshToken.Value)
 
 	if err != nil {
 		returnError(w, http.StatusUnauthorized, err)

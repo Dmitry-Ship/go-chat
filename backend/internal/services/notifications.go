@@ -22,12 +22,14 @@ type BroadcastMessage struct {
 }
 
 type NotificationService interface {
-	Send(message ws.OutgoingNotification) error
-	RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) uuid.UUID
+	Send(ctx context.Context, message ws.OutgoingNotification) error
+	RegisterClient(ctx context.Context, conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) uuid.UUID
 	Run()
-	SubscribeUserToChannel(userID uuid.UUID, channelID uuid.UUID) error
-	UnsubscribeUserFromChannel(userID uuid.UUID, channelID uuid.UUID) error
-	Notify(event domain.DomainEvent) error
+	SubscribeUserToChannel(ctx context.Context, userID uuid.UUID, channelID uuid.UUID) error
+	UnsubscribeUserFromChannel(ctx context.Context, userID uuid.UUID, channelID uuid.UUID) error
+	NotifyConversationUpdated(ctx context.Context, conversation readModel.ConversationFullDTO) error
+	NotifyConversationDeleted(ctx context.Context, conversationID uuid.UUID) error
+	NotifyMessageSent(ctx context.Context, conversationID uuid.UUID, message readModel.MessageDTO) error
 }
 
 type notificationService struct {
@@ -36,7 +38,6 @@ type notificationService struct {
 	redisClient      *redis.Client
 	participants     domain.ParticipantRepository
 	subscriptionSync ws.SubscriptionSync
-	queries          readModel.QueriesRepository
 }
 
 func NewNotificationService(
@@ -44,7 +45,6 @@ func NewNotificationService(
 	redisClient *redis.Client,
 	participants domain.ParticipantRepository,
 	subscriptionSync ws.SubscriptionSync,
-	queries readModel.QueriesRepository,
 ) *notificationService {
 	return &notificationService{
 		ctx:              ctx,
@@ -52,7 +52,6 @@ func NewNotificationService(
 		redisClient:      redisClient,
 		participants:     participants,
 		subscriptionSync: subscriptionSync,
-		queries:          queries,
 	}
 }
 
@@ -61,7 +60,6 @@ func NewNotificationServiceWithClients(
 	redisClient *redis.Client,
 	participants domain.ParticipantRepository,
 	subscriptionSync ws.SubscriptionSync,
-	queries readModel.QueriesRepository,
 	activeClients ws.ActiveClients,
 ) *notificationService {
 	return &notificationService{
@@ -70,11 +68,10 @@ func NewNotificationServiceWithClients(
 		redisClient:      redisClient,
 		participants:     participants,
 		subscriptionSync: subscriptionSync,
-		queries:          queries,
 	}
 }
 
-func (s *notificationService) Send(message ws.OutgoingNotification) error {
+func (s *notificationService) Send(ctx context.Context, message ws.OutgoingNotification) error {
 	bMessage := BroadcastMessage{
 		Payload: message,
 		UserID:  message.UserID,
@@ -93,12 +90,12 @@ func (s *notificationService) Send(message ws.OutgoingNotification) error {
 	return nil
 }
 
-func (s *notificationService) RegisterClient(conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) uuid.UUID {
+func (s *notificationService) RegisterClient(ctx context.Context, conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) uuid.UUID {
 	newClient := ws.NewClient(conn, s.activeClients.RemoveClient, handleNotification, userID)
 
 	clientID := s.activeClients.AddClient(newClient)
 
-	conversationIDs, err := s.participants.GetConversationIDsByUserID(userID)
+	conversationIDs, err := s.participants.GetConversationIDsByUserID(ctx, userID)
 	if err != nil {
 		log.Printf("Error getting user conversations: %v", err)
 	} else {
@@ -130,9 +127,10 @@ func (s *notificationService) Run() {
 			return
 		}
 
-		if event.Action == "subscribe" {
+		switch event.Action {
+		case "subscribe":
 			s.activeClients.SubscribeChannel(client, event.ChannelID)
-		} else if event.Action == "unsubscribe" {
+		case "unsubscribe":
 			s.activeClients.UnsubscribeChannel(client, event.ChannelID)
 		}
 	})
@@ -160,7 +158,7 @@ func (s *notificationService) Run() {
 	}
 }
 
-func (s *notificationService) SubscribeUserToChannel(userID uuid.UUID, channelID uuid.UUID) error {
+func (s *notificationService) SubscribeUserToChannel(ctx context.Context, userID uuid.UUID, channelID uuid.UUID) error {
 	s.activeClients.SubscribeUserToChannel(userID, channelID)
 
 	clients := s.activeClients.GetClientsByUser(userID)
@@ -173,7 +171,7 @@ func (s *notificationService) SubscribeUserToChannel(userID uuid.UUID, channelID
 	return nil
 }
 
-func (s *notificationService) UnsubscribeUserFromChannel(userID uuid.UUID, channelID uuid.UUID) error {
+func (s *notificationService) UnsubscribeUserFromChannel(ctx context.Context, userID uuid.UUID, channelID uuid.UUID) error {
 	s.activeClients.UnsubscribeUserFromChannel(userID, channelID)
 
 	clients := s.activeClients.GetClientsByUser(userID)
@@ -186,102 +184,53 @@ func (s *notificationService) UnsubscribeUserFromChannel(userID uuid.UUID, chann
 	return nil
 }
 
-func (s *notificationService) Notify(event domain.DomainEvent) error {
-	recipients := s.getRecipients(event)
+func (s *notificationService) NotifyConversationUpdated(ctx context.Context, conversation readModel.ConversationFullDTO) error {
+	clients := s.activeClients.GetClientsByChannel(conversation.ID)
 
-	for _, recipient := range recipients {
-		message, err := s.buildMessage(recipient.UserID, event)
-		if err != nil {
-			log.Printf("Error building message for user %s: %v", recipient.UserID, err)
-			continue
+	for _, client := range clients {
+		message := ws.OutgoingNotification{
+			Type:    "conversation_updated",
+			UserID:  client.UserID,
+			Payload: conversation,
 		}
-		s.sendDirectly(recipient, message)
+		s.sendDirectly(client, message)
 	}
 
 	return nil
 }
 
-func (s *notificationService) getRecipients(event domain.DomainEvent) []*ws.Client {
-	var clients []*ws.Client
+func (s *notificationService) NotifyConversationDeleted(ctx context.Context, conversationID uuid.UUID) error {
+	clients := s.activeClients.GetClientsByChannel(conversationID)
 
-	switch e := event.(type) {
-	case
-		domain.GroupConversationRenamed,
-		domain.GroupConversationLeft,
-		domain.GroupConversationJoined,
-		domain.GroupConversationInvited,
-		domain.MessageSent,
-		domain.GroupConversationDeleted,
-		domain.DirectConversationCreated:
-		if e, ok := e.(domain.ConversationEvent); ok {
-			clients = s.activeClients.GetClientsByChannel(e.GetConversationID())
-		}
-	}
-
-	return clients
-}
-
-func (s *notificationService) buildMessage(userID uuid.UUID, event domain.DomainEvent) (ws.OutgoingNotification, error) {
-	var buildMessage func(userID uuid.UUID) (ws.OutgoingNotification, error)
-
-	switch e := event.(type) {
-	case domain.GroupConversationRenamed, domain.GroupConversationLeft, domain.GroupConversationJoined, domain.GroupConversationInvited:
-		if e, ok := e.(domain.ConversationEvent); ok {
-			buildMessage = s.getConversationUpdatedBuilder(e.GetConversationID())
-		}
-	case domain.GroupConversationDeleted:
-		buildMessage = s.getConversationDeletedBuilder(e.GetConversationID())
-	case domain.MessageSent:
-		buildMessage = s.getMessageSentBuilder(e.MessageID)
-	}
-
-	return buildMessage(userID)
-}
-
-func (s *notificationService) getConversationUpdatedBuilder(conversationID uuid.UUID) func(userID uuid.UUID) (ws.OutgoingNotification, error) {
-	return func(userID uuid.UUID) (ws.OutgoingNotification, error) {
-		conversation, err := s.queries.GetConversation(conversationID, userID)
-
-		if err != nil {
-			return ws.OutgoingNotification{}, fmt.Errorf("get conversation error: %w", err)
-		}
-
-		return ws.OutgoingNotification{
-			Type:    "conversation_updated",
-			UserID:  userID,
-			Payload: conversation,
-		}, nil
-	}
-}
-
-func (s *notificationService) getConversationDeletedBuilder(conversationID uuid.UUID) func(userID uuid.UUID) (ws.OutgoingNotification, error) {
-	return func(userID uuid.UUID) (ws.OutgoingNotification, error) {
-		return ws.OutgoingNotification{
+	for _, client := range clients {
+		message := ws.OutgoingNotification{
 			Type:   "conversation_deleted",
-			UserID: userID,
+			UserID: client.UserID,
 			Payload: struct {
 				ConversationId uuid.UUID `json:"conversation_id"`
 			}{
 				ConversationId: conversationID,
 			},
-		}, nil
+		}
+		s.sendDirectly(client, message)
 	}
+
+	return nil
 }
 
-func (s *notificationService) getMessageSentBuilder(messageID uuid.UUID) func(userID uuid.UUID) (ws.OutgoingNotification, error) {
-	return func(userID uuid.UUID) (ws.OutgoingNotification, error) {
-		messageDTO, err := s.queries.GetNotificationMessage(messageID, userID)
+func (s *notificationService) NotifyMessageSent(ctx context.Context, conversationID uuid.UUID, message readModel.MessageDTO) error {
+	clients := s.activeClients.GetClientsByChannel(conversationID)
 
-		if err != nil {
-			return ws.OutgoingNotification{}, err
-		}
-
-		return ws.OutgoingNotification{
+	for _, client := range clients {
+		notification := ws.OutgoingNotification{
 			Type:    "message",
-			UserID:  userID,
-			Payload: messageDTO,
-		}, nil
+			UserID:  client.UserID,
+			Payload: message,
+		}
+		s.sendDirectly(client, notification)
 	}
+
+	return nil
 }
 
 func (s *notificationService) sendDirectly(client *ws.Client, message ws.OutgoingNotification) {
