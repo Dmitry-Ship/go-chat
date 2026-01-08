@@ -55,63 +55,6 @@ func (p pagination) GetPageSize() int {
 	return p.pageSize
 }
 
-func (s *Server) get(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		w.Header().Set("Access-Control-Allow-Origin", s.config.ClientOrigin)
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
-		w.Header().Set("Access-Control-Allow-Methods", "GET")
-		w.Header().Set("Content-Type", "application/json")
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *Server) post(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		w.Header().Set("Access-Control-Allow-Origin", s.config.ClientOrigin)
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-		w.Header().Set("Content-Type", "application/json")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *Server) getPaginated(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-
-		page, _ := strconv.Atoi(query.Get("page"))
-		pageSize, _ := strconv.Atoi(query.Get("page_size"))
-
-		p := pagination{
-			page:     page,
-			pageSize: pageSize,
-		}
-
-		ctx := context.WithValue(r.Context(), paginationKey, p)
-
-		s.get(next).ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
 func returnError(w http.ResponseWriter, code int, err error) {
 	w.WriteHeader(code)
 	log.Printf("Internal error: %v", err)
@@ -144,4 +87,43 @@ func limitRequestBodySize(maxBytes int64, next http.HandlerFunc) http.HandlerFun
 		r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
 		next(w, r)
 	}
+}
+
+func corsHandler(clientOrigin string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			w.Header().Set("Access-Control-Allow-Origin", clientOrigin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		w.Header().Set("Access-Control-Allow-Origin", clientOrigin)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Content-Type", "application/json")
+
+		next.ServeHTTP(w, r)
+	}
+}
+
+func withPagination(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+
+		page, _ := strconv.Atoi(query.Get("page"))
+		pageSize, _ := strconv.Atoi(query.Get("page_size"))
+
+		p := pagination{
+			page:     page,
+			pageSize: pageSize,
+		}
+
+		ctx := context.WithValue(r.Context(), paginationKey, p)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

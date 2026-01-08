@@ -7,6 +7,7 @@ import (
 	"GitHub/go-chat/backend/internal/readModel"
 	"GitHub/go-chat/backend/internal/services"
 	"context"
+	"net/http"
 )
 
 type EventHandlers interface {
@@ -49,8 +50,9 @@ func NewServer(
 	}
 }
 
-func (s *Server) Run() {
-	s.initRoutes()
+func (s *Server) Run() http.Handler {
+	mux := s.initRoutes()
 	s.listenForEvents()
 	go s.notificationCommands.Run()
+	return mux
 }

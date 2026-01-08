@@ -185,8 +185,8 @@ func main() {
 		ipRateLimiter,
 		userRateLimiter,
 	)
-	server.Run()
+	handler := server.Run()
 
-	s := gracefulServer.NewGracefulServer()
+	s := gracefulServer.NewGracefulServer(handler)
 	s.Run()
 }
