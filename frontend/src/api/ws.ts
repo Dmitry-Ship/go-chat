@@ -65,7 +65,7 @@ export class WSService implements IWSService {
       if (this.connection?.readyState === ConnectionState.OPEN) {
         clearInterval(intervalId);
       }
-    }, 5000);
+    }, RECONNECTION_INTERVAL_MS);
   };
 
   private updateStatus = () => {

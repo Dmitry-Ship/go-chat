@@ -126,8 +126,8 @@ func main() {
 	cachedParticipantRepository := cache.NewParticipantCacheDecorator(participantRepository, cacheClient)
 
 	authService := services.NewAuthService(cachedUsersRepository, config.Auth{
-		AccessToken:  config.Token{Secret: os.Getenv("ACCESS_TOKEN_SECRET"), TTL: 10 * time.Minute},
-		RefreshToken: config.Token{Secret: os.Getenv("REFRESH_TOKEN_SECRET"), TTL: 24 * 90 * time.Hour},
+		AccessToken:  config.Token{Secret: os.Getenv("ACCESS_TOKEN_SECRET"), TTL: DefaultAccessTokenTTL},
+		RefreshToken: config.Token{Secret: os.Getenv("REFRESH_TOKEN_SECRET"), TTL: DefaultRefreshTokenTTL},
 	})
 
 	conversationService := services.NewConversationService(
@@ -153,13 +153,13 @@ func main() {
 	windowDuration, _ := time.ParseDuration(windowDurationStr)
 
 	if maxUserConnections == 0 {
-		maxUserConnections = 10
+		maxUserConnections = DefaultUserRateLimit
 	}
 	if maxIPConnections == 0 {
-		maxIPConnections = 20
+		maxIPConnections = DefaultIPRateLimit
 	}
 	if windowDuration == 0 {
-		windowDuration = 60 * time.Second
+		windowDuration = DefaultRateLimitWindow
 	}
 
 	userRateLimiter := ratelimit.NewSlidingWindowRateLimiter(ratelimit.Config{

@@ -1,10 +1,8 @@
 import React from "react";
 import styles from "./Avatar.module.css";
+import { AVATAR_SIZES } from "../../constants";
 
-const sizesMap = {
-  md: 65,
-  lg: 100,
-};
+const sizesMap = AVATAR_SIZES;
 
 export function Avatar({
   src,

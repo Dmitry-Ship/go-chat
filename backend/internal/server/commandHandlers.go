@@ -4,17 +4,10 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 )
 
 func (s *Server) handleOpenWSConnection() http.HandlerFunc {
-	var upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			return r.Header.Get("Origin") == s.config.ClientOrigin
-		},
-	}
+	var upgrader = WebSocketUpgrader
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(userIDKey).(uuid.UUID)

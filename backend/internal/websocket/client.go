@@ -43,14 +43,14 @@ func NewClient(conn *websocket.Conn, unregisterClient func(*Client), handleIncom
 		Id:                         uuid.New(),
 		UserID:                     userID,
 		connection:                 conn,
-		sendChannel:                make(chan OutgoingNotification, 1024),
+		sendChannel:                make(chan OutgoingNotification, SendChannelSize),
 		unregisterClient:           unregisterClient,
 		handleIncomingNotification: handleIncomingNotification,
 		connectionOptions: connectionOptions{
-			writeWait:      10 * time.Second,
-			pongWait:       60 * time.Second,
-			pingPeriod:     (60 * time.Second * 9) / 10,
-			maxMessageSize: 512,
+			writeWait:      WriteWait,
+			pongWait:       PongWait,
+			pingPeriod:     PingPeriod,
+			maxMessageSize: MaxMessageSize,
 		},
 	}
 }

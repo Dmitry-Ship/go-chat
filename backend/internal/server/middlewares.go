@@ -70,29 +70,29 @@ func returnError(w http.ResponseWriter, code int, err error) {
 	}
 }
 
-func securityHeaders(next http.HandlerFunc) http.HandlerFunc {
+func (s *Server) securityHeaders(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("Content-Security-Policy", "default-src 'self'")
-		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		w.Header().Set("Strict-Transport-Security", "max-age="+strconv.Itoa(HSTSMaxAgeSeconds)+"; includeSubDomains")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		next(w, r)
 	}
 }
 
-func limitRequestBodySize(maxBytes int64, next http.HandlerFunc) http.HandlerFunc {
+func (s *Server) limitRequestBodySize(maxBytes int64, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
 		next(w, r)
 	}
 }
 
-func corsHandler(clientOrigin string, next http.HandlerFunc) http.HandlerFunc {
+func (s *Server) corsHandler(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "OPTIONS" {
-			w.Header().Set("Access-Control-Allow-Origin", clientOrigin)
+			w.Header().Set("Access-Control-Allow-Origin", s.config.ClientOrigin)
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -100,7 +100,7 @@ func corsHandler(clientOrigin string, next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Access-Control-Allow-Origin", clientOrigin)
+		w.Header().Set("Access-Control-Allow-Origin", s.config.ClientOrigin)
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
