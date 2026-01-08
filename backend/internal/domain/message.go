@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 type MessageRepository interface {
@@ -57,6 +58,8 @@ type textMessageContent struct {
 	text string
 }
 
+var sanitizer = bluemonday.UGCPolicy()
+
 func newTextMessageContent(text string) (textMessageContent, error) {
 	if text == "" {
 		return textMessageContent{}, errors.New("text is empty")
@@ -66,8 +69,10 @@ func newTextMessageContent(text string) (textMessageContent, error) {
 		return textMessageContent{}, errors.New("text is too long")
 	}
 
+	sanitizedText := sanitizer.Sanitize(text)
+
 	return textMessageContent{
-		text: text,
+		text: sanitizedText,
 	}, nil
 }
 

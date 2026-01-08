@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -113,14 +114,34 @@ func (s *Server) getPaginated(next http.HandlerFunc) http.HandlerFunc {
 
 func returnError(w http.ResponseWriter, code int, err error) {
 	w.WriteHeader(code)
+	log.Printf("Internal error: %v", err)
 	errorResponse := struct {
 		Error string `json:"error"`
 	}{
-		Error: err.Error(),
+		Error: "An internal error occurred",
 	}
 
 	if err = json.NewEncoder(w).Encode(errorResponse); err != nil {
-		returnError(w, http.StatusInternalServerError, err)
+		log.Printf("Error encoding error response: %v", err)
 		return
+	}
+}
+
+func securityHeaders(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'")
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		next(w, r)
+	}
+}
+
+func limitRequestBodySize(maxBytes int64, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+		next(w, r)
 	}
 }

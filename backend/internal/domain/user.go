@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"unicode"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -28,7 +29,25 @@ func ValidateUsername(username string) error {
 
 func HashPassword(password string) (string, error) {
 	if len(password) < 8 {
-		return "", errors.New("password too short")
+		return "", errors.New("password must be at least 8 characters")
+	}
+
+	var hasUpper, hasLower, hasDigit, hasSpecial bool
+	for _, c := range password {
+		switch {
+		case unicode.IsUpper(c):
+			hasUpper = true
+		case unicode.IsLower(c):
+			hasLower = true
+		case unicode.IsDigit(c):
+			hasDigit = true
+		case unicode.IsPunct(c) || unicode.IsSymbol(c):
+			hasSpecial = true
+		}
+	}
+
+	if !hasUpper || !hasLower || !hasDigit || !hasSpecial {
+		return "", errors.New("password must contain uppercase, lowercase, digit, and special character")
 	}
 
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)

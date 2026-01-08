@@ -10,7 +10,7 @@ import (
 
 func TestNewUser(t *testing.T) {
 	name := "John"
-	password, _ := HashPassword("12345678")
+	password, _ := HashPassword("Password123!")
 	userID := uuid.New()
 	user := NewUser(userID, name, password)
 
@@ -60,10 +60,10 @@ func TestValidateUsernameErrors(t *testing.T) {
 }
 
 func TestHashPassword(t *testing.T) {
-	password, err := HashPassword("asdasdasdasdasdasd")
+	password, err := HashPassword("Password123!")
 
 	assert.Nil(t, err)
-	assert.NotEqual(t, password, "asdasdasdasdasdasd")
+	assert.NotEqual(t, password, "Password123!")
 }
 
 func TestHashPasswordErrors(t *testing.T) {
@@ -75,10 +75,19 @@ func TestHashPasswordErrors(t *testing.T) {
 	testCases := []testCase{
 		{
 			password:    "",
-			expectedErr: errors.New("password too short"),
+			expectedErr: errors.New("password must be at least 8 characters"),
 		}, {
 			password:    "123",
-			expectedErr: errors.New("password too short"),
+			expectedErr: errors.New("password must be at least 8 characters"),
+		}, {
+			password:    "Password123",
+			expectedErr: errors.New("password must contain uppercase, lowercase, digit, and special character"),
+		}, {
+			password:    "password!",
+			expectedErr: errors.New("password must contain uppercase, lowercase, digit, and special character"),
+		}, {
+			password:    "PASSWORD1!",
+			expectedErr: errors.New("password must contain uppercase, lowercase, digit, and special character"),
 		},
 	}
 
@@ -92,15 +101,15 @@ func TestHashPasswordErrors(t *testing.T) {
 }
 
 func TestComparePassword(t *testing.T) {
-	hashed, _ := HashPassword("12345678")
+	hashed, _ := HashPassword("Password123!")
 
-	err := ComparePassword(hashed, "12345678")
+	err := ComparePassword(hashed, "Password123!")
 
 	assert.Nil(t, err)
 }
 
 func TestComparePasswordFail(t *testing.T) {
-	hashed, _ := HashPassword("12345678")
+	hashed, _ := HashPassword("Password123!")
 
 	err := ComparePassword(hashed, "wrongpassword")
 
@@ -108,7 +117,7 @@ func TestComparePasswordFail(t *testing.T) {
 }
 
 func TestSetRefreshToken(t *testing.T) {
-	password, _ := HashPassword("12345678")
+	password, _ := HashPassword("Password123!")
 	name := "John"
 	userID := uuid.New()
 	user := NewUser(userID, name, password)

@@ -101,6 +101,9 @@ func (a *jwTokens) CreateTokens(userid uuid.UUID) (tokens, error) {
 
 func (a *jwTokens) ParseAccessToken(tokenString string) (uuid.UUID, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
 		return []byte(a.config.AccessToken.Secret), nil
 	})
 
@@ -126,6 +129,9 @@ func (a *jwTokens) ParseAccessToken(tokenString string) (uuid.UUID, error) {
 
 func (a *jwTokens) ParseRefreshToken(tokenString string) (uuid.UUID, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
 		return []byte(a.config.RefreshToken.Secret), nil
 	})
 

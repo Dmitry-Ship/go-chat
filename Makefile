@@ -1,9 +1,10 @@
-.PHONY: help backend_build backend_test backend_lint backend_run
+.PHONY: help secret backend_build backend_test backend_lint backend_run
 .PHONY: frontend_build frontend_test frontend_lint frontend_type frontend_dev frontend_prod
 .PHONY: all_build all_test all_lint docker_up docker_up_detached docker_down docker_build clean
 
 help:
 	@echo "Available commands:"
+	@echo "  secret           - Generate a cryptographically secure secret"
 	@echo "  backend_build    - Build Go backend server"
 	@echo "  backend_test     - Run Go backend tests"
 	@echo "  backend_lint     - Run Go backend linter"
@@ -91,3 +92,6 @@ clean:
 	@echo "Cleaning build artifacts..."
 	rm -rf backend/go-bin
 	cd frontend && rm -rf node_modules .next
+
+secret:
+	@openssl rand -base64 32

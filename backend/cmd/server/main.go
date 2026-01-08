@@ -12,13 +12,78 @@ import (
 	"GitHub/go-chat/backend/internal/services"
 	ws "GitHub/go-chat/backend/internal/websocket"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"time"
 )
 
+func validateConfig() error {
+	requiredVars := []string{
+		"ACCESS_TOKEN_SECRET",
+		"REFRESH_TOKEN_SECRET",
+		"DB_HOST",
+		"DB_PORT",
+		"DB_NAME",
+		"DB_USER",
+		"DB_PASSWORD",
+		"REDIS_HOST",
+		"REDIS_PORT",
+		"CLIENT_ORIGIN",
+	}
+
+	for _, envVar := range requiredVars {
+		if os.Getenv(envVar) == "" {
+			return fmt.Errorf("%s environment variable is required", envVar)
+		}
+	}
+
+	if os.Getenv("ACCESS_TOKEN_SECRET") == "generate-with-make-secret-or-crypto-rand" {
+		return fmt.Errorf("ACCESS_TOKEN_SECRET must be set to a strong secret (run 'make secret' to generate one)")
+	}
+
+	if os.Getenv("REFRESH_TOKEN_SECRET") == "generate-with-make-secret-or-crypto-rand" {
+		return fmt.Errorf("REFRESH_TOKEN_SECRET must be set to a strong secret (run 'make secret' to generate one)")
+	}
+
+	if os.Getenv("REDIS_PASSWORD") == "change-this-redis-password" {
+		log.Println("WARNING: REDIS_PASSWORD should be changed from the default value")
+	}
+
+	maxUserConnections, err := strconv.Atoi(os.Getenv("WS_RATE_LIMIT_MAX_USER"))
+	if err != nil {
+		return fmt.Errorf("WS_RATE_LIMIT_MAX_USER must be a valid integer")
+	}
+	if maxUserConnections <= 0 {
+		return fmt.Errorf("WS_RATE_LIMIT_MAX_USER must be positive")
+	}
+
+	maxIPConnections, err := strconv.Atoi(os.Getenv("WS_RATE_LIMIT_MAX_IP"))
+	if err != nil {
+		return fmt.Errorf("WS_RATE_LIMIT_MAX_IP must be a valid integer")
+	}
+	if maxIPConnections <= 0 {
+		return fmt.Errorf("WS_RATE_LIMIT_MAX_IP must be positive")
+	}
+
+	windowDurationStr := os.Getenv("WS_RATE_LIMIT_WINDOW")
+	windowDuration, err := time.ParseDuration(windowDurationStr)
+	if err != nil {
+		return fmt.Errorf("WS_RATE_LIMIT_WINDOW must be a valid duration (e.g., '60s')")
+	}
+	if windowDuration <= 0 {
+		return fmt.Errorf("WS_RATE_LIMIT_WINDOW must be positive")
+	}
+
+	return nil
+}
+
 func main() {
+	if err := validateConfig(); err != nil {
+		log.Fatalf("Configuration error: %v", err)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

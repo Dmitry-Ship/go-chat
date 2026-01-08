@@ -44,6 +44,22 @@ func (s *Server) wsRateLimit(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func (s *Server) httpRateLimit(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ip := getClientIP(r)
+
+		if allowed, retryAfter := s.ipRateLimiter.CheckLimit(ip); !allowed {
+			w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+
+		s.ipRateLimiter.RecordAttempt(ip)
+
+		next.ServeHTTP(w, r)
+	}
+}
+
 func getClientIP(r *http.Request) string {
 	forwarded := r.Header.Get("X-Forwarded-For")
 	if forwarded != "" {

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra"
@@ -24,7 +25,8 @@ func NewUserRepository(pool *pgxpool.Pool, eventPublisher *infra.EventBus) *user
 }
 
 func (r *userRepository) Store(user *domain.User) error {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	params := db.StoreUserParams{
 		ID:           uuidToPgtype(user.ID),
 		Avatar:       pgtype.Text{String: user.Avatar, Valid: user.Avatar != ""},
@@ -42,7 +44,8 @@ func (r *userRepository) Store(user *domain.User) error {
 }
 
 func (r *userRepository) Update(user *domain.User) error {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	params := db.UpdateUserParams{
 		ID:           uuidToPgtype(user.ID),
 		Avatar:       pgtype.Text{String: user.Avatar, Valid: user.Avatar != ""},
@@ -60,7 +63,8 @@ func (r *userRepository) Update(user *domain.User) error {
 }
 
 func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	user, err := r.queries.GetUserByID(ctx, uuidToPgtype(id))
 	if err != nil {
 		return nil, fmt.Errorf("get user by id error: %w", err)
@@ -76,7 +80,8 @@ func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
 }
 
 func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	user, err := r.queries.FindUserByUsername(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("find user by username error: %w", err)
@@ -92,7 +97,8 @@ func (r *userRepository) FindByUsername(username string) (*domain.User, error) {
 }
 
 func (r *userRepository) UpdateRefreshToken(id uuid.UUID, refreshToken string) error {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	params := db.UpdateUserRefreshTokenParams{
 		ID:           uuidToPgtype(id),
 		RefreshToken: pgtype.Text{String: refreshToken, Valid: refreshToken != ""},

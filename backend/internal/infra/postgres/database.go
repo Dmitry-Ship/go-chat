@@ -20,7 +20,7 @@ type DbConfig struct {
 
 func NewDatabaseConnection(ctx context.Context, conf DbConfig) (*pgxpool.Pool, error) {
 	connString := fmt.Sprintf(
-		"host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+		"host=%s port=%s user=%s dbname=%s password=%s sslmode=require",
 		conf.Host, conf.Port, conf.User, conf.Name, conf.Password,
 	)
 
