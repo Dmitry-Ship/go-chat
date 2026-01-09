@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
+  const router = useRouter();
 
   const validatePassword = (pwd: string): boolean => {
     const minLength = pwd.length >= 8;
@@ -45,6 +47,7 @@ export default function SignupPage() {
 
     try {
       await signup({ username, password });
+      router.push("/chat");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");
     } finally {

@@ -1,7 +1,6 @@
 "use client";
 
 import { ConversationDTO } from "@/lib/types";
-import { useChat } from "@/contexts/ChatContext";
 
 interface ConversationItemProps {
   conversation: ConversationDTO;
@@ -14,8 +13,6 @@ export const ConversationItem = ({
   onClick,
   active,
 }: ConversationItemProps) => {
-  const { activeConversationId } = useChat();
-
   return (
     <div
       onClick={onClick}

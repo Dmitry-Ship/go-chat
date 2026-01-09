@@ -225,7 +225,7 @@ func (s *conversationService) SendDirectTextMessage(ctx context.Context, convers
 		return fmt.Errorf("get notification message error: %w", err)
 	}
 
-	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO}); err != nil {
+	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO, UserID: userID}); err != nil {
 		return fmt.Errorf("notify error: %w", err)
 	}
 
@@ -262,7 +262,7 @@ func (s *conversationService) SendGroupTextMessage(ctx context.Context, conversa
 		return fmt.Errorf("get notification message error: %w", err)
 	}
 
-	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO}); err != nil {
+	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO, UserID: userID}); err != nil {
 		return fmt.Errorf("notify error: %w", err)
 	}
 

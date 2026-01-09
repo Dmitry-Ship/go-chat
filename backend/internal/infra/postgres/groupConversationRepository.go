@@ -28,7 +28,7 @@ func (r *groupConversationRepository) Store(ctx context.Context, conversation *d
 		qtx := r.queries.WithTx(tx)
 
 		conversationParams := db.StoreConversationParams{
-			ID:       uuidToPgtype(conversation.ID),
+			ID:       uuidToPgtype(conversation.Conversation.ID),
 			Type:     int32(toConversationTypePersistence(conversation.Type)),
 			IsActive: conversation.IsActive,
 		}

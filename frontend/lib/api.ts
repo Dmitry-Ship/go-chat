@@ -1,11 +1,6 @@
 import {
-  AuthRequest,
   AuthResponse,
-  CreateConversationRequest,
-  StartDirectConversationRequest,
   StartDirectConversationResponse,
-  InviteUserRequest,
-  RenameConversationRequest,
   UserDTO,
   ContactDTO,
   ConversationDTO,

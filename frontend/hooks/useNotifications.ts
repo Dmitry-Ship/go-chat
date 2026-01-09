@@ -1,22 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth } from "./useAuth";
-import { useChat } from "@/contexts/ChatContext";
+import { useState } from "react";
 
 export const useNotifications = () => {
-  const { user } = useAuth();
-  const { activeConversationId } = useChat();
-  const [permission, setPermission] = useState<NotificationPermission>("default");
-  const [enabled, setEnabled] = useState(false);
-
-  useEffect(() => {
-    if ("Notification" in window) {
-      setPermission(Notification.permission);
-      const savedEnabled = localStorage.getItem("notificationsEnabled") === "true";
-      setEnabled(savedEnabled);
-    }
-  }, []);
+  const [permission, setPermission] = useState<NotificationPermission>(
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "default"
+  );
+  const [enabled, setEnabled] = useState(
+    typeof window !== "undefined"
+      ? localStorage.getItem("notificationsEnabled") === "true"
+      : false
+  );
 
   const requestPermission = async () => {
     if ("Notification" in window) {

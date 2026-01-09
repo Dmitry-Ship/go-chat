@@ -11,7 +11,7 @@ interface MessageListProps {
 }
 
 export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
-  ({ messages, currentUserId, messagesEndRef }, ref) => {
+  ({ messages, messagesEndRef }, ref) => {
     useEffect(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, messagesEndRef]);
