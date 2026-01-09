@@ -28,9 +28,8 @@ func (r *directConversationRepository) Store(ctx context.Context, conversation *
 		qtx := r.queries.WithTx(tx)
 
 		conversationParams := db.StoreConversationParams{
-			ID:       uuidToPgtype(conversation.ID),
-			Type:     int32(toConversationTypePersistence(conversation.Type)),
-			IsActive: conversation.IsActive,
+			ID:   uuidToPgtype(conversation.ID),
+			Type: int32(toConversationTypePersistence(conversation.Type)),
 		}
 
 		if err := qtx.StoreConversation(ctx, conversationParams); err != nil {
@@ -79,16 +78,14 @@ func (r *directConversationRepository) GetByID(ctx context.Context, id uuid.UUID
 		participantsDomain[i] = domain.Participant{
 			UserID:         userID,
 			ConversationID: pgtypeToUUID(conv.ID),
-			IsActive:       true,
 		}
 	}
 
 	return &domain.DirectConversation{
 		Participants: participantsDomain,
 		Conversation: domain.Conversation{
-			ID:       pgtypeToUUID(conv.ID),
-			Type:     conversationTypesMap[uint8(conv.Type)],
-			IsActive: conv.IsActive,
+			ID:   pgtypeToUUID(conv.ID),
+			Type: conversationTypesMap[uint8(conv.Type)],
 		},
 	}, nil
 }

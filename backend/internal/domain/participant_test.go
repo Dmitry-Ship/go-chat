@@ -17,5 +17,4 @@ func TestNewParticipant(t *testing.T) {
 	assert.Equal(t, conversationID, participant.ConversationID)
 	assert.Equal(t, userID, participant.UserID)
 	assert.Equal(t, participantID, participant.ID)
-	assert.Equal(t, participant.IsActive, true)
 }

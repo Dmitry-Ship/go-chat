@@ -28,9 +28,8 @@ func (r *groupConversationRepository) Store(ctx context.Context, conversation *d
 		qtx := r.queries.WithTx(tx)
 
 		conversationParams := db.StoreConversationParams{
-			ID:       uuidToPgtype(conversation.Conversation.ID),
-			Type:     int32(toConversationTypePersistence(conversation.Type)),
-			IsActive: conversation.IsActive,
+			ID:   uuidToPgtype(conversation.Conversation.ID),
+			Type: int32(toConversationTypePersistence(conversation.Type)),
 		}
 
 		if err := qtx.StoreConversation(ctx, conversationParams); err != nil {
@@ -53,7 +52,6 @@ func (r *groupConversationRepository) Store(ctx context.Context, conversation *d
 			ID:             uuidToPgtype(conversation.Owner.ID),
 			ConversationID: uuidToPgtype(conversation.Owner.ConversationID),
 			UserID:         uuidToPgtype(conversation.Owner.UserID),
-			IsActive:       conversation.Owner.IsActive,
 		}
 
 		if err := qtx.StoreParticipant(ctx, participantParams); err != nil {
@@ -69,9 +67,8 @@ func (r *groupConversationRepository) Update(ctx context.Context, conversation *
 		qtx := r.queries.WithTx(tx)
 
 		updateConvParams := db.UpdateConversationParams{
-			ID:       uuidToPgtype(conversation.ID),
-			Type:     int32(toConversationTypePersistence(conversation.Type)),
-			IsActive: conversation.IsActive,
+			ID:   uuidToPgtype(conversation.ID),
+			Type: int32(toConversationTypePersistence(conversation.Type)),
 		}
 
 		if err := qtx.UpdateConversation(ctx, updateConvParams); err != nil {
@@ -91,6 +88,14 @@ func (r *groupConversationRepository) Update(ctx context.Context, conversation *
 	})
 }
 
+func (r *groupConversationRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	if err := r.queries.DeleteConversation(ctx, uuidToPgtype(id)); err != nil {
+		return fmt.Errorf("delete conversation error: %w", err)
+	}
+
+	return nil
+}
+
 func (r *groupConversationRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.GroupConversation, error) {
 	result, err := r.queries.GetGroupConversationWithOwner(ctx, uuidToPgtype(id))
 	if err != nil {
@@ -105,12 +110,10 @@ func (r *groupConversationRepository) GetByID(ctx context.Context, id uuid.UUID)
 			UserID:         pgtypeToUUID(result.OwnerUserID),
 			ID:             pgtypeToUUID(result.OwnerParticipantID),
 			ConversationID: pgtypeToUUID(result.OwnerConversationID),
-			IsActive:       result.OwnerIsActive,
 		},
 		Conversation: domain.Conversation{
-			ID:       pgtypeToUUID(result.ConversationID),
-			Type:     conversationTypesMap[uint8(result.ConversationType)],
-			IsActive: result.ConversationIsActive,
+			ID:   pgtypeToUUID(result.ConversationID),
+			Type: conversationTypesMap[uint8(result.ConversationType)],
 		},
 	}, nil
 }

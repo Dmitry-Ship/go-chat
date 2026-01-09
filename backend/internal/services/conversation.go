@@ -325,8 +325,8 @@ func (s *conversationService) Leave(ctx context.Context, conversationID uuid.UUI
 		return fmt.Errorf("leave conversation error: %w", err)
 	}
 
-	if err := s.participants.Update(ctx, participant); err != nil {
-		return fmt.Errorf("update participant error: %w", err)
+	if err := s.participants.Delete(ctx, participant.ID); err != nil {
+		return fmt.Errorf("delete participant error: %w", err)
 	}
 
 	if err := s.systemMessages.SaveLeftMessage(ctx, conversationID, userID); err != nil {
@@ -431,8 +431,8 @@ func (s *conversationService) Kick(ctx context.Context, conversationID uuid.UUID
 		return fmt.Errorf("kick user error: %w", err)
 	}
 
-	if err := s.participants.Update(ctx, kicked); err != nil {
-		return fmt.Errorf("update participant error: %w", err)
+	if err := s.participants.Delete(ctx, kicked.ID); err != nil {
+		return fmt.Errorf("delete participant error: %w", err)
 	}
 
 	if err := s.systemMessages.SaveLeftMessage(ctx, conversationID, targetID); err != nil {

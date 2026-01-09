@@ -31,20 +31,18 @@ func DeserializeUser(data []byte) (*UserCache, error) {
 }
 
 type ConversationCache struct {
-	ID       string
-	Type     string
-	Name     string
-	Avatar   string
-	IsActive bool
+	ID     string
+	Type   string
+	Name   string
+	Avatar string
 }
 
 func SerializeGroupConversation(conv *domain.GroupConversation) ([]byte, error) {
 	cacheConv := ConversationCache{
-		ID:       conv.ID.String(),
-		Type:     "group",
-		Name:     conv.Name,
-		Avatar:   conv.Avatar,
-		IsActive: conv.IsActive,
+		ID:     conv.ID.String(),
+		Type:   "group",
+		Name:   conv.Name,
+		Avatar: conv.Avatar,
 	}
 	return json.Marshal(cacheConv)
 }
@@ -62,7 +60,6 @@ type ParticipantCache struct {
 	ID             string
 	ConversationID string
 	UserID         string
-	IsActive       bool
 }
 
 type ParticipantsCache struct {
@@ -77,7 +74,6 @@ func SerializeParticipants(participants []*domain.Participant) ([]byte, error) {
 			ID:             p.ID.String(),
 			ConversationID: p.ConversationID.String(),
 			UserID:         p.UserID.String(),
-			IsActive:       p.IsActive,
 		}
 	}
 	cacheData := ParticipantsCache{
@@ -100,15 +96,13 @@ type ConversationMetaCache struct {
 	Name             string
 	Avatar           string
 	ParticipantCount int
-	IsActive         bool
 }
 
-func SerializeConversationMeta(name, avatar string, participantCount int, isActive bool) ([]byte, error) {
+func SerializeConversationMeta(name, avatar string, participantCount int) ([]byte, error) {
 	meta := ConversationMetaCache{
 		Name:             name,
 		Avatar:           avatar,
 		ParticipantCount: participantCount,
-		IsActive:         isActive,
 	}
 	return json.Marshal(meta)
 }

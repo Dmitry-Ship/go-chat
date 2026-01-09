@@ -11,7 +11,6 @@ import (
 type Conversation struct {
 	ID        pgtype.UUID        `json:"id"`
 	Type      int32              `json:"type"`
-	IsActive  bool               `json:"is_active"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
@@ -43,7 +42,6 @@ type Participant struct {
 	ID             pgtype.UUID        `json:"id"`
 	ConversationID pgtype.UUID        `json:"conversation_id"`
 	UserID         pgtype.UUID        `json:"user_id"`
-	IsActive       bool               `json:"is_active"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`

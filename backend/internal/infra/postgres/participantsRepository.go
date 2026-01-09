@@ -26,7 +26,6 @@ func (r *participantRepository) Store(ctx context.Context, participant *domain.P
 		ID:             uuidToPgtype(participant.ID),
 		ConversationID: uuidToPgtype(participant.ConversationID),
 		UserID:         uuidToPgtype(participant.UserID),
-		IsActive:       participant.IsActive,
 	}
 
 	if err := r.queries.StoreParticipant(ctx, params); err != nil {
@@ -36,14 +35,9 @@ func (r *participantRepository) Store(ctx context.Context, participant *domain.P
 	return nil
 }
 
-func (r *participantRepository) Update(ctx context.Context, participant *domain.Participant) error {
-	params := db.UpdateParticipantParams{
-		ID:       uuidToPgtype(participant.ID),
-		IsActive: participant.IsActive,
-	}
-
-	if err := r.queries.UpdateParticipant(ctx, params); err != nil {
-		return fmt.Errorf("update participant error: %w", err)
+func (r *participantRepository) Delete(ctx context.Context, participantID uuid.UUID) error {
+	if err := r.queries.DeleteParticipant(ctx, uuidToPgtype(participantID)); err != nil {
+		return fmt.Errorf("delete participant error: %w", err)
 	}
 
 	return nil
@@ -64,7 +58,6 @@ func (r *participantRepository) GetByConversationIDAndUserID(ctx context.Context
 		ID:             pgtypeToUUID(participant.ID),
 		ConversationID: pgtypeToUUID(participant.ConversationID),
 		UserID:         pgtypeToUUID(participant.UserID),
-		IsActive:       participant.IsActive,
 	}, nil
 }
 

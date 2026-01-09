@@ -11,7 +11,8 @@ import (
 )
 
 type Querier interface {
-	DeactivateConversation(ctx context.Context, id pgtype.UUID) error
+	DeleteConversation(ctx context.Context, id pgtype.UUID) error
+	DeleteParticipant(ctx context.Context, id pgtype.UUID) error
 	FindParticipantByConversationAndUser(ctx context.Context, arg FindParticipantByConversationAndUserParams) (Participant, error)
 	FindUserByUsername(ctx context.Context, name string) (User, error)
 	// Complex queries for read model
@@ -21,7 +22,6 @@ type Querier interface {
 	GetConversationMessagesWithFormattedText(ctx context.Context, arg GetConversationMessagesWithFormattedTextParams) ([]GetConversationMessagesWithFormattedTextRow, error)
 	GetDirectConversationBetweenUsers(ctx context.Context, arg GetDirectConversationBetweenUsersParams) (Conversation, error)
 	GetDirectConversationWithParticipants(ctx context.Context, id pgtype.UUID) (GetDirectConversationWithParticipantsRow, error)
-	GetGroupConversationByOwnerID(ctx context.Context, ownerID pgtype.UUID) ([]GetGroupConversationByOwnerIDRow, error)
 	GetGroupConversationWithOwner(ctx context.Context, conversationID pgtype.UUID) (GetGroupConversationWithOwnerRow, error)
 	GetNotificationMessageWithFormattedText(ctx context.Context, id pgtype.UUID) (GetNotificationMessageWithFormattedTextRow, error)
 	GetParticipantsByConversationID(ctx context.Context, arg GetParticipantsByConversationIDParams) ([]GetParticipantsByConversationIDRow, error)
@@ -48,7 +48,6 @@ type Querier interface {
 	StoreUser(ctx context.Context, arg StoreUserParams) error
 	UpdateConversation(ctx context.Context, arg UpdateConversationParams) error
 	UpdateGroupConversation(ctx context.Context, arg UpdateGroupConversationParams) error
-	UpdateParticipant(ctx context.Context, arg UpdateParticipantParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	UpdateUserRefreshToken(ctx context.Context, arg UpdateUserRefreshTokenParams) error
 }

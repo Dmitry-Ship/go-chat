@@ -18,13 +18,11 @@ CREATE INDEX idx_users_deleted_at ON users(deleted_at);
 CREATE TABLE conversations (
     id UUID PRIMARY KEY,
     type INTEGER NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_conversations_is_active ON conversations(is_active) WHERE deleted_at IS NULL;
 CREATE INDEX idx_conversations_deleted_at ON conversations(deleted_at);
 
 CREATE TABLE group_conversations (
@@ -46,13 +44,12 @@ CREATE TABLE participants (
     id UUID PRIMARY KEY,
     conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
 );
 
-CREATE UNIQUE INDEX idx_participants_conversation_user ON participants(conversation_id, user_id) WHERE deleted_at IS NULL AND is_active = TRUE;
+CREATE UNIQUE INDEX idx_participants_conversation_user ON participants(conversation_id, user_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_participants_conversation_id ON participants(conversation_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_participants_user_id ON participants(user_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_participants_deleted_at ON participants(deleted_at);

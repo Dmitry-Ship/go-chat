@@ -22,9 +22,8 @@ var (
 )
 
 type Conversation struct {
-	ID       uuid.UUID
-	Type     ConversationType
-	IsActive bool
+	ID   uuid.UUID
+	Type ConversationType
 }
 
 func (c *Conversation) GetBaseData() *Conversation {

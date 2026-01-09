@@ -74,6 +74,16 @@ func (d *GroupConversationCacheDecorator) Update(ctx context.Context, conversati
 	return nil
 }
 
+func (d *GroupConversationCacheDecorator) Delete(ctx context.Context, id uuid.UUID) error {
+	if err := d.repo.Delete(ctx, id); err != nil {
+		return fmt.Errorf("repo delete error: %w", err)
+	}
+
+	d.invalidateConversationCache(ctx, id.String())
+
+	return nil
+}
+
 func (d *GroupConversationCacheDecorator) invalidateConversationCache(ctx context.Context, conversationID string) {
 	_ = d.cache.Delete(ctx, ConversationKey(conversationID))
 	_ = d.cache.Delete(ctx, ConvMetaKey(conversationID))

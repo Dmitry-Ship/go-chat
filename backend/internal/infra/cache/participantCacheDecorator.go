@@ -45,7 +45,6 @@ func (d *ParticipantCacheDecorator) GetByConversationIDAndUserID(ctx context.Con
 					ID:             participantID,
 					ConversationID: convID,
 					UserID:         userIDParsed,
-					IsActive:       p.IsActive,
 				}, nil
 			}
 		}
@@ -90,7 +89,6 @@ func (d *ParticipantCacheDecorator) GetIDsByConversationID(ctx context.Context, 
 		participants[i] = &domain.Participant{
 			UserID:         id,
 			ConversationID: conversationID,
-			IsActive:       true,
 		}
 	}
 
@@ -117,13 +115,12 @@ func (d *ParticipantCacheDecorator) Store(ctx context.Context, participant *doma
 	return nil
 }
 
-func (d *ParticipantCacheDecorator) Update(ctx context.Context, participant *domain.Participant) error {
-	if err := d.repo.Update(ctx, participant); err != nil {
-		return fmt.Errorf("repo update error: %w", err)
+func (d *ParticipantCacheDecorator) Delete(ctx context.Context, participantID uuid.UUID) error {
+	if err := d.repo.Delete(ctx, participantID); err != nil {
+		return fmt.Errorf("repo delete error: %w", err)
 	}
 
-	d.invalidateParticipantsCache(ctx, participant.ConversationID.String())
-	d.invalidateUserConvListCache(ctx, participant.UserID.String())
+	d.invalidateUserConvListCache(ctx, participantID.String())
 
 	return nil
 }

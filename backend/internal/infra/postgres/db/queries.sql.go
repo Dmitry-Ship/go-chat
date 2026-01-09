@@ -11,19 +11,30 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deactivateConversation = `-- name: DeactivateConversation :exec
+const deleteConversation = `-- name: DeleteConversation :exec
 UPDATE conversations
-SET is_active = FALSE, updated_at = NOW()
+SET deleted_at = NOW(), updated_at = NOW()
 WHERE id = $1
 `
 
-func (q *Queries) DeactivateConversation(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deactivateConversation, id)
+func (q *Queries) DeleteConversation(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteConversation, id)
+	return err
+}
+
+const deleteParticipant = `-- name: DeleteParticipant :exec
+UPDATE participants
+SET deleted_at = NOW(), updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) DeleteParticipant(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteParticipant, id)
 	return err
 }
 
 const findParticipantByConversationAndUser = `-- name: FindParticipantByConversationAndUser :one
-SELECT id, conversation_id, user_id, is_active, created_at, updated_at, deleted_at FROM participants
+SELECT id, conversation_id, user_id, created_at, updated_at, deleted_at FROM participants
 WHERE conversation_id = $1 AND user_id = $2 AND deleted_at IS NULL
 LIMIT 1
 `
@@ -40,7 +51,6 @@ func (q *Queries) FindParticipantByConversationAndUser(ctx context.Context, arg 
 		&i.ID,
 		&i.ConversationID,
 		&i.UserID,
-		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -116,7 +126,6 @@ WITH participants_count AS (
     SELECT COUNT(*) as count
     FROM participants
     WHERE conversation_id = $1
-      AND is_active = TRUE
       AND deleted_at IS NULL
 )
 SELECT
@@ -134,13 +143,12 @@ SELECT
 FROM conversations c
 LEFT JOIN participants op ON op.conversation_id = c.id
     AND op.user_id <> $2
-    AND op.is_active = TRUE
 LEFT JOIN users ou ON ou.id = op.user_id
 LEFT JOIN group_conversations gc ON gc.conversation_id = c.id
-LEFT JOIN participants pc_sub ON pc_sub.conversation_id = c.id AND pc_sub.user_id = $2 AND pc_sub.is_active = TRUE
-LEFT JOIN participants up ON up.conversation_id = c.id AND up.user_id = $2 AND up.is_active = TRUE
+LEFT JOIN participants pc_sub ON pc_sub.conversation_id = c.id AND pc_sub.user_id = $2
+LEFT JOIN participants up ON up.conversation_id = c.id AND up.user_id = $2
 CROSS JOIN participants_count pc
-WHERE c.id = $1 AND c.is_active = TRUE AND c.deleted_at IS NULL
+WHERE c.id = $1 AND c.deleted_at IS NULL
 LIMIT 1
 `
 
@@ -185,7 +193,7 @@ func (q *Queries) GetConversationFull(ctx context.Context, arg GetConversationFu
 const getConversationIDsByUserID = `-- name: GetConversationIDsByUserID :many
 SELECT conversation_id
 FROM participants
-WHERE user_id = $1 AND is_active = TRUE AND deleted_at IS NULL
+WHERE user_id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetConversationIDsByUserID(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error) {
@@ -278,12 +286,11 @@ func (q *Queries) GetConversationMessagesWithFormattedText(ctx context.Context, 
 }
 
 const getDirectConversationBetweenUsers = `-- name: GetDirectConversationBetweenUsers :one
-SELECT c.id, c.type, c.is_active, c.created_at, c.updated_at, c.deleted_at
+SELECT c.id, c.type, c.created_at, c.updated_at, c.deleted_at
 FROM conversations c
-JOIN participants p1 ON p1.conversation_id = c.id AND p1.user_id = $1 AND p1.is_active = TRUE
-JOIN participants p2 ON p2.conversation_id = c.id AND p2.user_id = $2 AND p2.is_active = TRUE
+JOIN participants p1 ON p1.conversation_id = c.id AND p1.user_id = $1
+JOIN participants p2 ON p2.conversation_id = c.id AND p2.user_id = $2
 WHERE c.type = 1
-  AND c.is_active = TRUE
   AND c.deleted_at IS NULL
   AND p1.deleted_at IS NULL
   AND p2.deleted_at IS NULL
@@ -301,7 +308,6 @@ func (q *Queries) GetDirectConversationBetweenUsers(ctx context.Context, arg Get
 	err := row.Scan(
 		&i.ID,
 		&i.Type,
-		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -310,7 +316,7 @@ func (q *Queries) GetDirectConversationBetweenUsers(ctx context.Context, arg Get
 }
 
 const getDirectConversationWithParticipants = `-- name: GetDirectConversationWithParticipants :one
-SELECT c.id, c.type, c.is_active, c.created_at, c.updated_at,
+SELECT c.id, c.type, c.created_at, c.updated_at,
        ARRAY_AGG(p.user_id) as participant_user_ids
 FROM conversations c
 JOIN participants p ON p.conversation_id = c.id
@@ -321,7 +327,6 @@ GROUP BY c.id
 type GetDirectConversationWithParticipantsRow struct {
 	ID                 pgtype.UUID        `json:"id"`
 	Type               int32              `json:"type"`
-	IsActive           bool               `json:"is_active"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 	ParticipantUserIds interface{}        `json:"participant_user_ids"`
@@ -333,71 +338,11 @@ func (q *Queries) GetDirectConversationWithParticipants(ctx context.Context, id 
 	err := row.Scan(
 		&i.ID,
 		&i.Type,
-		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ParticipantUserIds,
 	)
 	return i, err
-}
-
-const getGroupConversationByOwnerID = `-- name: GetGroupConversationByOwnerID :many
-SELECT gc.id, gc.name, gc.avatar, gc.conversation_id, gc.owner_id, gc.created_at, gc.updated_at, gc.deleted_at, c.id, c.type, c.is_active, c.created_at, c.updated_at, c.deleted_at
-FROM group_conversations gc
-JOIN conversations c ON c.id = gc.conversation_id
-WHERE gc.owner_id = $1 AND gc.deleted_at IS NULL AND c.deleted_at IS NULL
-`
-
-type GetGroupConversationByOwnerIDRow struct {
-	ID             pgtype.UUID        `json:"id"`
-	Name           string             `json:"name"`
-	Avatar         pgtype.Text        `json:"avatar"`
-	ConversationID pgtype.UUID        `json:"conversation_id"`
-	OwnerID        pgtype.UUID        `json:"owner_id"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
-	ID_2           pgtype.UUID        `json:"id_2"`
-	Type           int32              `json:"type"`
-	IsActive       bool               `json:"is_active"`
-	CreatedAt_2    pgtype.Timestamptz `json:"created_at_2"`
-	UpdatedAt_2    pgtype.Timestamptz `json:"updated_at_2"`
-	DeletedAt_2    pgtype.Timestamptz `json:"deleted_at_2"`
-}
-
-func (q *Queries) GetGroupConversationByOwnerID(ctx context.Context, ownerID pgtype.UUID) ([]GetGroupConversationByOwnerIDRow, error) {
-	rows, err := q.db.Query(ctx, getGroupConversationByOwnerID, ownerID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetGroupConversationByOwnerIDRow
-	for rows.Next() {
-		var i GetGroupConversationByOwnerIDRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Avatar,
-			&i.ConversationID,
-			&i.OwnerID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-			&i.ID_2,
-			&i.Type,
-			&i.IsActive,
-			&i.CreatedAt_2,
-			&i.UpdatedAt_2,
-			&i.DeletedAt_2,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getGroupConversationWithOwner = `-- name: GetGroupConversationWithOwner :one
@@ -408,11 +353,9 @@ SELECT
     gc.conversation_id,
     gc.owner_id,
     c.type as conversation_type,
-    c.is_active as conversation_is_active,
     p.id as owner_participant_id,
     p.user_id as owner_user_id,
-    p.conversation_id as owner_conversation_id,
-    p.is_active as owner_is_active
+    p.conversation_id as owner_conversation_id
 FROM group_conversations gc
 JOIN conversations c ON c.id = gc.conversation_id
 JOIN participants p ON p.conversation_id = gc.conversation_id AND p.user_id = gc.owner_id
@@ -424,17 +367,15 @@ LIMIT 1
 `
 
 type GetGroupConversationWithOwnerRow struct {
-	ID                   pgtype.UUID `json:"id"`
-	Name                 string      `json:"name"`
-	Avatar               pgtype.Text `json:"avatar"`
-	ConversationID       pgtype.UUID `json:"conversation_id"`
-	OwnerID              pgtype.UUID `json:"owner_id"`
-	ConversationType     int32       `json:"conversation_type"`
-	ConversationIsActive bool        `json:"conversation_is_active"`
-	OwnerParticipantID   pgtype.UUID `json:"owner_participant_id"`
-	OwnerUserID          pgtype.UUID `json:"owner_user_id"`
-	OwnerConversationID  pgtype.UUID `json:"owner_conversation_id"`
-	OwnerIsActive        bool        `json:"owner_is_active"`
+	ID                  pgtype.UUID `json:"id"`
+	Name                string      `json:"name"`
+	Avatar              pgtype.Text `json:"avatar"`
+	ConversationID      pgtype.UUID `json:"conversation_id"`
+	OwnerID             pgtype.UUID `json:"owner_id"`
+	ConversationType    int32       `json:"conversation_type"`
+	OwnerParticipantID  pgtype.UUID `json:"owner_participant_id"`
+	OwnerUserID         pgtype.UUID `json:"owner_user_id"`
+	OwnerConversationID pgtype.UUID `json:"owner_conversation_id"`
 }
 
 func (q *Queries) GetGroupConversationWithOwner(ctx context.Context, conversationID pgtype.UUID) (GetGroupConversationWithOwnerRow, error) {
@@ -447,11 +388,9 @@ func (q *Queries) GetGroupConversationWithOwner(ctx context.Context, conversatio
 		&i.ConversationID,
 		&i.OwnerID,
 		&i.ConversationType,
-		&i.ConversationIsActive,
 		&i.OwnerParticipantID,
 		&i.OwnerUserID,
 		&i.OwnerConversationID,
-		&i.OwnerIsActive,
 	)
 	return i, err
 }
@@ -510,7 +449,6 @@ SELECT u.id, u.name, u.avatar
 FROM users u
 JOIN participants p ON p.user_id = u.id
 WHERE p.conversation_id = $1
-  AND p.is_active = TRUE
   AND p.deleted_at IS NULL
   AND u.deleted_at IS NULL
 LIMIT $2 OFFSET $3
@@ -583,7 +521,6 @@ WHERE u.deleted_at IS NULL
     SELECT user_id
     FROM participants
     WHERE conversation_id = $1
-      AND is_active = TRUE
       AND deleted_at IS NULL
   )
 LIMIT $2 OFFSET $3
@@ -699,12 +636,9 @@ LEFT JOIN users u ON u.id = m.user_id
 LEFT JOIN group_conversations gc ON gc.conversation_id = c.id
 LEFT JOIN participants op ON op.conversation_id = c.id
     AND op.user_id <> $1
-    AND op.is_active = TRUE
 LEFT JOIN users ou ON ou.id = op.user_id
 WHERE p.user_id = $1
-  AND c.is_active = TRUE
   AND c.deleted_at IS NULL
-  AND p.is_active = TRUE
   AND p.deleted_at IS NULL
 ORDER BY c.created_at DESC
 LIMIT $2 OFFSET $3
@@ -777,10 +711,8 @@ WITH valid_conversation AS (
     JOIN conversations c ON c.id = gc.conversation_id
     JOIN participants p ON p.conversation_id = gc.conversation_id 
         AND p.user_id = $2 
-        AND p.is_active = TRUE 
         AND p.deleted_at IS NULL
     WHERE gc.conversation_id = $1 
-        AND c.is_active = TRUE 
         AND c.deleted_at IS NULL
         AND gc.deleted_at IS NULL
 ),
@@ -788,8 +720,8 @@ valid_invitee AS (
     SELECT u.id as user_id FROM users u WHERE u.id = $3 AND u.deleted_at IS NULL
 ),
 new_participant AS (
-    INSERT INTO participants (id, conversation_id, user_id, is_active, created_at)
-    SELECT $4, vc.conv_id, vi.user_id, TRUE, NOW()
+    INSERT INTO participants (id, conversation_id, user_id, created_at)
+    SELECT $4, vc.conv_id, vi.user_id, NOW()
     FROM valid_conversation vc, valid_invitee vi
     ON CONFLICT DO NOTHING
     RETURNING user_id
@@ -822,7 +754,6 @@ WITH valid_conversation AS (
     FROM group_conversations gc
     JOIN conversations c ON c.id = gc.conversation_id
     WHERE gc.conversation_id = $1 
-        AND c.is_active = TRUE 
         AND c.deleted_at IS NULL
         AND gc.deleted_at IS NULL
 ),
@@ -830,8 +761,8 @@ valid_user AS (
     SELECT u.id as user_id FROM users u WHERE u.id = $2 AND u.deleted_at IS NULL
 ),
 new_participant AS (
-    INSERT INTO participants (id, conversation_id, user_id, is_active, created_at)
-    SELECT $3, vc.conv_id, vu.user_id, TRUE, NOW()
+    INSERT INTO participants (id, conversation_id, user_id, created_at)
+    SELECT $3, vc.conv_id, vu.user_id, NOW()
     FROM valid_conversation vc, valid_user vu
     ON CONFLICT DO NOTHING
     RETURNING user_id
@@ -854,16 +785,14 @@ func (q *Queries) JoinConversationAtomic(ctx context.Context, arg JoinConversati
 
 const kickParticipantAtomic = `-- name: KickParticipantAtomic :execrows
 UPDATE participants p
-SET is_active = FALSE, updated_at = NOW()
+SET deleted_at = NOW(), updated_at = NOW()
 WHERE p.conversation_id = $1 
   AND p.user_id = $3 
-  AND p.is_active = TRUE 
   AND p.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM group_conversations gc
     JOIN conversations c ON c.id = gc.conversation_id
     WHERE gc.conversation_id = $1 
-      AND c.is_active = TRUE 
       AND c.deleted_at IS NULL
       AND gc.deleted_at IS NULL
       AND gc.owner_id = $2
@@ -886,16 +815,14 @@ func (q *Queries) KickParticipantAtomic(ctx context.Context, arg KickParticipant
 
 const leaveConversationAtomic = `-- name: LeaveConversationAtomic :execrows
 UPDATE participants p
-SET is_active = FALSE, updated_at = NOW()
+SET deleted_at = NOW(), updated_at = NOW()
 WHERE p.conversation_id = $1 
   AND p.user_id = $2 
-  AND p.is_active = TRUE 
   AND p.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM group_conversations gc
     JOIN conversations c ON c.id = gc.conversation_id
     WHERE gc.conversation_id = $1 
-      AND c.is_active = TRUE 
       AND c.deleted_at IS NULL
       AND gc.deleted_at IS NULL
       AND gc.owner_id <> $2
@@ -917,19 +844,18 @@ func (q *Queries) LeaveConversationAtomic(ctx context.Context, arg LeaveConversa
 
 const storeConversation = `-- name: StoreConversation :exec
 
-INSERT INTO conversations (id, type, is_active)
-VALUES ($1, $2, $3)
+INSERT INTO conversations (id, type)
+VALUES ($1, $2)
 `
 
 type StoreConversationParams struct {
-	ID       pgtype.UUID `json:"id"`
-	Type     int32       `json:"type"`
-	IsActive bool        `json:"is_active"`
+	ID   pgtype.UUID `json:"id"`
+	Type int32       `json:"type"`
 }
 
 // Conversation queries
 func (q *Queries) StoreConversation(ctx context.Context, arg StoreConversationParams) error {
-	_, err := q.db.Exec(ctx, storeConversation, arg.ID, arg.Type, arg.IsActive)
+	_, err := q.db.Exec(ctx, storeConversation, arg.ID, arg.Type)
 	return err
 }
 
@@ -987,31 +913,25 @@ func (q *Queries) StoreMessage(ctx context.Context, arg StoreMessageParams) erro
 
 const storeParticipant = `-- name: StoreParticipant :exec
 
-INSERT INTO participants (id, conversation_id, user_id, is_active)
-VALUES ($1, $2, $3, $4)
+INSERT INTO participants (id, conversation_id, user_id)
+VALUES ($1, $2, $3)
 `
 
 type StoreParticipantParams struct {
 	ID             pgtype.UUID `json:"id"`
 	ConversationID pgtype.UUID `json:"conversation_id"`
 	UserID         pgtype.UUID `json:"user_id"`
-	IsActive       bool        `json:"is_active"`
 }
 
 // Participant queries
 func (q *Queries) StoreParticipant(ctx context.Context, arg StoreParticipantParams) error {
-	_, err := q.db.Exec(ctx, storeParticipant,
-		arg.ID,
-		arg.ConversationID,
-		arg.UserID,
-		arg.IsActive,
-	)
+	_, err := q.db.Exec(ctx, storeParticipant, arg.ID, arg.ConversationID, arg.UserID)
 	return err
 }
 
 const storeParticipantsBatch = `-- name: StoreParticipantsBatch :exec
-INSERT INTO participants (id, conversation_id, user_id, is_active, created_at)
-SELECT unnest($1::uuid[]), $2, unnest($3::uuid[]), TRUE, NOW()
+INSERT INTO participants (id, conversation_id, user_id, created_at)
+SELECT unnest($1::uuid[]), $2, unnest($3::uuid[]), NOW()
 `
 
 type StoreParticipantsBatchParams struct {
@@ -1031,7 +951,7 @@ SELECT $1, $2, $3, $4, $5
 WHERE EXISTS (
     SELECT 1 FROM conversations c
     JOIN group_conversations gc ON gc.conversation_id = c.id
-    WHERE c.id = $2 AND c.is_active = TRUE AND c.deleted_at IS NULL AND gc.deleted_at IS NULL
+    WHERE c.id = $2 AND c.deleted_at IS NULL AND gc.deleted_at IS NULL
 )
 AND EXISTS (
     SELECT 1 FROM users WHERE id = $3 AND deleted_at IS NULL
@@ -1088,18 +1008,17 @@ func (q *Queries) StoreUser(ctx context.Context, arg StoreUserParams) error {
 
 const updateConversation = `-- name: UpdateConversation :exec
 UPDATE conversations
-SET type = $2, is_active = $3, updated_at = NOW()
+SET type = $2, updated_at = NOW()
 WHERE id = $1
 `
 
 type UpdateConversationParams struct {
-	ID       pgtype.UUID `json:"id"`
-	Type     int32       `json:"type"`
-	IsActive bool        `json:"is_active"`
+	ID   pgtype.UUID `json:"id"`
+	Type int32       `json:"type"`
 }
 
 func (q *Queries) UpdateConversation(ctx context.Context, arg UpdateConversationParams) error {
-	_, err := q.db.Exec(ctx, updateConversation, arg.ID, arg.Type, arg.IsActive)
+	_, err := q.db.Exec(ctx, updateConversation, arg.ID, arg.Type)
 	return err
 }
 
@@ -1117,22 +1036,6 @@ type UpdateGroupConversationParams struct {
 
 func (q *Queries) UpdateGroupConversation(ctx context.Context, arg UpdateGroupConversationParams) error {
 	_, err := q.db.Exec(ctx, updateGroupConversation, arg.ConversationID, arg.Name, arg.Avatar)
-	return err
-}
-
-const updateParticipant = `-- name: UpdateParticipant :exec
-UPDATE participants
-SET is_active = $2, updated_at = NOW()
-WHERE id = $1
-`
-
-type UpdateParticipantParams struct {
-	ID       pgtype.UUID `json:"id"`
-	IsActive bool        `json:"is_active"`
-}
-
-func (q *Queries) UpdateParticipant(ctx context.Context, arg UpdateParticipantParams) error {
-	_, err := q.db.Exec(ctx, updateParticipant, arg.ID, arg.IsActive)
 	return err
 }
 

@@ -10,12 +10,12 @@ import (
 type GroupConversationRepository interface {
 	Store(ctx context.Context, conversation *GroupConversation) error
 	Update(ctx context.Context, conversation *GroupConversation) error
+	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*GroupConversation, error)
 }
 
 var (
 	ErrorUserNotInConversation = errors.New("user is not in conversation")
-	ErrorConversationNotActive = errors.New("conversation is not active")
 	ErrorUserNotOwner          = errors.New("user is not owner")
 	ErrorCannotInviteOneself   = errors.New("cannot invite yourself")
 	ErrorCannotKickOneself     = errors.New("cannot kick yourself")
@@ -44,9 +44,8 @@ type GroupConversation struct {
 func NewGroupConversation(id uuid.UUID, name string, creatorId uuid.UUID) (*GroupConversation, error) {
 	groupConversation := &GroupConversation{
 		Conversation: Conversation{
-			ID:       id,
-			Type:     ConversationTypeGroup,
-			IsActive: true,
+			ID:   id,
+			Type: ConversationTypeGroup,
 		},
 		ID:     uuid.New(),
 		Name:   name,
@@ -58,7 +57,7 @@ func NewGroupConversation(id uuid.UUID, name string, creatorId uuid.UUID) (*Grou
 }
 
 func (groupConversation *GroupConversation) isJoined(participant *Participant) bool {
-	return participant.ConversationID == groupConversation.Conversation.ID && participant.IsActive
+	return participant.ConversationID == groupConversation.Conversation.ID
 }
 
 func (groupConversation *GroupConversation) Delete(participant *Participant) error {
@@ -69,12 +68,6 @@ func (groupConversation *GroupConversation) Delete(participant *Participant) err
 	if groupConversation.Owner.UserID != participant.UserID {
 		return ErrorUserNotOwner
 	}
-
-	if !groupConversation.IsActive {
-		return ErrorConversationNotActive
-	}
-
-	groupConversation.IsActive = false
 
 	return nil
 }
@@ -95,25 +88,15 @@ func (groupConversation *GroupConversation) Rename(newName string, participant *
 }
 
 func (groupConversation *GroupConversation) Join(user User) (*Participant, error) {
-	if !groupConversation.IsActive {
-		return nil, ErrorConversationNotActive
-	}
-
 	participant := NewParticipant(uuid.New(), groupConversation.Conversation.ID, user.ID)
 
 	return participant, nil
 }
 
 func (groupConversation *GroupConversation) Leave(participant *Participant) (*Participant, error) {
-	if !groupConversation.IsActive {
-		return nil, ErrorConversationNotActive
-	}
-
 	if !groupConversation.isJoined(participant) {
 		return nil, ErrorUserNotInConversation
 	}
-
-	participant.IsActive = false
 
 	return participant, nil
 }
@@ -121,10 +104,6 @@ func (groupConversation *GroupConversation) Leave(participant *Participant) (*Pa
 func (groupConversation *GroupConversation) Invite(inviter *Participant, invitee *User) (*Participant, error) {
 	if !groupConversation.isJoined(inviter) {
 		return nil, ErrorUserNotInConversation
-	}
-
-	if !groupConversation.IsActive {
-		return nil, ErrorConversationNotActive
 	}
 
 	if inviter.UserID == invitee.ID {
@@ -141,10 +120,6 @@ func (groupConversation *GroupConversation) Kick(kicker *Participant, target *Pa
 		return nil, ErrorUserNotInConversation
 	}
 
-	if !groupConversation.IsActive {
-		return nil, ErrorConversationNotActive
-	}
-
 	if groupConversation.Owner.UserID != kicker.UserID {
 		return nil, ErrorUserNotOwner
 	}
@@ -153,16 +128,10 @@ func (groupConversation *GroupConversation) Kick(kicker *Participant, target *Pa
 		return nil, ErrorCannotKickOneself
 	}
 
-	target.IsActive = false
-
 	return target, nil
 }
 
 func (groupConversation *GroupConversation) SendTextMessage(messageID uuid.UUID, text string, participant *Participant) (*Message, error) {
-	if !groupConversation.IsActive {
-		return nil, ErrorConversationNotActive
-	}
-
 	if !groupConversation.isJoined(participant) {
 		return nil, ErrorUserNotInConversation
 	}
@@ -179,30 +148,18 @@ func (groupConversation *GroupConversation) SendTextMessage(messageID uuid.UUID,
 }
 
 func (groupConversation *GroupConversation) SendJoinedConversationMessage(messageID uuid.UUID, user *User) (*Message, error) {
-	if !groupConversation.IsActive {
-		return nil, ErrorConversationNotActive
-	}
-
 	message := newJoinedConversationMessage(messageID, groupConversation.Conversation.ID, user.ID)
 
 	return message, nil
 }
 
 func (groupConversation *GroupConversation) SendInvitedConversationMessage(messageID uuid.UUID, user *User) (*Message, error) {
-	if !groupConversation.IsActive {
-		return nil, ErrorConversationNotActive
-	}
-
 	message := newInvitedConversationMessage(messageID, groupConversation.Conversation.ID, user.ID)
 
 	return message, nil
 }
 
 func (groupConversation *GroupConversation) SendRenamedConversationMessage(messageID uuid.UUID, participant *Participant, newName string) (*Message, error) {
-	if !groupConversation.IsActive {
-		return nil, ErrorConversationNotActive
-	}
-
 	content := newRenamedMessageContent(newName)
 	message := newConversationRenamedMessage(messageID, groupConversation.Conversation.ID, participant.UserID, content)
 
