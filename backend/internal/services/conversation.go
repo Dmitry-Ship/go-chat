@@ -65,13 +65,7 @@ func (s *conversationService) CreateGroupConversation(ctx context.Context, conve
 		return fmt.Errorf("validate conversation name error: %w", err)
 	}
 
-	user, err := s.users.GetByID(ctx, userID)
-
-	if err != nil {
-		return fmt.Errorf("get user by id error: %w", err)
-	}
-
-	conversation, err := domain.NewGroupConversation(conversationID, name, *user)
+	conversation, err := domain.NewGroupConversation(conversationID, name, userID)
 
 	if err != nil {
 		return fmt.Errorf("new group conversation error: %w", err)
@@ -90,7 +84,6 @@ func (s *conversationService) CreateGroupConversation(ctx context.Context, conve
 
 func (s *conversationService) StartDirectConversation(ctx context.Context, fromUserID uuid.UUID, toUserID uuid.UUID) (uuid.UUID, error) {
 	existingConversationID, err := s.directConversations.GetID(ctx, fromUserID, toUserID)
-
 	if err == nil {
 		return existingConversationID, nil
 	}
@@ -98,7 +91,6 @@ func (s *conversationService) StartDirectConversation(ctx context.Context, fromU
 	newConversationID := uuid.New()
 
 	conversation, err := domain.NewDirectConversation(newConversationID, toUserID, fromUserID)
-
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("new direct conversation error: %w", err)
 	}
@@ -120,13 +112,11 @@ func (s *conversationService) StartDirectConversation(ctx context.Context, fromU
 
 func (s *conversationService) DeleteGroupConversation(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) error {
 	conversation, err := s.groupConversations.GetByID(ctx, conversationID)
-
 	if err != nil {
 		return fmt.Errorf("get conversation by id error: %w", err)
 	}
 
 	participant, err := s.participants.GetByConversationIDAndUserID(ctx, conversationID, userID)
-
 	if err != nil {
 		return fmt.Errorf("get participant error: %w", err)
 	}

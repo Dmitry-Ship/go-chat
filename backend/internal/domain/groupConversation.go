@@ -41,7 +41,7 @@ type GroupConversation struct {
 	Owner  Participant
 }
 
-func NewGroupConversation(id uuid.UUID, name string, creator User) (*GroupConversation, error) {
+func NewGroupConversation(id uuid.UUID, name string, creatorId uuid.UUID) (*GroupConversation, error) {
 	groupConversation := &GroupConversation{
 		Conversation: Conversation{
 			ID:       id,
@@ -51,7 +51,7 @@ func NewGroupConversation(id uuid.UUID, name string, creator User) (*GroupConver
 		ID:     uuid.New(),
 		Name:   name,
 		Avatar: string(name[0]),
-		Owner:  *NewParticipant(uuid.New(), id, creator.ID),
+		Owner:  *NewParticipant(uuid.New(), id, creatorId),
 	}
 
 	return groupConversation, nil
