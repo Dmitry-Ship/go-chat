@@ -124,9 +124,6 @@ func main() {
 	cacheService := services.NewCacheService(cacheClient)
 
 	systemMessageService := services.NewSystemMessageService(
-		cachedGroupConversationsRepository,
-		cachedUsersRepository,
-		cachedParticipantRepository,
 		messagesRepository,
 	)
 

@@ -134,7 +134,7 @@ func (r *queriesRepository) GetUserByID(id uuid.UUID) (readModel.UserDTO, error)
 func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.MessageDTO, error) {
 	limit, offset := r.paginate(paginationInfo)
 
-	messages, err := r.queries.GetConversationMessagesWithUser(context.Background(), db.GetConversationMessagesWithUserParams{
+	messages, err := r.queries.GetConversationMessagesWithFormattedText(context.Background(), db.GetConversationMessagesWithFormattedTextParams{
 		ConversationID: uuidToPgtype(conversationID),
 		Limit:          limit,
 		Offset:         offset,
@@ -146,26 +146,12 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 
 	messageDTOs := make([]readModel.MessageDTO, len(messages))
 	for i, msg := range messages {
-		createdAt := msg.CreatedAt.Time
-
-		text := ""
-		switch messageTypesMap[uint8(msg.Type)] {
-		case domain.MessageTypeText:
-			text = msg.Content
-		case domain.MessageTypeRenamedConversation:
-			text = msg.UserName.String + " renamed chat to " + msg.Content
-		case domain.MessageTypeJoinedConversation:
-			text = msg.UserName.String + " joined"
-		case domain.MessageTypeLeftConversation:
-			text = msg.UserName.String + " left"
-		case domain.MessageTypeInvitedConversation:
-			text = msg.UserName.String + " was invited"
-		}
+		formattedText, _ := msg.FormattedText.(string)
 
 		messageDTO := readModel.MessageDTO{
 			ID:             pgtypeToUUID(msg.ID),
-			CreatedAt:      createdAt,
-			Text:           text,
+			CreatedAt:      msg.CreatedAt.Time,
+			Text:           formattedText,
 			Type:           messageTypesMap[uint8(msg.Type)].String(),
 			ConversationId: pgtypeToUUID(msg.ConversationID),
 			User: readModel.UserDTO{
@@ -186,31 +172,17 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 }
 
 func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
-	msg, err := r.queries.GetNotificationMessageWithUser(context.Background(), uuidToPgtype(messageID))
+	msg, err := r.queries.GetNotificationMessageWithFormattedText(context.Background(), uuidToPgtype(messageID))
 	if err != nil {
 		return readModel.MessageDTO{}, err
 	}
 
-	createdAt := msg.CreatedAt.Time
-
-	text := ""
-	switch messageTypesMap[uint8(msg.Type)] {
-	case domain.MessageTypeText:
-		text = msg.Content
-	case domain.MessageTypeRenamedConversation:
-		text = msg.UserName.String + " renamed chat to " + msg.Content
-	case domain.MessageTypeJoinedConversation:
-		text = msg.UserName.String + " joined"
-	case domain.MessageTypeLeftConversation:
-		text = msg.UserName.String + " left"
-	case domain.MessageTypeInvitedConversation:
-		text = msg.UserName.String + " was invited"
-	}
+	formattedText, _ := msg.FormattedText.(string)
 
 	messageDTO := readModel.MessageDTO{
 		ID:             pgtypeToUUID(msg.ID),
-		CreatedAt:      createdAt,
-		Text:           text,
+		CreatedAt:      msg.CreatedAt.Time,
+		Text:           formattedText,
 		Type:           messageTypesMap[uint8(msg.Type)].String(),
 		ConversationId: pgtypeToUUID(msg.ConversationID),
 		User: readModel.UserDTO{
@@ -249,29 +221,14 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 		}
 
 		if result.MessageID.Valid {
-			createdAt := result.MessageCreatedAt.Time
-
-			text := ""
-			switch messageTypesMap[uint8(result.MessageType.Int32)] {
-			case domain.MessageTypeText:
-				text = result.MessageContent.String
-			case domain.MessageTypeRenamedConversation:
-				text = result.MessageUserName.String + " renamed chat to " + result.MessageContent.String
-			case domain.MessageTypeJoinedConversation:
-				text = result.MessageUserName.String + " joined"
-			case domain.MessageTypeLeftConversation:
-				text = result.MessageUserName.String + " left"
-			case domain.MessageTypeInvitedConversation:
-				text = result.MessageUserName.String + " was invited"
-			}
-
 			msgID := uuid.UUID(result.MessageID.Bytes)
 			msgUserID := uuid.UUID(result.MessageUserID.Bytes)
+			formattedText, _ := result.MessageFormattedText.(string)
 
 			messageDTO := readModel.MessageDTO{
 				ID:             msgID,
-				CreatedAt:      createdAt,
-				Text:           text,
+				CreatedAt:      result.MessageCreatedAt.Time,
+				Text:           formattedText,
 				Type:           messageTypesMap[uint8(result.MessageType.Int32)].String(),
 				ConversationId: pgtypeToUUID(result.ConversationID),
 				User: readModel.UserDTO{

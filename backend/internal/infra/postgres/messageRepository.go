@@ -35,3 +35,20 @@ func (r *messageRepository) Store(ctx context.Context, message *domain.Message) 
 
 	return nil
 }
+
+func (r *messageRepository) StoreSystemMessage(ctx context.Context, message *domain.Message) (bool, error) {
+	params := db.StoreSystemMessageParams{
+		ID:             uuidToPgtype(message.ID),
+		ConversationID: uuidToPgtype(message.ConversationID),
+		UserID:         uuidToPgtype(message.UserID),
+		Content:        message.Content.String(),
+		Type:           int32(toMessageTypePersistence(message.Type)),
+	}
+
+	rowsAffected, err := r.queries.StoreSystemMessage(ctx, params)
+	if err != nil {
+		return false, fmt.Errorf("store system message error: %w", err)
+	}
+
+	return rowsAffected > 0, nil
+}

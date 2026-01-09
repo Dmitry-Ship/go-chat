@@ -12,29 +12,28 @@ import (
 
 type Querier interface {
 	DeactivateConversation(ctx context.Context, id pgtype.UUID) error
-	DeactivateParticipant(ctx context.Context, id pgtype.UUID) error
 	FindParticipantByConversationAndUser(ctx context.Context, arg FindParticipantByConversationAndUserParams) (Participant, error)
 	FindUserByUsername(ctx context.Context, name string) (User, error)
 	// Complex queries for read model
 	GetContacts(ctx context.Context, arg GetContactsParams) ([]GetContactsRow, error)
-	GetConversationByID(ctx context.Context, id pgtype.UUID) (Conversation, error)
 	GetConversationFull(ctx context.Context, arg GetConversationFullParams) (GetConversationFullRow, error)
-	GetConversationMessagesWithUser(ctx context.Context, arg GetConversationMessagesWithUserParams) ([]GetConversationMessagesWithUserRow, error)
+	GetConversationIDsByUserID(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)
+	GetConversationMessagesWithFormattedText(ctx context.Context, arg GetConversationMessagesWithFormattedTextParams) ([]GetConversationMessagesWithFormattedTextRow, error)
 	GetDirectConversationBetweenUsers(ctx context.Context, arg GetDirectConversationBetweenUsersParams) (Conversation, error)
-	GetGroupConversationByID(ctx context.Context, conversationID pgtype.UUID) (GroupConversation, error)
+	GetDirectConversationWithParticipants(ctx context.Context, id pgtype.UUID) (GetDirectConversationWithParticipantsRow, error)
 	GetGroupConversationByOwnerID(ctx context.Context, ownerID pgtype.UUID) ([]GetGroupConversationByOwnerIDRow, error)
 	GetGroupConversationWithOwner(ctx context.Context, conversationID pgtype.UUID) (GetGroupConversationWithOwnerRow, error)
-	GetMessageByID(ctx context.Context, id pgtype.UUID) (GetMessageByIDRow, error)
-	GetMessagesForConversation(ctx context.Context, arg GetMessagesForConversationParams) ([]GetMessagesForConversationRow, error)
-	GetNotificationMessageWithUser(ctx context.Context, id pgtype.UUID) (GetNotificationMessageWithUserRow, error)
-	GetParticipantByID(ctx context.Context, id pgtype.UUID) (Participant, error)
+	GetNotificationMessageWithFormattedText(ctx context.Context, id pgtype.UUID) (GetNotificationMessageWithFormattedTextRow, error)
 	GetParticipantsByConversationID(ctx context.Context, arg GetParticipantsByConversationIDParams) ([]GetParticipantsByConversationIDRow, error)
-	GetParticipantsForConversation(ctx context.Context, arg GetParticipantsForConversationParams) ([]GetParticipantsForConversationRow, error)
 	GetParticipantsIDsByConversationID(ctx context.Context, conversationID pgtype.UUID) ([]pgtype.UUID, error)
 	GetPotentialInvitees(ctx context.Context, arg GetPotentialInviteesParams) ([]GetPotentialInviteesRow, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByIDDTO(ctx context.Context, id pgtype.UUID) (GetUserByIDDTORow, error)
 	GetUserConversations(ctx context.Context, arg GetUserConversationsParams) ([]GetUserConversationsRow, error)
+	InviteToConversationAtomic(ctx context.Context, arg InviteToConversationAtomicParams) (pgtype.UUID, error)
+	JoinConversationAtomic(ctx context.Context, arg JoinConversationAtomicParams) (pgtype.UUID, error)
+	KickParticipantAtomic(ctx context.Context, arg KickParticipantAtomicParams) (int64, error)
+	LeaveConversationAtomic(ctx context.Context, arg LeaveConversationAtomicParams) (int64, error)
 	// Conversation queries
 	StoreConversation(ctx context.Context, arg StoreConversationParams) error
 	// GroupConversation queries
@@ -43,6 +42,8 @@ type Querier interface {
 	StoreMessage(ctx context.Context, arg StoreMessageParams) error
 	// Participant queries
 	StoreParticipant(ctx context.Context, arg StoreParticipantParams) error
+	StoreParticipantsBatch(ctx context.Context, arg StoreParticipantsBatchParams) error
+	StoreSystemMessage(ctx context.Context, arg StoreSystemMessageParams) (int64, error)
 	// User queries
 	StoreUser(ctx context.Context, arg StoreUserParams) error
 	UpdateConversation(ctx context.Context, arg UpdateConversationParams) error

@@ -9,7 +9,7 @@ func (s *Server) initRoutes() http.Handler {
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 
 	mux.HandleFunc("POST /api/signup", s.corsHandler(s.securityHeaders(s.httpRateLimit(s.limitRequestBodySize(MaxRequestBodySize, s.handleSignUp)))))

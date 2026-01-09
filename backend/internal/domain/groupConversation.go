@@ -95,7 +95,7 @@ func (groupConversation *GroupConversation) Rename(newName string, participant *
 }
 
 func (groupConversation *GroupConversation) Join(user User) (*Participant, error) {
-	if !groupConversation.Conversation.IsActive {
+	if !groupConversation.IsActive {
 		return nil, ErrorConversationNotActive
 	}
 
@@ -105,7 +105,7 @@ func (groupConversation *GroupConversation) Join(user User) (*Participant, error
 }
 
 func (groupConversation *GroupConversation) Leave(participant *Participant) (*Participant, error) {
-	if !groupConversation.Conversation.IsActive {
+	if !groupConversation.IsActive {
 		return nil, ErrorConversationNotActive
 	}
 
@@ -123,7 +123,7 @@ func (groupConversation *GroupConversation) Invite(inviter *Participant, invitee
 		return nil, ErrorUserNotInConversation
 	}
 
-	if !groupConversation.Conversation.IsActive {
+	if !groupConversation.IsActive {
 		return nil, ErrorConversationNotActive
 	}
 
@@ -141,7 +141,7 @@ func (groupConversation *GroupConversation) Kick(kicker *Participant, target *Pa
 		return nil, ErrorUserNotInConversation
 	}
 
-	if !groupConversation.Conversation.IsActive {
+	if !groupConversation.IsActive {
 		return nil, ErrorConversationNotActive
 	}
 
@@ -159,7 +159,7 @@ func (groupConversation *GroupConversation) Kick(kicker *Participant, target *Pa
 }
 
 func (groupConversation *GroupConversation) SendTextMessage(messageID uuid.UUID, text string, participant *Participant) (*Message, error) {
-	if !groupConversation.Conversation.IsActive {
+	if !groupConversation.IsActive {
 		return nil, ErrorConversationNotActive
 	}
 
@@ -179,7 +179,7 @@ func (groupConversation *GroupConversation) SendTextMessage(messageID uuid.UUID,
 }
 
 func (groupConversation *GroupConversation) SendJoinedConversationMessage(messageID uuid.UUID, user *User) (*Message, error) {
-	if !groupConversation.Conversation.IsActive {
+	if !groupConversation.IsActive {
 		return nil, ErrorConversationNotActive
 	}
 
@@ -189,7 +189,7 @@ func (groupConversation *GroupConversation) SendJoinedConversationMessage(messag
 }
 
 func (groupConversation *GroupConversation) SendInvitedConversationMessage(messageID uuid.UUID, user *User) (*Message, error) {
-	if !groupConversation.Conversation.IsActive {
+	if !groupConversation.IsActive {
 		return nil, ErrorConversationNotActive
 	}
 
@@ -199,7 +199,7 @@ func (groupConversation *GroupConversation) SendInvitedConversationMessage(messa
 }
 
 func (groupConversation *GroupConversation) SendRenamedConversationMessage(messageID uuid.UUID, participant *Participant, newName string) (*Message, error) {
-	if !groupConversation.Conversation.IsActive {
+	if !groupConversation.IsActive {
 		return nil, ErrorConversationNotActive
 	}
 

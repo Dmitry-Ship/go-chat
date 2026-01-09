@@ -10,6 +10,7 @@ import (
 
 type MessageRepository interface {
 	Store(ctx context.Context, message *Message) error
+	StoreSystemMessage(ctx context.Context, message *Message) (bool, error)
 }
 
 type MessageType struct {
@@ -121,4 +122,16 @@ func newJoinedConversationMessage(messageID uuid.UUID, conversationID uuid.UUID,
 
 func newInvitedConversationMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID) *Message {
 	return newMessage(messageID, conversationID, userID, MessageTypeInvitedConversation, newEmptyMessageContent())
+}
+
+// NewSystemMessage creates a system message (joined, left, invited, renamed) without requiring full entity validation.
+// Validation is performed at the database level for optimal performance.
+func NewSystemMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, messageType MessageType, content string) *Message {
+	var msgContent messageContent
+	if messageType == MessageTypeRenamedConversation {
+		msgContent = newRenamedMessageContent(content)
+	} else {
+		msgContent = newEmptyMessageContent()
+	}
+	return newMessage(messageID, conversationID, userID, messageType, msgContent)
 }

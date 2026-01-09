@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -36,17 +37,19 @@ func (r *directConversationRepository) Store(ctx context.Context, conversation *
 			return fmt.Errorf("create conversation error: %w", err)
 		}
 
-		for _, participant := range conversation.Participants {
-			participantParams := db.StoreParticipantParams{
-				ID:             uuidToPgtype(participant.ID),
-				ConversationID: uuidToPgtype(participant.ConversationID),
-				UserID:         uuidToPgtype(participant.UserID),
-				IsActive:       participant.IsActive,
-			}
+		participantIDs := make([]pgtype.UUID, len(conversation.Participants))
+		userIDs := make([]pgtype.UUID, len(conversation.Participants))
+		for i, p := range conversation.Participants {
+			participantIDs[i] = uuidToPgtype(p.ID)
+			userIDs[i] = uuidToPgtype(p.UserID)
+		}
 
-			if err := qtx.StoreParticipant(ctx, participantParams); err != nil {
-				return fmt.Errorf("create participant error: %w", err)
-			}
+		if err := qtx.StoreParticipantsBatch(ctx, db.StoreParticipantsBatchParams{
+			Column1:        participantIDs,
+			ConversationID: uuidToPgtype(conversation.ID),
+			Column3:        userIDs,
+		}); err != nil {
+			return fmt.Errorf("create participants error: %w", err)
 		}
 
 		return nil
@@ -54,24 +57,27 @@ func (r *directConversationRepository) Store(ctx context.Context, conversation *
 }
 
 func (r *directConversationRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.DirectConversation, error) {
-	participants, err := r.queries.GetParticipantsIDsByConversationID(ctx, uuidToPgtype(id))
+	conv, err := r.queries.GetDirectConversationWithParticipants(ctx, uuidToPgtype(id))
 	if err != nil {
 		return nil, fmt.Errorf("get direct conversation error: %w", err)
 	}
 
-	if len(participants) == 0 {
+	// Parse the ARRAY_AGG result - PostgreSQL returns this as a slice of [16]byte
+	participantUserIDs, ok := conv.ParticipantUserIds.([]interface{})
+	if !ok || len(participantUserIDs) == 0 {
 		return nil, fmt.Errorf("direct conversation not found")
 	}
 
-	conv, err := r.queries.GetConversationByID(ctx, uuidToPgtype(id))
-	if err != nil {
-		return nil, fmt.Errorf("get conversation error: %w", err)
-	}
-
-	participantsDomain := make([]domain.Participant, len(participants))
-	for i, userID := range participants {
+	participantsDomain := make([]domain.Participant, len(participantUserIDs))
+	for i, userIDRaw := range participantUserIDs {
+		// Convert from [16]byte to uuid.UUID
+		userIDBytes, ok := userIDRaw.([16]byte)
+		if !ok {
+			return nil, fmt.Errorf("invalid user id format")
+		}
+		userID := uuid.UUID(userIDBytes)
 		participantsDomain[i] = domain.Participant{
-			UserID:         pgtypeToUUID(userID),
+			UserID:         userID,
 			ConversationID: pgtypeToUUID(conv.ID),
 			IsActive:       true,
 		}

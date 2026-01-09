@@ -84,10 +84,15 @@ func (r *participantRepository) GetIDsByConversationID(ctx context.Context, conv
 }
 
 func (r *participantRepository) GetConversationIDsByUserID(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
-	participants, err := r.queries.GetParticipantByID(ctx, uuidToPgtype(userID))
+	conversationIDs, err := r.queries.GetConversationIDsByUserID(ctx, uuidToPgtype(userID))
 	if err != nil {
 		return nil, fmt.Errorf("get user conversations error: %w", err)
 	}
 
-	return []uuid.UUID{pgtypeToUUID(participants.ConversationID)}, nil
+	ids := make([]uuid.UUID, len(conversationIDs))
+	for i, id := range conversationIDs {
+		ids[i] = pgtypeToUUID(id)
+	}
+
+	return ids, nil
 }
