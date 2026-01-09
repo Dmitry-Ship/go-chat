@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
 
@@ -20,7 +20,7 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool, migrationsDir string
 		config.Database,
 	)
 
-	db, err := goose.OpenDBWithDriver("postgres", connString)
+	db, err := goose.OpenDBWithDriver("pgx", connString)
 	if err != nil {
 		return fmt.Errorf("open database connection: %w", err)
 	}

@@ -8,6 +8,33 @@ import (
 	"github.com/google/uuid"
 )
 
+func isSecureRequest(r *http.Request) bool {
+	if r.URL.Scheme != "" {
+		return r.URL.Scheme == "https"
+	}
+	return r.TLS != nil
+}
+
+func setAuthCookie(w http.ResponseWriter, r *http.Request, name, value string, expires time.Time) {
+	cookie := &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Expires:  expires,
+		HttpOnly: true,
+		Path:     "/",
+	}
+
+	if isSecureRequest(r) {
+		cookie.Secure = true
+		cookie.SameSite = http.SameSiteNoneMode
+	} else {
+		cookie.Secure = false
+		cookie.SameSite = http.SameSiteLaxMode
+	}
+
+	http.SetCookie(w, cookie)
+}
+
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	request := struct {
 		UserName string `json:"username"`
@@ -26,25 +53,8 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    tokens.AccessToken,
-		Expires:  time.Now().Add(tokens.AccessTokenExpiration),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken,
-		Expires:  time.Now().Add(tokens.RefreshTokenExpiration),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
-	})
+	setAuthCookie(w, r, "access_token", tokens.AccessToken, time.Now().Add(tokens.AccessTokenExpiration))
+	setAuthCookie(w, r, "refresh_token", tokens.RefreshToken, time.Now().Add(tokens.RefreshTokenExpiration))
 
 	expiration := struct {
 		AccessTokenExpiration time.Duration `json:"access_token_expiration"`
@@ -71,19 +81,37 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
+	cookie := &http.Cookie{
 		Name:     "access_token",
 		Value:    "",
 		HttpOnly: true,
 		MaxAge:   -1,
-	})
+		Path:     "/",
+	}
+	if !isSecureRequest(r) {
+		cookie.Secure = false
+		cookie.SameSite = http.SameSiteLaxMode
+	} else {
+		cookie.Secure = true
+		cookie.SameSite = http.SameSiteNoneMode
+	}
+	http.SetCookie(w, cookie)
 
-	http.SetCookie(w, &http.Cookie{
+	cookie = &http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",
 		HttpOnly: true,
 		MaxAge:   -1,
-	})
+		Path:     "/",
+	}
+	if !isSecureRequest(r) {
+		cookie.Secure = false
+		cookie.SameSite = http.SameSiteLaxMode
+	} else {
+		cookie.Secure = true
+		cookie.SameSite = http.SameSiteNoneMode
+	}
+	http.SetCookie(w, cookie)
 
 	if err := json.NewEncoder(w).Encode("OK"); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -109,25 +137,8 @@ func (s *Server) handleSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    tokens.AccessToken,
-		HttpOnly: true,
-		Secure:   true,
-		Expires:  time.Now().Add(tokens.AccessTokenExpiration),
-		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken,
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-		Expires:  time.Now().Add(tokens.RefreshTokenExpiration),
-		SameSite: http.SameSiteNoneMode,
-	})
+	setAuthCookie(w, r, "access_token", tokens.AccessToken, time.Now().Add(tokens.AccessTokenExpiration))
+	setAuthCookie(w, r, "refresh_token", tokens.RefreshToken, time.Now().Add(tokens.RefreshTokenExpiration))
 
 	expiration := struct {
 		AccessTokenExpiration time.Duration `json:"access_token_expiration"`
@@ -161,25 +172,8 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    newTokens.AccessToken,
-		HttpOnly: true,
-		Secure:   true,
-		Expires:  time.Now().Add(newTokens.AccessTokenExpiration),
-		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    newTokens.RefreshToken,
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-		Expires:  time.Now().Add(newTokens.RefreshTokenExpiration),
-		SameSite: http.SameSiteNoneMode,
-	})
+	setAuthCookie(w, r, "access_token", newTokens.AccessToken, time.Now().Add(newTokens.AccessTokenExpiration))
+	setAuthCookie(w, r, "refresh_token", newTokens.RefreshToken, time.Now().Add(newTokens.RefreshTokenExpiration))
 
 	expiration := struct {
 		AccessTokenExpiration time.Duration `json:"access_token_expiration"`

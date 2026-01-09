@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"GitHub/go-chat/backend/internal/infra/postgres/db"
 
@@ -20,7 +21,7 @@ type DbConfig struct {
 
 func NewDatabaseConnection(ctx context.Context, conf DbConfig) (*pgxpool.Pool, error) {
 	connString := fmt.Sprintf(
-		"host=%s port=%s user=%s dbname=%s password=%s sslmode=require",
+		"host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
 		conf.Host, conf.Port, conf.User, conf.Name, conf.Password,
 	)
 
@@ -29,16 +30,32 @@ func NewDatabaseConnection(ctx context.Context, conf DbConfig) (*pgxpool.Pool, e
 		return nil, fmt.Errorf("parse config error: %w", err)
 	}
 
-	pool, err := pgxpool.NewWithConfig(ctx, config)
-	if err != nil {
-		return nil, fmt.Errorf("create pool error: %w", err)
+	var pool *pgxpool.Pool
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		pool, err = pgxpool.NewWithConfig(ctx, config)
+		if err != nil {
+			if i < maxRetries-1 {
+				log.Printf("Failed to create pool, retrying in 2s... (%d/%d)", i+1, maxRetries)
+				time.Sleep(2 * time.Second)
+				continue
+			}
+			return nil, fmt.Errorf("create pool error: %w", err)
+		}
+
+		if err := pool.Ping(ctx); err != nil {
+			if i < maxRetries-1 {
+				log.Printf("Failed to ping, retrying in 2s... (%d/%d)", i+1, maxRetries)
+				pool.Close()
+				time.Sleep(2 * time.Second)
+				continue
+			}
+			return nil, fmt.Errorf("ping error: %w", err)
+		}
+		break
 	}
 
-	if err := pool.Ping(ctx); err != nil {
-		return nil, fmt.Errorf("ping error: %w", err)
-	}
-
-	migrationsDir := "./migrations"
+	migrationsDir := "internal/infra/postgres/migrations/up"
 	if err := RunMigrations(ctx, pool, migrationsDir); err != nil {
 		return nil, fmt.Errorf("migrate error: %w", err)
 	}

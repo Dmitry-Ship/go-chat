@@ -78,12 +78,12 @@ func (s *notificationService) Broadcast(ctx context.Context, channelID uuid.UUID
 		UserID:  notification.UserID,
 	}
 
-	json, err := json.Marshal(bMessage)
+	data, err := json.Marshal(bMessage)
 	if err != nil {
 		return fmt.Errorf("json marshal error: %w", err)
 	}
 
-	if err := s.redisClient.Publish(ctx, pubsub.ChatChannel, []byte(json)).Err(); err != nil {
+	if err := s.redisClient.Publish(ctx, pubsub.ChatChannel, data).Err(); err != nil {
 		return fmt.Errorf("redis publish error: %w", err)
 	}
 
@@ -190,7 +190,7 @@ func (s *notificationService) publishInvalidate(userID uuid.UUID) error {
 		return fmt.Errorf("json marshal error: %w", err)
 	}
 
-	if err := s.redisClient.Publish(context.Background(), s.subscriptionChannel, data).Err(); err != nil {
+	if err := s.redisClient.Publish(s.ctx, s.subscriptionChannel, data).Err(); err != nil {
 		return fmt.Errorf("redis publish error: %w", err)
 	}
 

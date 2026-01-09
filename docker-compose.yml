@@ -1,18 +1,18 @@
-version: "3.9"
-
 services:
   load_balancer:
-    image: nginx:1.21.6-alpine
+    image: nginx:1.29.4-alpine
     ports:
       - 8080:80
     volumes:
       - ./balancer/nginx/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
-      - api
-      - frontend
+      # api:
+      #   condition: service_healthy
+      frontend:
+        condition: service_healthy
 
   redis:
-    image: redis:6.2.6-alpine
+    image: redis:8.4.0-alpine
     restart: always
     ports:
       - ${REDIS_PORT}:${REDIS_PORT}
@@ -21,7 +21,7 @@ services:
       - ./cache:/data
 
   postgres:
-    image: postgres:14.2-alpine
+    image: postgres:18.1-alpine3.23
     ports:
       - ${DB_PORT}:${DB_PORT}
     environment:
@@ -33,9 +33,17 @@ services:
       - ./db/pgdata:/pgdata
 
   api:
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
     environment:
       - PORT=${API_PORT}
-      - CLIENT_ORIGIN      
+      - CLIENT_ORIGIN
+      - ACCESS_TOKEN_SECRET
+      - REFRESH_TOKEN_SECRET
       - DB_PORT
       - DB_HOST
       - DB_NAME
@@ -44,43 +52,31 @@ services:
       - REDIS_HOST
       - REDIS_PORT
       - REDIS_PASSWORD
+      - WS_RATE_LIMIT_MAX_USER
+      - WS_RATE_LIMIT_MAX_IP
+      - WS_RATE_LIMIT_WINDOW
     build:
       context: ./backend
-      target: dev
-    volumes:
-      - ./backend:/app
+      # target: debug
     depends_on:
       - postgres
       - redis
 
   frontend:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
     restart: always
     build:
       context: ./frontend
-      target: dev
-    volumes:
-      - ./frontend:/client
-      - /client/node_modules/
+      # target: prod
+    #   target: dev
+    # volumes:
+    #   - ./frontend:/client
+    #   - /client/node_modules/
     depends_on:
       - api
 
-
-  # sql_proxy:
-  #   environment:
-  #     - CLOUDSQL_CONNECTION_NAME
-  #     - CLOUDSQL_USER=${DB_USER}
-  #     - CLOUDSQL_PASSWORD=${DB_PASSWORD}
-  #   image: gcr.io/cloudsql-docker/gce-proxy:1.19.1
-  #   command:
-  #     - "/cloud_sql_proxy"
-  #     - "-dir=/cloudsql"
-  #     - "-instances=${CLOUDSQL_CONNECTION_NAME}"
-  #     - "-credential_file=/tmp/keys/keyfile.json"
-  #   # Allow the container to bind to the unix socket.
-  #   user: root
-  #   volumes:
-  #     - ${GCP_KEY_PATH}:/tmp/keys/keyfile.json:ro
-  # - cloudsql:/cloudsql
-# volumes:
-#   # This empty property initializes a named volume.
-#   database:

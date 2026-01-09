@@ -1,10 +1,6 @@
-.env
-tmp
-
-.vscode
-
-.git
-.gitignore
-.github
-
-**/*go-bin
+*
+!go.mod
+!go.sum
+!cmd/
+!internal/
+!internal/infra/postgres/migrations/

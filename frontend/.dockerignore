@@ -1,4 +1,6 @@
-Dockerfile
-node_modules/*
-.next/*
-
+.git
+.next
+node_modules
+.env
+*.log
+.DS_Store

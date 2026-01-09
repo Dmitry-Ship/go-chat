@@ -31,6 +31,7 @@ type connectionOptions struct {
 type Client struct {
 	Id                         uuid.UUID
 	UserID                     uuid.UUID
+	channelIDs                 map[uuid.UUID]struct{}
 	connection                 *websocket.Conn
 	sendChannel                chan OutgoingNotification
 	handleIncomingNotification func(userID uuid.UUID, message []byte)
@@ -42,6 +43,7 @@ func NewClient(conn *websocket.Conn, unregisterClient func(*Client), handleIncom
 	return &Client{
 		Id:                         uuid.New(),
 		UserID:                     userID,
+		channelIDs:                 make(map[uuid.UUID]struct{}),
 		connection:                 conn,
 		sendChannel:                make(chan OutgoingNotification, SendChannelSize),
 		unregisterClient:           unregisterClient,

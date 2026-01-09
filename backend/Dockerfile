@@ -1,30 +1,25 @@
-# stage 1: install dependencies
-FROM golang:1.18.3-alpine3.16 AS base
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
-
 RUN go mod download
-RUN go install github.com/githubnemo/CompileDaemon@latest
 
 COPY . .
 
-# stage 2: build binary for production
-FROM base as build
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o server ./cmd/server
 
-RUN go build -v -o main ./cmd/server
+FROM alpine:3.22
 
-# stage 3: run binary
-FROM alpine:3.16 as prod
+RUN addgroup -S app && adduser -S -G app app
 
-RUN apk --no-cache add ca-certificates
+WORKDIR /app
 
-COPY --from=build /app/main .
+USER app
 
-ENTRYPOINT "./main"
+COPY --from=builder /app/server /app/server
+COPY --from=builder /app/internal/infra/postgres/migrations /app/internal/infra/postgres/migrations
 
-# stage 4: run in watch mode
-FROM base as dev
+EXPOSE 4000
 
-ENTRYPOINT CompileDaemon --build="go build -v -o go-bin ./cmd/server/main.go" --command=./go-bin
+CMD ["/app/server"]
