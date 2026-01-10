@@ -140,3 +140,12 @@ export const getPotentialInvitees = (
   fetchWithAuth<UserDTO[]>(
     `/api/getPotentialInvitees?conversation_id=${conversationId}&page=${page}&page_size=${pageSize}`
   );
+
+export const sendMessage = (content: string, conversationId: string) =>
+  fetchWithAuth<{ messageId: string; createdAt: string }>(
+    "/api/sendMessage",
+    {
+      method: "POST",
+      body: JSON.stringify({ content, conversation_id: conversationId }),
+    }
+  );

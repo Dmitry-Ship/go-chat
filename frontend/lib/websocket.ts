@@ -1,6 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
 import {
-  WSIncomingMessage,
   WSOutgoingMessage,
   MessageDTO,
   ConversationFullDTO,
@@ -131,16 +130,6 @@ class WebSocketManager {
       this.ws.close();
       this.ws = null;
     }
-  }
-
-  sendMessage(type: "group_message" | "direct_message", data: { content: string; conversation_id: string }): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.error("WebSocket is not connected");
-      return;
-    }
-
-    const message: WSIncomingMessage = { type, data };
-    this.ws.send(JSON.stringify(message));
   }
 
   onMessage(handler: MessageHandler): () => void {

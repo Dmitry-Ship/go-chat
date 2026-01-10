@@ -2,14 +2,14 @@
 
 import { useRef, useCallback } from "react";
 import { useChat } from "@/contexts/ChatContext";
-import { useConversation } from "@/hooks/queries/useConversation";
 import { useMessages } from "@/hooks/queries/useMessages";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 
-import { wsManager } from "@/lib/websocket";
+import { sendMessage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ChatAreaProps {
   className?: string;
@@ -18,18 +18,16 @@ interface ChatAreaProps {
 export const ChatArea = ({ className = "" }: ChatAreaProps) => {
   const { activeConversationId, setActiveConversation } = useChat();
   const { user } = useAuth();
-  const { data: conversation } = useConversation(activeConversationId);
+  const queryClient = useQueryClient();
   const { data: messages } = useMessages(activeConversationId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const isDirect = conversation?.type === "direct";
-
-  const handleSendMessage = useCallback((content: string) => {
+  const handleSendMessage = useCallback(async (content: string) => {
     if (!activeConversationId) return;
 
-    const type = isDirect ? "direct_message" : "group_message";
-    wsManager.sendMessage(type, { content, conversation_id: activeConversationId });
-  }, [activeConversationId, isDirect]);
+    await sendMessage(content, activeConversationId);
+    queryClient.invalidateQueries({ queryKey: ["messages", activeConversationId] });
+  }, [activeConversationId, queryClient]);
 
   if (!activeConversationId) {
     return (

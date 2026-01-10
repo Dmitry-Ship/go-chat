@@ -20,6 +20,7 @@ func (s *Server) initRoutes() http.Handler {
 	mux.HandleFunc("GET /ws", s.securityHeaders(s.wsRateLimit(s.private(s.handleOpenWSConnection()))))
 
 	mux.HandleFunc("POST /api/createConversation", s.corsHandler(s.securityHeaders(s.limitRequestBodySize(MaxRequestBodySize, s.private(s.handleCreateGroupConversation)))))
+	mux.HandleFunc("POST /api/sendMessage", s.corsHandler(s.securityHeaders(s.limitRequestBodySize(MaxRequestBodySize, s.private(s.handleSendMessage)))))
 	mux.HandleFunc("POST /api/startDirectConversation", s.corsHandler(s.securityHeaders(s.limitRequestBodySize(MaxRequestBodySize, s.private(s.handleStartDirectConversation)))))
 	mux.HandleFunc("POST /api/deleteConversation", s.corsHandler(s.securityHeaders(s.limitRequestBodySize(MaxRequestBodySize, s.private(s.handleDeleteConversation)))))
 	mux.HandleFunc("POST /api/joinConversation", s.corsHandler(s.securityHeaders(s.limitRequestBodySize(MaxRequestBodySize, s.private(s.handleJoin)))))
