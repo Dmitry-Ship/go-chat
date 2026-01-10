@@ -15,7 +15,7 @@ type tokenClaims struct {
 	jwt.StandardClaims
 }
 
-type tokens struct {
+type Tokens struct {
 	AccessToken            string `json:"access_token"`
 	RefreshToken           string `json:"refresh_token"`
 	RefreshTokenExpiration time.Duration
@@ -29,7 +29,7 @@ type jwTokens struct {
 type JWTokens interface {
 	ParseAccessToken(accessTokenString string) (uuid.UUID, error)
 	ParseRefreshToken(refreshTokenString string) (uuid.UUID, error)
-	CreateTokens(userid uuid.UUID) (tokens, error)
+	CreateTokens(userid uuid.UUID) (Tokens, error)
 }
 
 func NewJWTokens(config config.Auth) *jwTokens {
@@ -76,8 +76,8 @@ func (a *jwTokens) createRefreshToken(userid uuid.UUID) (string, error) {
 	return token, nil
 }
 
-func (a *jwTokens) CreateTokens(userid uuid.UUID) (tokens, error) {
-	var newTokens tokens
+func (a *jwTokens) CreateTokens(userid uuid.UUID) (Tokens, error) {
+	var newTokens Tokens
 
 	accessToken, err := a.createAccessToken(userid)
 

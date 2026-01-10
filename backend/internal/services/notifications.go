@@ -25,18 +25,18 @@ type SubscriptionEvent struct {
 	UserID uuid.UUID `json:"user_id"`
 }
 
-type NotificationService interface {
-	Broadcast(ctx context.Context, channelID uuid.UUID, notification ws.OutgoingNotification) error
-	RegisterClient(ctx context.Context, conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) uuid.UUID
-	Run()
-	InvalidateMembership(ctx context.Context, userID uuid.UUID) error
-}
-
 type notificationService struct {
 	ctx                 context.Context
 	activeClients       ws.ActiveClients
 	redisClient         *redis.Client
 	subscriptionChannel string
+}
+
+type NotificationService interface {
+	Broadcast(ctx context.Context, channelID uuid.UUID, notification ws.OutgoingNotification) error
+	RegisterClient(ctx context.Context, conn *websocket.Conn, userID uuid.UUID, handleNotification func(userID uuid.UUID, message []byte)) uuid.UUID
+	Run()
+	InvalidateMembership(ctx context.Context, userID uuid.UUID) error
 }
 
 func NewNotificationService(

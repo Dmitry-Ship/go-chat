@@ -799,41 +799,6 @@ func (q *Queries) IsMemberOwner(ctx context.Context, arg IsMemberOwnerParams) (b
 	return exists, err
 }
 
-const joinConversationAtomic = `-- name: JoinConversationAtomic :one
-WITH valid_conversation AS (
-    SELECT gc.conversation_id as conv_id
-    FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    WHERE gc.conversation_id = $1 
-        AND c.deleted_at IS NULL
-        AND gc.deleted_at IS NULL
-),
-valid_user AS (
-    SELECT u.id as user_id FROM users u WHERE u.id = $2 AND u.deleted_at IS NULL
-),
-new_participant AS (
-    INSERT INTO participants (id, conversation_id, user_id, created_at)
-    SELECT $3, vc.conv_id, vu.user_id, NOW()
-    FROM valid_conversation vc, valid_user vu
-    ON CONFLICT DO NOTHING
-    RETURNING user_id
-)
-SELECT user_id FROM new_participant
-`
-
-type JoinConversationAtomicParams struct {
-	ConversationID pgtype.UUID `json:"conversation_id"`
-	ID             pgtype.UUID `json:"id"`
-	ID_2           pgtype.UUID `json:"id_2"`
-}
-
-func (q *Queries) JoinConversationAtomic(ctx context.Context, arg JoinConversationAtomicParams) (pgtype.UUID, error) {
-	row := q.db.QueryRow(ctx, joinConversationAtomic, arg.ConversationID, arg.ID, arg.ID_2)
-	var user_id pgtype.UUID
-	err := row.Scan(&user_id)
-	return user_id, err
-}
-
 const kickParticipantAtomic = `-- name: KickParticipantAtomic :execrows
 UPDATE participants
 SET deleted_at = NOW(), updated_at = NOW()
@@ -1107,6 +1072,75 @@ func (q *Queries) StoreSystemMessage(ctx context.Context, arg StoreSystemMessage
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const storeSystemMessageAndReturn = `-- name: StoreSystemMessageAndReturn :one
+WITH valid_conversation AS (
+    SELECT gc.conversation_id as conv_id
+    FROM group_conversations gc
+    JOIN conversations c ON c.id = gc.conversation_id
+    WHERE gc.conversation_id = $2 
+        AND c.deleted_at IS NULL
+        AND gc.deleted_at IS NULL
+),
+valid_user AS (
+    SELECT u.id as user_id FROM users u WHERE u.id = $3 AND u.deleted_at IS NULL
+),
+new_message AS (
+    INSERT INTO messages (id, conversation_id, user_id, content, type)
+    SELECT $1, vc.conv_id, vu.user_id, $4, $5
+    FROM valid_conversation vc, valid_user vu
+    ON CONFLICT DO NOTHING
+    RETURNING id, type, created_at, conversation_id, content
+)
+SELECT
+    nm.id, nm.type, nm.created_at, nm.conversation_id,
+    nm.content as formatted_text,
+    u.id as user_id, u.name as user_name, u.avatar as user_avatar
+FROM new_message nm
+JOIN users u ON u.id = nm.user_id
+WHERE u.deleted_at IS NULL
+`
+
+type StoreSystemMessageAndReturnParams struct {
+	ID             pgtype.UUID `json:"id"`
+	ConversationID pgtype.UUID `json:"conversation_id"`
+	ID_2           pgtype.UUID `json:"id_2"`
+	Content        string      `json:"content"`
+	Type           int32       `json:"type"`
+}
+
+type StoreSystemMessageAndReturnRow struct {
+	ID             pgtype.UUID        `json:"id"`
+	Type           int32              `json:"type"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	ConversationID pgtype.UUID        `json:"conversation_id"`
+	FormattedText  string             `json:"formatted_text"`
+	UserID         pgtype.UUID        `json:"user_id"`
+	UserName       string             `json:"user_name"`
+	UserAvatar     pgtype.Text        `json:"user_avatar"`
+}
+
+func (q *Queries) StoreSystemMessageAndReturn(ctx context.Context, arg StoreSystemMessageAndReturnParams) (StoreSystemMessageAndReturnRow, error) {
+	row := q.db.QueryRow(ctx, storeSystemMessageAndReturn,
+		arg.ID,
+		arg.ConversationID,
+		arg.ID_2,
+		arg.Content,
+		arg.Type,
+	)
+	var i StoreSystemMessageAndReturnRow
+	err := row.Scan(
+		&i.ID,
+		&i.Type,
+		&i.CreatedAt,
+		&i.ConversationID,
+		&i.FormattedText,
+		&i.UserID,
+		&i.UserName,
+		&i.UserAvatar,
+	)
+	return i, err
 }
 
 const storeUser = `-- name: StoreUser :exec

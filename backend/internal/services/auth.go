@@ -6,20 +6,13 @@ import (
 
 	"GitHub/go-chat/backend/internal/config"
 	"GitHub/go-chat/backend/internal/domain"
+
 	"github.com/google/uuid"
 )
 
 type authService struct {
 	users    domain.UserRepository
 	jwTokens JWTokens
-}
-
-type AuthService interface {
-	Login(ctx context.Context, username string, password string) (tokens, error)
-	Logout(ctx context.Context, userID uuid.UUID) error
-	SignUp(ctx context.Context, username string, password string) (tokens, error)
-	RotateTokens(ctx context.Context, refreshTokenString string) (tokens, error)
-	ParseAccessToken(accessTokenString string) (uuid.UUID, error)
 }
 
 func NewAuthService(users domain.UserRepository, config config.Auth) *authService {
@@ -29,27 +22,27 @@ func NewAuthService(users domain.UserRepository, config config.Auth) *authServic
 	}
 }
 
-func (a *authService) Login(ctx context.Context, username string, password string) (tokens, error) {
+func (a *authService) Login(ctx context.Context, username string, password string) (Tokens, error) {
 	user, err := a.users.FindByUsername(ctx, username)
 
 	if err != nil {
-		return tokens{}, fmt.Errorf("find by username error: %w", err)
+		return Tokens{}, fmt.Errorf("find by username error: %w", err)
 	}
 
 	if err := domain.ComparePassword(user.PasswordHash, password); err != nil {
-		return tokens{}, fmt.Errorf("compare password error: %w", err)
+		return Tokens{}, fmt.Errorf("compare password error: %w", err)
 	}
 
 	newTokens, err := a.jwTokens.CreateTokens(user.ID)
 
 	if err != nil {
-		return tokens{}, fmt.Errorf("create tokens error: %w", err)
+		return Tokens{}, fmt.Errorf("create tokens error: %w", err)
 	}
 
 	user.SetRefreshToken(newTokens.RefreshToken)
 
 	if err = a.users.Update(ctx, user); err != nil {
-		return tokens{}, fmt.Errorf("update user error: %w", err)
+		return Tokens{}, fmt.Errorf("update user error: %w", err)
 	}
 
 	return newTokens, err
@@ -73,15 +66,15 @@ func (a *authService) Logout(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
-func (a *authService) SignUp(ctx context.Context, username string, password string) (tokens, error) {
+func (a *authService) SignUp(ctx context.Context, username string, password string) (Tokens, error) {
 	if err := domain.ValidateUsername(username); err != nil {
-		return tokens{}, fmt.Errorf("validate username error: %w", err)
+		return Tokens{}, fmt.Errorf("validate username error: %w", err)
 	}
 
 	hashedPassword, err := domain.HashPassword(password)
 
 	if err != nil {
-		return tokens{}, fmt.Errorf("hash password error: %w", err)
+		return Tokens{}, fmt.Errorf("hash password error: %w", err)
 	}
 
 	userID := uuid.New()
@@ -91,45 +84,45 @@ func (a *authService) SignUp(ctx context.Context, username string, password stri
 	newTokens, err := a.jwTokens.CreateTokens(user.ID)
 
 	if err != nil {
-		return tokens{}, fmt.Errorf("create tokens error: %w", err)
+		return Tokens{}, fmt.Errorf("create tokens error: %w", err)
 	}
 
 	user.SetRefreshToken(newTokens.RefreshToken)
 
 	if err = a.users.Store(ctx, user); err != nil {
-		return tokens{}, fmt.Errorf("store user error: %w", err)
+		return Tokens{}, fmt.Errorf("store user error: %w", err)
 	}
 
 	return newTokens, nil
 }
 
-func (a *authService) RotateTokens(ctx context.Context, refreshTokenString string) (tokens, error) {
+func (a *authService) RotateTokens(ctx context.Context, refreshTokenString string) (Tokens, error) {
 	userID, err := a.jwTokens.ParseRefreshToken(refreshTokenString)
 
 	if err != nil {
-		return tokens{}, fmt.Errorf("parse refresh token error: %w", err)
+		return Tokens{}, fmt.Errorf("parse refresh token error: %w", err)
 	}
 
 	user, err := a.users.GetByID(ctx, userID)
 
 	if err != nil {
-		return tokens{}, fmt.Errorf("get by id error: %w", err)
+		return Tokens{}, fmt.Errorf("get by id error: %w", err)
 	}
 
 	if user.RefreshToken != refreshTokenString {
-		return tokens{}, fmt.Errorf("invalid token")
+		return Tokens{}, fmt.Errorf("invalid token")
 	}
 
 	newTokens, err := a.jwTokens.CreateTokens(user.ID)
 
 	if err != nil {
-		return tokens{}, fmt.Errorf("create tokens error: %w", err)
+		return Tokens{}, fmt.Errorf("create tokens error: %w", err)
 	}
 
 	user.SetRefreshToken(newTokens.RefreshToken)
 
 	if err = a.users.Update(ctx, user); err != nil {
-		return tokens{}, fmt.Errorf("update user error: %w", err)
+		return Tokens{}, fmt.Errorf("update user error: %w", err)
 	}
 
 	return newTokens, nil

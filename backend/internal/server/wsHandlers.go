@@ -44,7 +44,7 @@ func (s *Server) handleReceiveWSGroupChatMessage(data json.RawMessage, userID uu
 		return
 	}
 
-	err := s.conversationCommands.SendGroupTextMessage(context.Background(), request.ConversationId, userID, request.Content)
+	err := s.conversationCommands.SendTextMessage(context.Background(), request.ConversationId, userID, request.Content)
 
 	if err != nil {
 		log.Println(err)
@@ -63,7 +63,7 @@ func (s *Server) handleReceiveWSDirectChatMessage(data json.RawMessage, userID u
 		return
 	}
 
-	err := s.conversationCommands.SendDirectTextMessage(context.Background(), request.ConversationId, userID, request.Content)
+	err := s.conversationCommands.SendTextMessage(context.Background(), request.ConversationId, userID, request.Content)
 
 	if err != nil {
 		log.Println(err)

@@ -286,27 +286,6 @@ SELECT conversation_id
 FROM participants
 WHERE user_id = $1 AND deleted_at IS NULL;
 
--- name: JoinConversationAtomic :one
-WITH valid_conversation AS (
-    SELECT gc.conversation_id as conv_id
-    FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    WHERE gc.conversation_id = $1 
-        AND c.deleted_at IS NULL
-        AND gc.deleted_at IS NULL
-),
-valid_user AS (
-    SELECT u.id as user_id FROM users u WHERE u.id = $2 AND u.deleted_at IS NULL
-),
-new_participant AS (
-    INSERT INTO participants (id, conversation_id, user_id, created_at)
-    SELECT $3, vc.conv_id, vu.user_id, NOW()
-    FROM valid_conversation vc, valid_user vu
-    ON CONFLICT DO NOTHING
-    RETURNING user_id
-)
-SELECT user_id FROM new_participant;
-
 -- name: LeaveConversationAtomic :execrows
 UPDATE participants
 SET deleted_at = NOW(), updated_at = NOW()
@@ -356,6 +335,33 @@ SELECT EXISTS(
     WHERE gc.conversation_id = $1 AND gc.owner_id = $2
       AND gc.deleted_at IS NULL AND c.deleted_at IS NULL AND p.deleted_at IS NULL
 );
+
+-- name: StoreSystemMessageAndReturn :one
+WITH valid_conversation AS (
+    SELECT gc.conversation_id as conv_id
+    FROM group_conversations gc
+    JOIN conversations c ON c.id = gc.conversation_id
+    WHERE gc.conversation_id = $2 
+        AND c.deleted_at IS NULL
+        AND gc.deleted_at IS NULL
+),
+valid_user AS (
+    SELECT u.id as user_id FROM users u WHERE u.id = $3 AND u.deleted_at IS NULL
+),
+new_message AS (
+    INSERT INTO messages (id, conversation_id, user_id, content, type)
+    SELECT $1, vc.conv_id, vu.user_id, $4, $5
+    FROM valid_conversation vc, valid_user vu
+    ON CONFLICT DO NOTHING
+    RETURNING id, type, created_at, conversation_id, content
+)
+SELECT
+    nm.id, nm.type, nm.created_at, nm.conversation_id,
+    nm.content as formatted_text,
+    u.id as user_id, u.name as user_name, u.avatar as user_avatar
+FROM new_message nm
+JOIN users u ON u.id = nm.user_id
+WHERE u.deleted_at IS NULL;
 
 -- name: StoreMessageAndReturnWithUser :one
 WITH new_message AS (

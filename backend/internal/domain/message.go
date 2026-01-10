@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"GitHub/go-chat/backend/internal/readModel"
+
 	"github.com/google/uuid"
 	"github.com/microcosm-cc/bluemonday"
 )
@@ -11,6 +13,7 @@ import (
 type MessageRepository interface {
 	Store(ctx context.Context, message *Message) error
 	StoreSystemMessage(ctx context.Context, message *Message) (bool, error)
+	StoreSystemMessageAndReturn(ctx context.Context, message *Message, requestUserID uuid.UUID) (readModel.MessageDTO, error)
 }
 
 type MessageType struct {

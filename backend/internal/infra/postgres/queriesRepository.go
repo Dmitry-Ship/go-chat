@@ -218,6 +218,33 @@ func (r *queriesRepository) StoreMessageAndReturnWithUser(id uuid.UUID, conversa
 	return formatter.FormatMessageDTO(rawMessage, userID), nil
 }
 
+func (r *queriesRepository) StoreSystemMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
+	msg, err := r.queries.StoreSystemMessageAndReturn(context.Background(), db.StoreSystemMessageAndReturnParams{
+		ID:             uuidToPgtype(id),
+		ConversationID: uuidToPgtype(conversationID),
+		ID_2:           uuidToPgtype(userID),
+		Content:        content,
+		Type:           messageType,
+	})
+	if err != nil {
+		return readModel.MessageDTO{}, err
+	}
+
+	formatter := presentation.NewMessageFormatter()
+	rawMessage := readModel.RawMessageDTO{
+		ID:             pgtypeToUUID(msg.ID),
+		Type:           uint8(msg.Type),
+		CreatedAt:      msg.CreatedAt.Time,
+		ConversationID: pgtypeToUUID(msg.ConversationID),
+		Content:        msg.FormattedText,
+		UserID:         pgtypeToUUID(msg.UserID),
+		UserName:       msg.UserName,
+		UserAvatar:     msg.UserAvatar.String,
+	}
+
+	return formatter.FormatMessageDTO(rawMessage, userID), nil
+}
+
 func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ConversationDTO, error) {
 	limit, offset := r.paginate(paginationInfo)
 

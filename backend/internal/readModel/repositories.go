@@ -26,6 +26,7 @@ type messageQueryRepository interface {
 	GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo PaginationInfo) ([]MessageDTO, error)
 	GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (MessageDTO, error)
 	StoreMessageAndReturnWithUser(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (MessageDTO, error)
+	StoreSystemMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (MessageDTO, error)
 }
 
 type authorizationQueryRepository interface {
