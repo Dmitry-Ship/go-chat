@@ -216,19 +216,13 @@ func (q *Queries) GetConversationIDsByUserID(ctx context.Context, userID pgtype.
 	return items, nil
 }
 
-const getConversationMessagesWithFormattedText = `-- name: GetConversationMessagesWithFormattedText :many
+const getConversationMessagesRaw = `-- name: GetConversationMessagesRaw :many
 SELECT
     m.id,
     m.type,
     m.created_at,
     m.conversation_id,
-    CASE m.type
-        WHEN 0 THEN m.content
-        WHEN 1 THEN COALESCE(u.name, '') || ' renamed chat to ' || m.content
-        WHEN 2 THEN COALESCE(u.name, '') || ' left'
-        WHEN 3 THEN COALESCE(u.name, '') || ' joined'
-        WHEN 4 THEN COALESCE(u.name, '') || ' was invited'
-    END as formatted_text,
+    m.content,
     u.id as user_id,
     u.name as user_name,
     u.avatar as user_avatar
@@ -239,38 +233,38 @@ ORDER BY m.created_at ASC
 LIMIT $2 OFFSET $3
 `
 
-type GetConversationMessagesWithFormattedTextParams struct {
+type GetConversationMessagesRawParams struct {
 	ConversationID pgtype.UUID `json:"conversation_id"`
 	Limit          int32       `json:"limit"`
 	Offset         int32       `json:"offset"`
 }
 
-type GetConversationMessagesWithFormattedTextRow struct {
+type GetConversationMessagesRawRow struct {
 	ID             pgtype.UUID        `json:"id"`
 	Type           int32              `json:"type"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	ConversationID pgtype.UUID        `json:"conversation_id"`
-	FormattedText  interface{}        `json:"formatted_text"`
+	Content        string             `json:"content"`
 	UserID         pgtype.UUID        `json:"user_id"`
 	UserName       pgtype.Text        `json:"user_name"`
 	UserAvatar     pgtype.Text        `json:"user_avatar"`
 }
 
-func (q *Queries) GetConversationMessagesWithFormattedText(ctx context.Context, arg GetConversationMessagesWithFormattedTextParams) ([]GetConversationMessagesWithFormattedTextRow, error) {
-	rows, err := q.db.Query(ctx, getConversationMessagesWithFormattedText, arg.ConversationID, arg.Limit, arg.Offset)
+func (q *Queries) GetConversationMessagesRaw(ctx context.Context, arg GetConversationMessagesRawParams) ([]GetConversationMessagesRawRow, error) {
+	rows, err := q.db.Query(ctx, getConversationMessagesRaw, arg.ConversationID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetConversationMessagesWithFormattedTextRow
+	var items []GetConversationMessagesRawRow
 	for rows.Next() {
-		var i GetConversationMessagesWithFormattedTextRow
+		var i GetConversationMessagesRawRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Type,
 			&i.CreatedAt,
 			&i.ConversationID,
-			&i.FormattedText,
+			&i.Content,
 			&i.UserID,
 			&i.UserName,
 			&i.UserAvatar,
@@ -395,19 +389,50 @@ func (q *Queries) GetGroupConversationWithOwner(ctx context.Context, conversatio
 	return i, err
 }
 
-const getNotificationMessageWithFormattedText = `-- name: GetNotificationMessageWithFormattedText :one
+const getMessageWithUser = `-- name: GetMessageWithUser :one
+SELECT
+    m.id, m.type, m.created_at, m.conversation_id, m.content,
+    u.id as user_id, u.name as user_name, u.avatar as user_avatar
+FROM messages m
+JOIN users u ON u.id = m.user_id
+WHERE m.id = $1 AND u.deleted_at IS NULL
+LIMIT 1
+`
+
+type GetMessageWithUserRow struct {
+	ID             pgtype.UUID        `json:"id"`
+	Type           int32              `json:"type"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	ConversationID pgtype.UUID        `json:"conversation_id"`
+	Content        string             `json:"content"`
+	UserID         pgtype.UUID        `json:"user_id"`
+	UserName       string             `json:"user_name"`
+	UserAvatar     pgtype.Text        `json:"user_avatar"`
+}
+
+func (q *Queries) GetMessageWithUser(ctx context.Context, id pgtype.UUID) (GetMessageWithUserRow, error) {
+	row := q.db.QueryRow(ctx, getMessageWithUser, id)
+	var i GetMessageWithUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.Type,
+		&i.CreatedAt,
+		&i.ConversationID,
+		&i.Content,
+		&i.UserID,
+		&i.UserName,
+		&i.UserAvatar,
+	)
+	return i, err
+}
+
+const getNotificationMessageRaw = `-- name: GetNotificationMessageRaw :one
 SELECT
     m.id,
     m.type,
     m.created_at,
     m.conversation_id,
-    CASE m.type
-        WHEN 0 THEN m.content
-        WHEN 1 THEN COALESCE(u.name, '') || ' renamed chat to ' || m.content
-        WHEN 2 THEN COALESCE(u.name, '') || ' left'
-        WHEN 3 THEN COALESCE(u.name, '') || ' joined'
-        WHEN 4 THEN COALESCE(u.name, '') || ' was invited'
-    END as formatted_text,
+    m.content,
     u.id as user_id,
     u.name as user_name,
     u.avatar as user_avatar
@@ -417,26 +442,26 @@ WHERE m.id = $1 AND m.deleted_at IS NULL
 LIMIT 1
 `
 
-type GetNotificationMessageWithFormattedTextRow struct {
+type GetNotificationMessageRawRow struct {
 	ID             pgtype.UUID        `json:"id"`
 	Type           int32              `json:"type"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	ConversationID pgtype.UUID        `json:"conversation_id"`
-	FormattedText  interface{}        `json:"formatted_text"`
+	Content        string             `json:"content"`
 	UserID         pgtype.UUID        `json:"user_id"`
 	UserName       pgtype.Text        `json:"user_name"`
 	UserAvatar     pgtype.Text        `json:"user_avatar"`
 }
 
-func (q *Queries) GetNotificationMessageWithFormattedText(ctx context.Context, id pgtype.UUID) (GetNotificationMessageWithFormattedTextRow, error) {
-	row := q.db.QueryRow(ctx, getNotificationMessageWithFormattedText, id)
-	var i GetNotificationMessageWithFormattedTextRow
+func (q *Queries) GetNotificationMessageRaw(ctx context.Context, id pgtype.UUID) (GetNotificationMessageRawRow, error) {
+	row := q.db.QueryRow(ctx, getNotificationMessageRaw, id)
+	var i GetNotificationMessageRawRow
 	err := row.Scan(
 		&i.ID,
 		&i.Type,
 		&i.CreatedAt,
 		&i.ConversationID,
-		&i.FormattedText,
+		&i.Content,
 		&i.UserID,
 		&i.UserName,
 		&i.UserAvatar,
@@ -612,13 +637,7 @@ SELECT
     c.type,
     m.id as message_id,
     m.type as message_type,
-    CASE m.type
-        WHEN 0 THEN m.content
-        WHEN 1 THEN COALESCE(u.name, '') || ' renamed chat to ' || m.content
-        WHEN 2 THEN COALESCE(u.name, '') || ' left'
-        WHEN 3 THEN COALESCE(u.name, '') || ' joined'
-        WHEN 4 THEN COALESCE(u.name, '') || ' was invited'
-    END as message_formatted_text,
+    m.content as message_content,
     m.created_at as message_created_at,
     m.user_id as message_user_id,
     u.name as message_user_name,
@@ -651,21 +670,21 @@ type GetUserConversationsParams struct {
 }
 
 type GetUserConversationsRow struct {
-	ConversationID       pgtype.UUID        `json:"conversation_id"`
-	CreatedAt            pgtype.Timestamptz `json:"created_at"`
-	Type                 int32              `json:"type"`
-	MessageID            pgtype.UUID        `json:"message_id"`
-	MessageType          pgtype.Int4        `json:"message_type"`
-	MessageFormattedText interface{}        `json:"message_formatted_text"`
-	MessageCreatedAt     pgtype.Timestamptz `json:"message_created_at"`
-	MessageUserID        pgtype.UUID        `json:"message_user_id"`
-	MessageUserName      pgtype.Text        `json:"message_user_name"`
-	MessageUserAvatar    pgtype.Text        `json:"message_user_avatar"`
-	GroupAvatar          pgtype.Text        `json:"group_avatar"`
-	GroupName            pgtype.Text        `json:"group_name"`
-	OtherUserID          pgtype.UUID        `json:"other_user_id"`
-	OtherUserName        pgtype.Text        `json:"other_user_name"`
-	OtherUserAvatar      pgtype.Text        `json:"other_user_avatar"`
+	ConversationID    pgtype.UUID        `json:"conversation_id"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	Type              int32              `json:"type"`
+	MessageID         pgtype.UUID        `json:"message_id"`
+	MessageType       pgtype.Int4        `json:"message_type"`
+	MessageContent    pgtype.Text        `json:"message_content"`
+	MessageCreatedAt  pgtype.Timestamptz `json:"message_created_at"`
+	MessageUserID     pgtype.UUID        `json:"message_user_id"`
+	MessageUserName   pgtype.Text        `json:"message_user_name"`
+	MessageUserAvatar pgtype.Text        `json:"message_user_avatar"`
+	GroupAvatar       pgtype.Text        `json:"group_avatar"`
+	GroupName         pgtype.Text        `json:"group_name"`
+	OtherUserID       pgtype.UUID        `json:"other_user_id"`
+	OtherUserName     pgtype.Text        `json:"other_user_name"`
+	OtherUserAvatar   pgtype.Text        `json:"other_user_avatar"`
 }
 
 func (q *Queries) GetUserConversations(ctx context.Context, arg GetUserConversationsParams) ([]GetUserConversationsRow, error) {
@@ -683,7 +702,7 @@ func (q *Queries) GetUserConversations(ctx context.Context, arg GetUserConversat
 			&i.Type,
 			&i.MessageID,
 			&i.MessageType,
-			&i.MessageFormattedText,
+			&i.MessageContent,
 			&i.MessageCreatedAt,
 			&i.MessageUserID,
 			&i.MessageUserName,
@@ -709,19 +728,16 @@ WITH valid_conversation AS (
     SELECT gc.conversation_id as conv_id
     FROM group_conversations gc
     JOIN conversations c ON c.id = gc.conversation_id
-    JOIN participants p ON p.conversation_id = gc.conversation_id 
-        AND p.user_id = $2 
-        AND p.deleted_at IS NULL
     WHERE gc.conversation_id = $1 
         AND c.deleted_at IS NULL
         AND gc.deleted_at IS NULL
 ),
 valid_invitee AS (
-    SELECT u.id as user_id FROM users u WHERE u.id = $3 AND u.deleted_at IS NULL
+    SELECT u.id as user_id FROM users u WHERE u.id = $2 AND u.deleted_at IS NULL
 ),
 new_participant AS (
     INSERT INTO participants (id, conversation_id, user_id, created_at)
-    SELECT $4, vc.conv_id, vi.user_id, NOW()
+    SELECT $3, vc.conv_id, vi.user_id, NOW()
     FROM valid_conversation vc, valid_invitee vi
     ON CONFLICT DO NOTHING
     RETURNING user_id
@@ -731,21 +747,56 @@ SELECT user_id FROM new_participant
 
 type InviteToConversationAtomicParams struct {
 	ConversationID pgtype.UUID `json:"conversation_id"`
-	UserID         pgtype.UUID `json:"user_id"`
 	ID             pgtype.UUID `json:"id"`
 	ID_2           pgtype.UUID `json:"id_2"`
 }
 
 func (q *Queries) InviteToConversationAtomic(ctx context.Context, arg InviteToConversationAtomicParams) (pgtype.UUID, error) {
-	row := q.db.QueryRow(ctx, inviteToConversationAtomic,
-		arg.ConversationID,
-		arg.UserID,
-		arg.ID,
-		arg.ID_2,
-	)
+	row := q.db.QueryRow(ctx, inviteToConversationAtomic, arg.ConversationID, arg.ID, arg.ID_2)
 	var user_id pgtype.UUID
 	err := row.Scan(&user_id)
 	return user_id, err
+}
+
+const isMember = `-- name: IsMember :one
+SELECT EXISTS(
+    SELECT 1 FROM participants
+    WHERE conversation_id = $1 AND user_id = $2 AND deleted_at IS NULL
+)
+`
+
+type IsMemberParams struct {
+	ConversationID pgtype.UUID `json:"conversation_id"`
+	UserID         pgtype.UUID `json:"user_id"`
+}
+
+func (q *Queries) IsMember(ctx context.Context, arg IsMemberParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isMember, arg.ConversationID, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const isMemberOwner = `-- name: IsMemberOwner :one
+SELECT EXISTS(
+    SELECT 1 FROM group_conversations gc
+    JOIN conversations c ON c.id = gc.conversation_id
+    JOIN participants p ON p.conversation_id = gc.conversation_id AND p.user_id = $2
+    WHERE gc.conversation_id = $1 AND gc.owner_id = $2
+      AND gc.deleted_at IS NULL AND c.deleted_at IS NULL AND p.deleted_at IS NULL
+)
+`
+
+type IsMemberOwnerParams struct {
+	ConversationID pgtype.UUID `json:"conversation_id"`
+	UserID         pgtype.UUID `json:"user_id"`
+}
+
+func (q *Queries) IsMemberOwner(ctx context.Context, arg IsMemberOwnerParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isMemberOwner, arg.ConversationID, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const joinConversationAtomic = `-- name: JoinConversationAtomic :one
@@ -784,29 +835,20 @@ func (q *Queries) JoinConversationAtomic(ctx context.Context, arg JoinConversati
 }
 
 const kickParticipantAtomic = `-- name: KickParticipantAtomic :execrows
-UPDATE participants p
+UPDATE participants
 SET deleted_at = NOW(), updated_at = NOW()
-WHERE p.conversation_id = $1 
-  AND p.user_id = $3 
-  AND p.deleted_at IS NULL
-  AND EXISTS (
-    SELECT 1 FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    WHERE gc.conversation_id = $1 
-      AND c.deleted_at IS NULL
-      AND gc.deleted_at IS NULL
-      AND gc.owner_id = $2
-  )
+WHERE conversation_id = $1 
+  AND user_id = $2 
+  AND deleted_at IS NULL
 `
 
 type KickParticipantAtomicParams struct {
 	ConversationID pgtype.UUID `json:"conversation_id"`
-	OwnerID        pgtype.UUID `json:"owner_id"`
 	UserID         pgtype.UUID `json:"user_id"`
 }
 
 func (q *Queries) KickParticipantAtomic(ctx context.Context, arg KickParticipantAtomicParams) (int64, error) {
-	result, err := q.db.Exec(ctx, kickParticipantAtomic, arg.ConversationID, arg.OwnerID, arg.UserID)
+	result, err := q.db.Exec(ctx, kickParticipantAtomic, arg.ConversationID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
@@ -814,19 +856,11 @@ func (q *Queries) KickParticipantAtomic(ctx context.Context, arg KickParticipant
 }
 
 const leaveConversationAtomic = `-- name: LeaveConversationAtomic :execrows
-UPDATE participants p
+UPDATE participants
 SET deleted_at = NOW(), updated_at = NOW()
-WHERE p.conversation_id = $1 
-  AND p.user_id = $2 
-  AND p.deleted_at IS NULL
-  AND EXISTS (
-    SELECT 1 FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    WHERE gc.conversation_id = $1 
-      AND c.deleted_at IS NULL
-      AND gc.deleted_at IS NULL
-      AND gc.owner_id <> $2
-  )
+WHERE conversation_id = $1 
+  AND user_id = $2 
+  AND deleted_at IS NULL
 `
 
 type LeaveConversationAtomicParams struct {
@@ -840,6 +874,45 @@ func (q *Queries) LeaveConversationAtomic(ctx context.Context, arg LeaveConversa
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const renameConversationAndReturn = `-- name: RenameConversationAndReturn :execrows
+UPDATE group_conversations
+SET name = $2, updated_at = NOW()
+WHERE conversation_id = $1
+  AND deleted_at IS NULL
+  AND EXISTS (
+    SELECT 1 FROM conversations c WHERE c.id = conversation_id AND c.deleted_at IS NULL
+  )
+`
+
+type RenameConversationAndReturnParams struct {
+	ConversationID pgtype.UUID `json:"conversation_id"`
+	Name           string      `json:"name"`
+}
+
+func (q *Queries) RenameConversationAndReturn(ctx context.Context, arg RenameConversationAndReturnParams) (int64, error) {
+	result, err := q.db.Exec(ctx, renameConversationAndReturn, arg.ConversationID, arg.Name)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const renameGroupConversation = `-- name: RenameGroupConversation :exec
+UPDATE group_conversations
+SET name = $2, updated_at = NOW()
+WHERE conversation_id = $1
+`
+
+type RenameGroupConversationParams struct {
+	ConversationID pgtype.UUID `json:"conversation_id"`
+	Name           string      `json:"name"`
+}
+
+func (q *Queries) RenameGroupConversation(ctx context.Context, arg RenameGroupConversationParams) error {
+	_, err := q.db.Exec(ctx, renameGroupConversation, arg.ConversationID, arg.Name)
+	return err
 }
 
 const storeConversation = `-- name: StoreConversation :exec
@@ -887,8 +960,8 @@ func (q *Queries) StoreGroupConversation(ctx context.Context, arg StoreGroupConv
 
 const storeMessage = `-- name: StoreMessage :exec
 
-INSERT INTO messages (id, conversation_id, user_id, content, type)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO messages (id, conversation_id, user_id, content, type, created_at)
+VALUES ($1, $2, $3, $4, $5, NOW())
 `
 
 type StoreMessageParams struct {
@@ -909,6 +982,62 @@ func (q *Queries) StoreMessage(ctx context.Context, arg StoreMessageParams) erro
 		arg.Type,
 	)
 	return err
+}
+
+const storeMessageAndReturnWithUser = `-- name: StoreMessageAndReturnWithUser :one
+WITH new_message AS (
+    INSERT INTO messages (id, conversation_id, user_id, content, type, created_at)
+    VALUES ($1, $2, $3, $4, $5, NOW())
+    RETURNING id, type, created_at, conversation_id, content
+)
+SELECT
+    nm.id, nm.type, nm.created_at, nm.conversation_id,
+    nm.content as formatted_text,
+    u.id as user_id, u.name as user_name, u.avatar as user_avatar
+FROM new_message nm
+JOIN users u ON u.id = nm.user_id
+WHERE u.deleted_at IS NULL
+`
+
+type StoreMessageAndReturnWithUserParams struct {
+	ID             pgtype.UUID `json:"id"`
+	ConversationID pgtype.UUID `json:"conversation_id"`
+	UserID         pgtype.UUID `json:"user_id"`
+	Content        string      `json:"content"`
+	Type           int32       `json:"type"`
+}
+
+type StoreMessageAndReturnWithUserRow struct {
+	ID             pgtype.UUID        `json:"id"`
+	Type           int32              `json:"type"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	ConversationID pgtype.UUID        `json:"conversation_id"`
+	FormattedText  string             `json:"formatted_text"`
+	UserID         pgtype.UUID        `json:"user_id"`
+	UserName       string             `json:"user_name"`
+	UserAvatar     pgtype.Text        `json:"user_avatar"`
+}
+
+func (q *Queries) StoreMessageAndReturnWithUser(ctx context.Context, arg StoreMessageAndReturnWithUserParams) (StoreMessageAndReturnWithUserRow, error) {
+	row := q.db.QueryRow(ctx, storeMessageAndReturnWithUser,
+		arg.ID,
+		arg.ConversationID,
+		arg.UserID,
+		arg.Content,
+		arg.Type,
+	)
+	var i StoreMessageAndReturnWithUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.Type,
+		&i.CreatedAt,
+		&i.ConversationID,
+		&i.FormattedText,
+		&i.UserID,
+		&i.UserName,
+		&i.UserAvatar,
+	)
+	return i, err
 }
 
 const storeParticipant = `-- name: StoreParticipant :exec

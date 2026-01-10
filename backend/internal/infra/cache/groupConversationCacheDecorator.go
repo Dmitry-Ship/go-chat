@@ -74,6 +74,16 @@ func (d *GroupConversationCacheDecorator) Update(ctx context.Context, conversati
 	return nil
 }
 
+func (d *GroupConversationCacheDecorator) Rename(ctx context.Context, id uuid.UUID, name string) error {
+	if err := d.repo.Rename(ctx, id, name); err != nil {
+		return fmt.Errorf("repo rename error: %w", err)
+	}
+
+	d.invalidateConversationCache(ctx, id.String())
+
+	return nil
+}
+
 func (d *GroupConversationCacheDecorator) Delete(ctx context.Context, id uuid.UUID) error {
 	if err := d.repo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("repo delete error: %w", err)

@@ -59,7 +59,7 @@ type textMessageContent struct {
 
 var sanitizer = bluemonday.UGCPolicy()
 
-func newTextMessageContent(text string) (textMessageContent, error) {
+func NewTextMessageContent(text string) (textMessageContent, error) {
 	if text == "" {
 		return textMessageContent{}, errors.New("text is empty")
 	}
@@ -79,8 +79,13 @@ func (m textMessageContent) String() string {
 	return m.text
 }
 
-func newTextMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, text textMessageContent) *Message {
-	return newMessage(messageID, conversationID, userID, MessageTypeText, text)
+func NewTextMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, text string) (*Message, error) {
+	content, err := NewTextMessageContent(text)
+	if err != nil {
+		return nil, err
+	}
+
+	return newMessage(messageID, conversationID, userID, MessageTypeText, content), nil
 }
 
 type renamedMessageContent struct {

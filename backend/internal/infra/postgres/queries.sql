@@ -51,6 +51,11 @@ UPDATE group_conversations
 SET name = $2, avatar = $3, updated_at = NOW()
 WHERE conversation_id = $1;
 
+-- name: RenameGroupConversation :exec
+UPDATE group_conversations
+SET name = $2, updated_at = NOW()
+WHERE conversation_id = $1;
+
 -- name: GetGroupConversationWithOwner :one
 SELECT
     gc.id,
@@ -108,8 +113,17 @@ GROUP BY c.id;
 -- Message queries
 
 -- name: StoreMessage :exec
-INSERT INTO messages (id, conversation_id, user_id, content, type)
-VALUES ($1, $2, $3, $4, $5);
+INSERT INTO messages (id, conversation_id, user_id, content, type, created_at)
+VALUES ($1, $2, $3, $4, $5, NOW());
+
+-- name: GetMessageWithUser :one
+SELECT
+    m.id, m.type, m.created_at, m.conversation_id, m.content,
+    u.id as user_id, u.name as user_name, u.avatar as user_avatar
+FROM messages m
+JOIN users u ON u.id = m.user_id
+WHERE m.id = $1 AND u.deleted_at IS NULL
+LIMIT 1;
 
 -- name: StoreSystemMessage :execrows
 INSERT INTO messages (id, conversation_id, user_id, content, type)
@@ -158,19 +172,13 @@ FROM users
 WHERE id = $1 AND deleted_at IS NULL
 LIMIT 1;
 
--- name: GetConversationMessagesWithFormattedText :many
+-- name: GetConversationMessagesRaw :many
 SELECT
     m.id,
     m.type,
     m.created_at,
     m.conversation_id,
-    CASE m.type
-        WHEN 0 THEN m.content
-        WHEN 1 THEN COALESCE(u.name, '') || ' renamed chat to ' || m.content
-        WHEN 2 THEN COALESCE(u.name, '') || ' left'
-        WHEN 3 THEN COALESCE(u.name, '') || ' joined'
-        WHEN 4 THEN COALESCE(u.name, '') || ' was invited'
-    END as formatted_text,
+    m.content,
     u.id as user_id,
     u.name as user_name,
     u.avatar as user_avatar
@@ -180,19 +188,13 @@ WHERE m.conversation_id = $1 AND m.deleted_at IS NULL
 ORDER BY m.created_at ASC
 LIMIT $2 OFFSET $3;
 
--- name: GetNotificationMessageWithFormattedText :one
+-- name: GetNotificationMessageRaw :one
 SELECT
     m.id,
     m.type,
     m.created_at,
     m.conversation_id,
-    CASE m.type
-        WHEN 0 THEN m.content
-        WHEN 1 THEN COALESCE(u.name, '') || ' renamed chat to ' || m.content
-        WHEN 2 THEN COALESCE(u.name, '') || ' left'
-        WHEN 3 THEN COALESCE(u.name, '') || ' joined'
-        WHEN 4 THEN COALESCE(u.name, '') || ' was invited'
-    END as formatted_text,
+    m.content,
     u.id as user_id,
     u.name as user_name,
     u.avatar as user_avatar
@@ -213,13 +215,7 @@ SELECT
     c.type,
     m.id as message_id,
     m.type as message_type,
-    CASE m.type
-        WHEN 0 THEN m.content
-        WHEN 1 THEN COALESCE(u.name, '') || ' renamed chat to ' || m.content
-        WHEN 2 THEN COALESCE(u.name, '') || ' left'
-        WHEN 3 THEN COALESCE(u.name, '') || ' joined'
-        WHEN 4 THEN COALESCE(u.name, '') || ' was invited'
-    END as message_formatted_text,
+    m.content as message_content,
     m.created_at as message_created_at,
     m.user_id as message_user_id,
     u.name as message_user_name,
@@ -312,55 +308,74 @@ new_participant AS (
 SELECT user_id FROM new_participant;
 
 -- name: LeaveConversationAtomic :execrows
-UPDATE participants p
+UPDATE participants
 SET deleted_at = NOW(), updated_at = NOW()
-WHERE p.conversation_id = $1 
-  AND p.user_id = $2 
-  AND p.deleted_at IS NULL
-  AND EXISTS (
-    SELECT 1 FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    WHERE gc.conversation_id = $1 
-      AND c.deleted_at IS NULL
-      AND gc.deleted_at IS NULL
-      AND gc.owner_id <> $2
-  );
+WHERE conversation_id = $1 
+  AND user_id = $2 
+  AND deleted_at IS NULL;
 
 -- name: KickParticipantAtomic :execrows
-UPDATE participants p
+UPDATE participants
 SET deleted_at = NOW(), updated_at = NOW()
-WHERE p.conversation_id = $1 
-  AND p.user_id = $3 
-  AND p.deleted_at IS NULL
-  AND EXISTS (
-    SELECT 1 FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    WHERE gc.conversation_id = $1 
-      AND c.deleted_at IS NULL
-      AND gc.deleted_at IS NULL
-      AND gc.owner_id = $2
-  );
+WHERE conversation_id = $1 
+  AND user_id = $2 
+  AND deleted_at IS NULL;
 
 -- name: InviteToConversationAtomic :one
 WITH valid_conversation AS (
     SELECT gc.conversation_id as conv_id
     FROM group_conversations gc
     JOIN conversations c ON c.id = gc.conversation_id
-    JOIN participants p ON p.conversation_id = gc.conversation_id 
-        AND p.user_id = $2 
-        AND p.deleted_at IS NULL
     WHERE gc.conversation_id = $1 
         AND c.deleted_at IS NULL
         AND gc.deleted_at IS NULL
 ),
 valid_invitee AS (
-    SELECT u.id as user_id FROM users u WHERE u.id = $3 AND u.deleted_at IS NULL
+    SELECT u.id as user_id FROM users u WHERE u.id = $2 AND u.deleted_at IS NULL
 ),
 new_participant AS (
     INSERT INTO participants (id, conversation_id, user_id, created_at)
-    SELECT $4, vc.conv_id, vi.user_id, NOW()
+    SELECT $3, vc.conv_id, vi.user_id, NOW()
     FROM valid_conversation vc, valid_invitee vi
     ON CONFLICT DO NOTHING
     RETURNING user_id
 )
 SELECT user_id FROM new_participant;
+
+-- name: IsMember :one
+SELECT EXISTS(
+    SELECT 1 FROM participants
+    WHERE conversation_id = $1 AND user_id = $2 AND deleted_at IS NULL
+);
+
+-- name: IsMemberOwner :one
+SELECT EXISTS(
+    SELECT 1 FROM group_conversations gc
+    JOIN conversations c ON c.id = gc.conversation_id
+    JOIN participants p ON p.conversation_id = gc.conversation_id AND p.user_id = $2
+    WHERE gc.conversation_id = $1 AND gc.owner_id = $2
+      AND gc.deleted_at IS NULL AND c.deleted_at IS NULL AND p.deleted_at IS NULL
+);
+
+-- name: StoreMessageAndReturnWithUser :one
+WITH new_message AS (
+    INSERT INTO messages (id, conversation_id, user_id, content, type, created_at)
+    VALUES ($1, $2, $3, $4, $5, NOW())
+    RETURNING id, type, created_at, conversation_id, content
+)
+SELECT
+    nm.id, nm.type, nm.created_at, nm.conversation_id,
+    nm.content as formatted_text,
+    u.id as user_id, u.name as user_name, u.avatar as user_avatar
+FROM new_message nm
+JOIN users u ON u.id = nm.user_id
+WHERE u.deleted_at IS NULL;
+
+-- name: RenameConversationAndReturn :execrows
+UPDATE group_conversations
+SET name = $2, updated_at = NOW()
+WHERE conversation_id = $1
+  AND deleted_at IS NULL
+  AND EXISTS (
+    SELECT 1 FROM conversations c WHERE c.id = conversation_id AND c.deleted_at IS NULL
+  );

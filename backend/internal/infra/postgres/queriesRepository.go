@@ -5,6 +5,7 @@ import (
 
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra/postgres/db"
+	"GitHub/go-chat/backend/internal/presentation"
 	"GitHub/go-chat/backend/internal/readModel"
 
 	"github.com/google/uuid"
@@ -134,7 +135,7 @@ func (r *queriesRepository) GetUserByID(id uuid.UUID) (readModel.UserDTO, error)
 func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.MessageDTO, error) {
 	limit, offset := r.paginate(paginationInfo)
 
-	messages, err := r.queries.GetConversationMessagesWithFormattedText(context.Background(), db.GetConversationMessagesWithFormattedTextParams{
+	messages, err := r.queries.GetConversationMessagesRaw(context.Background(), db.GetConversationMessagesRawParams{
 		ConversationID: uuidToPgtype(conversationID),
 		Limit:          limit,
 		Offset:         offset,
@@ -144,59 +145,77 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 		return nil, err
 	}
 
+	formatter := presentation.NewMessageFormatter()
 	messageDTOs := make([]readModel.MessageDTO, len(messages))
+
 	for i, msg := range messages {
-		formattedText, _ := msg.FormattedText.(string)
-
-		messageDTO := readModel.MessageDTO{
+		rawMessage := readModel.RawMessageDTO{
 			ID:             pgtypeToUUID(msg.ID),
+			Type:           uint8(msg.Type),
 			CreatedAt:      msg.CreatedAt.Time,
-			Text:           formattedText,
-			Type:           messageTypesMap[uint8(msg.Type)].String(),
-			ConversationId: pgtypeToUUID(msg.ConversationID),
-			User: readModel.UserDTO{
-				ID:     pgtypeToUUID(msg.UserID),
-				Avatar: msg.UserAvatar.String,
-				Name:   msg.UserName.String,
-			},
+			ConversationID: pgtypeToUUID(msg.ConversationID),
+			Content:        msg.Content,
+			UserID:         pgtypeToUUID(msg.UserID),
+			UserName:       msg.UserName.String,
+			UserAvatar:     msg.UserAvatar.String,
 		}
 
-		if messageTypesMap[uint8(msg.Type)] == domain.MessageTypeText {
-			messageDTO.IsInbound = pgtypeToUUID(msg.UserID) != requestUserID
-		}
-
-		messageDTOs[i] = messageDTO
+		messageDTOs[i] = formatter.FormatMessageDTO(rawMessage, requestUserID)
 	}
 
 	return messageDTOs, nil
 }
 
 func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
-	msg, err := r.queries.GetNotificationMessageWithFormattedText(context.Background(), uuidToPgtype(messageID))
+	msg, err := r.queries.GetNotificationMessageRaw(context.Background(), uuidToPgtype(messageID))
 	if err != nil {
 		return readModel.MessageDTO{}, err
 	}
 
-	formattedText, _ := msg.FormattedText.(string)
-
-	messageDTO := readModel.MessageDTO{
+	formatter := presentation.NewMessageFormatter()
+	rawMessage := readModel.RawMessageDTO{
 		ID:             pgtypeToUUID(msg.ID),
+		Type:           uint8(msg.Type),
 		CreatedAt:      msg.CreatedAt.Time,
-		Text:           formattedText,
-		Type:           messageTypesMap[uint8(msg.Type)].String(),
-		ConversationId: pgtypeToUUID(msg.ConversationID),
-		User: readModel.UserDTO{
-			ID:     pgtypeToUUID(msg.UserID),
-			Avatar: msg.UserAvatar.String,
-			Name:   msg.UserName.String,
-		},
+		ConversationID: pgtypeToUUID(msg.ConversationID),
+		Content:        msg.Content,
+		UserID:         pgtypeToUUID(msg.UserID),
+		UserName:       msg.UserName.String,
+		UserAvatar:     msg.UserAvatar.String,
 	}
 
-	if messageTypesMap[uint8(msg.Type)] == domain.MessageTypeText {
-		messageDTO.IsInbound = pgtypeToUUID(msg.UserID) != requestUserID
+	return formatter.FormatMessageDTO(rawMessage, requestUserID), nil
+}
+
+func (r *queriesRepository) StoreMessageAndReturnWithUser(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
+	if err := r.queries.StoreMessage(context.Background(), db.StoreMessageParams{
+		ID:             uuidToPgtype(id),
+		ConversationID: uuidToPgtype(conversationID),
+		UserID:         uuidToPgtype(userID),
+		Content:        content,
+		Type:           messageType,
+	}); err != nil {
+		return readModel.MessageDTO{}, err
 	}
 
-	return messageDTO, nil
+	msg, err := r.queries.GetMessageWithUser(context.Background(), uuidToPgtype(id))
+	if err != nil {
+		return readModel.MessageDTO{}, err
+	}
+
+	formatter := presentation.NewMessageFormatter()
+	rawMessage := readModel.RawMessageDTO{
+		ID:             pgtypeToUUID(msg.ID),
+		Type:           uint8(msg.Type),
+		CreatedAt:      msg.CreatedAt.Time,
+		ConversationID: pgtypeToUUID(msg.ConversationID),
+		Content:        msg.Content,
+		UserID:         pgtypeToUUID(msg.UserID),
+		UserName:       msg.UserName,
+		UserAvatar:     msg.UserAvatar.String,
+	}
+
+	return formatter.FormatMessageDTO(rawMessage, userID), nil
 }
 
 func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ConversationDTO, error) {
@@ -212,6 +231,7 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 		return nil, err
 	}
 
+	formatter := presentation.NewMessageFormatter()
 	conversationDTOs := make([]readModel.ConversationDTO, len(queryResults))
 
 	for i, result := range queryResults {
@@ -221,28 +241,17 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 		}
 
 		if result.MessageID.Valid {
-			msgID := uuid.UUID(result.MessageID.Bytes)
-			msgUserID := uuid.UUID(result.MessageUserID.Bytes)
-			formattedText, _ := result.MessageFormattedText.(string)
-
-			messageDTO := readModel.MessageDTO{
-				ID:             msgID,
-				CreatedAt:      result.MessageCreatedAt.Time,
-				Text:           formattedText,
-				Type:           messageTypesMap[uint8(result.MessageType.Int32)].String(),
-				ConversationId: pgtypeToUUID(result.ConversationID),
-				User: readModel.UserDTO{
-					ID:     msgUserID,
-					Avatar: result.MessageUserAvatar.String,
-					Name:   result.MessageUserName.String,
-				},
+			rawLastMessage := readModel.RawLastMessageDTO{
+				MessageID:         pgtypeToUUID(result.MessageID),
+				MessageCreatedAt:  result.MessageCreatedAt.Time,
+				MessageContent:    result.MessageContent.String,
+				MessageType:       result.MessageType.Int32,
+				MessageUserID:     pgtypeToUUID(result.MessageUserID),
+				MessageUserName:   result.MessageUserName.String,
+				MessageUserAvatar: result.MessageUserAvatar.String,
+				ConversationID:    pgtypeToUUID(result.ConversationID),
 			}
-
-			if messageTypesMap[uint8(result.MessageType.Int32)] == domain.MessageTypeText {
-				messageDTO.IsInbound = msgUserID != userID
-			}
-
-			conversationDTO.LastMessage = messageDTO
+			conversationDTO.LastMessage = formatter.FormatConversationLastMessage(rawLastMessage, userID)
 		}
 
 		switch conversationTypesMap[uint8(result.Type)] {
@@ -299,4 +308,63 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (rea
 	}
 
 	return conversationDTO, nil
+}
+
+func (r *queriesRepository) IsMember(conversationID uuid.UUID, userID uuid.UUID) (bool, error) {
+	return r.queries.IsMember(context.Background(), db.IsMemberParams{
+		ConversationID: uuidToPgtype(conversationID),
+		UserID:         uuidToPgtype(userID),
+	})
+}
+
+func (r *queriesRepository) IsMemberOwner(conversationID uuid.UUID, userID uuid.UUID) (bool, error) {
+	return r.queries.IsMemberOwner(context.Background(), db.IsMemberOwnerParams{
+		ConversationID: uuidToPgtype(conversationID),
+		UserID:         uuidToPgtype(userID),
+	})
+}
+
+func (r *queriesRepository) RenameConversationAndReturn(conversationID uuid.UUID, name string) error {
+	rowsAffected, err := r.queries.RenameConversationAndReturn(context.Background(), db.RenameConversationAndReturnParams{
+		ConversationID: uuidToPgtype(conversationID),
+		Name:           name,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return domain.ErrorUserNotOwner
+	}
+
+	return nil
+}
+
+func (r *queriesRepository) InviteToConversationAtomic(conversationID uuid.UUID, inviteeID uuid.UUID, participantID uuid.UUID) (uuid.UUID, error) {
+	result, err := r.queries.InviteToConversationAtomic(context.Background(), db.InviteToConversationAtomicParams{
+		ConversationID: uuidToPgtype(conversationID),
+		ID:             uuidToPgtype(inviteeID),
+		ID_2:           uuidToPgtype(participantID),
+	})
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return pgtypeToUUID(result), nil
+}
+
+func (r *queriesRepository) KickParticipantAtomic(conversationID uuid.UUID, targetID uuid.UUID) (int64, error) {
+	return r.queries.KickParticipantAtomic(context.Background(), db.KickParticipantAtomicParams{
+		ConversationID: uuidToPgtype(conversationID),
+		UserID:         uuidToPgtype(targetID),
+	})
+}
+
+func (r *queriesRepository) LeaveConversationAtomic(conversationID uuid.UUID, userID uuid.UUID) (int64, error) {
+	return r.queries.LeaveConversationAtomic(context.Background(), db.LeaveConversationAtomicParams{
+		ConversationID: uuidToPgtype(conversationID),
+		UserID:         uuidToPgtype(userID),
+	})
 }

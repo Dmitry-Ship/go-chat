@@ -36,19 +36,3 @@ func NewDirectConversation(id uuid.UUID, to uuid.UUID, from uuid.UUID) (*DirectC
 
 	return &directConversation, nil
 }
-
-func (directConversation *DirectConversation) SendTextMessage(messageID uuid.UUID, text string, participant Participant) (*Message, error) {
-	if directConversation.ID != participant.ConversationID {
-		return nil, ErrorUserNotInConversation
-	}
-
-	content, err := newTextMessageContent(text)
-
-	if err != nil {
-		return nil, err
-	}
-
-	message := newTextMessage(messageID, directConversation.ID, participant.UserID, content)
-
-	return message, nil
-}

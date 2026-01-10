@@ -10,6 +10,7 @@ import (
 type GroupConversationRepository interface {
 	Store(ctx context.Context, conversation *GroupConversation) error
 	Update(ctx context.Context, conversation *GroupConversation) error
+	Rename(ctx context.Context, id uuid.UUID, name string) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*GroupConversation, error)
 }
@@ -19,6 +20,7 @@ var (
 	ErrorUserNotOwner          = errors.New("user is not owner")
 	ErrorCannotInviteOneself   = errors.New("cannot invite yourself")
 	ErrorCannotKickOneself     = errors.New("cannot kick yourself")
+	ErrorOwnerCannotLeave      = errors.New("owner cannot leave conversation")
 )
 
 func ValidateConversationName(name string) error {
@@ -87,20 +89,6 @@ func (groupConversation *GroupConversation) Rename(newName string, participant *
 	return nil
 }
 
-func (groupConversation *GroupConversation) Join(user User) (*Participant, error) {
-	participant := NewParticipant(uuid.New(), groupConversation.Conversation.ID, user.ID)
-
-	return participant, nil
-}
-
-func (groupConversation *GroupConversation) Leave(participant *Participant) (*Participant, error) {
-	if !groupConversation.isJoined(participant) {
-		return nil, ErrorUserNotInConversation
-	}
-
-	return participant, nil
-}
-
 func (groupConversation *GroupConversation) Invite(inviter *Participant, invitee *User) (*Participant, error) {
 	if !groupConversation.isJoined(inviter) {
 		return nil, ErrorUserNotInConversation
@@ -129,22 +117,6 @@ func (groupConversation *GroupConversation) Kick(kicker *Participant, target *Pa
 	}
 
 	return target, nil
-}
-
-func (groupConversation *GroupConversation) SendTextMessage(messageID uuid.UUID, text string, participant *Participant) (*Message, error) {
-	if !groupConversation.isJoined(participant) {
-		return nil, ErrorUserNotInConversation
-	}
-
-	content, err := newTextMessageContent(text)
-
-	if err != nil {
-		return nil, err
-	}
-
-	message := newTextMessage(messageID, groupConversation.Conversation.ID, participant.UserID, content)
-
-	return message, nil
 }
 
 func (groupConversation *GroupConversation) SendJoinedConversationMessage(messageID uuid.UUID, user *User) (*Message, error) {

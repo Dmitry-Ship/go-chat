@@ -46,3 +46,25 @@ type MessageDTO struct {
 	IsInbound      bool      `json:"is_inbound,omitempty"`
 	ConversationId uuid.UUID `json:"conversation_id"`
 }
+
+type RawMessageDTO struct {
+	ID             uuid.UUID
+	Type           uint8
+	CreatedAt      time.Time
+	ConversationID uuid.UUID
+	Content        string
+	UserID         uuid.UUID
+	UserName       string
+	UserAvatar     string
+}
+
+type RawLastMessageDTO struct {
+	MessageID         uuid.UUID
+	MessageCreatedAt  time.Time
+	MessageContent    string
+	MessageType       int32
+	MessageUserID     uuid.UUID
+	MessageUserName   string
+	MessageUserAvatar string
+	ConversationID    uuid.UUID
+}

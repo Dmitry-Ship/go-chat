@@ -88,6 +88,19 @@ func (r *groupConversationRepository) Update(ctx context.Context, conversation *
 	})
 }
 
+func (r *groupConversationRepository) Rename(ctx context.Context, id uuid.UUID, name string) error {
+	params := db.RenameGroupConversationParams{
+		ConversationID: uuidToPgtype(id),
+		Name:           name,
+	}
+
+	if err := r.queries.RenameGroupConversation(ctx, params); err != nil {
+		return fmt.Errorf("rename group conversation error: %w", err)
+	}
+
+	return nil
+}
+
 func (r *groupConversationRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	if err := r.queries.DeleteConversation(ctx, uuidToPgtype(id)); err != nil {
 		return fmt.Errorf("delete conversation error: %w", err)

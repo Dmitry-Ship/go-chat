@@ -1,127 +1,106 @@
 # AGENTS.md
 
-## Project Overview
-Real-time multi-room chat: Go 1.23+ backend (DDD), Next.js 16 frontend, PostgreSQL/Redis/WebSocket.
-
-## Commands
-
-### Quick Start
-```bash
-make help                                  # Show all commands
-make backend_build frontend_build         # Build both
-make backend_test frontend_test            # Run all tests
-make all_lint                              # Lint everything
-make docker_up_detached                    # Start all services
-```
+## Build, Lint, and Test Commands
 
 ### Backend (Go)
-```bash
-cd backend
-go test ./...                              # All tests
-go test ./internal/services -run TestLogin -v # Single test verbose
-go test ./internal/... -cover             # With coverage
-go test -count=1 ./...                    # Disable cache
-go build -o go-bin ./cmd/server           # Build
-go run ./cmd/server                        # Run server
-golangci-lint run                          # Lint
-golangci-lint run ./internal/... --fix     # Auto-fix
-```
+- **Build**: `make backend_build` or `cd backend && go build -o go-bin ./cmd/server`
+- **Test all**: `make backend_test` or `cd backend && go test ./...`
+- **Test single**: `cd backend && go test -run TestFunctionName ./path/to/package`
+- **Test with verbose**: `cd backend && go test -v ./...`
+- **Lint**: `make backend_lint` or `cd backend && golangci-lint run`
+- **Run dev**: `make backend_run` or `cd backend && go run ./cmd/server`
 
-### Frontend (Next.js)
-```bash
-cd frontend
-npm run dev                                # Dev server
-npm run build                              # Production build
-npm run lint                               # Lint
-npx tsc --noEmit                           # Type check
-npm test                                   # Run tests
-```
+### Frontend (TypeScript/Next.js)
+- **Build**: `make frontend_build` or `cd frontend && npm run build`
+- **Test**: `cd frontend && npm test` (Jest/Vitest)
+- **Test single**: `cd frontend && npm test -- fileName.test.ts`
+- **Lint**: `make frontend_lint` or `cd frontend && npm run lint`
+- **Type check**: `make frontend_type` or `cd frontend && npx tsc --noEmit`
+- **Dev server**: `make frontend_dev` or `cd frontend && npm run dev`
 
-## Backend (Go) Style
+### Combined Commands
+- `make all_build` - Build backend and frontend
+- `make all_test` - Run all tests
+- `make all_lint` - Run all linters (backend + frontend)
 
-**Structure**: `cmd/server` → `internal/domain` → `services` → `infra` → `server`
+### Docker
+- `make docker_up` - Start all services
+- `make docker_down` - Stop all services
 
-**DDD Layers**: Domain (value objects, aggregates, repository interfaces), Infrastructure (sqlc-generated, repository impls), Application (services), Interfaces (handlers, WebSocket)
+---
 
-**Naming**: Files `snake_case.go`, packages lowercase. Exported: `UserRepository`, `GetByID`. Private: `userService`, `userID`. Value objects: `userName`, `userPassword`.
+## Code Style Guidelines
 
-**Imports**: Group stdlib, third-party, local. Blank imports for side effects. Use full module paths: `"GitHub/go-chat/backend/internal/domain"`
+### Backend (Go 1.23)
 
-**Formatting**: `gofmt`, tabs, error-first: `result, err := someFunc()`. No unnecessary comments.
+**Package Structure** (Clean Architecture):
+- `internal/domain/` - Domain entities, business logic, validation (no dependencies)
+- `internal/services/` - Application services (auth, conversation, notifications)
+- `internal/infra/postgres/` - PostgreSQL repositories using sqlc/pgx
+- `internal/infra/cache/` - Redis cache decorators (decorator pattern)
+- `internal/server/` - HTTP handlers, WebSocket handlers, middleware
+- `internal/websocket/` - WebSocket connection management
+- `internal/ratelimit/` - Rate limiting (token bucket)
+- `internal/readModel/` - Query models and DTOs
+- `internal/config/` - Configuration loading
+- `cmd/server/` - Application entry point
 
-**Context**: Always pass `context.Context` as first parameter to I/O functions. Retrieve from request: `userID := r.Context().Value(userIDKey).(uuid.UUID)`
+**Imports**: Grouped in three blocks (stdlib, third-party, internal) separated by blank lines
 
-**Error Handling**: Always check errors, early returns. Domain errors in domain layer. Custom errors: `var ErrName = errors.New("description")`. Wrap: `fmt.Errorf("create user: %w", err)`
+**Naming**: PascalCase for exported, camelCase for private, package names lowercase
 
-**Value Objects**: Private struct, `NewTypeName(name string) (typeName, error)` validates and returns value object.
+**Error Handling**: Wrap with `fmt.Errorf("operation: %w", err)`, avoid errors.New for expected failures
 
-**Aggregates**: Root embeds `aggregate` struct. Domain events via `AddEvent()`, retrieve via `GetEvents()`.
+**Interfaces**: Define in domain (e.g., `UserRepository`), implement in infra packages
 
-**Repositories**: Interfaces in domain/, implementations in infra/postgres/. Methods: `Store`, `Update`, `GetByID`, `FindByUsername`, `Delete`.
+**Testing**: Use `github.com/stretchr/testify/assert`, test files `*_test.go`, table-driven tests for multiple cases
 
-**Services**: Interface with methods, private struct with repos, `NewService` constructor. Methods contain business logic only.
+**Database**: Use sqlc-generated queries in `internal/infra/postgres/db/`, pgx for connection pooling
 
-**Testing**: `testify/assert`. Mock structs implement repository interfaces. Test names `Test<FunctionName>`. Use `uuid.New()` for test IDs. Table-driven: define `testCase` struct, loop with `t.Run()`.
+**Security**: bcrypt with cost 14, JWT tokens, refresh token rotation, input sanitization with bluemonday
 
-**sqlc**: Type-safe SQL in `internal/infra/postgres/db/`. Queries in `queries.sql` use `-- name: FunctionName :exec|:one|:many`.
+**Context**: Pass context.Context as first parameter to all service/repository methods
 
-**Database**: PostgreSQL pgx/v5 pool, Redis caching, Goose migrations in `migrations/`.
+**Repository Pattern**: Decorate with cache layer when appropriate (userCacheDecorator, participantCacheDecorator)
 
-## Frontend (Next.js) Style
+**Middleware**: Chain middleware using alice pattern (auth, rate limiting, logging)
 
-**Structure**: `app/` (Next.js App Router), `components/` (UI components), `hooks/` (React hooks), `contexts/` (React contexts), `lib/` (utilities)
+---
 
-**Naming**: Components PascalCase: `MessageItem.tsx`, `useAuth.ts`. Hooks: `use*` prefix. Utilities camelCase.
+### Frontend (Next.js 16, React 19, TypeScript)
 
-**Formatting**: ESLint with `eslint-config-next`. TypeScript strict mode enabled. Tailwind CSS for styling.
+**File Structure**:
+- `app/` - Next.js App Router pages and layouts
+- `components/` - Reusable UI components (chat, ui)
+- `contexts/` - React context providers (AuthContext, ChatContext)
+- `hooks/` - Custom hooks (useAuth, useNotifications)
+- `hooks/queries/` - React Query hooks for data fetching
+- `hooks/mutations/` - React Query mutations
+- `lib/` - Utilities and API client
 
-**Components**: "use client" directive for interactive components. Props interfaces inline or above component.
+**Imports**: Use path aliases `@/` for internal imports, no bare `.` imports
 
-**React Patterns**: Context providers for global state (AuthContext, ChatContext). Custom hooks (`useAuth`, `useConversation`) encapsulate TanStack Query logic.
+**Components**:
+- Client components: `"use client"` at top
+- Named exports preferred: `export const ComponentName = ...`
+- Props interface: `interface Props { prop: type }`
+- Early returns for conditions, avoid nested ternaries
 
-**API**: REST calls via `@/lib/api`, WebSocket via `@/lib/websocket`. TanStack Query for data fetching/mutations.
+**TypeScript**: Strict mode enabled, no `any`, use generics, proper types for API responses
 
-**Imports**: Absolute imports with `@/` alias: `@/components/ui/button`, `@/hooks/useAuth`.
+**State Management**:
+- TanStack Query for server state (queries/mutations)
+- Context for auth/chat state
+- Local state for simple UI
 
-**Type Safety**: Interfaces for DTOs in `@/lib/types`. Explicit return types in API functions.
+**Styling**: Tailwind CSS, classnames with clsx + tailwind-merge, shadcn/ui components
 
-**UI Components**: shadcn/ui pattern with Base UI primitives, Tailwind, class-variance-authority for variants.
+**Error Handling**: Try/catch in async functions, display user-friendly messages, error boundaries for components
 
-## Caching
+**API Calls**: Centralized in `lib/api.ts`, typed return values, credentials: "include" for cookies
 
-**Redis Cache**: Decorator pattern in `internal/infra/cache/`. TTL: Users 15min, Conversations 15min, Participants 10min, UserConvList 5min.
+**WebSocket**: Reconnection logic in lib/websocket.ts, message handling via React Context
 
-## Rate Limiting
+**Environment**: Variables defined in .env.example, NEXT_PUBLIC_ prefix for client-side vars
 
-**Sliding Window**: In-memory in `internal/ratelimit/`. Dual limits: IP-based + user-based. Returns `429 Too Many Requests` with `Retry-After` header.
-
-## WebSocket
-
-**Handler**: `internal/server/wsHandlers.go`. Client struct in `internal/websocket/`. Hub pattern for room broadcasts. Handle: `join`, `send_message`, `leave` events.
-
-**Message Types**: `TextMessage`, `JoinedMessage`, `LeftMessage`, `ErrorMessage`. JSON with `type` field.
-
-## Workflow
-
-**Backend**: Domain → Interfaces → Implementations → Services → Wire in main.go → Test
-
-**Pre-commit**: Run `make all_lint`, `make backend_test` before committing.
-
-## Environment
-
-Copy `.env.example` to `.env`. Requires DB, Redis, and JWT secrets. Run `make secret` to generate secrets.
-
-## Common Tasks
-
-**Add new domain model**: 1) Create value objects in `internal/domain/`, 2) Define repository interface in domain/, 3) Implement in `internal/infra/postgres/`, 4) Wrap with cache decorator in `internal/infra/cache/`, 5) Create service in `internal/services/`, 6) Wire in `cmd/server/main.go`, 7) Add sqlc queries, 8) Write tests with mocks
-
-**Add new API endpoint**: Add handler in `internal/server/handlers.go`, register route in `cmd/server/main.go`
-
-**Add new UI component**: Use shadcn pattern in `components/ui/`, or domain-specific in `components/chat/`
-
-## Important Notes
-
-- Never commit secrets or keys
-- Always run `make all_lint` before committing
-- Use full module paths for Go imports
-- All client components need "use client" directive
+**Components**: shadcn/ui for UI primitives, custom components in components/chat/

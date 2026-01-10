@@ -123,10 +123,6 @@ func main() {
 
 	cacheService := services.NewCacheService(cacheClient)
 
-	systemMessageService := services.NewSystemMessageService(
-		messagesRepository,
-	)
-
 	authService := services.NewAuthService(cachedUsersRepository, config.Auth{
 		AccessToken:  config.Token{Secret: os.Getenv("ACCESS_TOKEN_SECRET"), TTL: DefaultAccessTokenTTL},
 		RefreshToken: config.Token{Secret: os.Getenv("REFRESH_TOKEN_SECRET"), TTL: DefaultRefreshTokenTTL},
@@ -144,7 +140,6 @@ func main() {
 		messagesRepository,
 		notificationService,
 		cacheService,
-		systemMessageService,
 		queries,
 	)
 
