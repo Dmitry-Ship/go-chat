@@ -373,6 +373,15 @@ func (s *conversationService) saveJoinedMessage(ctx context.Context, conversatio
 		return fmt.Errorf("system message validation failed")
 	}
 
+	messageDTO, err := s.queries.GetNotificationMessage(message.ID, userID)
+	if err != nil {
+		return fmt.Errorf("get message error: %w", err)
+	}
+
+	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO, UserID: userID}); err != nil {
+		return fmt.Errorf("notify error: %w", err)
+	}
+
 	return nil
 }
 
@@ -386,6 +395,15 @@ func (s *conversationService) saveLeftMessage(ctx context.Context, conversationI
 
 	if !stored {
 		return fmt.Errorf("system message validation failed")
+	}
+
+	messageDTO, err := s.queries.GetNotificationMessage(message.ID, userID)
+	if err != nil {
+		return fmt.Errorf("get message error: %w", err)
+	}
+
+	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO, UserID: userID}); err != nil {
+		return fmt.Errorf("notify error: %w", err)
 	}
 
 	return nil
@@ -403,6 +421,15 @@ func (s *conversationService) saveInvitedMessage(ctx context.Context, conversati
 		return fmt.Errorf("system message validation failed")
 	}
 
+	messageDTO, err := s.queries.GetNotificationMessage(message.ID, userID)
+	if err != nil {
+		return fmt.Errorf("get message error: %w", err)
+	}
+
+	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO, UserID: userID}); err != nil {
+		return fmt.Errorf("notify error: %w", err)
+	}
+
 	return nil
 }
 
@@ -416,6 +443,15 @@ func (s *conversationService) saveRenamedMessage(ctx context.Context, conversati
 
 	if !stored {
 		return fmt.Errorf("system message validation failed")
+	}
+
+	messageDTO, err := s.queries.GetNotificationMessage(message.ID, userID)
+	if err != nil {
+		return fmt.Errorf("get message error: %w", err)
+	}
+
+	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO, UserID: userID}); err != nil {
+		return fmt.Errorf("notify error: %w", err)
 	}
 
 	return nil
