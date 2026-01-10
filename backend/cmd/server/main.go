@@ -16,6 +16,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func validateConfig() error {
@@ -86,6 +88,12 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	serverID := os.Getenv("SERVER_ID")
+	if serverID == "" {
+		log.Println("SERVER_ID not set, generating random ID")
+		serverID = uuid.New().String()
+	}
+
 	redisClient := redisPubsub.GetRedisClient(ctx, redisPubsub.RedisConfig{
 		Host:     os.Getenv("REDIS_HOST"),
 		Port:     os.Getenv("REDIS_PORT"),
@@ -130,7 +138,7 @@ func main() {
 
 	activeClients := ws.NewActiveClients(cachedParticipantRepository)
 	queries := postgres.NewQueriesRepository(pool)
-	notificationService := services.NewNotificationServiceWithClients(ctx, redisClient, activeClients)
+	notificationService := services.NewNotificationService(ctx, redisClient, cachedParticipantRepository, serverID, services.WithActiveClients(activeClients))
 
 	conversationService := services.NewConversationService(
 		cachedGroupConversationsRepository,
