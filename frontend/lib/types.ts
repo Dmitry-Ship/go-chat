@@ -95,8 +95,14 @@ export interface WSIncomingMessage {
   };
 }
 
-export interface WSOutgoingMessage {
+export interface WSNotificationEvent {
   type: "message" | "conversation_updated" | "conversation_deleted";
-  user_id: string;
   data: MessageDTO | ConversationFullDTO | { conversation_id: string };
+}
+
+export interface WSOutgoingMessage {
+  user_id: string;
+  type?: "message" | "conversation_updated" | "conversation_deleted";
+  data?: MessageDTO | ConversationFullDTO | { conversation_id: string };
+  events?: WSNotificationEvent[];
 }

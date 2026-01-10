@@ -15,6 +15,16 @@ type OutgoingNotification struct {
 	Payload interface{} `json:"data"`
 }
 
+type NotificationEvent struct {
+	Type    string      `json:"type"`
+	Payload interface{} `json:"data"`
+}
+
+type BatchOutgoingNotification struct {
+	UserID uuid.UUID           `json:"user_id"`
+	Events []NotificationEvent `json:"events"`
+}
+
 type IncomingNotification struct {
 	Type   string
 	Data   json.RawMessage
@@ -103,7 +113,6 @@ func (c *Client) WritePump() {
 			}
 
 			if !ok {
-				// The conversation closed the channel.
 				err := c.connection.WriteMessage(websocket.CloseMessage, []byte{})
 				if err != nil {
 					log.Println(err)

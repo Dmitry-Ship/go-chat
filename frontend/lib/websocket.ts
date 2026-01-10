@@ -78,44 +78,50 @@ class WebSocketManager {
   private handleMessage(message: WSOutgoingMessage) {
     if (!this.queryClient) return;
 
-    switch (message.type) {
-      case 'message':
-        const msg = message.data as MessageDTO;
-        this.queryClient.setQueryData(
-          ['messages', msg.conversation_id, 1, 20],
-          (old: MessageDTO[] | undefined) => {
-            if (!old) return [msg];
-            if (old.some(m => m.id === msg.id)) return old;
-            return [...old, msg];
-          }
-        );
-        this.queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        break;
+    const events = message.events
+      ? message.events
+      : [{ type: message.type!, data: message.data! }];
 
-      case 'conversation_updated':
-        const conv = message.data as ConversationFullDTO;
-        this.queryClient.setQueryData(['conversation', conv.id], conv);
-        this.queryClient.setQueryData(
-          ['conversations', 1, 20],
-          (old: ConversationDTO[] | undefined) => {
-            if (!old) return old;
-            return old.map(c => 
-              c.id === conv.id 
-                ? { ...c, name: conv.name, avatar: conv.avatar } 
-                : c
-            );
-          }
-        );
-        this.queryClient.invalidateQueries({ queryKey: ['participants', conv.id] });
-        break;
+    for (const event of events) {
+      switch (event.type) {
+        case 'message':
+          const msg = event.data as MessageDTO;
+          this.queryClient.setQueryData(
+            ['messages', msg.conversation_id, 1, 20],
+            (old: MessageDTO[] | undefined) => {
+              if (!old) return [msg];
+              if (old.some(m => m.id === msg.id)) return old;
+              return [...old, msg];
+            }
+          );
+          this.queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          break;
 
-      case 'conversation_deleted':
-        const { conversation_id } = message.data as { conversation_id: string };
-        this.queryClient.removeQueries({ queryKey: ['conversation', conversation_id] });
-        this.queryClient.removeQueries({ queryKey: ['messages', conversation_id] });
-        this.queryClient.removeQueries({ queryKey: ['participants', conversation_id] });
-        this.queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        break;
+        case 'conversation_updated':
+          const conv = event.data as ConversationFullDTO;
+          this.queryClient.setQueryData(['conversation', conv.id], conv);
+          this.queryClient.setQueryData(
+            ['conversations', 1, 20],
+            (old: ConversationDTO[] | undefined) => {
+              if (!old) return old;
+              return old.map(c =>
+                c.id === conv.id
+                  ? { ...c, name: conv.name, avatar: conv.avatar }
+                  : c
+              );
+            }
+          );
+          this.queryClient.invalidateQueries({ queryKey: ['participants', conv.id] });
+          break;
+
+        case 'conversation_deleted':
+          const { conversation_id } = event.data as { conversation_id: string };
+          this.queryClient.removeQueries({ queryKey: ['conversation', conversation_id] });
+          this.queryClient.removeQueries({ queryKey: ['messages', conversation_id] });
+          this.queryClient.removeQueries({ queryKey: ['participants', conversation_id] });
+          this.queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          break;
+      }
     }
   }
 
