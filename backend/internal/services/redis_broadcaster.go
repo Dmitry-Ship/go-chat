@@ -16,28 +16,26 @@ import (
 type RedisBroadcaster interface {
 	PublishNotification(ctx context.Context, notification ws.OutgoingNotification, serverID string) error
 	PublishInvalidate(ctx context.Context, userID uuid.UUID) error
-	SubscribeToChat(ctx context.Context) <-chan BroadcastMessage
-	SubscribeToInvalidation(ctx context.Context) <-chan SubscriptionEvent
-	Close()
+	Subscribe(ctx context.Context) error
+	Close() error
 }
 
 type redisBroadcaster struct {
 	redisClient         *redis.Client
 	subscriptionChannel string
 	chatChannel         string
-	chatMessages        chan BroadcastMessage
-	invalidationEvents  chan SubscriptionEvent
+
+	notificationService NotificationService
 	chatPubsub          *redis.PubSub
 	subPubsub           *redis.PubSub
 }
 
-func NewRedisBroadcaster(redisClient *redis.Client) RedisBroadcaster {
+func NewRedisBroadcaster(redisClient *redis.Client, notificationService NotificationService) RedisBroadcaster {
 	return &redisBroadcaster{
 		redisClient:         redisClient,
 		subscriptionChannel: pubsub.SubscriptionChannel,
 		chatChannel:         pubsub.ChatChannel,
-		chatMessages:        make(chan BroadcastMessage, 1000),
-		invalidationEvents:  make(chan SubscriptionEvent, 1000),
+		notificationService: notificationService,
 	}
 }
 
@@ -45,10 +43,11 @@ func (b *redisBroadcaster) PublishNotification(ctx context.Context, notification
 	messageID := uuid.New().String()
 
 	bMessage := BroadcastMessage{
-		Payload:   notification,
-		UserID:    notification.UserID,
-		MessageID: messageID,
-		ServerID:  serverID,
+		Payload:        notification,
+		UserID:         notification.UserID,
+		MessageID:      messageID,
+		ServerID:       serverID,
+		ConversationID: uuid.Nil,
 	}
 
 	data, err := json.Marshal(bMessage)
@@ -81,85 +80,74 @@ func (b *redisBroadcaster) PublishInvalidate(ctx context.Context, userID uuid.UU
 	return nil
 }
 
-func (b *redisBroadcaster) SubscribeToChat(ctx context.Context) <-chan BroadcastMessage {
-	b.chatPubsub = b.redisClient.Subscribe(ctx, b.chatChannel)
-	chatChannel := b.chatPubsub.Channel()
+func (b *redisBroadcaster) Subscribe(ctx context.Context) error {
+	chatPubsub := b.redisClient.Subscribe(ctx, b.chatChannel)
+	b.chatPubsub = chatPubsub
 
-	go b.readChatMessages(ctx, chatChannel)
-	return b.chatMessages
-}
+	subPubsub := b.redisClient.Subscribe(ctx, b.subscriptionChannel)
+	b.subPubsub = subPubsub
 
-func (b *redisBroadcaster) SubscribeToInvalidation(ctx context.Context) <-chan SubscriptionEvent {
-	b.subPubsub = b.redisClient.Subscribe(ctx, b.subscriptionChannel)
-	subscriptionChannel := b.subPubsub.Channel()
+	chatCh := chatPubsub.Channel()
+	subCh := subPubsub.Channel()
 
-	go b.readInvalidationEvents(ctx, subscriptionChannel)
-	return b.invalidationEvents
-}
-
-func (b *redisBroadcaster) readChatMessages(ctx context.Context, chatChannel <-chan *redis.Message) {
-	for {
-		select {
-		case message := <-chatChannel:
-			if message == nil {
-				return
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("Redis subscription goroutine recovered from panic: %v", r)
 			}
+		}()
 
-			var bMessage BroadcastMessage
-			if err := json.Unmarshal([]byte(message.Payload), &bMessage); err != nil {
-				log.Printf("Error unmarshaling broadcast message: %v, payload: %s", err, message.Payload)
-				continue
-			}
-
+		for {
 			select {
-			case b.chatMessages <- bMessage:
 			case <-ctx.Done():
 				return
-			default:
-				log.Printf("Chat messages channel full, dropping message: %s", bMessage.MessageID)
-			}
+			case msg, ok := <-chatCh:
+				if !ok {
+					return
+				}
 
-		case <-ctx.Done():
-			return
+				var broadcastMsg BroadcastMessage
+				if err := json.Unmarshal([]byte(msg.Payload), &broadcastMsg); err != nil {
+					log.Printf("Error unmarshaling broadcast message: %v, payload: %s", err, msg.Payload)
+					continue
+				}
+
+				if err := b.notificationService.Broadcast(ctx, broadcastMsg.ConversationID, broadcastMsg.Payload); err != nil {
+					log.Printf("Error broadcasting message: %v", err)
+				}
+			case msg, ok := <-subCh:
+				if !ok {
+					return
+				}
+
+				var event SubscriptionEvent
+				if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
+					log.Printf("Error unmarshaling subscription event: %v, payload: %s", err, msg.Payload)
+					continue
+				}
+
+				if event.Action == "invalidate" {
+					if err := b.notificationService.InvalidateMembership(ctx, event.UserID); err != nil {
+						log.Printf("Error invalidating membership: %v", err)
+					}
+				}
+			}
 		}
-	}
+	}()
+
+	return nil
 }
 
-func (b *redisBroadcaster) readInvalidationEvents(ctx context.Context, subscriptionChannel <-chan *redis.Message) {
-	for {
-		select {
-		case message := <-subscriptionChannel:
-			if message == nil {
-				return
-			}
-
-			var event SubscriptionEvent
-			if err := json.Unmarshal([]byte(message.Payload), &event); err != nil {
-				log.Printf("Error unmarshaling subscription event: %v, payload: %s", err, message.Payload)
-				continue
-			}
-
-			select {
-			case b.invalidationEvents <- event:
-			case <-ctx.Done():
-				return
-			default:
-				log.Printf("Invalidation events channel full, dropping event for user: %s", event.UserID)
-			}
-
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-func (b *redisBroadcaster) Close() {
+func (b *redisBroadcaster) Close() error {
 	if b.chatPubsub != nil {
-		_ = b.chatPubsub.Close()
+		if err := b.chatPubsub.Close(); err != nil {
+			log.Printf("Error closing chat pubsub: %v", err)
+		}
 	}
 	if b.subPubsub != nil {
-		_ = b.subPubsub.Close()
+		if err := b.subPubsub.Close(); err != nil {
+			log.Printf("Error closing sub pubsub: %v", err)
+		}
 	}
-	close(b.chatMessages)
-	close(b.invalidationEvents)
+	return nil
 }

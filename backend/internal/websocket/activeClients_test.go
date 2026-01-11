@@ -35,7 +35,7 @@ func (m *mockParticipantRepository) GetConversationIDsByUserID(ctx context.Conte
 }
 
 func TestNewActiveClients(t *testing.T) {
-	ac := NewActiveClients(nil)
+	ac := NewActiveClients(context.Background(), nil)
 
 	assert.NotNil(t, ac)
 	assert.IsType(t, &activeClients{}, ac)
@@ -45,7 +45,7 @@ func TestActiveClients_AddClient(t *testing.T) {
 	mockRepo := &mockParticipantRepository{
 		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
 	}
-	ac := NewActiveClients(mockRepo)
+	ac := NewActiveClients(context.Background(), mockRepo)
 
 	client := &Client{
 		Id:     uuid.New(),
@@ -55,67 +55,35 @@ func TestActiveClients_AddClient(t *testing.T) {
 	clientID := ac.AddClient(client)
 
 	assert.Equal(t, client.Id, clientID)
-	assert.NotNil(t, ac.GetClient(client.Id))
-}
-
-func TestActiveClients_GetClient(t *testing.T) {
-	mockRepo := &mockParticipantRepository{
-		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
-	}
-	ac := NewActiveClients(mockRepo)
-
-	client := &Client{
-		Id:     uuid.New(),
-		UserID: uuid.New(),
-	}
-
-	ac.AddClient(client)
-
-	retrieved := ac.GetClient(client.Id)
-	assert.NotNil(t, retrieved)
-	assert.Equal(t, client.Id, retrieved.Id)
-}
-
-func TestActiveClients_GetClient_NotFound(t *testing.T) {
-	mockRepo := &mockParticipantRepository{
-		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
-	}
-	ac := NewActiveClients(mockRepo)
-
-	retrieved := ac.GetClient(uuid.New())
-
-	assert.Nil(t, retrieved)
 }
 
 func TestActiveClients_RemoveClient(t *testing.T) {
 	mockRepo := &mockParticipantRepository{
 		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
 	}
-	ac := NewActiveClients(mockRepo)
+	ac := NewActiveClients(context.Background(), mockRepo)
 
 	client := &Client{
-		Id:          uuid.New(),
-		UserID:      uuid.New(),
-		channelIDs:  make(map[uuid.UUID]struct{}),
+		Id:     uuid.New(),
+		UserID: uuid.New(),
+
 		sendChannel: make(chan OutgoingNotification, 1),
 	}
 
 	ac.AddClient(client)
 	ac.RemoveClient(client)
-
-	assert.Nil(t, ac.GetClient(client.Id))
 }
 
 func TestActiveClients_AddClientToChannel(t *testing.T) {
 	mockRepo := &mockParticipantRepository{
 		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
 	}
-	ac := NewActiveClients(mockRepo)
+	ac := NewActiveClients(context.Background(), mockRepo)
 
 	client := &Client{
-		Id:         uuid.New(),
-		UserID:     uuid.New(),
-		channelIDs: make(map[uuid.UUID]struct{}),
+		Id:          uuid.New(),
+		UserID:      uuid.New(),
+		sendChannel: make(chan OutgoingNotification, 1),
 	}
 	channelID := uuid.New()
 
@@ -131,12 +99,12 @@ func TestActiveClients_RemoveClientFromChannel(t *testing.T) {
 	mockRepo := &mockParticipantRepository{
 		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
 	}
-	ac := NewActiveClients(mockRepo)
+	ac := NewActiveClients(context.Background(), mockRepo)
 
 	client := &Client{
-		Id:         uuid.New(),
-		UserID:     uuid.New(),
-		channelIDs: make(map[uuid.UUID]struct{}),
+		Id:          uuid.New(),
+		UserID:      uuid.New(),
+		sendChannel: make(chan OutgoingNotification, 1),
 	}
 	channelID := uuid.New()
 
@@ -152,45 +120,9 @@ func TestActiveClients_GetClientsByChannel_NotFound(t *testing.T) {
 	mockRepo := &mockParticipantRepository{
 		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
 	}
-	ac := NewActiveClients(mockRepo)
+	ac := NewActiveClients(context.Background(), mockRepo)
 
 	clients := ac.GetClientsByChannel(uuid.New())
-
-	assert.Nil(t, clients)
-}
-
-func TestActiveClients_GetClientsByUser(t *testing.T) {
-	mockRepo := &mockParticipantRepository{
-		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
-	}
-	ac := NewActiveClients(mockRepo)
-
-	userID := uuid.New()
-	client1 := &Client{
-		Id:         uuid.New(),
-		UserID:     userID,
-		channelIDs: make(map[uuid.UUID]struct{}),
-	}
-	client2 := &Client{
-		Id:         uuid.New(),
-		UserID:     userID,
-		channelIDs: make(map[uuid.UUID]struct{}),
-	}
-
-	ac.AddClient(client1)
-	ac.AddClient(client2)
-
-	clients := ac.GetClientsByUser(userID)
-	assert.Len(t, clients, 2)
-}
-
-func TestActiveClients_GetClientsByUser_NotFound(t *testing.T) {
-	mockRepo := &mockParticipantRepository{
-		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
-	}
-	ac := NewActiveClients(mockRepo)
-
-	clients := ac.GetClientsByUser(uuid.New())
 
 	assert.Nil(t, clients)
 }
@@ -205,12 +137,12 @@ func TestActiveClients_InvalidateMembership(t *testing.T) {
 			userID: {conversationID1, conversationID2},
 		},
 	}
-	ac := NewActiveClients(mockRepo)
+	ac := NewActiveClients(context.Background(), mockRepo)
 
 	client := &Client{
-		Id:          uuid.New(),
-		UserID:      userID,
-		channelIDs:  make(map[uuid.UUID]struct{}),
+		Id:     uuid.New(),
+		UserID: userID,
+
 		sendChannel: make(chan OutgoingNotification, 1),
 	}
 
@@ -234,7 +166,7 @@ func TestActiveClients_InvalidateMembership_NoClients(t *testing.T) {
 	mockRepo := &mockParticipantRepository{
 		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
 	}
-	ac := NewActiveClients(mockRepo)
+	ac := NewActiveClients(context.Background(), mockRepo)
 
 	err := ac.InvalidateMembership(context.Background(), uuid.New())
 
@@ -245,18 +177,16 @@ func TestActiveClients_MultipleClientsSameChannel(t *testing.T) {
 	mockRepo := &mockParticipantRepository{
 		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
 	}
-	ac := NewActiveClients(mockRepo)
+	ac := NewActiveClients(context.Background(), mockRepo)
 
 	channelID := uuid.New()
 	client1 := &Client{
-		Id:         uuid.New(),
-		UserID:     uuid.New(),
-		channelIDs: make(map[uuid.UUID]struct{}),
+		Id:     uuid.New(),
+		UserID: uuid.New(),
 	}
 	client2 := &Client{
-		Id:         uuid.New(),
-		UserID:     uuid.New(),
-		channelIDs: make(map[uuid.UUID]struct{}),
+		Id:     uuid.New(),
+		UserID: uuid.New(),
 	}
 
 	ac.AddClient(client1)
@@ -266,29 +196,4 @@ func TestActiveClients_MultipleClientsSameChannel(t *testing.T) {
 
 	clients := ac.GetClientsByChannel(channelID)
 	assert.Len(t, clients, 2)
-}
-
-func TestActiveClients_RemoveClient_RemovesFromUserList(t *testing.T) {
-	mockRepo := &mockParticipantRepository{
-		conversationIDs: make(map[uuid.UUID][]uuid.UUID),
-	}
-	ac := NewActiveClients(mockRepo)
-
-	userID := uuid.New()
-	client := &Client{
-		Id:          uuid.New(),
-		UserID:      userID,
-		channelIDs:  make(map[uuid.UUID]struct{}),
-		sendChannel: make(chan OutgoingNotification, 1),
-	}
-
-	ac.AddClient(client)
-
-	clients := ac.GetClientsByUser(userID)
-	assert.Len(t, clients, 1)
-
-	ac.RemoveClient(client)
-
-	clients = ac.GetClientsByUser(userID)
-	assert.Nil(t, clients)
 }

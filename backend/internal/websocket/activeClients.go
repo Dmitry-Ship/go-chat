@@ -17,15 +17,15 @@ type clientKey struct {
 type ActiveClients interface {
 	AddClient(c *Client) uuid.UUID
 	RemoveClient(c *Client)
+	RemoveClientsByUser(userID uuid.UUID)
 	AddClientToChannel(c *Client, channelID uuid.UUID)
 	RemoveClientFromChannel(c *Client, channelID uuid.UUID)
-	GetClient(clientID uuid.UUID) *Client
 	GetClientsByChannel(channelID uuid.UUID) []*Client
 	InvalidateMembership(ctx context.Context, userID uuid.UUID) error
-	GetClientsByUser(userID uuid.UUID) []*Client
 }
 
 type activeClients struct {
+	ctx          context.Context
 	mu           sync.RWMutex
 	clients      map[clientKey]*Client
 	byUserID     map[uuid.UUID]map[*Client]struct{}
@@ -34,8 +34,9 @@ type activeClients struct {
 	participants domain.ParticipantRepository
 }
 
-func NewActiveClients(participants domain.ParticipantRepository) *activeClients {
+func NewActiveClients(ctx context.Context, participants domain.ParticipantRepository) *activeClients {
 	return &activeClients{
+		ctx:          ctx,
 		clients:      make(map[clientKey]*Client),
 		byUserID:     make(map[uuid.UUID]map[*Client]struct{}),
 		byChannelID:  make(map[uuid.UUID]map[*Client]struct{}),
@@ -62,13 +63,6 @@ func (ac *activeClients) AddClient(c *Client) uuid.UUID {
 	return c.Id
 }
 
-func (ac *activeClients) GetClient(clientID uuid.UUID) *Client {
-	ac.mu.RLock()
-	defer ac.mu.RUnlock()
-
-	return ac.byClientID[clientID]
-}
-
 func (ac *activeClients) RemoveClient(c *Client) {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
@@ -85,14 +79,38 @@ func (ac *activeClients) RemoveClient(c *Client) {
 		}
 	}
 
-	for channelID := range c.channelIDs {
-		if clients, exists := ac.byChannelID[channelID]; exists {
-			delete(clients, c)
-			if len(clients) == 0 {
+	for channelID, clients := range ac.byChannelID {
+		delete(clients, c)
+		if len(clients) == 0 {
+			delete(ac.byChannelID, channelID)
+		}
+	}
+}
+
+func (ac *activeClients) RemoveClientsByUser(userID uuid.UUID) {
+	ac.mu.Lock()
+	defer ac.mu.Unlock()
+
+	userClients, exists := ac.byUserID[userID]
+	if !exists {
+		return
+	}
+
+	for client := range userClients {
+		key := clientKey{userID: userID, clientID: client.Id}
+		close(client.sendChannel)
+		delete(ac.clients, key)
+		delete(ac.byClientID, client.Id)
+
+		for channelID, channelClients := range ac.byChannelID {
+			delete(channelClients, client)
+			if len(channelClients) == 0 {
 				delete(ac.byChannelID, channelID)
 			}
 		}
 	}
+
+	delete(ac.byUserID, userID)
 }
 
 func (ac *activeClients) AddClientToChannel(c *Client, channelID uuid.UUID) {
@@ -103,7 +121,6 @@ func (ac *activeClients) AddClientToChannel(c *Client, channelID uuid.UUID) {
 		ac.byChannelID[channelID] = make(map[*Client]struct{})
 	}
 	ac.byChannelID[channelID][c] = struct{}{}
-	c.channelIDs[channelID] = struct{}{}
 }
 
 func (ac *activeClients) RemoveClientFromChannel(c *Client, channelID uuid.UUID) {
@@ -116,24 +133,6 @@ func (ac *activeClients) RemoveClientFromChannel(c *Client, channelID uuid.UUID)
 			delete(ac.byChannelID, channelID)
 		}
 	}
-	delete(c.channelIDs, channelID)
-}
-
-func (ac *activeClients) GetClientsByUser(userID uuid.UUID) []*Client {
-	ac.mu.RLock()
-	defer ac.mu.RUnlock()
-
-	userClients, exists := ac.byUserID[userID]
-	if !exists {
-		return nil
-	}
-
-	clients := make([]*Client, 0, len(userClients))
-	for client := range userClients {
-		clients = append(clients, client)
-	}
-
-	return clients
 }
 
 func (ac *activeClients) GetClientsByChannel(channelID uuid.UUID) []*Client {
@@ -154,10 +153,10 @@ func (ac *activeClients) GetClientsByChannel(channelID uuid.UUID) []*Client {
 }
 
 func (ac *activeClients) InvalidateMembership(ctx context.Context, userID uuid.UUID) error {
-	ac.mu.Lock()
+	ac.mu.RLock()
 	userClients, exists := ac.byUserID[userID]
 	if !exists {
-		ac.mu.Unlock()
+		ac.mu.RUnlock()
 		return nil
 	}
 
@@ -165,7 +164,7 @@ func (ac *activeClients) InvalidateMembership(ctx context.Context, userID uuid.U
 	for client := range userClients {
 		clients = append(clients, client)
 	}
-	ac.mu.Unlock()
+	ac.mu.RUnlock()
 
 	conversationIDs, err := ac.participants.GetConversationIDsByUserID(ctx, userID)
 	if err != nil {
@@ -175,8 +174,26 @@ func (ac *activeClients) InvalidateMembership(ctx context.Context, userID uuid.U
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 
+	currentUserClients, stillExists := ac.byUserID[userID]
+	if !stillExists {
+		return nil
+	}
+
+	validClients := make(map[*Client]struct{})
 	for _, client := range clients {
-		for channelID := range client.channelIDs {
+		if _, ok := currentUserClients[client]; ok {
+			validClients[client] = struct{}{}
+		}
+	}
+
+	for client := range validClients {
+		var channelIDs []uuid.UUID
+		for channelID, channelClients := range ac.byChannelID {
+			if _, exists := channelClients[client]; exists {
+				channelIDs = append(channelIDs, channelID)
+			}
+		}
+		for _, channelID := range channelIDs {
 			if channelClients, exists := ac.byChannelID[channelID]; exists {
 				delete(channelClients, client)
 				if len(channelClients) == 0 {
@@ -184,16 +201,14 @@ func (ac *activeClients) InvalidateMembership(ctx context.Context, userID uuid.U
 				}
 			}
 		}
-		client.channelIDs = make(map[uuid.UUID]struct{})
 	}
 
-	for _, client := range clients {
+	for client := range validClients {
 		for _, conversationID := range conversationIDs {
 			if _, exists := ac.byChannelID[conversationID]; !exists {
 				ac.byChannelID[conversationID] = make(map[*Client]struct{})
 			}
 			ac.byChannelID[conversationID][client] = struct{}{}
-			client.channelIDs[conversationID] = struct{}{}
 		}
 	}
 

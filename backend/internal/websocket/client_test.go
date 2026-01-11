@@ -8,11 +8,10 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	unregisterClient := func(c *Client) {}
-	handleIncomingNotification := func(userID uuid.UUID, message []byte) {}
+	unregisterChannel := make(chan *Client)
 	userID := uuid.New()
 
-	client := NewClient(nil, unregisterClient, handleIncomingNotification, userID)
+	client := NewClient(nil, unregisterChannel, userID)
 
 	assert.NotNil(t, client)
 	assert.NotEqual(t, uuid.Nil, client.Id)
@@ -22,11 +21,10 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestClient_SendNotification(t *testing.T) {
-	unregisterClient := func(c *Client) {}
-	handleIncomingNotification := func(userID uuid.UUID, message []byte) {}
+	unregisterChannel := make(chan *Client)
 	userID := uuid.New()
 
-	client := NewClient(nil, unregisterClient, handleIncomingNotification, userID)
+	client := NewClient(nil, unregisterChannel, userID)
 
 	notification := OutgoingNotification{
 		Type:    "test",
@@ -34,7 +32,8 @@ func TestClient_SendNotification(t *testing.T) {
 		Payload: "test payload",
 	}
 
-	client.SendNotification(notification)
+	err := client.SendNotification(notification)
+	assert.NoError(t, err)
 
 	assert.Len(t, client.sendChannel, 1)
 
@@ -44,11 +43,10 @@ func TestClient_SendNotification(t *testing.T) {
 }
 
 func TestClient_SendNotification_Multiple(t *testing.T) {
-	unregisterClient := func(c *Client) {}
-	handleIncomingNotification := func(userID uuid.UUID, message []byte) {}
+	unregisterChannel := make(chan *Client)
 	userID := uuid.New()
 
-	client := NewClient(nil, unregisterClient, handleIncomingNotification, userID)
+	client := NewClient(nil, unregisterChannel, userID)
 
 	for i := 0; i < 5; i++ {
 		notification := OutgoingNotification{
@@ -56,32 +54,21 @@ func TestClient_SendNotification_Multiple(t *testing.T) {
 			UserID:  userID,
 			Payload: i,
 		}
-		client.SendNotification(notification)
+		err := client.SendNotification(notification)
+		assert.NoError(t, err)
 	}
 
 	assert.Len(t, client.sendChannel, 5)
 }
 
 func TestClient_ConnectionOptions(t *testing.T) {
-	unregisterClient := func(c *Client) {}
-	handleIncomingNotification := func(userID uuid.UUID, message []byte) {}
+	unregisterChannel := make(chan *Client)
 	userID := uuid.New()
 
-	client := NewClient(nil, unregisterClient, handleIncomingNotification, userID)
+	client := NewClient(nil, unregisterChannel, userID)
 
 	assert.Equal(t, WriteWait, client.connectionOptions.writeWait)
 	assert.Equal(t, PongWait, client.connectionOptions.pongWait)
 	assert.Equal(t, PingPeriod, client.connectionOptions.pingPeriod)
 	assert.Equal(t, int64(MaxMessageSize), client.connectionOptions.maxMessageSize)
-}
-
-func TestClient_ChannelIDsInitialized(t *testing.T) {
-	unregisterClient := func(c *Client) {}
-	handleIncomingNotification := func(userID uuid.UUID, message []byte) {}
-	userID := uuid.New()
-
-	client := NewClient(nil, unregisterClient, handleIncomingNotification, userID)
-
-	assert.NotNil(t, client.channelIDs)
-	assert.Equal(t, 0, len(client.channelIDs))
 }

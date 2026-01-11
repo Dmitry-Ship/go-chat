@@ -34,3 +34,4 @@ func GetRedisClient(ctx context.Context, conf RedisConfig) *redis.Client {
 
 const ChatChannel = "chat"
 const SubscriptionChannel = "subscriptions"
+const PresenceChannel = "presence"

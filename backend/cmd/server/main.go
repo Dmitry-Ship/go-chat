@@ -136,9 +136,12 @@ func main() {
 		RefreshToken: config.Token{Secret: os.Getenv("REFRESH_TOKEN_SECRET"), TTL: DefaultRefreshTokenTTL},
 	})
 
-	activeClients := ws.NewActiveClients(cachedParticipantRepository)
+	activeClients := ws.NewActiveClients(ctx, cachedParticipantRepository)
 	queries := postgres.NewQueriesRepository(pool)
-	notificationService := services.NewNotificationService(ctx, redisClient, cachedParticipantRepository, serverID, services.WithActiveClients(activeClients))
+	notificationService := services.NewNotificationService(ctx, serverID, activeClients)
+
+	broadcaster := services.NewRedisBroadcaster(redisClient, notificationService)
+	_ = broadcaster.Subscribe(ctx)
 
 	conversationService := services.NewConversationService(
 		cachedGroupConversationsRepository,

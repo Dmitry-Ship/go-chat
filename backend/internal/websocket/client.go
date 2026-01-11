@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -39,25 +40,21 @@ type connectionOptions struct {
 }
 
 type Client struct {
-	Id                         uuid.UUID
-	UserID                     uuid.UUID
-	channelIDs                 map[uuid.UUID]struct{}
-	connection                 *websocket.Conn
-	sendChannel                chan OutgoingNotification
-	handleIncomingNotification func(userID uuid.UUID, message []byte)
-	unregisterClient           func(*Client)
-	connectionOptions          connectionOptions
+	Id                uuid.UUID
+	UserID            uuid.UUID
+	connection        *websocket.Conn
+	sendChannel       chan OutgoingNotification
+	unregisterChannel chan *Client
+	connectionOptions connectionOptions
 }
 
-func NewClient(conn *websocket.Conn, unregisterClient func(*Client), handleIncomingNotification func(userID uuid.UUID, message []byte), userID uuid.UUID) *Client {
+func NewClient(conn *websocket.Conn, unregisterChannel chan *Client, userID uuid.UUID) *Client {
 	return &Client{
-		Id:                         uuid.New(),
-		UserID:                     userID,
-		channelIDs:                 make(map[uuid.UUID]struct{}),
-		connection:                 conn,
-		sendChannel:                make(chan OutgoingNotification, SendChannelSize),
-		unregisterClient:           unregisterClient,
-		handleIncomingNotification: handleIncomingNotification,
+		Id:                uuid.New(),
+		UserID:            userID,
+		connection:        conn,
+		sendChannel:       make(chan OutgoingNotification, SendChannelSize),
+		unregisterChannel: unregisterChannel,
 		connectionOptions: connectionOptions{
 			writeWait:      WriteWait,
 			pongWait:       PongWait,
@@ -69,7 +66,7 @@ func NewClient(conn *websocket.Conn, unregisterClient func(*Client), handleIncom
 
 func (c *Client) ReadPump() {
 	defer func() {
-		c.unregisterClient(c)
+		c.unregisterChannel <- c
 		_ = c.connection.Close()
 	}()
 
@@ -94,7 +91,7 @@ func (c *Client) ReadPump() {
 			break
 		}
 
-		c.handleIncomingNotification(c.UserID, message)
+		_ = message
 	}
 }
 
@@ -136,6 +133,11 @@ func (c *Client) WritePump() {
 	}
 }
 
-func (c *Client) SendNotification(notification OutgoingNotification) {
-	c.sendChannel <- notification
+func (c *Client) SendNotification(notification OutgoingNotification) error {
+	select {
+	case c.sendChannel <- notification:
+		return nil
+	default:
+		return fmt.Errorf("send channel full for client %s", c.Id)
+	}
 }

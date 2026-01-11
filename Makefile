@@ -32,7 +32,7 @@ backend_build:
 
 backend_test:
 	@echo "Running Go backend tests..."
-	cd backend && go test ./...
+	cd backend && go test -timeout 2m ./...
 
 backend_lint:
 	@echo "Running Go backend linter..."
