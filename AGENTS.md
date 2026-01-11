@@ -2,18 +2,20 @@
 
 ## Build, Lint, and Test Commands
 
-### Backend (Go)
+### Backend (Go 1.23)
 - **Build**: `make backend_build` or `cd backend && go build -o go-bin ./cmd/server`
-- **Test all**: `make backend_test` or `cd backend && go test ./...`
+- **Test all**: `make backend_test` or `cd backend && go test -timeout 2m ./...`
 - **Test single**: `cd backend && go test -run TestFunctionName ./path/to/package`
-- **Test with verbose**: `cd backend && go test -v ./...`
+- **Test with coverage**: `cd backend && go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html`
+- **Test verbose**: `cd backend && go test -v ./...`
 - **Lint**: `make backend_lint` or `cd backend && golangci-lint run`
 - **Run dev**: `make backend_run` or `cd backend && go run ./cmd/server`
 
-### Frontend (TypeScript/Next.js)
+### Frontend (Next.js 16, React 19, TypeScript)
 - **Build**: `make frontend_build` or `cd frontend && npm run build`
-- **Test**: `cd frontend && npm test` (Jest/Vitest)
+- **Test**: `make frontend_test` or `cd frontend && npm test`
 - **Test single**: `cd frontend && npm test -- fileName.test.ts`
+- **Test watch**: `cd frontend && npm test -- --watch`
 - **Lint**: `make frontend_lint` or `cd frontend && npm run lint`
 - **Type check**: `make frontend_type` or `cd frontend && npx tsc --noEmit`
 - **Dev server**: `make frontend_dev` or `cd frontend && npm run dev`
@@ -22,10 +24,13 @@
 - `make all_build` - Build backend and frontend
 - `make all_test` - Run all tests
 - `make all_lint` - Run all linters (backend + frontend)
+- `make clean` - Remove build artifacts
 
 ### Docker
 - `make docker_up` - Start all services
+- `make docker_up_detached` - Start in detached mode
 - `make docker_down` - Stop all services
+- `make docker_build` - Build all Docker images
 
 ---
 
@@ -45,25 +50,25 @@
 - `internal/config/` - Configuration loading
 - `cmd/server/` - Application entry point
 
-**Imports**: Grouped in three blocks (stdlib, third-party, internal) separated by blank lines
+**Imports**: Three blocks - stdlib, third-party, internal - separated by blank lines
 
 **Naming**: PascalCase for exported, camelCase for private, package names lowercase
 
-**Error Handling**: Wrap with `fmt.Errorf("operation: %w", err)`, avoid errors.New for expected failures
+**Error Handling**: Wrap with `fmt.Errorf("operation: %w", err)`, use `errors.New` only for sentinel errors
 
-**Interfaces**: Define in domain (e.g., `UserRepository`), implement in infra packages
+**Interfaces**: Define in domain packages, implement in infra packages (e.g., `UserRepository` in domain)
 
-**Testing**: Use `github.com/stretchr/testify/assert`, test files `*_test.go`, table-driven tests for multiple cases
+**Testing**: Use `github.com/stretchr/testify/assert`, test files `*_test.go`, table-driven tests with subtests (`t.Run`)
 
-**Database**: Use sqlc-generated queries in `internal/infra/postgres/db/`, pgx for connection pooling
+**Database**: sqlc-generated queries in `internal/infra/postgres/db/`, pgx for connection pooling
 
-**Security**: bcrypt with cost 14, JWT tokens, refresh token rotation, input sanitization with bluemonday
+**Security**: bcrypt cost 14, JWT tokens, refresh token rotation, input sanitization with bluemonday
 
-**Context**: Pass context.Context as first parameter to all service/repository methods
+**Context**: Pass `context.Context` as first parameter to all service/repository methods
 
-**Repository Pattern**: Decorate with cache layer when appropriate (userCacheDecorator, participantCacheDecorator)
+**Repository Pattern**: Decorate with cache layer when appropriate (e.g., `userCacheDecorator`)
 
-**Middleware**: Chain middleware using alice pattern (auth, rate limiting, logging)
+**Middleware**: Chain using alice pattern (auth, rate limiting, logging)
 
 ---
 
@@ -71,14 +76,14 @@
 
 **File Structure**:
 - `app/` - Next.js App Router pages and layouts
-- `components/` - Reusable UI components (chat, ui)
+- `components/` - Reusable UI (chat/, ui/)
 - `contexts/` - React context providers (AuthContext, ChatContext)
-- `hooks/` - Custom hooks (useAuth, useNotifications)
-- `hooks/queries/` - React Query hooks for data fetching
-- `hooks/mutations/` - React Query mutations
+- `hooks/` - Custom hooks
+- `hooks/queries/` - TanStack Query hooks for data fetching
+- `hooks/mutations/` - TanStack Query mutations
 - `lib/` - Utilities and API client
 
-**Imports**: Use path aliases `@/` for internal imports, no bare `.` imports
+**Imports**: Use path aliases `@/` for internal imports, no bare relative imports
 
 **Components**:
 - Client components: `"use client"` at top
@@ -86,21 +91,19 @@
 - Props interface: `interface Props { prop: type }`
 - Early returns for conditions, avoid nested ternaries
 
-**TypeScript**: Strict mode enabled, no `any`, use generics, proper types for API responses
+**TypeScript**: Strict mode, no `any`, use generics, proper types for API responses
 
 **State Management**:
 - TanStack Query for server state (queries/mutations)
-- Context for auth/chat state
-- Local state for simple UI
+- React Context for auth/chat state
+- Local state (`useState`, `useReducer`) for simple UI
 
-**Styling**: Tailwind CSS, classnames with clsx + tailwind-merge, shadcn/ui components
+**Styling**: Tailwind CSS, classnames with `clsx` + `tailwind-merge`, shadcn/ui components
 
-**Error Handling**: Try/catch in async functions, display user-friendly messages, error boundaries for components
+**Error Handling**: `try/catch` in async functions, display user-friendly messages, error boundaries
 
-**API Calls**: Centralized in `lib/api.ts`, typed return values, credentials: "include" for cookies
+**API Calls**: Centralized in `lib/api.ts`, typed return values, `credentials: "include"` for cookies
 
-**WebSocket**: Reconnection logic in lib/websocket.ts, message handling via React Context
+**WebSocket**: Reconnection logic in `lib/websocket.ts`, message handling via React Context
 
-**Environment**: Variables defined in .env.example, NEXT_PUBLIC_ prefix for client-side vars
-
-**Components**: shadcn/ui for UI primitives, custom components in components/chat/
+**Environment**: Define in `.env.example`, `NEXT_PUBLIC_` prefix for client-side vars

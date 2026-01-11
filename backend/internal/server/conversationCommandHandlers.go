@@ -24,7 +24,7 @@ func (s *Server) handleStartDirectConversation(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	conversationID, err := s.conversationCommands.StartDirectConversation(r.Context(), userID, request.ToUserID)
+	conversationID, err := s.directConversation.StartDirectConversation(r.Context(), userID, request.ToUserID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -61,7 +61,7 @@ func (s *Server) handleCreateGroupConversation(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err := s.conversationCommands.CreateGroupConversation(r.Context(), request.ConversationId, request.ConversationName, userID)
+	err := s.groupConversation.CreateGroupConversation(r.Context(), request.ConversationId, request.ConversationName, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -91,7 +91,7 @@ func (s *Server) handleDeleteConversation(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err := s.conversationCommands.DeleteGroupConversation(r.Context(), request.ConversationId, userID)
+	err := s.groupConversation.DeleteGroupConversation(r.Context(), request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -120,7 +120,7 @@ func (s *Server) handleJoin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.conversationCommands.Join(r.Context(), request.ConversationId, userID)
+	err := s.membership.Join(r.Context(), request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -150,7 +150,7 @@ func (s *Server) handleLeave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.conversationCommands.Leave(r.Context(), request.ConversationId, userID)
+	err := s.membership.Leave(r.Context(), request.ConversationId, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -181,7 +181,7 @@ func (s *Server) handleRename(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.conversationCommands.Rename(r.Context(), request.ConversationId, userID, request.ConversationName)
+	err := s.groupConversation.Rename(r.Context(), request.ConversationId, userID, request.ConversationName)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -212,7 +212,7 @@ func (s *Server) handleInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.conversationCommands.Invite(r.Context(), request.ConversationId, userID, request.InviteeId)
+	err := s.membership.Invite(r.Context(), request.ConversationId, userID, request.InviteeId)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -243,7 +243,7 @@ func (s *Server) handleKick(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.conversationCommands.Kick(r.Context(), request.ConversationId, userID, request.TargetId)
+	err := s.membership.Kick(r.Context(), request.ConversationId, userID, request.TargetId)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)

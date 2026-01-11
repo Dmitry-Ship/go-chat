@@ -26,7 +26,7 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.conversationCommands.SendTextMessage(r.Context(), request.ConversationId, userID, request.Content)
+	err := s.message.SendTextMessage(r.Context(), request.ConversationId, userID, request.Content)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
