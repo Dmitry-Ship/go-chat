@@ -34,7 +34,6 @@ type Querier interface {
 	InviteToConversationAtomic(ctx context.Context, arg InviteToConversationAtomicParams) (pgtype.UUID, error)
 	IsMember(ctx context.Context, arg IsMemberParams) (bool, error)
 	IsMemberOwner(ctx context.Context, arg IsMemberOwnerParams) (bool, error)
-	KickParticipantAtomic(ctx context.Context, arg KickParticipantAtomicParams) (int64, error)
 	LeaveConversationAtomic(ctx context.Context, arg LeaveConversationAtomicParams) (int64, error)
 	RenameConversationAndReturn(ctx context.Context, arg RenameConversationAndReturnParams) (int64, error)
 	RenameGroupConversation(ctx context.Context, arg RenameGroupConversationParams) error
@@ -44,12 +43,10 @@ type Querier interface {
 	StoreGroupConversation(ctx context.Context, arg StoreGroupConversationParams) error
 	// Message queries
 	StoreMessage(ctx context.Context, arg StoreMessageParams) error
-	StoreMessageAndReturnWithUser(ctx context.Context, arg StoreMessageAndReturnWithUserParams) (StoreMessageAndReturnWithUserRow, error)
+	StoreMessageAndReturn(ctx context.Context, arg StoreMessageAndReturnParams) (StoreMessageAndReturnRow, error)
 	// Participant queries
 	StoreParticipant(ctx context.Context, arg StoreParticipantParams) error
 	StoreParticipantsBatch(ctx context.Context, arg StoreParticipantsBatchParams) error
-	StoreSystemMessage(ctx context.Context, arg StoreSystemMessageParams) (int64, error)
-	StoreSystemMessageAndReturn(ctx context.Context, arg StoreSystemMessageAndReturnParams) (StoreSystemMessageAndReturnRow, error)
 	// User queries
 	StoreUser(ctx context.Context, arg StoreUserParams) error
 	UpdateConversation(ctx context.Context, arg UpdateConversationParams) error

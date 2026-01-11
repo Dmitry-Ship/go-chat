@@ -143,10 +143,15 @@ func main() {
 	broadcaster := services.NewRedisBroadcaster(redisClient, notificationService)
 	_ = broadcaster.Subscribe(ctx)
 
+	messageService := services.NewMessageService(
+		messagesRepository,
+		notificationService,
+	)
+
 	groupConversationService := services.NewGroupConversationService(
 		cachedGroupConversationsRepository,
 		queries,
-		messagesRepository,
+		messageService,
 		notificationService,
 		cacheService,
 	)
@@ -158,13 +163,9 @@ func main() {
 	membershipService := services.NewMembershipService(
 		cachedParticipantRepository,
 		queries,
-		messagesRepository,
+		messageService,
 		notificationService,
 		cacheService,
-	)
-	messageService := services.NewMessageService(
-		queries,
-		notificationService,
 	)
 
 	maxUserConnections, _ := strconv.Atoi(os.Getenv("WS_RATE_LIMIT_MAX_USER"))

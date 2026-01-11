@@ -95,12 +95,7 @@ func (m *MockQueriesRepository) GetNotificationMessage(messageID uuid.UUID, requ
 	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
 
-func (m *MockQueriesRepository) StoreMessageAndReturnWithUser(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
-	args := m.Called(id, conversationID, userID, content, messageType)
-	return args.Get(0).(readModel.MessageDTO), args.Error(1)
-}
-
-func (m *MockQueriesRepository) StoreSystemMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
+func (m *MockQueriesRepository) StoreMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
 	args := m.Called(id, conversationID, userID, content, messageType)
 	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
@@ -120,31 +115,16 @@ func (m *MockQueriesRepository) InviteToConversationAtomic(conversationID uuid.U
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
-func (m *MockQueriesRepository) KickParticipantAtomic(conversationID uuid.UUID, targetID uuid.UUID) (int64, error) {
-	args := m.Called(conversationID, targetID)
-	return args.Get(0).(int64), args.Error(1)
-}
-
 func (m *MockQueriesRepository) LeaveConversationAtomic(conversationID uuid.UUID, userID uuid.UUID) (int64, error) {
 	args := m.Called(conversationID, userID)
 	return args.Get(0).(int64), args.Error(1)
 }
 
-type MockMessageRepository struct {
+type MockMessageService struct {
 	mock.Mock
 }
 
-func (m *MockMessageRepository) Store(ctx context.Context, message *domain.Message) error {
-	args := m.Called(ctx, message)
-	return args.Error(0)
-}
-
-func (m *MockMessageRepository) StoreSystemMessage(ctx context.Context, message *domain.Message) (bool, error) {
-	args := m.Called(ctx, message)
-	return args.Bool(0), args.Error(1)
-}
-
-func (m *MockMessageRepository) StoreSystemMessageAndReturn(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
+func (m *MockMessageService) Send(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
 	args := m.Called(ctx, message, requestUserID)
 	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
@@ -203,7 +183,7 @@ func TestGroupConversationService_CreateGroupConversation(t *testing.T) {
 
 	mockGroupConversations := new(MockGroupConversationRepository)
 	mockQueries := new(MockQueriesRepository)
-	mockMessages := new(MockMessageRepository)
+	mockMessages := new(MockMessageService)
 	mockNotifications := new(MockNotificationService)
 	mockCache := new(MockCacheService)
 
@@ -255,7 +235,7 @@ func TestGroupConversationService_DeleteGroupConversation(t *testing.T) {
 
 	mockGroupConversations := new(MockGroupConversationRepository)
 	mockQueries := new(MockQueriesRepository)
-	mockMessages := new(MockMessageRepository)
+	mockMessages := new(MockMessageService)
 	mockNotifications := new(MockNotificationService)
 	mockCache := new(MockCacheService)
 
@@ -300,7 +280,7 @@ func TestGroupConversationService_Rename(t *testing.T) {
 
 	mockGroupConversations := new(MockGroupConversationRepository)
 	mockQueries := new(MockQueriesRepository)
-	mockMessages := new(MockMessageRepository)
+	mockMessages := new(MockMessageService)
 	mockNotifications := new(MockNotificationService)
 	mockCache := new(MockCacheService)
 
@@ -315,10 +295,10 @@ func TestGroupConversationService_Rename(t *testing.T) {
 	t.Run("successful rename", func(t *testing.T) {
 		mockQueries.On("IsMemberOwner", conversationID, userID).Return(true, nil)
 		mockGroupConversations.On("Rename", mock.Anything, conversationID, newName).Return(nil)
-		mockMessages.On("StoreSystemMessageAndReturn", mock.Anything, mock.AnythingOfType("*domain.Message"), userID).Return(readModel.MessageDTO{}, nil)
-		mockNotifications.On("Broadcast", mock.Anything, conversationID, mock.Anything).Return(nil)
+		mockMessages.On("Send", mock.Anything, mock.AnythingOfType("*domain.Message"), userID).Return(readModel.MessageDTO{}, nil)
 		mockCache.On("InvalidateConversation", mock.Anything, conversationID).Return(nil)
 		mockQueries.On("GetConversation", conversationID, userID).Return(readModel.ConversationFullDTO{ID: conversationID}, nil)
+		mockNotifications.On("Broadcast", mock.Anything, conversationID, mock.Anything).Return(nil)
 
 		err := service.Rename(ctx, conversationID, userID, newName)
 

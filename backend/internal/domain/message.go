@@ -11,9 +11,7 @@ import (
 )
 
 type MessageRepository interface {
-	Store(ctx context.Context, message *Message) error
-	StoreSystemMessage(ctx context.Context, message *Message) (bool, error)
-	StoreSystemMessageAndReturn(ctx context.Context, message *Message, requestUserID uuid.UUID) (readModel.MessageDTO, error)
+	Send(ctx context.Context, message *Message, requestUserID uuid.UUID) (readModel.MessageDTO, error)
 }
 
 type MessageType struct {
@@ -25,11 +23,8 @@ func (r MessageType) String() string {
 }
 
 var (
-	MessageTypeText                = MessageType{"text"}
-	MessageTypeRenamedConversation = MessageType{"renamed_conversation"}
-	MessageTypeLeftConversation    = MessageType{"left_conversation"}
-	MessageTypeJoinedConversation  = MessageType{"joined_conversation"}
-	MessageTypeInvitedConversation = MessageType{"invited_conversation"}
+	MessageTypeUser   = MessageType{"user"}
+	MessageTypeSystem = MessageType{"system"}
 )
 
 type messageContent interface {
@@ -44,16 +39,20 @@ type Message struct {
 	Type           MessageType
 }
 
-func newMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, messageType MessageType, content messageContent) *Message {
+func NewMessage(conversationID uuid.UUID, userID uuid.UUID, messageType MessageType, content string) (*Message, error) {
+	text, err := NewTextMessageContent(content)
+	if err != nil {
+		return nil, err
+	}
 	message := Message{
-		ID:             messageID,
+		ID:             uuid.New(),
 		ConversationID: conversationID,
 		UserID:         userID,
 		Type:           messageType,
-		Content:        content,
+		Content:        text,
 	}
 
-	return &message
+	return &message, nil
 }
 
 type textMessageContent struct {
@@ -80,66 +79,4 @@ func NewTextMessageContent(text string) (textMessageContent, error) {
 
 func (m textMessageContent) String() string {
 	return m.text
-}
-
-func NewTextMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, text string) (*Message, error) {
-	content, err := NewTextMessageContent(text)
-	if err != nil {
-		return nil, err
-	}
-
-	return newMessage(messageID, conversationID, userID, MessageTypeText, content), nil
-}
-
-type renamedMessageContent struct {
-	newName string
-}
-
-func newRenamedMessageContent(newName string) renamedMessageContent {
-	return renamedMessageContent{
-		newName: newName,
-	}
-}
-
-func (m renamedMessageContent) String() string {
-	return m.newName
-}
-
-func newConversationRenamedMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content renamedMessageContent) *Message {
-	return newMessage(messageID, conversationID, userID, MessageTypeRenamedConversation, content)
-}
-
-type emptyMessageContent struct {
-}
-
-func newEmptyMessageContent() emptyMessageContent {
-	return emptyMessageContent{}
-}
-
-func (m emptyMessageContent) String() string {
-	return ""
-}
-
-func newLeftConversationMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID) *Message {
-	return newMessage(messageID, conversationID, userID, MessageTypeLeftConversation, newEmptyMessageContent())
-}
-
-func newJoinedConversationMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID) *Message {
-	return newMessage(messageID, conversationID, userID, MessageTypeJoinedConversation, newEmptyMessageContent())
-}
-
-func newInvitedConversationMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID) *Message {
-	return newMessage(messageID, conversationID, userID, MessageTypeInvitedConversation, newEmptyMessageContent())
-}
-
-// NewSystemMessage creates a system message (joined, left, invited, renamed) without requiring full entity validation.
-// Validation is performed at the database level for optimal performance.
-func NewSystemMessage(messageID uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, messageType MessageType, content string) *Message {
-	var msgContent messageContent
-	if messageType == MessageTypeRenamedConversation {
-		msgContent = newRenamedMessageContent(content)
-	} else {
-		msgContent = newEmptyMessageContent()
-	}
-	return newMessage(messageID, conversationID, userID, messageType, msgContent)
 }

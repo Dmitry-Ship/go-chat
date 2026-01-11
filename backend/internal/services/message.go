@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/readModel"
@@ -12,47 +11,33 @@ import (
 )
 
 type MessageService interface {
-	SendTextMessage(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID, messageText string) error
+	Send(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error)
 }
 
 type messageService struct {
-	queries       readModel.QueriesRepository
+	messages      domain.MessageRepository
 	notifications NotificationService
 }
 
 func NewMessageService(
-	queries readModel.QueriesRepository,
+	messages domain.MessageRepository,
 	notifications NotificationService,
 ) MessageService {
 	return &messageService{
-		queries:       queries,
+		messages:      messages,
 		notifications: notifications,
 	}
 }
 
-func (s *messageService) SendTextMessage(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID, messageText string) error {
-	isMember, err := s.queries.IsMember(conversationID, userID)
+func (s *messageService) Send(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
+	dto, err := s.messages.Send(ctx, message, requestUserID)
 	if err != nil {
-		return fmt.Errorf("is member error: %w", err)
-	}
-	if !isMember {
-		return fmt.Errorf("user is not in conversation: %w", domain.ErrorUserNotInConversation)
+		return dto, err
 	}
 
-	messageID := uuid.New()
-
-	if _, err := domain.NewTextMessageContent(messageText); err != nil {
-		return fmt.Errorf("validate message text error: %w", err)
+	if err := s.notifications.Broadcast(ctx, message.ConversationID, ws.OutgoingNotification{Type: "message", Payload: dto, UserID: message.UserID}); err != nil {
+		return dto, err
 	}
 
-	messageDTO, err := s.queries.StoreMessageAndReturnWithUser(messageID, conversationID, userID, messageText, 0)
-	if err != nil {
-		return fmt.Errorf("store message error: %w", err)
-	}
-
-	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: messageDTO, UserID: userID}); err != nil {
-		return fmt.Errorf("notify error: %w", err)
-	}
-
-	return nil
+	return dto, nil
 }

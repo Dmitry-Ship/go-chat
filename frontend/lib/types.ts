@@ -1,9 +1,4 @@
-export type MessageType = 
-  | "text" 
-  | "renamed_conversation" 
-  | "left_conversation" 
-  | "joined_conversation" 
-  | "invited_conversation";
+export type MessageType = "user" | "system";
 
 export interface UserDTO {
   id: string;

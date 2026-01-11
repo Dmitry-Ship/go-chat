@@ -118,28 +118,3 @@ func (groupConversation *GroupConversation) Kick(kicker *Participant, target *Pa
 
 	return target, nil
 }
-
-func (groupConversation *GroupConversation) SendJoinedConversationMessage(messageID uuid.UUID, user *User) (*Message, error) {
-	message := newJoinedConversationMessage(messageID, groupConversation.Conversation.ID, user.ID)
-
-	return message, nil
-}
-
-func (groupConversation *GroupConversation) SendInvitedConversationMessage(messageID uuid.UUID, user *User) (*Message, error) {
-	message := newInvitedConversationMessage(messageID, groupConversation.Conversation.ID, user.ID)
-
-	return message, nil
-}
-
-func (groupConversation *GroupConversation) SendRenamedConversationMessage(messageID uuid.UUID, participant *Participant, newName string) (*Message, error) {
-	content := newRenamedMessageContent(newName)
-	message := newConversationRenamedMessage(messageID, groupConversation.Conversation.ID, participant.UserID, content)
-
-	return message, nil
-}
-
-func (groupConversation *GroupConversation) SendLeftConversationMessage(messageID uuid.UUID, participant *Participant) (*Message, error) {
-	message := newLeftConversationMessage(messageID, groupConversation.Conversation.ID, participant.UserID)
-
-	return message, nil
-}

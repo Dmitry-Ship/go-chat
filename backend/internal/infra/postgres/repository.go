@@ -68,11 +68,8 @@ func toConversationTypePersistence(conversationType domain.ConversationType) uin
 }
 
 var messageTypesMap = map[uint8]domain.MessageType{
-	0: domain.MessageTypeText,
-	1: domain.MessageTypeRenamedConversation,
-	2: domain.MessageTypeLeftConversation,
-	3: domain.MessageTypeJoinedConversation,
-	4: domain.MessageTypeInvitedConversation,
+	0: domain.MessageTypeUser,
+	1: domain.MessageTypeSystem,
 }
 
 func toMessageTypePersistence(messageType domain.MessageType) uint8 {
@@ -88,5 +85,5 @@ func MessageTypePersistenceToDomain(persistenceType uint8) domain.MessageType {
 	if messageType, ok := messageTypesMap[persistenceType]; ok {
 		return messageType
 	}
-	return domain.MessageTypeText
+	return domain.MessageTypeUser
 }

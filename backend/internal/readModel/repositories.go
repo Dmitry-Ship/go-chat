@@ -25,15 +25,13 @@ type conversationQueryRepository interface {
 type messageQueryRepository interface {
 	GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo PaginationInfo) ([]MessageDTO, error)
 	GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (MessageDTO, error)
-	StoreMessageAndReturnWithUser(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (MessageDTO, error)
-	StoreSystemMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (MessageDTO, error)
+	StoreMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (MessageDTO, error)
 }
 
 type authorizationQueryRepository interface {
 	IsMember(conversationID uuid.UUID, userID uuid.UUID) (bool, error)
 	IsMemberOwner(conversationID uuid.UUID, userID uuid.UUID) (bool, error)
 	InviteToConversationAtomic(conversationID uuid.UUID, inviteeID uuid.UUID, participantID uuid.UUID) (uuid.UUID, error)
-	KickParticipantAtomic(conversationID uuid.UUID, targetID uuid.UUID) (int64, error)
 	LeaveConversationAtomic(conversationID uuid.UUID, userID uuid.UUID) (int64, error)
 }
 

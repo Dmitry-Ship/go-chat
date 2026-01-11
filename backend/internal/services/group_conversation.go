@@ -20,7 +20,7 @@ type GroupConversationService interface {
 type groupConversationService struct {
 	groupConversations domain.GroupConversationRepository
 	queries            readModel.QueriesRepository
-	messages           domain.MessageRepository
+	messages           MessageService
 	notifications      NotificationService
 	cache              CacheService
 }
@@ -28,7 +28,7 @@ type groupConversationService struct {
 func NewGroupConversationService(
 	groupConversations domain.GroupConversationRepository,
 	queries readModel.QueriesRepository,
-	messages domain.MessageRepository,
+	messages MessageService,
 	notifications NotificationService,
 	cache CacheService,
 ) GroupConversationService {
@@ -103,15 +103,13 @@ func (s *groupConversationService) Rename(ctx context.Context, conversationID uu
 		return fmt.Errorf("rename conversation error: %w", err)
 	}
 
-	renameMessage := domain.NewSystemMessage(uuid.New(), conversationID, userID, domain.MessageTypeRenamedConversation, name)
-
-	renameMessageDTO, err := s.messages.StoreSystemMessageAndReturn(ctx, renameMessage, userID)
+	renameMessage, err := domain.NewMessage(conversationID, userID, domain.MessageTypeSystem, fmt.Sprintf("renamed the conversation to %s", name))
 	if err != nil {
-		return fmt.Errorf("store renamed message error: %w", err)
+		return fmt.Errorf("create rename message error: %w", err)
 	}
 
-	if err := s.notifications.Broadcast(ctx, conversationID, ws.OutgoingNotification{Type: "message", Payload: renameMessageDTO, UserID: userID}); err != nil {
-		return fmt.Errorf("notify error: %w", err)
+	if _, err := s.messages.Send(ctx, renameMessage, userID); err != nil {
+		return fmt.Errorf("store renamed message error: %w", err)
 	}
 
 	if err := s.cache.InvalidateConversation(ctx, conversationID); err != nil {

@@ -95,12 +95,7 @@ func (m *MockQueriesRepositoryForMembership) GetNotificationMessage(messageID uu
 	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
 
-func (m *MockQueriesRepositoryForMembership) StoreMessageAndReturnWithUser(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
-	args := m.Called(id, conversationID, userID, content, messageType)
-	return args.Get(0).(readModel.MessageDTO), args.Error(1)
-}
-
-func (m *MockQueriesRepositoryForMembership) StoreSystemMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
+func (m *MockQueriesRepositoryForMembership) StoreMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
 	args := m.Called(id, conversationID, userID, content, messageType)
 	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
@@ -120,11 +115,6 @@ func (m *MockQueriesRepositoryForMembership) InviteToConversationAtomic(conversa
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
-func (m *MockQueriesRepositoryForMembership) KickParticipantAtomic(conversationID uuid.UUID, targetID uuid.UUID) (int64, error) {
-	args := m.Called(conversationID, targetID)
-	return args.Get(0).(int64), args.Error(1)
-}
-
 func (m *MockQueriesRepositoryForMembership) LeaveConversationAtomic(conversationID uuid.UUID, userID uuid.UUID) (int64, error) {
 	args := m.Called(conversationID, userID)
 	return args.Get(0).(int64), args.Error(1)
@@ -134,17 +124,16 @@ type MockMessageRepositoryForMembership struct {
 	mock.Mock
 }
 
-func (m *MockMessageRepositoryForMembership) Store(ctx context.Context, message *domain.Message) error {
-	args := m.Called(ctx, message)
-	return args.Error(0)
+func (m *MockMessageRepositoryForMembership) Send(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
+	args := m.Called(ctx, message, requestUserID)
+	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
 
-func (m *MockMessageRepositoryForMembership) StoreSystemMessage(ctx context.Context, message *domain.Message) (bool, error) {
-	args := m.Called(ctx, message)
-	return args.Bool(0), args.Error(1)
+type MockMessageServiceForMembership struct {
+	mock.Mock
 }
 
-func (m *MockMessageRepositoryForMembership) StoreSystemMessageAndReturn(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
+func (m *MockMessageServiceForMembership) Send(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
 	args := m.Called(ctx, message, requestUserID)
 	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
@@ -202,7 +191,7 @@ func TestMembershipService_Join(t *testing.T) {
 
 	mockParticipants := new(MockParticipantRepository)
 	mockQueries := new(MockQueriesRepositoryForMembership)
-	mockMessages := new(MockMessageRepositoryForMembership)
+	mockMessages := new(MockMessageServiceForMembership)
 	mockNotifications := new(MockNotificationServiceForMembership)
 	mockCache := new(MockCacheServiceForMembership)
 
@@ -216,8 +205,7 @@ func TestMembershipService_Join(t *testing.T) {
 
 	t.Run("successful join", func(t *testing.T) {
 		mockParticipants.On("Store", mock.Anything, mock.AnythingOfType("*domain.Participant")).Return(nil)
-		mockMessages.On("StoreSystemMessageAndReturn", mock.Anything, mock.AnythingOfType("*domain.Message"), userID).Return(readModel.MessageDTO{}, nil)
-		mockNotifications.On("Broadcast", mock.Anything, conversationID, mock.Anything).Return(nil)
+		mockMessages.On("Send", mock.Anything, mock.AnythingOfType("*domain.Message"), userID).Return(readModel.MessageDTO{}, nil)
 		mockCache.On("InvalidateParticipants", mock.Anything, conversationID).Return(nil)
 		mockNotifications.On("InvalidateMembership", mock.Anything, userID).Return(nil)
 
@@ -250,7 +238,7 @@ func TestMembershipService_Leave(t *testing.T) {
 
 	mockParticipants := new(MockParticipantRepository)
 	mockQueries := new(MockQueriesRepositoryForMembership)
-	mockMessages := new(MockMessageRepositoryForMembership)
+	mockMessages := new(MockMessageServiceForMembership)
 	mockNotifications := new(MockNotificationServiceForMembership)
 	mockCache := new(MockCacheServiceForMembership)
 
@@ -265,8 +253,7 @@ func TestMembershipService_Leave(t *testing.T) {
 	t.Run("successful leave", func(t *testing.T) {
 		mockQueries.On("IsMemberOwner", conversationID, userID).Return(false, nil)
 		mockQueries.On("LeaveConversationAtomic", conversationID, userID).Return(int64(1), nil)
-		mockMessages.On("StoreSystemMessageAndReturn", mock.Anything, mock.AnythingOfType("*domain.Message"), userID).Return(readModel.MessageDTO{}, nil)
-		mockNotifications.On("Broadcast", mock.Anything, conversationID, mock.Anything).Return(nil)
+		mockMessages.On("Send", mock.Anything, mock.AnythingOfType("*domain.Message"), userID).Return(readModel.MessageDTO{}, nil)
 		mockCache.On("InvalidateParticipants", mock.Anything, conversationID).Return(nil)
 		mockNotifications.On("InvalidateMembership", mock.Anything, userID).Return(nil)
 
@@ -307,7 +294,7 @@ func TestMembershipService_Invite(t *testing.T) {
 
 	mockParticipants := new(MockParticipantRepository)
 	mockQueries := new(MockQueriesRepositoryForMembership)
-	mockMessages := new(MockMessageRepositoryForMembership)
+	mockMessages := new(MockMessageServiceForMembership)
 	mockNotifications := new(MockNotificationServiceForMembership)
 	mockCache := new(MockCacheServiceForMembership)
 
@@ -322,8 +309,7 @@ func TestMembershipService_Invite(t *testing.T) {
 	t.Run("successful invite", func(t *testing.T) {
 		mockQueries.On("IsMember", conversationID, userID).Return(true, nil)
 		mockQueries.On("InviteToConversationAtomic", conversationID, inviteeID, mock.Anything).Return(uuid.New(), nil)
-		mockMessages.On("StoreSystemMessageAndReturn", mock.Anything, mock.AnythingOfType("*domain.Message"), inviteeID).Return(readModel.MessageDTO{}, nil)
-		mockNotifications.On("Broadcast", mock.Anything, conversationID, mock.Anything).Return(nil)
+		mockMessages.On("Send", mock.Anything, mock.AnythingOfType("*domain.Message"), inviteeID).Return(readModel.MessageDTO{}, nil)
 		mockNotifications.On("InvalidateMembership", mock.Anything, inviteeID).Return(nil)
 		mockCache.On("InvalidateParticipants", mock.Anything, conversationID).Return(nil)
 
@@ -354,7 +340,7 @@ func TestMembershipService_Kick(t *testing.T) {
 
 	mockParticipants := new(MockParticipantRepository)
 	mockQueries := new(MockQueriesRepositoryForMembership)
-	mockMessages := new(MockMessageRepositoryForMembership)
+	mockMessages := new(MockMessageServiceForMembership)
 	mockNotifications := new(MockNotificationServiceForMembership)
 	mockCache := new(MockCacheServiceForMembership)
 
@@ -369,9 +355,8 @@ func TestMembershipService_Kick(t *testing.T) {
 	t.Run("successful kick", func(t *testing.T) {
 		mockQueries.On("IsMemberOwner", conversationID, kickerID).Return(true, nil)
 		mockQueries.On("IsMember", conversationID, targetID).Return(true, nil)
-		mockQueries.On("KickParticipantAtomic", conversationID, targetID).Return(int64(1), nil)
-		mockMessages.On("StoreSystemMessageAndReturn", mock.Anything, mock.AnythingOfType("*domain.Message"), targetID).Return(readModel.MessageDTO{}, nil)
-		mockNotifications.On("Broadcast", mock.Anything, conversationID, mock.Anything).Return(nil)
+		mockQueries.On("LeaveConversationAtomic", conversationID, targetID).Return(int64(1), nil)
+		mockMessages.On("Send", mock.Anything, mock.AnythingOfType("*domain.Message"), targetID).Return(readModel.MessageDTO{}, nil)
 		mockCache.On("InvalidateParticipants", mock.Anything, conversationID).Return(nil)
 		mockQueries.On("GetConversation", conversationID, kickerID).Return(readModel.ConversationFullDTO{ID: conversationID}, nil)
 		mockNotifications.On("Broadcast", mock.Anything, conversationID, mock.Anything).Return(nil)

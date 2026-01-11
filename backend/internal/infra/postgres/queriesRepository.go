@@ -187,42 +187,11 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 	return formatter.FormatMessageDTO(rawMessage, requestUserID), nil
 }
 
-func (r *queriesRepository) StoreMessageAndReturnWithUser(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
-	if err := r.queries.StoreMessage(context.Background(), db.StoreMessageParams{
+func (r *queriesRepository) StoreMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
+	msg, err := r.queries.StoreMessageAndReturn(context.Background(), db.StoreMessageAndReturnParams{
 		ID:             uuidToPgtype(id),
 		ConversationID: uuidToPgtype(conversationID),
 		UserID:         uuidToPgtype(userID),
-		Content:        content,
-		Type:           messageType,
-	}); err != nil {
-		return readModel.MessageDTO{}, err
-	}
-
-	msg, err := r.queries.GetMessageWithUser(context.Background(), uuidToPgtype(id))
-	if err != nil {
-		return readModel.MessageDTO{}, err
-	}
-
-	formatter := presentation.NewMessageFormatter()
-	rawMessage := readModel.RawMessageDTO{
-		ID:             pgtypeToUUID(msg.ID),
-		Type:           uint8(msg.Type),
-		CreatedAt:      msg.CreatedAt.Time,
-		ConversationID: pgtypeToUUID(msg.ConversationID),
-		Content:        msg.Content,
-		UserID:         pgtypeToUUID(msg.UserID),
-		UserName:       msg.UserName,
-		UserAvatar:     msg.UserAvatar.String,
-	}
-
-	return formatter.FormatMessageDTO(rawMessage, userID), nil
-}
-
-func (r *queriesRepository) StoreSystemMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
-	msg, err := r.queries.StoreSystemMessageAndReturn(context.Background(), db.StoreSystemMessageAndReturnParams{
-		ID:             uuidToPgtype(id),
-		ConversationID: uuidToPgtype(conversationID),
-		ID_2:           uuidToPgtype(userID),
 		Content:        content,
 		Type:           messageType,
 	})
@@ -380,13 +349,6 @@ func (r *queriesRepository) InviteToConversationAtomic(conversationID uuid.UUID,
 	}
 
 	return pgtypeToUUID(result), nil
-}
-
-func (r *queriesRepository) KickParticipantAtomic(conversationID uuid.UUID, targetID uuid.UUID) (int64, error) {
-	return r.queries.KickParticipantAtomic(context.Background(), db.KickParticipantAtomicParams{
-		ConversationID: uuidToPgtype(conversationID),
-		UserID:         uuidToPgtype(targetID),
-	})
 }
 
 func (r *queriesRepository) LeaveConversationAtomic(conversationID uuid.UUID, userID uuid.UUID) (int64, error) {

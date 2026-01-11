@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"GitHub/go-chat/backend/internal/domain"
+
 	"github.com/google/uuid"
 )
 
@@ -26,7 +28,13 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.message.SendTextMessage(r.Context(), request.ConversationId, userID, request.Content)
+	message, err := domain.NewMessage(request.ConversationId, userID, domain.MessageTypeUser, request.Content)
+	if err != nil {
+		returnError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	_, err = s.message.Send(r.Context(), message, userID)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -37,7 +45,7 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 		MessageId string    `json:"message_id"`
 		CreatedAt time.Time `json:"created_at"`
 	}{
-		MessageId: uuid.New().String(),
+		MessageId: message.ID.String(),
 		CreatedAt: time.Now(),
 	}
 

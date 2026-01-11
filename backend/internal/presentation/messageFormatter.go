@@ -7,18 +7,15 @@ import (
 )
 
 var messageTypesMap = map[uint8]domain.MessageType{
-	0: domain.MessageTypeText,
-	1: domain.MessageTypeRenamedConversation,
-	2: domain.MessageTypeLeftConversation,
-	3: domain.MessageTypeJoinedConversation,
-	4: domain.MessageTypeInvitedConversation,
+	0: domain.MessageTypeUser,
+	1: domain.MessageTypeSystem,
 }
 
 func MessageTypePersistenceToDomain(persistenceType uint8) domain.MessageType {
 	if messageType, ok := messageTypesMap[persistenceType]; ok {
 		return messageType
 	}
-	return domain.MessageTypeText
+	return domain.MessageTypeUser
 }
 
 type MessageFormatter struct{}
@@ -33,16 +30,13 @@ func (f *MessageFormatter) FormatMessageText(messageType domain.MessageType, con
 	}
 
 	switch messageType {
-	case domain.MessageTypeText:
+	case domain.MessageTypeUser:
 		return content
-	case domain.MessageTypeRenamedConversation:
-		return userName + " renamed chat to " + content
-	case domain.MessageTypeLeftConversation:
-		return userName + " left"
-	case domain.MessageTypeJoinedConversation:
-		return userName + " joined"
-	case domain.MessageTypeInvitedConversation:
-		return userName + " was invited"
+	case domain.MessageTypeSystem:
+		if content != "" {
+			return userName + " renamed chat to " + content
+		}
+		return userName + " performed a system action"
 	default:
 		return content
 	}
@@ -65,7 +59,7 @@ func (f *MessageFormatter) FormatMessageDTO(rawMessage readModel.RawMessageDTO, 
 
 	messageDTO.Text = f.FormatMessageText(messageType, rawMessage.Content, rawMessage.UserName)
 
-	if messageType == domain.MessageTypeText {
+	if messageType == domain.MessageTypeUser {
 		messageDTO.IsInbound = rawMessage.UserID != requestUserID
 	}
 
@@ -93,7 +87,7 @@ func (f *MessageFormatter) FormatConversationLastMessage(rawLastMessage readMode
 
 	messageDTO.Text = f.FormatMessageText(messageType, rawLastMessage.MessageContent, rawLastMessage.MessageUserName)
 
-	if messageType == domain.MessageTypeText {
+	if messageType == domain.MessageTypeUser {
 		messageDTO.IsInbound = rawLastMessage.MessageUserID != userID
 	}
 

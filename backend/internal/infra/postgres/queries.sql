@@ -125,18 +125,6 @@ JOIN users u ON u.id = m.user_id
 WHERE m.id = $1 AND u.deleted_at IS NULL
 LIMIT 1;
 
--- name: StoreSystemMessage :execrows
-INSERT INTO messages (id, conversation_id, user_id, content, type)
-SELECT $1, $2, $3, $4, $5
-WHERE EXISTS (
-    SELECT 1 FROM conversations c
-    JOIN group_conversations gc ON gc.conversation_id = c.id
-    WHERE c.id = $2 AND c.deleted_at IS NULL AND gc.deleted_at IS NULL
-)
-AND EXISTS (
-    SELECT 1 FROM users WHERE id = $3 AND deleted_at IS NULL
-);
-
 -- Complex queries for read model
 
 -- name: GetContacts :many
@@ -289,15 +277,8 @@ WHERE user_id = $1 AND deleted_at IS NULL;
 -- name: LeaveConversationAtomic :execrows
 UPDATE participants
 SET deleted_at = NOW(), updated_at = NOW()
-WHERE conversation_id = $1 
-  AND user_id = $2 
-  AND deleted_at IS NULL;
-
--- name: KickParticipantAtomic :execrows
-UPDATE participants
-SET deleted_at = NOW(), updated_at = NOW()
-WHERE conversation_id = $1 
-  AND user_id = $2 
+WHERE conversation_id = $1
+  AND user_id = $2
   AND deleted_at IS NULL;
 
 -- name: InviteToConversationAtomic :one
@@ -336,34 +317,7 @@ SELECT EXISTS(
       AND gc.deleted_at IS NULL AND c.deleted_at IS NULL AND p.deleted_at IS NULL
 );
 
--- name: StoreSystemMessageAndReturn :one
-WITH valid_conversation AS (
-    SELECT gc.conversation_id as conv_id
-    FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    WHERE gc.conversation_id = $2 
-        AND c.deleted_at IS NULL
-        AND gc.deleted_at IS NULL
-),
-valid_user AS (
-    SELECT u.id as user_id FROM users u WHERE u.id = $3 AND u.deleted_at IS NULL
-),
-new_message AS (
-    INSERT INTO messages (id, conversation_id, user_id, content, type)
-    SELECT $1, vc.conv_id, vu.user_id, $4, $5
-    FROM valid_conversation vc, valid_user vu
-    ON CONFLICT DO NOTHING
-    RETURNING id, type, created_at, conversation_id, content
-)
-SELECT
-    nm.id, nm.type, nm.created_at, nm.conversation_id,
-    nm.content as formatted_text,
-    u.id as user_id, u.name as user_name, u.avatar as user_avatar
-FROM new_message nm
-JOIN users u ON u.id = nm.user_id
-WHERE u.deleted_at IS NULL;
-
--- name: StoreMessageAndReturnWithUser :one
+-- name: StoreMessageAndReturn :one
 WITH new_message AS (
     INSERT INTO messages (id, conversation_id, user_id, content, type, created_at)
     VALUES ($1, $2, $3, $4, $5, NOW())
