@@ -12,7 +12,6 @@ export interface MessageDTO {
   text: string;
   type: MessageType;
   user: UserDTO;
-  is_inbound: boolean;
   conversation_id: string;
 }
 

@@ -85,13 +85,13 @@ func (m *MockQueriesRepository) RenameConversationAndReturn(conversationID uuid.
 	return args.Error(0)
 }
 
-func (m *MockQueriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.MessageDTO, error) {
-	args := m.Called(conversationID, requestUserID, paginationInfo)
+func (m *MockQueriesRepository) GetConversationMessages(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.MessageDTO, error) {
+	args := m.Called(conversationID, paginationInfo)
 	return args.Get(0).([]readModel.MessageDTO), args.Error(1)
 }
 
-func (m *MockQueriesRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
-	args := m.Called(messageID, requestUserID)
+func (m *MockQueriesRepository) GetNotificationMessage(messageID uuid.UUID) (readModel.MessageDTO, error) {
+	args := m.Called(messageID)
 	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
 
@@ -124,8 +124,8 @@ type MockMessageService struct {
 	mock.Mock
 }
 
-func (m *MockMessageService) Send(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
-	args := m.Called(ctx, message, requestUserID)
+func (m *MockMessageService) Send(ctx context.Context, message *domain.Message) (readModel.MessageDTO, error) {
+	args := m.Called(ctx, message)
 	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
 
@@ -295,7 +295,7 @@ func TestGroupConversationService_Rename(t *testing.T) {
 	t.Run("successful rename", func(t *testing.T) {
 		mockQueries.On("IsMemberOwner", conversationID, userID).Return(true, nil)
 		mockGroupConversations.On("Rename", mock.Anything, conversationID, newName).Return(nil)
-		mockMessages.On("Send", mock.Anything, mock.AnythingOfType("*domain.Message"), userID).Return(readModel.MessageDTO{}, nil)
+		mockMessages.On("Send", mock.Anything, mock.AnythingOfType("*domain.Message")).Return(readModel.MessageDTO{}, nil)
 		mockCache.On("InvalidateConversation", mock.Anything, conversationID).Return(nil)
 		mockQueries.On("GetConversation", conversationID, userID).Return(readModel.ConversationFullDTO{ID: conversationID}, nil)
 		mockNotifications.On("Broadcast", mock.Anything, conversationID, mock.Anything).Return(nil)

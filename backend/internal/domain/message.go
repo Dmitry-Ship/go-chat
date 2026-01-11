@@ -11,7 +11,7 @@ import (
 )
 
 type MessageRepository interface {
-	Send(ctx context.Context, message *Message, requestUserID uuid.UUID) (readModel.MessageDTO, error)
+	Send(ctx context.Context, message *Message) (readModel.MessageDTO, error)
 }
 
 type MessageType struct {

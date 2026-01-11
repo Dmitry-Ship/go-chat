@@ -111,13 +111,6 @@ func (s *Server) handleGetConversationsMessages(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
-
-	if !ok {
-		http.Error(w, "userID not found in context", http.StatusInternalServerError)
-		return
-	}
-
 	paginationInfo, ok := r.Context().Value(paginationKey).(pagination)
 
 	if !ok {
@@ -125,7 +118,7 @@ func (s *Server) handleGetConversationsMessages(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	messages, err := s.queries.GetConversationMessages(conversationID, userID, paginationInfo)
+	messages, err := s.queries.GetConversationMessages(conversationID, paginationInfo)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)

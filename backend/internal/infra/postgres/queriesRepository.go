@@ -132,7 +132,7 @@ func (r *queriesRepository) GetUserByID(id uuid.UUID) (readModel.UserDTO, error)
 	}, nil
 }
 
-func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.MessageDTO, error) {
+func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.MessageDTO, error) {
 	limit, offset := r.paginate(paginationInfo)
 
 	messages, err := r.queries.GetConversationMessagesRaw(context.Background(), db.GetConversationMessagesRawParams{
@@ -160,13 +160,13 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, re
 			UserAvatar:     msg.UserAvatar.String,
 		}
 
-		messageDTOs[i] = formatter.FormatMessageDTO(rawMessage, requestUserID)
+		messageDTOs[i] = formatter.FormatMessageDTO(rawMessage)
 	}
 
 	return messageDTOs, nil
 }
 
-func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
+func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID) (readModel.MessageDTO, error) {
 	msg, err := r.queries.GetNotificationMessageRaw(context.Background(), uuidToPgtype(messageID))
 	if err != nil {
 		return readModel.MessageDTO{}, err
@@ -184,7 +184,7 @@ func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID, requestU
 		UserAvatar:     msg.UserAvatar.String,
 	}
 
-	return formatter.FormatMessageDTO(rawMessage, requestUserID), nil
+	return formatter.FormatMessageDTO(rawMessage), nil
 }
 
 func (r *queriesRepository) StoreMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
@@ -211,7 +211,7 @@ func (r *queriesRepository) StoreMessageAndReturn(id uuid.UUID, conversationID u
 		UserAvatar:     msg.UserAvatar.String,
 	}
 
-	return formatter.FormatMessageDTO(rawMessage, userID), nil
+	return formatter.FormatMessageDTO(rawMessage), nil
 }
 
 func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ConversationDTO, error) {
@@ -247,7 +247,7 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 				MessageUserAvatar: result.MessageUserAvatar.String,
 				ConversationID:    pgtypeToUUID(result.ConversationID),
 			}
-			conversationDTO.LastMessage = formatter.FormatConversationLastMessage(rawLastMessage, userID)
+			conversationDTO.LastMessage = formatter.FormatConversationLastMessage(rawLastMessage)
 		}
 
 		switch conversationTypesMap[uint8(result.Type)] {

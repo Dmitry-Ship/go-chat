@@ -108,7 +108,7 @@ func (s *groupConversationService) Rename(ctx context.Context, conversationID uu
 		return fmt.Errorf("create rename message error: %w", err)
 	}
 
-	if _, err := s.messages.Send(ctx, renameMessage, userID); err != nil {
+	if _, err := s.messages.Send(ctx, renameMessage); err != nil {
 		return fmt.Errorf("store renamed message error: %w", err)
 	}
 

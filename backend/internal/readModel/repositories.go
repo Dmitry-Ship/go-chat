@@ -23,8 +23,8 @@ type conversationQueryRepository interface {
 }
 
 type messageQueryRepository interface {
-	GetConversationMessages(conversationID uuid.UUID, requestUserID uuid.UUID, paginationInfo PaginationInfo) ([]MessageDTO, error)
-	GetNotificationMessage(messageID uuid.UUID, requestUserID uuid.UUID) (MessageDTO, error)
+	GetConversationMessages(conversationID uuid.UUID, paginationInfo PaginationInfo) ([]MessageDTO, error)
+	GetNotificationMessage(messageID uuid.UUID) (MessageDTO, error)
 	StoreMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (MessageDTO, error)
 }
 

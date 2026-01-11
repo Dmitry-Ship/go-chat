@@ -42,11 +42,3 @@ func ConvMetaKey(conversationID string) string {
 func UserConvListKey(userID string) string {
 	return fmt.Sprintf("%s:%s", CachePrefixUserConvList, userID)
 }
-
-func UserKeysPattern(userID string) string {
-	return fmt.Sprintf("%s:%s*", CachePrefixUser, userID)
-}
-
-func ConversationKeysPattern(conversationID string) string {
-	return fmt.Sprintf("%s:%s*", CachePrefixConversation, conversationID)
-}

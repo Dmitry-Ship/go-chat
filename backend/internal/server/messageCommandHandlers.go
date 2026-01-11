@@ -34,7 +34,7 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.message.Send(r.Context(), message, userID)
+	_, err = s.message.Send(r.Context(), message)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)

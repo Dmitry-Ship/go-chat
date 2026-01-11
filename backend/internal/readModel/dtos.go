@@ -43,7 +43,6 @@ type MessageDTO struct {
 	Text           string    `json:"text,omitempty"`
 	Type           string    `json:"type"`
 	User           UserDTO   `json:"user"`
-	IsInbound      bool      `json:"is_inbound,omitempty"`
 	ConversationId uuid.UUID `json:"conversation_id"`
 }
 

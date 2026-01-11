@@ -11,7 +11,7 @@ interface MessageListProps {
 }
 
 export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
-  ({ messages, messagesEndRef }, ref) => {
+  ({ messages, currentUserId, messagesEndRef }, ref) => {
     useEffect(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, messagesEndRef]);
@@ -28,7 +28,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
               <MessageItem
                 key={message.id}
                 message={message}
-                isCurrentUser={!message.is_inbound}
+                isCurrentUser={message.user.id === currentUserId}
               />
             ))
           )}

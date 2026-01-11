@@ -6,12 +6,10 @@ import (
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/readModel"
 	ws "GitHub/go-chat/backend/internal/websocket"
-
-	"github.com/google/uuid"
 )
 
 type MessageService interface {
-	Send(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error)
+	Send(ctx context.Context, message *domain.Message) (readModel.MessageDTO, error)
 }
 
 type messageService struct {
@@ -29,8 +27,8 @@ func NewMessageService(
 	}
 }
 
-func (s *messageService) Send(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
-	dto, err := s.messages.Send(ctx, message, requestUserID)
+func (s *messageService) Send(ctx context.Context, message *domain.Message) (readModel.MessageDTO, error) {
+	dto, err := s.messages.Send(ctx, message)
 	if err != nil {
 		return dto, err
 	}

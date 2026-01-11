@@ -42,7 +42,7 @@ func (f *MessageFormatter) FormatMessageText(messageType domain.MessageType, con
 	}
 }
 
-func (f *MessageFormatter) FormatMessageDTO(rawMessage readModel.RawMessageDTO, requestUserID uuid.UUID) readModel.MessageDTO {
+func (f *MessageFormatter) FormatMessageDTO(rawMessage readModel.RawMessageDTO) readModel.MessageDTO {
 	messageType := MessageTypePersistenceToDomain(rawMessage.Type)
 
 	messageDTO := readModel.MessageDTO{
@@ -59,14 +59,10 @@ func (f *MessageFormatter) FormatMessageDTO(rawMessage readModel.RawMessageDTO, 
 
 	messageDTO.Text = f.FormatMessageText(messageType, rawMessage.Content, rawMessage.UserName)
 
-	if messageType == domain.MessageTypeUser {
-		messageDTO.IsInbound = rawMessage.UserID != requestUserID
-	}
-
 	return messageDTO
 }
 
-func (f *MessageFormatter) FormatConversationLastMessage(rawLastMessage readModel.RawLastMessageDTO, userID uuid.UUID) readModel.MessageDTO {
+func (f *MessageFormatter) FormatConversationLastMessage(rawLastMessage readModel.RawLastMessageDTO) readModel.MessageDTO {
 	if rawLastMessage.MessageID == uuid.Nil {
 		return readModel.MessageDTO{}
 	}
@@ -86,10 +82,6 @@ func (f *MessageFormatter) FormatConversationLastMessage(rawLastMessage readMode
 	}
 
 	messageDTO.Text = f.FormatMessageText(messageType, rawLastMessage.MessageContent, rawLastMessage.MessageUserName)
-
-	if messageType == domain.MessageTypeUser {
-		messageDTO.IsInbound = rawLastMessage.MessageUserID != userID
-	}
 
 	return messageDTO
 }

@@ -54,7 +54,7 @@ func (s *membershipService) Join(ctx context.Context, conversationID uuid.UUID, 
 		return fmt.Errorf("create joined message error: %w", err)
 	}
 
-	if _, err := s.messages.Send(ctx, joinedMessage, userID); err != nil {
+	if _, err := s.messages.Send(ctx, joinedMessage); err != nil {
 		return fmt.Errorf("store joined message error: %w", err)
 	}
 
@@ -92,7 +92,7 @@ func (s *membershipService) Leave(ctx context.Context, conversationID uuid.UUID,
 		return fmt.Errorf("create left message error: %w", err)
 	}
 
-	if _, err := s.messages.Send(ctx, leftMessage, userID); err != nil {
+	if _, err := s.messages.Send(ctx, leftMessage); err != nil {
 		return fmt.Errorf("store left message error: %w", err)
 	}
 
@@ -132,7 +132,7 @@ func (s *membershipService) Invite(ctx context.Context, conversationID uuid.UUID
 		return fmt.Errorf("create invited message error: %w", err)
 	}
 
-	if _, err := s.messages.Send(ctx, invitedMessage, inviteeID); err != nil {
+	if _, err := s.messages.Send(ctx, invitedMessage); err != nil {
 		return fmt.Errorf("store invited message error: %w", err)
 	}
 
@@ -178,7 +178,7 @@ func (s *membershipService) Kick(ctx context.Context, conversationID uuid.UUID, 
 		return fmt.Errorf("create kicked message error: %w", err)
 	}
 
-	if _, err := s.messages.Send(ctx, kickedMessage, targetID); err != nil {
+	if _, err := s.messages.Send(ctx, kickedMessage); err != nil {
 		return fmt.Errorf("store left message error: %w", err)
 	}
 

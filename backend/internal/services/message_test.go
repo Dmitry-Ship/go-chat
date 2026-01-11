@@ -18,8 +18,8 @@ type MockMessageRepository struct {
 	mock.Mock
 }
 
-func (m *MockMessageRepository) Send(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
-	args := m.Called(ctx, message, requestUserID)
+func (m *MockMessageRepository) Send(ctx context.Context, message *domain.Message) (readModel.MessageDTO, error) {
+	args := m.Called(ctx, message)
 	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
 
@@ -65,10 +65,10 @@ func TestMessageService_Send(t *testing.T) {
 		message, err := domain.NewMessage(conversationID, userID, domain.MessageTypeUser, content)
 		assert.NoError(t, err)
 
-		mockRepository.On("Send", mock.Anything, message, userID).Return(readModel.MessageDTO{}, nil)
+		mockRepository.On("Send", mock.Anything, message).Return(readModel.MessageDTO{}, nil)
 		mockNotifications.On("Broadcast", mock.Anything, conversationID, mock.Anything).Return(nil)
 
-		_, err = service.Send(ctx, message, userID)
+		_, err = service.Send(ctx, message)
 
 		assert.NoError(t, err)
 		mockRepository.AssertExpectations(t)
@@ -81,9 +81,9 @@ func TestMessageService_Send(t *testing.T) {
 		message, err := domain.NewMessage(conversationID, userID, domain.MessageTypeUser, content)
 		assert.NoError(t, err)
 
-		mockRepository.On("Send", mock.Anything, message, userID).Return(readModel.MessageDTO{}, assert.AnError)
+		mockRepository.On("Send", mock.Anything, message).Return(readModel.MessageDTO{}, assert.AnError)
 
-		_, err = service.Send(ctx, message, userID)
+		_, err = service.Send(ctx, message)
 
 		assert.Error(t, err)
 	})
@@ -94,10 +94,10 @@ func TestMessageService_Send(t *testing.T) {
 		message, err := domain.NewMessage(conversationID, userID, domain.MessageTypeUser, content)
 		assert.NoError(t, err)
 
-		mockRepository.On("Send", mock.Anything, message, userID).Return(readModel.MessageDTO{}, nil)
+		mockRepository.On("Send", mock.Anything, message).Return(readModel.MessageDTO{}, nil)
 		mockNotifications.On("Broadcast", mock.Anything, conversationID, mock.Anything).Return(assert.AnError)
 
-		_, err = service.Send(ctx, message, userID)
+		_, err = service.Send(ctx, message)
 
 		assert.Error(t, err)
 	})

@@ -9,7 +9,6 @@ import (
 	"GitHub/go-chat/backend/internal/presentation"
 	"GitHub/go-chat/backend/internal/readModel"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,7 +22,7 @@ func NewMessageRepository(pool *pgxpool.Pool) *messageRepository {
 	}
 }
 
-func (r *messageRepository) Send(ctx context.Context, message *domain.Message, requestUserID uuid.UUID) (readModel.MessageDTO, error) {
+func (r *messageRepository) Send(ctx context.Context, message *domain.Message) (readModel.MessageDTO, error) {
 	params := db.StoreMessageAndReturnParams{
 		ID:             uuidToPgtype(message.ID),
 		ConversationID: uuidToPgtype(message.ConversationID),
@@ -49,5 +48,5 @@ func (r *messageRepository) Send(ctx context.Context, message *domain.Message, r
 		UserAvatar:     msg.UserAvatar.String,
 	}
 
-	return formatter.FormatMessageDTO(rawMessage, requestUserID), nil
+	return formatter.FormatMessageDTO(rawMessage), nil
 }
