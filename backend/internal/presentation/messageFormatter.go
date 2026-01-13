@@ -50,7 +50,8 @@ func (f *MessageFormatter) FormatMessageDTO(rawMessage readModel.RawMessageDTO) 
 		CreatedAt:      rawMessage.CreatedAt,
 		Type:           messageType.String(),
 		ConversationId: rawMessage.ConversationID,
-		User: readModel.UserDTO{
+		UserID:         rawMessage.UserID,
+		User: &readModel.UserDTO{
 			ID:     rawMessage.UserID,
 			Avatar: rawMessage.UserAvatar,
 			Name:   rawMessage.UserName,
@@ -74,7 +75,8 @@ func (f *MessageFormatter) FormatConversationLastMessage(rawLastMessage readMode
 		CreatedAt:      rawLastMessage.MessageCreatedAt,
 		Type:           messageType.String(),
 		ConversationId: rawLastMessage.ConversationID,
-		User: readModel.UserDTO{
+		UserID:         rawLastMessage.MessageUserID,
+		User: &readModel.UserDTO{
 			ID:     rawLastMessage.MessageUserID,
 			Avatar: rawLastMessage.MessageUserAvatar,
 			Name:   rawLastMessage.MessageUserName,

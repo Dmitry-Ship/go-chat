@@ -11,8 +11,12 @@ export interface MessageDTO {
   created_at: string;
   text: string;
   type: MessageType;
-  user: UserDTO;
+  user_id: string;
   conversation_id: string;
+}
+
+export interface ConversationUsersResponse {
+  users: Record<string, UserDTO>;
 }
 
 export interface ConversationDTO {

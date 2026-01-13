@@ -605,26 +605,6 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	return i, err
 }
 
-const getUserByIDDTO = `-- name: GetUserByIDDTO :one
-SELECT id, name, avatar
-FROM users
-WHERE id = $1 AND deleted_at IS NULL
-LIMIT 1
-`
-
-type GetUserByIDDTORow struct {
-	ID     pgtype.UUID `json:"id"`
-	Name   string      `json:"name"`
-	Avatar pgtype.Text `json:"avatar"`
-}
-
-func (q *Queries) GetUserByIDDTO(ctx context.Context, id pgtype.UUID) (GetUserByIDDTORow, error) {
-	row := q.db.QueryRow(ctx, getUserByIDDTO, id)
-	var i GetUserByIDDTORow
-	err := row.Scan(&i.ID, &i.Name, &i.Avatar)
-	return i, err
-}
-
 const getUserConversations = `-- name: GetUserConversations :many
 WITH last_messages AS (
     SELECT conversation_id, MAX(created_at) as max_created_at
@@ -713,6 +693,39 @@ func (q *Queries) GetUserConversations(ctx context.Context, arg GetUserConversat
 			&i.OtherUserName,
 			&i.OtherUserAvatar,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersByIDs = `-- name: GetUsersByIDs :many
+SELECT id, name, avatar
+FROM users
+WHERE id = ANY($1::uuid[])
+  AND deleted_at IS NULL
+`
+
+type GetUsersByIDsRow struct {
+	ID     pgtype.UUID `json:"id"`
+	Name   string      `json:"name"`
+	Avatar pgtype.Text `json:"avatar"`
+}
+
+func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetUsersByIDsRow, error) {
+	rows, err := q.db.Query(ctx, getUsersByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUsersByIDsRow
+	for rows.Next() {
+		var i GetUsersByIDsRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.Avatar); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

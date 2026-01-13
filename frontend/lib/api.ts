@@ -5,6 +5,7 @@ import {
   ContactDTO,
   ConversationDTO,
   ConversationFullDTO,
+  ConversationUsersResponse,
   MessageDTO,
 } from "./types";
 
@@ -82,6 +83,14 @@ export const getMessages = (
 ) =>
   fetchWithAuth<MessageDTO[]>(
     `/api/getConversationsMessages?conversation_id=${conversationId}&page=${page}&page_size=${pageSize}`
+  );
+
+export const getConversationUsers = (
+  conversationId: string,
+  userIds: string[]
+) =>
+  fetchWithAuth<ConversationUsersResponse>(
+    `/api/getConversationUsers?conversation_id=${conversationId}&ids=${userIds.join(",")}`
   );
 
 export const getParticipants = (

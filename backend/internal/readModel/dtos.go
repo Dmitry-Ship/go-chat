@@ -42,8 +42,13 @@ type MessageDTO struct {
 	CreatedAt      time.Time `json:"created_at"`
 	Text           string    `json:"text,omitempty"`
 	Type           string    `json:"type"`
-	User           UserDTO   `json:"user"`
+	UserID         uuid.UUID `json:"user_id"`
+	User           *UserDTO  `json:"user,omitempty"`
 	ConversationId uuid.UUID `json:"conversation_id"`
+}
+
+type ConversationUsersResponse struct {
+	Users map[uuid.UUID]UserDTO `json:"users"`
 }
 
 type RawMessageDTO struct {

@@ -1,13 +1,15 @@
 "use client";
 
-import { MessageDTO } from "@/lib/types";
+import { MessageDTO, UserDTO } from "@/lib/types";
 
 interface MessageItemProps {
   message: MessageDTO;
+  users: Record<string, UserDTO>;
   isCurrentUser: boolean;
 }
 
-export const MessageItem = ({ message, isCurrentUser }: MessageItemProps) => {
+export const MessageItem = ({ message, users, isCurrentUser }: MessageItemProps) => {
+  const user = users[message.user_id];
   const isSystemMessage = message.type === "system";
 
   if (isSystemMessage) {
@@ -24,7 +26,7 @@ export const MessageItem = ({ message, isCurrentUser }: MessageItemProps) => {
     <div className={`flex mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
       {!isCurrentUser && (
         <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-semibold mr-2 flex-shrink-0">
-          {message.user.avatar}
+          {user?.avatar}
         </div>
       )}
       <div
@@ -36,7 +38,7 @@ export const MessageItem = ({ message, isCurrentUser }: MessageItemProps) => {
       >
         {!isCurrentUser && (
           <div className="text-xs font-semibold mb-1 opacity-70">
-            {message.user.name}
+            {user?.name}
           </div>
         )}
         <div className="break-words">{message.text}</div>
@@ -51,7 +53,7 @@ export const MessageItem = ({ message, isCurrentUser }: MessageItemProps) => {
       </div>
       {isCurrentUser && (
         <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-semibold ml-2 flex-shrink-0">
-          {message.user.avatar}
+          {user?.avatar}
         </div>
       )}
     </div>

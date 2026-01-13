@@ -14,6 +14,7 @@ type userQueryRepository interface {
 	GetPotentialInvitees(conversationID uuid.UUID, paginationInfo PaginationInfo) ([]ContactDTO, error)
 	GetParticipants(conversationID uuid.UUID, userID uuid.UUID, paginationInfo PaginationInfo) ([]ContactDTO, error)
 	GetUserByID(userID uuid.UUID) (UserDTO, error)
+	GetUsersByIDs(userIDs []uuid.UUID) ([]UserDTO, error)
 }
 
 type conversationQueryRepository interface {

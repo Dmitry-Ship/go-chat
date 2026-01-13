@@ -70,6 +70,11 @@ func (m *MockQueriesRepository) GetUserByID(userID uuid.UUID) (readModel.UserDTO
 	return args.Get(0).(readModel.UserDTO), args.Error(1)
 }
 
+func (m *MockQueriesRepository) GetUsersByIDs(userIDs []uuid.UUID) ([]readModel.UserDTO, error) {
+	args := m.Called(userIDs)
+	return args.Get(0).([]readModel.UserDTO), args.Error(1)
+}
+
 func (m *MockQueriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (readModel.ConversationFullDTO, error) {
 	args := m.Called(id, userID)
 	return args.Get(0).(readModel.ConversationFullDTO), args.Error(1)

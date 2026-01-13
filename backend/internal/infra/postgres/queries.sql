@@ -154,11 +154,11 @@ WHERE u.deleted_at IS NULL
   )
 LIMIT $2 OFFSET $3;
 
--- name: GetUserByIDDTO :one
+-- name: GetUsersByIDs :many
 SELECT id, name, avatar
 FROM users
-WHERE id = $1 AND deleted_at IS NULL
-LIMIT 1;
+WHERE id = ANY($1::uuid[])
+  AND deleted_at IS NULL;
 
 -- name: GetConversationMessagesRaw :many
 SELECT

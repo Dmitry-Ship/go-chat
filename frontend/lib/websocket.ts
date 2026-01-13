@@ -93,6 +93,7 @@ class WebSocketManager {
               return [...old, msg];
             }
           );
+          this.queryClient.invalidateQueries({ queryKey: ['conversation-users', msg.conversation_id, 1, 20] });
           this.queryClient.invalidateQueries({ queryKey: ['conversations'] });
           break;
 
@@ -117,6 +118,7 @@ class WebSocketManager {
           const { conversation_id } = event.data as { conversation_id: string };
           this.queryClient.removeQueries({ queryKey: ['conversation', conversation_id] });
           this.queryClient.removeQueries({ queryKey: ['messages', conversation_id] });
+          this.queryClient.removeQueries({ queryKey: ['conversation-users', conversation_id] });
           this.queryClient.removeQueries({ queryKey: ['participants', conversation_id] });
           this.queryClient.invalidateQueries({ queryKey: ['conversations'] });
           break;

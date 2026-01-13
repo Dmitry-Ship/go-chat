@@ -3,7 +3,9 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
+	"GitHub/go-chat/backend/internal/readModel"
 	"github.com/google/uuid"
 )
 
@@ -125,9 +127,73 @@ func (s *Server) handleGetConversationsMessages(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	for i := range messages {
+		messages[i].User = nil
+	}
+
 	err = json.NewEncoder(w).Encode(messages)
 
 	if err != nil {
+		returnError(w, http.StatusInternalServerError, err)
+		return
+	}
+}
+
+func (s *Server) handleGetConversationUsers(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	conversationIDQuery := query.Get("conversation_id")
+	if _, err := uuid.Parse(conversationIDQuery); err != nil {
+		returnError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	idsParam := query.Get("ids")
+	if idsParam == "" {
+		response := readModel.ConversationUsersResponse{
+			Users: map[uuid.UUID]readModel.UserDTO{},
+		}
+
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			returnError(w, http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	uniqueIDs := make([]uuid.UUID, 0)
+	seenIDs := make(map[uuid.UUID]struct{})
+	for _, idStr := range strings.Split(idsParam, ",") {
+		if idStr == "" {
+			continue
+		}
+		userID, err := uuid.Parse(idStr)
+		if err != nil {
+			returnError(w, http.StatusBadRequest, err)
+			return
+		}
+		if _, exists := seenIDs[userID]; exists {
+			continue
+		}
+		seenIDs[userID] = struct{}{}
+		uniqueIDs = append(uniqueIDs, userID)
+	}
+
+	users, err := s.queries.GetUsersByIDs(uniqueIDs)
+	if err != nil {
+		returnError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	usersMap := make(map[uuid.UUID]readModel.UserDTO, len(users))
+	for _, user := range users {
+		usersMap[user.ID] = user
+	}
+
+	response := readModel.ConversationUsersResponse{
+		Users: usersMap,
+	}
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}

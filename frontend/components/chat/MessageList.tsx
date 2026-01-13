@@ -2,16 +2,17 @@
 
 import { forwardRef, useEffect } from "react";
 import { MessageItem } from "./MessageItem";
-import { MessageDTO } from "@/lib/types";
+import { MessageDTO, UserDTO } from "@/lib/types";
 
 interface MessageListProps {
   messages: MessageDTO[];
+  users: Record<string, UserDTO>;
   currentUserId: string;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
-  ({ messages, currentUserId, messagesEndRef }, ref) => {
+  ({ messages, users, currentUserId, messagesEndRef }, ref) => {
     useEffect(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, messagesEndRef]);
@@ -28,7 +29,8 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
               <MessageItem
                 key={message.id}
                 message={message}
-                isCurrentUser={message.user.id === currentUserId}
+                users={users}
+                isCurrentUser={message.user_id === currentUserId}
               />
             ))
           )}

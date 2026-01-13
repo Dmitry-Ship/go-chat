@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useMemo, useRef, useCallback } from "react";
 import { useChat } from "@/contexts/ChatContext";
-import { useMessages } from "@/hooks/queries/useMessages";
+import { useConversationUsers, useMessages } from "@/hooks/queries/useMessages";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
@@ -20,6 +20,17 @@ export const ChatArea = ({ className = "" }: ChatAreaProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: messages } = useMessages(activeConversationId);
+  const messageList = messages || [];
+  const userIds = useMemo(() => {
+    const uniqueIds = new Set<string>();
+    for (const message of messageList) {
+      if (message.user_id) {
+        uniqueIds.add(message.user_id);
+      }
+    }
+    return Array.from(uniqueIds).sort();
+  }, [messageList]);
+  const { data: usersData } = useConversationUsers(activeConversationId, userIds);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleSendMessage = useCallback(async (content: string) => {
@@ -65,7 +76,8 @@ export const ChatArea = ({ className = "" }: ChatAreaProps) => {
       />
 
       <MessageList
-        messages={messages || []}
+        messages={messageList}
+        users={usersData?.users || {}}
         currentUserId={user?.id || ""}
         messagesEndRef={messagesEndRef}
       />

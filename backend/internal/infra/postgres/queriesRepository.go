@@ -9,6 +9,7 @@ import (
 	"GitHub/go-chat/backend/internal/readModel"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -120,7 +121,7 @@ func (r *queriesRepository) GetPotentialInvitees(conversationID uuid.UUID, pagin
 }
 
 func (r *queriesRepository) GetUserByID(id uuid.UUID) (readModel.UserDTO, error) {
-	user, err := r.queries.GetUserByIDDTO(context.Background(), uuidToPgtype(id))
+	user, err := r.queries.GetUserByID(context.Background(), uuidToPgtype(id))
 	if err != nil {
 		return readModel.UserDTO{}, err
 	}
@@ -130,6 +131,33 @@ func (r *queriesRepository) GetUserByID(id uuid.UUID) (readModel.UserDTO, error)
 		Name:   user.Name,
 		Avatar: user.Avatar.String,
 	}, nil
+}
+
+func (r *queriesRepository) GetUsersByIDs(ids []uuid.UUID) ([]readModel.UserDTO, error) {
+	if len(ids) == 0 {
+		return []readModel.UserDTO{}, nil
+	}
+
+	pgIDs := make([]pgtype.UUID, len(ids))
+	for i, id := range ids {
+		pgIDs[i] = uuidToPgtype(id)
+	}
+
+	users, err := r.queries.GetUsersByIDs(context.Background(), pgIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	usersDTO := make([]readModel.UserDTO, len(users))
+	for i, user := range users {
+		usersDTO[i] = readModel.UserDTO{
+			ID:     pgtypeToUUID(user.ID),
+			Name:   user.Name,
+			Avatar: user.Avatar.String,
+		}
+	}
+
+	return usersDTO, nil
 }
 
 func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.MessageDTO, error) {
