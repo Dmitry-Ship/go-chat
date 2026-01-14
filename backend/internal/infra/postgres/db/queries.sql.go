@@ -945,7 +945,7 @@ const storeMessageAndReturn = `-- name: StoreMessageAndReturn :one
 WITH new_message AS (
     INSERT INTO messages (id, conversation_id, user_id, content, type, created_at)
     VALUES ($1, $2, $3, $4, $5, NOW())
-    RETURNING id, type, created_at, conversation_id, content
+    RETURNING id, type, created_at, conversation_id, content, user_id
 )
 SELECT
     nm.id, nm.type, nm.created_at, nm.conversation_id,

@@ -70,6 +70,8 @@ services:
       retries: 5
       start_period: 10s
     restart: always
+    ports:
+      - 3000:3000
     build:
       context: ./frontend
       # target: prod

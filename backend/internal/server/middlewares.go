@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type userIDKeyType string
@@ -91,23 +92,45 @@ func (s *Server) limitRequestBodySize(maxBytes int64, next http.HandlerFunc) htt
 
 func (s *Server) corsHandler(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "OPTIONS" {
-			w.Header().Set("Access-Control-Allow-Origin", s.config.ClientOrigin)
+		origin := r.Header.Get("Origin")
+		allowedOrigin := matchAllowedOrigin(origin, s.config.ClientOrigin)
+
+		if allowedOrigin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+			w.Header().Set("Vary", "Origin")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		}
+
+		if r.Method == "OPTIONS" {
+			if origin != "" && allowedOrigin == "" {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
-		w.Header().Set("Access-Control-Allow-Origin", s.config.ClientOrigin)
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, Origin")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		w.Header().Set("Content-Type", "application/json")
 
 		next.ServeHTTP(w, r)
 	}
+}
+
+func matchAllowedOrigin(origin string, allowedOrigins string) string {
+	if origin == "" {
+		return ""
+	}
+
+	for _, allowed := range strings.Split(allowedOrigins, ",") {
+		allowed = strings.TrimSpace(allowed)
+		if allowed != "" && allowed == origin {
+			return allowed
+		}
+	}
+
+	return ""
 }
 
 func withPagination(next http.HandlerFunc) http.HandlerFunc {

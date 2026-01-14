@@ -12,6 +12,7 @@ func (s *Server) initRoutes() http.Handler {
 		_, _ = w.Write([]byte("OK"))
 	})
 
+	mux.HandleFunc("OPTIONS /api/{rest...}", s.corsHandler(func(w http.ResponseWriter, r *http.Request) {}))
 	mux.HandleFunc("POST /api/signup", s.corsHandler(s.securityHeaders(s.httpRateLimit(s.limitRequestBodySize(MaxRequestBodySize, s.handleSignUp)))))
 	mux.HandleFunc("POST /api/login", s.corsHandler(s.securityHeaders(s.httpRateLimit(s.limitRequestBodySize(MaxRequestBodySize, s.handleLogin)))))
 	mux.HandleFunc("POST /api/refreshToken", s.corsHandler(s.securityHeaders(s.httpRateLimit(s.limitRequestBodySize(MaxRequestBodySize, s.handleRefreshToken)))))
