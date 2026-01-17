@@ -4,21 +4,15 @@
 
 ### Backend (Go 1.23)
 - **Build**: `make backend_build` or `cd backend && go build -o go-bin ./cmd/server`
-- **Test all**: `make backend_test` or `cd backend && go test -timeout 2m ./...`
-- **Test single**: `cd backend && go test -run TestFunctionName ./path/to/package`
-- **Test with coverage**: `cd backend && go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html`
-- **Test verbose**: `cd backend && go test -v ./...`
-- **Lint**: `make backend_lint` or `cd backend && golangci-lint run`
-- **Run dev**: `make backend_run` or `cd backend && go run ./cmd/server`
 
 ### Frontend (Next.js 16, React 19, TypeScript)
 - **Build**: `make frontend_build` or `cd frontend && npm run build`
-- **Test**: `make frontend_test` or `cd frontend && npm test`
-- **Test single**: `cd frontend && npm test -- fileName.test.ts`
-- **Test watch**: `cd frontend && npm test -- --watch`
-- **Lint**: `make frontend_lint` or `cd frontend && npm run lint`
-- **Type check**: `make frontend_type` or `cd frontend && npx tsc --noEmit`
-- **Dev server**: `make frontend_dev` or `cd frontend && npm run dev`
+
+### Separate Commands
+- `make backend_test` - Run backend tests only
+- `make backend_lint` - Run backend linter only
+- `make frontend_test` - Run frontend tests only
+- `make frontend_lint` - Run frontend linter only
 
 ### Combined Commands
 - `make all_build` - Build backend and frontend
@@ -31,6 +25,8 @@
 - `make docker_up_detached` - Start in detached mode
 - `make docker_down` - Stop all services
 - `make docker_build` - Build all Docker images
+
+Run tests and linters after finishing updates.
 
 ---
 
