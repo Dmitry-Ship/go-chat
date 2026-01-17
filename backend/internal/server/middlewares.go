@@ -73,25 +73,6 @@ func returnError(w http.ResponseWriter, code int, err error) {
 
 func (s *Server) securityHeaders(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-Frame-Options", "DENY")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("X-XSS-Protection", "1; mode=block")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'")
-		w.Header().Set("Strict-Transport-Security", "max-age="+strconv.Itoa(HSTSMaxAgeSeconds)+"; includeSubDomains")
-		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		next(w, r)
-	}
-}
-
-func (s *Server) limitRequestBodySize(maxBytes int64, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
-		next(w, r)
-	}
-}
-
-func (s *Server) corsHandler(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 		allowedOrigin := matchAllowedOrigin(origin, s.config.ClientOrigin)
 
@@ -103,6 +84,13 @@ func (s *Server) corsHandler(next http.HandlerFunc) http.HandlerFunc {
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		}
 
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'")
+		w.Header().Set("Strict-Transport-Security", "max-age="+strconv.Itoa(HSTSMaxAgeSeconds)+"; includeSubDomains")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+
 		if r.Method == "OPTIONS" {
 			if origin != "" && allowedOrigin == "" {
 				w.WriteHeader(http.StatusForbidden)
@@ -112,9 +100,18 @@ func (s *Server) corsHandler(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
+		if r.Header.Get("Upgrade") != "websocket" {
+			w.Header().Set("Content-Type", "application/json")
+		}
 
 		next.ServeHTTP(w, r)
+	}
+}
+
+func (s *Server) limitRequestBodySize(maxBytes int64, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+		next(w, r)
 	}
 }
 
