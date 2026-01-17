@@ -9,11 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type clientKey struct {
-	userID   uuid.UUID
-	clientID uuid.UUID
-}
-
 type ActiveClients interface {
 	AddClient(c *Client) uuid.UUID
 	RemoveClient(c *Client)
@@ -25,9 +20,7 @@ type ActiveClients interface {
 }
 
 type activeClients struct {
-	ctx          context.Context
 	mu           sync.RWMutex
-	clients      map[clientKey]*Client
 	byUserID     map[uuid.UUID]map[*Client]struct{}
 	byChannelID  map[uuid.UUID]map[*Client]struct{}
 	byClientID   map[uuid.UUID]*Client
@@ -36,8 +29,6 @@ type activeClients struct {
 
 func NewActiveClients(ctx context.Context, participants domain.ParticipantRepository) *activeClients {
 	return &activeClients{
-		ctx:          ctx,
-		clients:      make(map[clientKey]*Client),
 		byUserID:     make(map[uuid.UUID]map[*Client]struct{}),
 		byChannelID:  make(map[uuid.UUID]map[*Client]struct{}),
 		byClientID:   make(map[uuid.UUID]*Client),
@@ -49,8 +40,6 @@ func (ac *activeClients) AddClient(c *Client) uuid.UUID {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 
-	key := clientKey{userID: c.UserID, clientID: c.Id}
-	ac.clients[key] = c
 	ac.byClientID[c.Id] = c
 
 	userClients := ac.byUserID[c.UserID]
@@ -67,9 +56,7 @@ func (ac *activeClients) RemoveClient(c *Client) {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 
-	key := clientKey{userID: c.UserID, clientID: c.Id}
 	close(c.sendChannel)
-	delete(ac.clients, key)
 	delete(ac.byClientID, c.Id)
 
 	if userClients, exists := ac.byUserID[c.UserID]; exists {
@@ -97,9 +84,7 @@ func (ac *activeClients) RemoveClientsByUser(userID uuid.UUID) {
 	}
 
 	for client := range userClients {
-		key := clientKey{userID: userID, clientID: client.Id}
 		close(client.sendChannel)
-		delete(ac.clients, key)
 		delete(ac.byClientID, client.Id)
 
 		for channelID, channelClients := range ac.byChannelID {
