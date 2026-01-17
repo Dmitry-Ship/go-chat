@@ -1,43 +1,62 @@
-# dependencies
-frontend/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-frontend/.next/
-
-# production
-/build
-
-# misc
-.DS_Store
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
+# ===== Environment =====
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-
-# Test binary, built with `go test -c`
+# ===== Go =====
 *.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-.env
 go-bin
-/db
-tmp
+server
+main
+vendor/
+
+# ===== Frontend/Node =====
+frontend/node_modules
+.pnp
+.pnp.js
+frontend/.next/
+frontend/.turbo/
+frontend/.vercel/
+frontend/.tsbuildinfo
+*.tsbuildinfo
+
+# ===== Testing & Coverage =====
+coverage/
+coverage.out
+coverage.html
+
+# ===== Build & Distribution =====
+build/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# ===== IDEs =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Temporary Files =====
+tmp/
+.tmp/
 /cache
+/db
