@@ -1,20 +1,12 @@
 package domain
 
 import (
-	"context"
 	"errors"
 	"unicode"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type UserRepository interface {
-	Store(ctx context.Context, user *User) error
-	Update(ctx context.Context, user *User) error
-	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
-	FindByUsername(ctx context.Context, username string) (*User, error)
-}
 
 func ValidateUsername(username string) error {
 	if username == "" {

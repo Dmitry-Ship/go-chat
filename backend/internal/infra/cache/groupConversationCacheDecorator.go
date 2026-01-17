@@ -6,15 +6,16 @@ import (
 	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/repository"
 	"github.com/google/uuid"
 )
 
 type GroupConversationCacheDecorator struct {
 	cache CacheClient
-	repo  domain.GroupConversationRepository
+	repo  repository.GroupConversationRepository
 }
 
-func NewGroupConversationCacheDecorator(repo domain.GroupConversationRepository, cache CacheClient) *GroupConversationCacheDecorator {
+func NewGroupConversationCacheDecorator(repo repository.GroupConversationRepository, cache CacheClient) *GroupConversationCacheDecorator {
 	return &GroupConversationCacheDecorator{
 		cache: cache,
 		repo:  repo,

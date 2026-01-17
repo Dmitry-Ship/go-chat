@@ -6,6 +6,7 @@ import (
 
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/readModel"
+	"GitHub/go-chat/backend/internal/repository"
 	ws "GitHub/go-chat/backend/internal/websocket"
 
 	"github.com/google/uuid"
@@ -19,7 +20,7 @@ type MembershipService interface {
 }
 
 type membershipService struct {
-	participants  domain.ParticipantRepository
+	participants  repository.ParticipantRepository
 	queries       readModel.QueriesRepository
 	messages      MessageService
 	notifications NotificationService
@@ -27,7 +28,7 @@ type membershipService struct {
 }
 
 func NewMembershipService(
-	participants domain.ParticipantRepository,
+	participants repository.ParticipantRepository,
 	queries readModel.QueriesRepository,
 	messages MessageService,
 	notifications NotificationService,

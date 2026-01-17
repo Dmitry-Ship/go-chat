@@ -6,15 +6,16 @@ import (
 	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/repository"
 	"github.com/google/uuid"
 )
 
 type ParticipantCacheDecorator struct {
 	cache CacheClient
-	repo  domain.ParticipantRepository
+	repo  repository.ParticipantRepository
 }
 
-func NewParticipantCacheDecorator(repo domain.ParticipantRepository, cache CacheClient) *ParticipantCacheDecorator {
+func NewParticipantCacheDecorator(repo repository.ParticipantRepository, cache CacheClient) *ParticipantCacheDecorator {
 	return &ParticipantCacheDecorator{
 		cache: cache,
 		repo:  repo,

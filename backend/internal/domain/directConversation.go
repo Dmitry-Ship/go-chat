@@ -1,17 +1,10 @@
 package domain
 
 import (
-	"context"
 	"errors"
 
 	"github.com/google/uuid"
 )
-
-type DirectConversationRepository interface {
-	Store(ctx context.Context, conversation *DirectConversation) error
-	GetID(ctx context.Context, firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*DirectConversation, error)
-}
 
 type DirectConversation struct {
 	Conversation

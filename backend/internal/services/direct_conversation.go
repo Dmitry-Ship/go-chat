@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/repository"
 
 	"github.com/google/uuid"
 )
@@ -14,13 +15,13 @@ type DirectConversationService interface {
 }
 
 type directConversationService struct {
-	directConversations domain.DirectConversationRepository
+	directConversations repository.DirectConversationRepository
 	notifications       NotificationService
 	cache               CacheService
 }
 
 func NewDirectConversationService(
-	directConversations domain.DirectConversationRepository,
+	directConversations repository.DirectConversationRepository,
 	notifications NotificationService,
 	cache CacheService,
 ) DirectConversationService {

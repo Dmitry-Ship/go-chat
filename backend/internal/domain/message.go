@@ -1,18 +1,11 @@
 package domain
 
 import (
-	"context"
 	"errors"
-
-	"GitHub/go-chat/backend/internal/readModel"
 
 	"github.com/google/uuid"
 	"github.com/microcosm-cc/bluemonday"
 )
-
-type MessageRepository interface {
-	Send(ctx context.Context, message *Message) (readModel.MessageDTO, error)
-}
 
 type MessageType struct {
 	slug string

@@ -5,6 +5,7 @@ import (
 
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/readModel"
+	"GitHub/go-chat/backend/internal/repository"
 	ws "GitHub/go-chat/backend/internal/websocket"
 )
 
@@ -13,12 +14,12 @@ type MessageService interface {
 }
 
 type messageService struct {
-	messages      domain.MessageRepository
+	messages      repository.MessageRepository
 	notifications NotificationService
 }
 
 func NewMessageService(
-	messages domain.MessageRepository,
+	messages repository.MessageRepository,
 	notifications NotificationService,
 ) MessageService {
 	return &messageService{

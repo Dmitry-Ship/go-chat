@@ -6,6 +6,7 @@ import (
 
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/readModel"
+	"GitHub/go-chat/backend/internal/repository"
 	ws "GitHub/go-chat/backend/internal/websocket"
 
 	"github.com/google/uuid"
@@ -18,7 +19,7 @@ type GroupConversationService interface {
 }
 
 type groupConversationService struct {
-	groupConversations domain.GroupConversationRepository
+	groupConversations repository.GroupConversationRepository
 	queries            readModel.QueriesRepository
 	messages           MessageService
 	notifications      NotificationService
@@ -26,7 +27,7 @@ type groupConversationService struct {
 }
 
 func NewGroupConversationService(
-	groupConversations domain.GroupConversationRepository,
+	groupConversations repository.GroupConversationRepository,
 	queries readModel.QueriesRepository,
 	messages MessageService,
 	notifications NotificationService,

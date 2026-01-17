@@ -1,19 +1,10 @@
 package domain
 
 import (
-	"context"
 	"errors"
 
 	"github.com/google/uuid"
 )
-
-type GroupConversationRepository interface {
-	Store(ctx context.Context, conversation *GroupConversation) error
-	Update(ctx context.Context, conversation *GroupConversation) error
-	Rename(ctx context.Context, id uuid.UUID, name string) error
-	Delete(ctx context.Context, id uuid.UUID) error
-	GetByID(ctx context.Context, id uuid.UUID) (*GroupConversation, error)
-}
 
 var (
 	ErrorUserNotInConversation = errors.New("user is not in conversation")

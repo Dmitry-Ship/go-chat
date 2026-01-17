@@ -5,7 +5,7 @@ import (
 	"log"
 	"sync"
 
-	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/repository"
 
 	"github.com/google/uuid"
 )
@@ -26,10 +26,10 @@ type activeClients struct {
 	byUserID     map[uuid.UUID]map[*Client]struct{}
 	byChannelID  map[uuid.UUID]map[*Client]struct{}
 	byClientID   map[uuid.UUID]*Client
-	participants domain.ParticipantRepository
+	participants repository.ParticipantRepository
 }
 
-func NewActiveClients(ctx context.Context, participants domain.ParticipantRepository) *activeClients {
+func NewActiveClients(ctx context.Context, participants repository.ParticipantRepository) *activeClients {
 	return &activeClients{
 		byUserID:     make(map[uuid.UUID]map[*Client]struct{}),
 		byChannelID:  make(map[uuid.UUID]map[*Client]struct{}),

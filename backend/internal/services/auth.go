@@ -6,16 +6,17 @@ import (
 
 	"GitHub/go-chat/backend/internal/config"
 	"GitHub/go-chat/backend/internal/domain"
+	"GitHub/go-chat/backend/internal/repository"
 
 	"github.com/google/uuid"
 )
 
 type authService struct {
-	users    domain.UserRepository
+	users    repository.UserRepository
 	jwTokens JWTokens
 }
 
-func NewAuthService(users domain.UserRepository, config config.Auth) *authService {
+func NewAuthService(users repository.UserRepository, config config.Auth) *authService {
 	return &authService{
 		users:    users,
 		jwTokens: NewJWTokens(config),
