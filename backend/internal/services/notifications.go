@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"log"
 
 	ws "GitHub/go-chat/backend/internal/websocket"
 
@@ -90,13 +89,7 @@ func (ns *notificationService) Run() {
 	for {
 		select {
 		case msg := <-ns.broadcast:
-			clients := ns.activeClients.GetClientsByChannel(msg.conversationID)
-			for _, client := range clients {
-				if err := client.SendNotification(msg.notification); err != nil {
-					log.Printf("Error sending notification to client %s: %v", client.Id, err)
-					ns.removeClient <- client
-				}
-			}
+			ns.activeClients.NotifyChannelClients(ns.ctx, msg.conversationID, msg.notification)
 
 		case client := <-ns.registerClient:
 			ns.activeClients.AddClient(client)

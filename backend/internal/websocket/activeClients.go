@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"log"
 	"sync"
 
 	"GitHub/go-chat/backend/internal/domain"
@@ -17,6 +18,7 @@ type ActiveClients interface {
 	RemoveClientFromChannel(c *Client, channelID uuid.UUID)
 	GetClientsByChannel(channelID uuid.UUID) []*Client
 	InvalidateMembership(ctx context.Context, userID uuid.UUID) error
+	NotifyChannelClients(ctx context.Context, channelID uuid.UUID, notification OutgoingNotification)
 }
 
 type activeClients struct {
@@ -198,4 +200,13 @@ func (ac *activeClients) InvalidateMembership(ctx context.Context, userID uuid.U
 	}
 
 	return nil
+}
+
+func (ac *activeClients) NotifyChannelClients(ctx context.Context, channelID uuid.UUID, notification OutgoingNotification) {
+	clients := ac.GetClientsByChannel(channelID)
+	for _, client := range clients {
+		if err := client.SendNotification(notification); err != nil {
+			log.Printf("Error sending notification to client %s: %v", client.Id, err)
+		}
+	}
 }
