@@ -14,12 +14,6 @@
 - `make frontend_test` - Run frontend tests only
 - `make frontend_lint` - Run frontend linter only
 
-### Combined Commands
-- `make all_build` - Build backend and frontend
-- `make all_test` - Run all tests
-- `make all_lint` - Run all linters (backend + frontend)
-- `make clean` - Remove build artifacts
-
 ### Docker
 - `make docker_up` - Start all services
 - `make docker_up_detached` - Start in detached mode
@@ -63,8 +57,6 @@ Run tests and linters after finishing updates.
 **Context**: Pass `context.Context` as first parameter to all service/repository methods
 
 **Repository Pattern**: Decorate with cache layer when appropriate (e.g., `userCacheDecorator`)
-
-**Middleware**: Chain using alice pattern (auth, rate limiting, logging)
 
 ---
 
