@@ -13,10 +13,11 @@ export const MessageItem = ({ message, users, isCurrentUser }: MessageItemProps)
   const isSystemMessage = message.type === "system";
 
   if (isSystemMessage) {
+    const systemText = user?.name ? `${user.name} ${message.text}` : message.text;
     return (
       <div className="flex justify-center my-2">
         <span className="text-xs text-gray-500 italic px-2 py-1 bg-gray-50 rounded">
-          {message.text}
+          {systemText}
         </span>
       </div>
     );

@@ -90,9 +90,9 @@ func (m *MockQueriesRepository) RenameConversationAndReturn(conversationID uuid.
 	return args.Error(0)
 }
 
-func (m *MockQueriesRepository) GetConversationMessages(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.MessageDTO, error) {
-	args := m.Called(conversationID, paginationInfo)
-	return args.Get(0).([]readModel.MessageDTO), args.Error(1)
+func (m *MockQueriesRepository) GetConversationMessages(conversationID uuid.UUID, cursor *readModel.MessageCursor, limit int) (readModel.MessagePageDTO, error) {
+	args := m.Called(conversationID, cursor, limit)
+	return args.Get(0).(readModel.MessagePageDTO), args.Error(1)
 }
 
 func (m *MockQueriesRepository) GetNotificationMessage(messageID uuid.UUID) (readModel.MessageDTO, error) {

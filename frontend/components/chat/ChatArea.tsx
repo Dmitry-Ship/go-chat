@@ -19,8 +19,11 @@ export const ChatArea = ({ className = "" }: ChatAreaProps) => {
   const { activeConversationId, setActiveConversation } = useChat();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { data: messages } = useMessages(activeConversationId);
-  const messageList = messages || [];
+  const { data: messagesData } = useMessages(activeConversationId);
+  const messageList = useMemo(() => {
+    if (!messagesData) return [];
+    return [...messagesData.pages].reverse().flatMap((page) => page.messages);
+  }, [messagesData]);
   const userIds = useMemo(() => {
     const uniqueIds = new Set<string>();
     for (const message of messageList) {

@@ -1,9 +1,10 @@
-import { QueryClient } from '@tanstack/react-query'
+import { InfiniteData, QueryClient } from '@tanstack/react-query'
 import {
   WSOutgoingMessage,
   MessageDTO,
   ConversationFullDTO,
   ConversationDTO,
+  MessagePageResponse,
 } from "./types";
 
 type MessageHandler = (message: WSOutgoingMessage) => void;
@@ -85,15 +86,23 @@ class WebSocketManager {
       switch (event.type) {
         case 'message':
           const msg = event.data as MessageDTO;
-          this.queryClient.setQueryData(
-            ['messages', msg.conversation_id, 1, 20],
-            (old: MessageDTO[] | undefined) => {
-              if (!old) return [msg];
-              if (old.some(m => m.id === msg.id)) return old;
-              return [...old, msg];
+          this.queryClient.setQueriesData(
+            { queryKey: ['messages', msg.conversation_id] },
+            (old: InfiniteData<MessagePageResponse> | undefined) => {
+              if (!old) return old;
+              const lastPageIndex = old.pages.length - 1;
+              const lastPage = old.pages[lastPageIndex];
+              if (lastPage.messages.some(m => m.id === msg.id)) return old;
+              const updatedPages = [...old.pages];
+              updatedPages[lastPageIndex] = {
+                ...lastPage,
+                messages: [...lastPage.messages, msg],
+              };
+              return { ...old, pages: updatedPages };
             }
           );
-          this.queryClient.invalidateQueries({ queryKey: ['conversation-users', msg.conversation_id, 1, 20] });
+          this.queryClient.invalidateQueries({ queryKey: ['messages', msg.conversation_id] });
+          this.queryClient.invalidateQueries({ queryKey: ['conversation-users', msg.conversation_id] });
           this.queryClient.invalidateQueries({ queryKey: ['conversations'] });
           break;
 

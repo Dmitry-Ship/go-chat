@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"time"
 
 	"GitHub/go-chat/backend/internal/domain"
 	"GitHub/go-chat/backend/internal/infra/postgres/db"
@@ -160,23 +161,44 @@ func (r *queriesRepository) GetUsersByIDs(ids []uuid.UUID) ([]readModel.UserDTO,
 	return usersDTO, nil
 }
 
-func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.MessageDTO, error) {
-	limit, offset := r.paginate(paginationInfo)
+func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, cursor *readModel.MessageCursor, limit int) (readModel.MessagePageDTO, error) {
+	pageLimit := limit
+	if pageLimit <= 0 {
+		pageLimit = 50
+	} else if pageLimit > 100 {
+		pageLimit = 100
+	}
+
+	queryLimit := pageLimit + 1
+	var cursorCreatedAt pgtype.Timestamptz
+	var cursorID pgtype.UUID
+	if cursor != nil {
+		cursorCreatedAt = pgtype.Timestamptz{Time: cursor.CreatedAt, Valid: true}
+		cursorID = uuidToPgtype(cursor.ID)
+	}
 
 	messages, err := r.queries.GetConversationMessagesRaw(context.Background(), db.GetConversationMessagesRawParams{
-		ConversationID: uuidToPgtype(conversationID),
-		Limit:          limit,
-		Offset:         offset,
+		ConversationID:  uuidToPgtype(conversationID),
+		CursorCreatedAt: cursorCreatedAt,
+		CursorID:        cursorID,
+		PageLimit:       int32(queryLimit),
 	})
 
 	if err != nil {
-		return nil, err
+		return readModel.MessagePageDTO{}, err
+	}
+
+	hasMore := false
+	if len(messages) > pageLimit {
+		hasMore = true
+		messages = messages[:len(messages)-1]
 	}
 
 	formatter := presentation.NewMessageFormatter()
-	messageDTOs := make([]readModel.MessageDTO, len(messages))
+	messageDTOs := make([]readModel.MessageDTO, 0, len(messages))
 
-	for i, msg := range messages {
+	for i := len(messages) - 1; i >= 0; i-- {
+		msg := messages[i]
 		rawMessage := readModel.RawMessageDTO{
 			ID:             pgtypeToUUID(msg.ID),
 			Type:           uint8(msg.Type),
@@ -184,14 +206,22 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, pa
 			ConversationID: pgtypeToUUID(msg.ConversationID),
 			Content:        msg.Content,
 			UserID:         pgtypeToUUID(msg.UserID),
-			UserName:       msg.UserName.String,
-			UserAvatar:     msg.UserAvatar.String,
 		}
 
-		messageDTOs[i] = formatter.FormatMessageDTO(rawMessage)
+		messageDTOs = append(messageDTOs, formatter.FormatMessageDTO(rawMessage))
 	}
 
-	return messageDTOs, nil
+	response := readModel.MessagePageDTO{
+		Messages: messageDTOs,
+		HasMore:  hasMore,
+	}
+
+	if hasMore && len(messageDTOs) > 0 {
+		oldest := messageDTOs[0]
+		response.NextCursor = oldest.CreatedAt.UTC().Format(time.RFC3339Nano) + "|" + oldest.ID.String()
+	}
+
+	return response, nil
 }
 
 func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID) (readModel.MessageDTO, error) {

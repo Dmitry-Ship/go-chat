@@ -35,7 +35,7 @@ func (s *Server) initRoutes() http.Handler {
 	mux.HandleFunc("GET /api/getContacts", s.securityHeaders(s.private(withPagination(s.handleGetContacts))))
 	mux.HandleFunc("GET /api/getPotentialInvitees", s.securityHeaders(s.private(withPagination(s.handleGetPotentialInvitees))))
 	mux.HandleFunc("GET /api/getConversation", s.securityHeaders(s.private(s.handleGetConversation)))
-	mux.HandleFunc("GET /api/getConversationsMessages", s.securityHeaders(s.private(withPagination(s.handleGetConversationsMessages))))
+	mux.HandleFunc("GET /api/getConversationsMessages", s.securityHeaders(s.private(s.handleGetConversationsMessages)))
 	mux.HandleFunc("GET /api/getConversationUsers", s.securityHeaders(s.private(s.handleGetConversationUsers)))
 	mux.HandleFunc("GET /api/getParticipants", s.securityHeaders(s.private(withPagination(s.handleGetParticipants))))
 

@@ -15,6 +15,12 @@ export interface MessageDTO {
   conversation_id: string;
 }
 
+export interface MessagePageResponse {
+  messages: MessageDTO[];
+  next_cursor?: string;
+  has_more: boolean;
+}
+
 export interface ConversationUsersResponse {
   users: Record<string, UserDTO>;
 }

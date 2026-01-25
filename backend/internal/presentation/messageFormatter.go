@@ -25,18 +25,14 @@ func NewMessageFormatter() *MessageFormatter {
 }
 
 func (f *MessageFormatter) FormatMessageText(messageType domain.MessageType, content string, userName string) string {
-	if userName == "" {
-		userName = "Unknown"
-	}
-
 	switch messageType {
 	case domain.MessageTypeUser:
 		return content
 	case domain.MessageTypeSystem:
 		if content != "" {
-			return userName + " renamed chat to " + content
+			return content
 		}
-		return userName + " performed a system action"
+		return "performed a system action"
 	default:
 		return content
 	}

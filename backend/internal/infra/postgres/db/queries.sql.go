@@ -223,20 +223,27 @@ SELECT
     m.created_at,
     m.conversation_id,
     m.content,
-    u.id as user_id,
-    u.name as user_name,
-    u.avatar as user_avatar
+    m.user_id
 FROM messages m
-LEFT JOIN users u ON u.id = m.user_id
-WHERE m.conversation_id = $1 AND m.deleted_at IS NULL
-ORDER BY m.created_at ASC
-LIMIT $2 OFFSET $3
+WHERE m.conversation_id = $1
+  AND m.deleted_at IS NULL
+  AND (
+    $2::timestamptz IS NULL
+    OR m.created_at < $2
+    OR (
+      m.created_at = $2
+      AND m.id < $3
+    )
+  )
+ORDER BY m.created_at DESC, m.id DESC
+LIMIT $4
 `
 
 type GetConversationMessagesRawParams struct {
-	ConversationID pgtype.UUID `json:"conversation_id"`
-	Limit          int32       `json:"limit"`
-	Offset         int32       `json:"offset"`
+	ConversationID  pgtype.UUID        `json:"conversation_id"`
+	CursorCreatedAt pgtype.Timestamptz `json:"cursor_created_at"`
+	CursorID        pgtype.UUID        `json:"cursor_id"`
+	PageLimit       int32              `json:"page_limit"`
 }
 
 type GetConversationMessagesRawRow struct {
@@ -246,12 +253,15 @@ type GetConversationMessagesRawRow struct {
 	ConversationID pgtype.UUID        `json:"conversation_id"`
 	Content        string             `json:"content"`
 	UserID         pgtype.UUID        `json:"user_id"`
-	UserName       pgtype.Text        `json:"user_name"`
-	UserAvatar     pgtype.Text        `json:"user_avatar"`
 }
 
 func (q *Queries) GetConversationMessagesRaw(ctx context.Context, arg GetConversationMessagesRawParams) ([]GetConversationMessagesRawRow, error) {
-	rows, err := q.db.Query(ctx, getConversationMessagesRaw, arg.ConversationID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getConversationMessagesRaw,
+		arg.ConversationID,
+		arg.CursorCreatedAt,
+		arg.CursorID,
+		arg.PageLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -266,8 +276,6 @@ func (q *Queries) GetConversationMessagesRaw(ctx context.Context, arg GetConvers
 			&i.ConversationID,
 			&i.Content,
 			&i.UserID,
-			&i.UserName,
-			&i.UserAvatar,
 		); err != nil {
 			return nil, err
 		}

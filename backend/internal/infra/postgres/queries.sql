@@ -167,14 +167,20 @@ SELECT
     m.created_at,
     m.conversation_id,
     m.content,
-    u.id as user_id,
-    u.name as user_name,
-    u.avatar as user_avatar
+    m.user_id
 FROM messages m
-LEFT JOIN users u ON u.id = m.user_id
-WHERE m.conversation_id = $1 AND m.deleted_at IS NULL
-ORDER BY m.created_at ASC
-LIMIT $2 OFFSET $3;
+WHERE m.conversation_id = $1
+  AND m.deleted_at IS NULL
+  AND (
+    sqlc.arg(cursor_created_at)::timestamptz IS NULL
+    OR m.created_at < sqlc.arg(cursor_created_at)
+    OR (
+      m.created_at = sqlc.arg(cursor_created_at)
+      AND m.id < sqlc.arg(cursor_id)
+    )
+  )
+ORDER BY m.created_at DESC, m.id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: GetNotificationMessageRaw :one
 SELECT

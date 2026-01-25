@@ -6,7 +6,7 @@ import {
   ConversationDTO,
   ConversationFullDTO,
   ConversationUsersResponse,
-  MessageDTO,
+  MessagePageResponse,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -78,11 +78,13 @@ export const getConversation = (id: string) =>
 
 export const getMessages = (
   conversationId: string,
-  page = 1,
-  pageSize = 20
+  cursor?: string | null,
+  limit = 20
 ) =>
-  fetchWithAuth<MessageDTO[]>(
-    `/api/getConversationsMessages?conversation_id=${conversationId}&page=${page}&page_size=${pageSize}`
+  fetchWithAuth<MessagePageResponse>(
+    `/api/getConversationsMessages?conversation_id=${conversationId}&limit=${limit}${
+      cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""
+    }`
   );
 
 export const getConversationUsers = (

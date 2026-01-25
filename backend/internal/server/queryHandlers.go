@@ -113,25 +113,26 @@ func (s *Server) handleGetConversationsMessages(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	paginationInfo, ok := r.Context().Value(paginationKey).(pagination)
-
-	if !ok {
-		http.Error(w, "pagination info not found in context", http.StatusInternalServerError)
+	cursor, err := parseMessageCursor(query.Get("cursor"))
+	if err != nil {
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	messages, err := s.queries.GetConversationMessages(conversationID, paginationInfo)
+	limit := parseMessageLimit(query)
+
+	page, err := s.queries.GetConversationMessages(conversationID, cursor, limit)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	for i := range messages {
-		messages[i].User = nil
+	for i := range page.Messages {
+		page.Messages[i].User = nil
 	}
 
-	err = json.NewEncoder(w).Encode(messages)
+	err = json.NewEncoder(w).Encode(page)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)

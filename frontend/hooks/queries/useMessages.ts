@@ -1,10 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { getConversationUsers, getMessages } from '@/lib/api'
 
-export function useMessages(conversationId: string | null, page = 1, pageSize = 20) {
-  return useQuery({
-    queryKey: ['messages', conversationId, page, pageSize],
-    queryFn: () => getMessages(conversationId!, page, pageSize),
+export function useMessages(conversationId: string | null, limit = 20) {
+  return useInfiniteQuery({
+    queryKey: ['messages', conversationId, limit],
+    queryFn: ({ pageParam }) => getMessages(conversationId!, pageParam ?? null, limit),
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
     enabled: !!conversationId,
     staleTime: 10 * 60 * 1000,
   })
