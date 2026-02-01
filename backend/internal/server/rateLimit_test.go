@@ -17,8 +17,8 @@ func TestWSRateLimitMiddleware_AllowsWithinLimit(t *testing.T) {
 	}
 
 	server := &Server{
-		ipRateLimiter:   ratelimit.NewSlidingWindowRateLimiter(config),
-		userRateLimiter: ratelimit.NewSlidingWindowRateLimiter(config),
+		ipRateLimiter:   ratelimit.NewTokenBucketRateLimiter(config),
+		userRateLimiter: ratelimit.NewTokenBucketRateLimiter(config),
 	}
 
 	handler := server.wsRateLimit(func(w http.ResponseWriter, r *http.Request) {
@@ -41,8 +41,8 @@ func TestWSRateLimitMiddleware_BlocksExceededIPLimit(t *testing.T) {
 	}
 
 	server := &Server{
-		ipRateLimiter:   ratelimit.NewSlidingWindowRateLimiter(config),
-		userRateLimiter: ratelimit.NewSlidingWindowRateLimiter(config),
+		ipRateLimiter:   ratelimit.NewTokenBucketRateLimiter(config),
+		userRateLimiter: ratelimit.NewTokenBucketRateLimiter(config),
 	}
 
 	handler := server.wsRateLimit(func(w http.ResponseWriter, r *http.Request) {
@@ -72,8 +72,8 @@ func TestWSRateLimitMiddleware_DifferentIPs(t *testing.T) {
 	}
 
 	server := &Server{
-		ipRateLimiter:   ratelimit.NewSlidingWindowRateLimiter(config),
-		userRateLimiter: ratelimit.NewSlidingWindowRateLimiter(config),
+		ipRateLimiter:   ratelimit.NewTokenBucketRateLimiter(config),
+		userRateLimiter: ratelimit.NewTokenBucketRateLimiter(config),
 	}
 
 	handler := server.wsRateLimit(func(w http.ResponseWriter, r *http.Request) {
@@ -94,15 +94,15 @@ func TestWSRateLimitMiddleware_DifferentIPs(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestWSRateLimitMiddleware_SlidingWindow(t *testing.T) {
+func TestWSRateLimitMiddleware_TokenBucketRefill(t *testing.T) {
 	config := ratelimit.Config{
 		MaxConnections: 2,
 		WindowDuration: 100 * time.Millisecond,
 	}
 
 	server := &Server{
-		ipRateLimiter:   ratelimit.NewSlidingWindowRateLimiter(config),
-		userRateLimiter: ratelimit.NewSlidingWindowRateLimiter(config),
+		ipRateLimiter:   ratelimit.NewTokenBucketRateLimiter(config),
+		userRateLimiter: ratelimit.NewTokenBucketRateLimiter(config),
 	}
 
 	handler := server.wsRateLimit(func(w http.ResponseWriter, r *http.Request) {
@@ -138,8 +138,8 @@ func TestWSRateLimitMiddleware_XForwardedForHeader(t *testing.T) {
 	}
 
 	server := &Server{
-		ipRateLimiter:   ratelimit.NewSlidingWindowRateLimiter(config),
-		userRateLimiter: ratelimit.NewSlidingWindowRateLimiter(config),
+		ipRateLimiter:   ratelimit.NewTokenBucketRateLimiter(config),
+		userRateLimiter: ratelimit.NewTokenBucketRateLimiter(config),
 	}
 
 	handler := server.wsRateLimit(func(w http.ResponseWriter, r *http.Request) {
@@ -166,8 +166,8 @@ func TestWSRateLimitMiddleware_XRealIPHeader(t *testing.T) {
 	}
 
 	server := &Server{
-		ipRateLimiter:   ratelimit.NewSlidingWindowRateLimiter(config),
-		userRateLimiter: ratelimit.NewSlidingWindowRateLimiter(config),
+		ipRateLimiter:   ratelimit.NewTokenBucketRateLimiter(config),
+		userRateLimiter: ratelimit.NewTokenBucketRateLimiter(config),
 	}
 
 	handler := server.wsRateLimit(func(w http.ResponseWriter, r *http.Request) {

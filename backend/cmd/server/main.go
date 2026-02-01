@@ -183,12 +183,12 @@ func main() {
 		windowDuration = DefaultRateLimitWindow
 	}
 
-	userRateLimiter := ratelimit.NewSlidingWindowRateLimiter(ratelimit.Config{
+	userRateLimiter := ratelimit.NewTokenBucketRateLimiter(ratelimit.Config{
 		MaxConnections: maxUserConnections,
 		WindowDuration: windowDuration,
 	})
 
-	ipRateLimiter := ratelimit.NewSlidingWindowRateLimiter(ratelimit.Config{
+	ipRateLimiter := ratelimit.NewTokenBucketRateLimiter(ratelimit.Config{
 		MaxConnections: maxIPConnections,
 		WindowDuration: windowDuration,
 	})

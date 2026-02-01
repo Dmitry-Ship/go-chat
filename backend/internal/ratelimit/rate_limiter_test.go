@@ -7,12 +7,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSlidingWindowRateLimiter_CheckLimit_AllowsWithinLimit(t *testing.T) {
+func TestTokenBucketRateLimiter_CheckLimit_AllowsWithinCapacity(t *testing.T) {
 	config := Config{
 		MaxConnections: 5,
 		WindowDuration: 1 * time.Minute,
 	}
-	rateLimiter := NewSlidingWindowRateLimiter(config)
+	rateLimiter := NewTokenBucketRateLimiter(config)
 
 	for i := 0; i < 5; i++ {
 		allowed, _ := rateLimiter.CheckLimit("test-key")
@@ -21,12 +21,12 @@ func TestSlidingWindowRateLimiter_CheckLimit_AllowsWithinLimit(t *testing.T) {
 	}
 }
 
-func TestSlidingWindowRateLimiter_CheckLimit_ExceedsLimit(t *testing.T) {
+func TestTokenBucketRateLimiter_CheckLimit_ExceedsCapacity(t *testing.T) {
 	config := Config{
 		MaxConnections: 3,
 		WindowDuration: 1 * time.Minute,
 	}
-	rateLimiter := NewSlidingWindowRateLimiter(config)
+	rateLimiter := NewTokenBucketRateLimiter(config)
 
 	for i := 0; i < 3; i++ {
 		allowed, _ := rateLimiter.CheckLimit("test-key")
@@ -39,12 +39,12 @@ func TestSlidingWindowRateLimiter_CheckLimit_ExceedsLimit(t *testing.T) {
 	assert.Greater(t, retryAfter, 0)
 }
 
-func TestSlidingWindowRateLimiter_CheckLimit_SlidingWindow(t *testing.T) {
+func TestTokenBucketRateLimiter_CheckLimit_RefillsAfterWindow(t *testing.T) {
 	config := Config{
 		MaxConnections: 3,
 		WindowDuration: 100 * time.Millisecond,
 	}
-	rateLimiter := NewSlidingWindowRateLimiter(config)
+	rateLimiter := NewTokenBucketRateLimiter(config)
 
 	for i := 0; i < 3; i++ {
 		rateLimiter.RecordAttempt("test-key")
@@ -59,12 +59,12 @@ func TestSlidingWindowRateLimiter_CheckLimit_SlidingWindow(t *testing.T) {
 	assert.True(t, allowed)
 }
 
-func TestSlidingWindowRateLimiter_CheckLimit_DifferentKeys(t *testing.T) {
+func TestTokenBucketRateLimiter_CheckLimit_DifferentKeys(t *testing.T) {
 	config := Config{
 		MaxConnections: 2,
 		WindowDuration: 1 * time.Minute,
 	}
-	rateLimiter := NewSlidingWindowRateLimiter(config)
+	rateLimiter := NewTokenBucketRateLimiter(config)
 
 	for i := 0; i < 2; i++ {
 		rateLimiter.RecordAttempt("key1")
@@ -77,12 +77,12 @@ func TestSlidingWindowRateLimiter_CheckLimit_DifferentKeys(t *testing.T) {
 	assert.True(t, allowed)
 }
 
-func TestSlidingWindowRateLimiter_ConcurrentAccess(t *testing.T) {
+func TestTokenBucketRateLimiter_ConcurrentAccess(t *testing.T) {
 	config := Config{
 		MaxConnections: 10,
 		WindowDuration: 1 * time.Minute,
 	}
-	rateLimiter := NewSlidingWindowRateLimiter(config)
+	rateLimiter := NewTokenBucketRateLimiter(config)
 
 	done := make(chan bool)
 	for i := 0; i < 10; i++ {
