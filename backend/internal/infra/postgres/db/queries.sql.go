@@ -22,42 +22,6 @@ func (q *Queries) DeleteConversation(ctx context.Context, id pgtype.UUID) error 
 	return err
 }
 
-const deleteParticipant = `-- name: DeleteParticipant :exec
-UPDATE participants
-SET deleted_at = NOW(), updated_at = NOW()
-WHERE id = $1
-`
-
-func (q *Queries) DeleteParticipant(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteParticipant, id)
-	return err
-}
-
-const findParticipantByConversationAndUser = `-- name: FindParticipantByConversationAndUser :one
-SELECT id, conversation_id, user_id, created_at, updated_at, deleted_at FROM participants
-WHERE conversation_id = $1 AND user_id = $2 AND deleted_at IS NULL
-LIMIT 1
-`
-
-type FindParticipantByConversationAndUserParams struct {
-	ConversationID pgtype.UUID `json:"conversation_id"`
-	UserID         pgtype.UUID `json:"user_id"`
-}
-
-func (q *Queries) FindParticipantByConversationAndUser(ctx context.Context, arg FindParticipantByConversationAndUserParams) (Participant, error) {
-	row := q.db.QueryRow(ctx, findParticipantByConversationAndUser, arg.ConversationID, arg.UserID)
-	var i Participant
-	err := row.Scan(
-		&i.ID,
-		&i.ConversationID,
-		&i.UserID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
 const findUserByUsername = `-- name: FindUserByUsername :one
 SELECT id, avatar, name, password, refresh_token, created_at, updated_at, deleted_at FROM users
 WHERE name = $1 AND deleted_at IS NULL
@@ -317,166 +281,6 @@ func (q *Queries) GetDirectConversationBetweenUsers(ctx context.Context, arg Get
 	return i, err
 }
 
-const getDirectConversationWithParticipants = `-- name: GetDirectConversationWithParticipants :one
-SELECT c.id, c.type, c.created_at, c.updated_at,
-       ARRAY_AGG(p.user_id) as participant_user_ids
-FROM conversations c
-JOIN participants p ON p.conversation_id = c.id
-WHERE c.id = $1 AND c.deleted_at IS NULL AND p.deleted_at IS NULL
-GROUP BY c.id
-`
-
-type GetDirectConversationWithParticipantsRow struct {
-	ID                 pgtype.UUID        `json:"id"`
-	Type               int32              `json:"type"`
-	CreatedAt          pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	ParticipantUserIds interface{}        `json:"participant_user_ids"`
-}
-
-func (q *Queries) GetDirectConversationWithParticipants(ctx context.Context, id pgtype.UUID) (GetDirectConversationWithParticipantsRow, error) {
-	row := q.db.QueryRow(ctx, getDirectConversationWithParticipants, id)
-	var i GetDirectConversationWithParticipantsRow
-	err := row.Scan(
-		&i.ID,
-		&i.Type,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.ParticipantUserIds,
-	)
-	return i, err
-}
-
-const getGroupConversationWithOwner = `-- name: GetGroupConversationWithOwner :one
-SELECT
-    gc.id,
-    gc.name,
-    gc.avatar,
-    gc.conversation_id,
-    gc.owner_id,
-    c.type as conversation_type,
-    p.id as owner_participant_id,
-    p.user_id as owner_user_id,
-    p.conversation_id as owner_conversation_id
-FROM group_conversations gc
-JOIN conversations c ON c.id = gc.conversation_id
-JOIN participants p ON p.conversation_id = gc.conversation_id AND p.user_id = gc.owner_id
-WHERE gc.conversation_id = $1
-  AND gc.deleted_at IS NULL
-  AND c.deleted_at IS NULL
-  AND p.deleted_at IS NULL
-LIMIT 1
-`
-
-type GetGroupConversationWithOwnerRow struct {
-	ID                  pgtype.UUID `json:"id"`
-	Name                string      `json:"name"`
-	Avatar              pgtype.Text `json:"avatar"`
-	ConversationID      pgtype.UUID `json:"conversation_id"`
-	OwnerID             pgtype.UUID `json:"owner_id"`
-	ConversationType    int32       `json:"conversation_type"`
-	OwnerParticipantID  pgtype.UUID `json:"owner_participant_id"`
-	OwnerUserID         pgtype.UUID `json:"owner_user_id"`
-	OwnerConversationID pgtype.UUID `json:"owner_conversation_id"`
-}
-
-func (q *Queries) GetGroupConversationWithOwner(ctx context.Context, conversationID pgtype.UUID) (GetGroupConversationWithOwnerRow, error) {
-	row := q.db.QueryRow(ctx, getGroupConversationWithOwner, conversationID)
-	var i GetGroupConversationWithOwnerRow
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Avatar,
-		&i.ConversationID,
-		&i.OwnerID,
-		&i.ConversationType,
-		&i.OwnerParticipantID,
-		&i.OwnerUserID,
-		&i.OwnerConversationID,
-	)
-	return i, err
-}
-
-const getMessageWithUser = `-- name: GetMessageWithUser :one
-SELECT
-    m.id, m.type, m.created_at, m.conversation_id, m.content,
-    u.id as user_id, u.name as user_name, u.avatar as user_avatar
-FROM messages m
-JOIN users u ON u.id = m.user_id
-WHERE m.id = $1 AND u.deleted_at IS NULL
-LIMIT 1
-`
-
-type GetMessageWithUserRow struct {
-	ID             pgtype.UUID        `json:"id"`
-	Type           int32              `json:"type"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	ConversationID pgtype.UUID        `json:"conversation_id"`
-	Content        string             `json:"content"`
-	UserID         pgtype.UUID        `json:"user_id"`
-	UserName       string             `json:"user_name"`
-	UserAvatar     pgtype.Text        `json:"user_avatar"`
-}
-
-func (q *Queries) GetMessageWithUser(ctx context.Context, id pgtype.UUID) (GetMessageWithUserRow, error) {
-	row := q.db.QueryRow(ctx, getMessageWithUser, id)
-	var i GetMessageWithUserRow
-	err := row.Scan(
-		&i.ID,
-		&i.Type,
-		&i.CreatedAt,
-		&i.ConversationID,
-		&i.Content,
-		&i.UserID,
-		&i.UserName,
-		&i.UserAvatar,
-	)
-	return i, err
-}
-
-const getNotificationMessageRaw = `-- name: GetNotificationMessageRaw :one
-SELECT
-    m.id,
-    m.type,
-    m.created_at,
-    m.conversation_id,
-    m.content,
-    u.id as user_id,
-    u.name as user_name,
-    u.avatar as user_avatar
-FROM messages m
-LEFT JOIN users u ON u.id = m.user_id
-WHERE m.id = $1 AND m.deleted_at IS NULL
-LIMIT 1
-`
-
-type GetNotificationMessageRawRow struct {
-	ID             pgtype.UUID        `json:"id"`
-	Type           int32              `json:"type"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	ConversationID pgtype.UUID        `json:"conversation_id"`
-	Content        string             `json:"content"`
-	UserID         pgtype.UUID        `json:"user_id"`
-	UserName       pgtype.Text        `json:"user_name"`
-	UserAvatar     pgtype.Text        `json:"user_avatar"`
-}
-
-func (q *Queries) GetNotificationMessageRaw(ctx context.Context, id pgtype.UUID) (GetNotificationMessageRawRow, error) {
-	row := q.db.QueryRow(ctx, getNotificationMessageRaw, id)
-	var i GetNotificationMessageRawRow
-	err := row.Scan(
-		&i.ID,
-		&i.Type,
-		&i.CreatedAt,
-		&i.ConversationID,
-		&i.Content,
-		&i.UserID,
-		&i.UserName,
-		&i.UserAvatar,
-	)
-	return i, err
-}
-
 const getParticipantsByConversationID = `-- name: GetParticipantsByConversationID :many
 SELECT u.id, u.name, u.avatar
 FROM users u
@@ -512,33 +316,6 @@ func (q *Queries) GetParticipantsByConversationID(ctx context.Context, arg GetPa
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getParticipantsIDsByConversationID = `-- name: GetParticipantsIDsByConversationID :many
-SELECT user_id
-FROM participants
-WHERE conversation_id = $1 AND deleted_at IS NULL
-ORDER BY created_at ASC
-`
-
-func (q *Queries) GetParticipantsIDsByConversationID(ctx context.Context, conversationID pgtype.UUID) ([]pgtype.UUID, error) {
-	rows, err := q.db.Query(ctx, getParticipantsIDsByConversationID, conversationID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []pgtype.UUID
-	for rows.Next() {
-		var user_id pgtype.UUID
-		if err := rows.Scan(&user_id); err != nil {
-			return nil, err
-		}
-		items = append(items, user_id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -841,29 +618,6 @@ func (q *Queries) LeaveConversationAtomic(ctx context.Context, arg LeaveConversa
 	return result.RowsAffected(), nil
 }
 
-const renameConversationAndReturn = `-- name: RenameConversationAndReturn :execrows
-UPDATE group_conversations
-SET name = $2, updated_at = NOW()
-WHERE conversation_id = $1
-  AND deleted_at IS NULL
-  AND EXISTS (
-    SELECT 1 FROM conversations c WHERE c.id = conversation_id AND c.deleted_at IS NULL
-  )
-`
-
-type RenameConversationAndReturnParams struct {
-	ConversationID pgtype.UUID `json:"conversation_id"`
-	Name           string      `json:"name"`
-}
-
-func (q *Queries) RenameConversationAndReturn(ctx context.Context, arg RenameConversationAndReturnParams) (int64, error) {
-	result, err := q.db.Exec(ctx, renameConversationAndReturn, arg.ConversationID, arg.Name)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
 const renameGroupConversation = `-- name: RenameGroupConversation :exec
 UPDATE group_conversations
 SET name = $2, updated_at = NOW()
@@ -923,33 +677,8 @@ func (q *Queries) StoreGroupConversation(ctx context.Context, arg StoreGroupConv
 	return err
 }
 
-const storeMessage = `-- name: StoreMessage :exec
-
-INSERT INTO messages (id, conversation_id, user_id, content, type, created_at)
-VALUES ($1, $2, $3, $4, $5, NOW())
-`
-
-type StoreMessageParams struct {
-	ID             pgtype.UUID `json:"id"`
-	ConversationID pgtype.UUID `json:"conversation_id"`
-	UserID         pgtype.UUID `json:"user_id"`
-	Content        string      `json:"content"`
-	Type           int32       `json:"type"`
-}
-
-// Message queries
-func (q *Queries) StoreMessage(ctx context.Context, arg StoreMessageParams) error {
-	_, err := q.db.Exec(ctx, storeMessage,
-		arg.ID,
-		arg.ConversationID,
-		arg.UserID,
-		arg.Content,
-		arg.Type,
-	)
-	return err
-}
-
 const storeMessageAndReturn = `-- name: StoreMessageAndReturn :one
+
 WITH new_message AS (
     INSERT INTO messages (id, conversation_id, user_id, content, type, created_at)
     VALUES ($1, $2, $3, $4, $5, NOW())
@@ -983,6 +712,7 @@ type StoreMessageAndReturnRow struct {
 	UserAvatar     pgtype.Text        `json:"user_avatar"`
 }
 
+// Message queries
 func (q *Queries) StoreMessageAndReturn(ctx context.Context, arg StoreMessageAndReturnParams) (StoreMessageAndReturnRow, error) {
 	row := q.db.QueryRow(ctx, storeMessageAndReturn,
 		arg.ID,
@@ -1065,39 +795,6 @@ func (q *Queries) StoreUser(ctx context.Context, arg StoreUserParams) error {
 	return err
 }
 
-const updateConversation = `-- name: UpdateConversation :exec
-UPDATE conversations
-SET type = $2, updated_at = NOW()
-WHERE id = $1
-`
-
-type UpdateConversationParams struct {
-	ID   pgtype.UUID `json:"id"`
-	Type int32       `json:"type"`
-}
-
-func (q *Queries) UpdateConversation(ctx context.Context, arg UpdateConversationParams) error {
-	_, err := q.db.Exec(ctx, updateConversation, arg.ID, arg.Type)
-	return err
-}
-
-const updateGroupConversation = `-- name: UpdateGroupConversation :exec
-UPDATE group_conversations
-SET name = $2, avatar = $3, updated_at = NOW()
-WHERE conversation_id = $1
-`
-
-type UpdateGroupConversationParams struct {
-	ConversationID pgtype.UUID `json:"conversation_id"`
-	Name           string      `json:"name"`
-	Avatar         pgtype.Text `json:"avatar"`
-}
-
-func (q *Queries) UpdateGroupConversation(ctx context.Context, arg UpdateGroupConversationParams) error {
-	_, err := q.db.Exec(ctx, updateGroupConversation, arg.ConversationID, arg.Name, arg.Avatar)
-	return err
-}
-
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
 SET avatar = $2, name = $3, password = $4, refresh_token = $5, updated_at = NOW()
@@ -1120,21 +817,5 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.Password,
 		arg.RefreshToken,
 	)
-	return err
-}
-
-const updateUserRefreshToken = `-- name: UpdateUserRefreshToken :exec
-UPDATE users
-SET refresh_token = $2, updated_at = NOW()
-WHERE id = $1
-`
-
-type UpdateUserRefreshTokenParams struct {
-	ID           pgtype.UUID `json:"id"`
-	RefreshToken pgtype.Text `json:"refresh_token"`
-}
-
-func (q *Queries) UpdateUserRefreshToken(ctx context.Context, arg UpdateUserRefreshTokenParams) error {
-	_, err := q.db.Exec(ctx, updateUserRefreshToken, arg.ID, arg.RefreshToken)
 	return err
 }

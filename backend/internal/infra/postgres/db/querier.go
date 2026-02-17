@@ -12,8 +12,6 @@ import (
 
 type Querier interface {
 	DeleteConversation(ctx context.Context, id pgtype.UUID) error
-	DeleteParticipant(ctx context.Context, id pgtype.UUID) error
-	FindParticipantByConversationAndUser(ctx context.Context, arg FindParticipantByConversationAndUserParams) (Participant, error)
 	FindUserByUsername(ctx context.Context, name string) (User, error)
 	// Complex queries for read model
 	GetContacts(ctx context.Context, arg GetContactsParams) ([]GetContactsRow, error)
@@ -21,12 +19,7 @@ type Querier interface {
 	GetConversationIDsByUserID(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)
 	GetConversationMessagesRaw(ctx context.Context, arg GetConversationMessagesRawParams) ([]GetConversationMessagesRawRow, error)
 	GetDirectConversationBetweenUsers(ctx context.Context, arg GetDirectConversationBetweenUsersParams) (Conversation, error)
-	GetDirectConversationWithParticipants(ctx context.Context, id pgtype.UUID) (GetDirectConversationWithParticipantsRow, error)
-	GetGroupConversationWithOwner(ctx context.Context, conversationID pgtype.UUID) (GetGroupConversationWithOwnerRow, error)
-	GetMessageWithUser(ctx context.Context, id pgtype.UUID) (GetMessageWithUserRow, error)
-	GetNotificationMessageRaw(ctx context.Context, id pgtype.UUID) (GetNotificationMessageRawRow, error)
 	GetParticipantsByConversationID(ctx context.Context, arg GetParticipantsByConversationIDParams) ([]GetParticipantsByConversationIDRow, error)
-	GetParticipantsIDsByConversationID(ctx context.Context, conversationID pgtype.UUID) ([]pgtype.UUID, error)
 	GetPotentialInvitees(ctx context.Context, arg GetPotentialInviteesParams) ([]GetPotentialInviteesRow, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserConversations(ctx context.Context, arg GetUserConversationsParams) ([]GetUserConversationsRow, error)
@@ -35,24 +28,19 @@ type Querier interface {
 	IsMember(ctx context.Context, arg IsMemberParams) (bool, error)
 	IsMemberOwner(ctx context.Context, arg IsMemberOwnerParams) (bool, error)
 	LeaveConversationAtomic(ctx context.Context, arg LeaveConversationAtomicParams) (int64, error)
-	RenameConversationAndReturn(ctx context.Context, arg RenameConversationAndReturnParams) (int64, error)
 	RenameGroupConversation(ctx context.Context, arg RenameGroupConversationParams) error
 	// Conversation queries
 	StoreConversation(ctx context.Context, arg StoreConversationParams) error
 	// GroupConversation queries
 	StoreGroupConversation(ctx context.Context, arg StoreGroupConversationParams) error
 	// Message queries
-	StoreMessage(ctx context.Context, arg StoreMessageParams) error
 	StoreMessageAndReturn(ctx context.Context, arg StoreMessageAndReturnParams) (StoreMessageAndReturnRow, error)
 	// Participant queries
 	StoreParticipant(ctx context.Context, arg StoreParticipantParams) error
 	StoreParticipantsBatch(ctx context.Context, arg StoreParticipantsBatchParams) error
 	// User queries
 	StoreUser(ctx context.Context, arg StoreUserParams) error
-	UpdateConversation(ctx context.Context, arg UpdateConversationParams) error
-	UpdateGroupConversation(ctx context.Context, arg UpdateGroupConversationParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
-	UpdateUserRefreshToken(ctx context.Context, arg UpdateUserRefreshTokenParams) error
 }
 
 var _ Querier = (*Queries)(nil)

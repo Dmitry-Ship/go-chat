@@ -19,21 +19,11 @@ SELECT * FROM users
 WHERE name = $1 AND deleted_at IS NULL
 LIMIT 1;
 
--- name: UpdateUserRefreshToken :exec
-UPDATE users
-SET refresh_token = $2, updated_at = NOW()
-WHERE id = $1;
-
 -- Conversation queries
 
 -- name: StoreConversation :exec
 INSERT INTO conversations (id, type)
 VALUES ($1, $2);
-
--- name: UpdateConversation :exec
-UPDATE conversations
-SET type = $2, updated_at = NOW()
-WHERE id = $1;
 
 -- name: DeleteConversation :exec
 UPDATE conversations
@@ -46,35 +36,10 @@ WHERE id = $1;
 INSERT INTO group_conversations (id, name, avatar, conversation_id, owner_id)
 VALUES ($1, $2, $3, $4, $5);
 
--- name: UpdateGroupConversation :exec
-UPDATE group_conversations
-SET name = $2, avatar = $3, updated_at = NOW()
-WHERE conversation_id = $1;
-
 -- name: RenameGroupConversation :exec
 UPDATE group_conversations
 SET name = $2, updated_at = NOW()
 WHERE conversation_id = $1;
-
--- name: GetGroupConversationWithOwner :one
-SELECT
-    gc.id,
-    gc.name,
-    gc.avatar,
-    gc.conversation_id,
-    gc.owner_id,
-    c.type as conversation_type,
-    p.id as owner_participant_id,
-    p.user_id as owner_user_id,
-    p.conversation_id as owner_conversation_id
-FROM group_conversations gc
-JOIN conversations c ON c.id = gc.conversation_id
-JOIN participants p ON p.conversation_id = gc.conversation_id AND p.user_id = gc.owner_id
-WHERE gc.conversation_id = $1
-  AND gc.deleted_at IS NULL
-  AND c.deleted_at IS NULL
-  AND p.deleted_at IS NULL
-LIMIT 1;
 
 -- Participant queries
 
@@ -85,45 +50,6 @@ VALUES ($1, $2, $3);
 -- name: StoreParticipantsBatch :exec
 INSERT INTO participants (id, conversation_id, user_id, created_at)
 SELECT unnest($1::uuid[]), $2, unnest($3::uuid[]), NOW();
-
--- name: DeleteParticipant :exec
-UPDATE participants
-SET deleted_at = NOW(), updated_at = NOW()
-WHERE id = $1;
-
--- name: FindParticipantByConversationAndUser :one
-SELECT * FROM participants
-WHERE conversation_id = $1 AND user_id = $2 AND deleted_at IS NULL
-LIMIT 1;
-
--- name: GetParticipantsIDsByConversationID :many
-SELECT user_id
-FROM participants
-WHERE conversation_id = $1 AND deleted_at IS NULL
-ORDER BY created_at ASC;
-
--- name: GetDirectConversationWithParticipants :one
-SELECT c.id, c.type, c.created_at, c.updated_at,
-       ARRAY_AGG(p.user_id) as participant_user_ids
-FROM conversations c
-JOIN participants p ON p.conversation_id = c.id
-WHERE c.id = $1 AND c.deleted_at IS NULL AND p.deleted_at IS NULL
-GROUP BY c.id;
-
--- Message queries
-
--- name: StoreMessage :exec
-INSERT INTO messages (id, conversation_id, user_id, content, type, created_at)
-VALUES ($1, $2, $3, $4, $5, NOW());
-
--- name: GetMessageWithUser :one
-SELECT
-    m.id, m.type, m.created_at, m.conversation_id, m.content,
-    u.id as user_id, u.name as user_name, u.avatar as user_avatar
-FROM messages m
-JOIN users u ON u.id = m.user_id
-WHERE m.id = $1 AND u.deleted_at IS NULL
-LIMIT 1;
 
 -- Complex queries for read model
 
@@ -181,21 +107,6 @@ WHERE m.conversation_id = $1
   )
 ORDER BY m.created_at DESC, m.id DESC
 LIMIT sqlc.arg(page_limit);
-
--- name: GetNotificationMessageRaw :one
-SELECT
-    m.id,
-    m.type,
-    m.created_at,
-    m.conversation_id,
-    m.content,
-    u.id as user_id,
-    u.name as user_name,
-    u.avatar as user_avatar
-FROM messages m
-LEFT JOIN users u ON u.id = m.user_id
-WHERE m.id = $1 AND m.deleted_at IS NULL
-LIMIT 1;
 
 -- name: GetUserConversations :many
 WITH last_messages AS (
@@ -323,6 +234,8 @@ SELECT EXISTS(
       AND gc.deleted_at IS NULL AND c.deleted_at IS NULL AND p.deleted_at IS NULL
 );
 
+-- Message queries
+
 -- name: StoreMessageAndReturn :one
 WITH new_message AS (
     INSERT INTO messages (id, conversation_id, user_id, content, type, created_at)
@@ -336,12 +249,3 @@ SELECT
 FROM new_message nm
 JOIN users u ON u.id = nm.user_id
 WHERE u.deleted_at IS NULL;
-
--- name: RenameConversationAndReturn :execrows
-UPDATE group_conversations
-SET name = $2, updated_at = NOW()
-WHERE conversation_id = $1
-  AND deleted_at IS NULL
-  AND EXISTS (
-    SELECT 1 FROM conversations c WHERE c.id = conversation_id AND c.deleted_at IS NULL
-  );
