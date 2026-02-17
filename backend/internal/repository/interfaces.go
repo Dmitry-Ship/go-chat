@@ -22,22 +22,16 @@ type MessageRepository interface {
 
 type ParticipantRepository interface {
 	Store(ctx context.Context, participant *domain.Participant) error
-	Delete(ctx context.Context, participantID uuid.UUID) error
-	GetByConversationIDAndUserID(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error)
-	GetIDsByConversationID(ctx context.Context, conversationID uuid.UUID) ([]uuid.UUID, error)
 	GetConversationIDsByUserID(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 }
 
 type DirectConversationRepository interface {
 	Store(ctx context.Context, conversation *domain.DirectConversation) error
 	GetID(ctx context.Context, firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.DirectConversation, error)
 }
 
 type GroupConversationRepository interface {
 	Store(ctx context.Context, conversation *domain.GroupConversation) error
-	Update(ctx context.Context, conversation *domain.GroupConversation) error
 	Rename(ctx context.Context, id uuid.UUID, name string) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.GroupConversation, error)
 }

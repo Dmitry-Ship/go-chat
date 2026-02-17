@@ -23,24 +23,6 @@ func (m *MockParticipantRepository) Store(ctx context.Context, participant *doma
 	return args.Error(0)
 }
 
-func (m *MockParticipantRepository) Delete(ctx context.Context, participantID uuid.UUID) error {
-	args := m.Called(ctx, participantID)
-	return args.Error(0)
-}
-
-func (m *MockParticipantRepository) GetByConversationIDAndUserID(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
-	args := m.Called(ctx, conversationID, userID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.Participant), args.Error(1)
-}
-
-func (m *MockParticipantRepository) GetIDsByConversationID(ctx context.Context, conversationID uuid.UUID) ([]uuid.UUID, error) {
-	args := m.Called(ctx, conversationID)
-	return args.Get(0).([]uuid.UUID), args.Error(1)
-}
-
 func (m *MockParticipantRepository) GetConversationIDsByUserID(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).([]uuid.UUID), args.Error(1)
@@ -85,24 +67,9 @@ func (m *MockQueriesRepositoryForMembership) GetUserConversations(userID uuid.UU
 	return args.Get(0).([]readModel.ConversationDTO), args.Error(1)
 }
 
-func (m *MockQueriesRepositoryForMembership) RenameConversationAndReturn(conversationID uuid.UUID, name string) error {
-	args := m.Called(conversationID, name)
-	return args.Error(0)
-}
-
 func (m *MockQueriesRepositoryForMembership) GetConversationMessages(conversationID uuid.UUID, cursor *readModel.MessageCursor, limit int) (readModel.MessagePageDTO, error) {
 	args := m.Called(conversationID, cursor, limit)
 	return args.Get(0).(readModel.MessagePageDTO), args.Error(1)
-}
-
-func (m *MockQueriesRepositoryForMembership) GetNotificationMessage(messageID uuid.UUID) (readModel.MessageDTO, error) {
-	args := m.Called(messageID)
-	return args.Get(0).(readModel.MessageDTO), args.Error(1)
-}
-
-func (m *MockQueriesRepositoryForMembership) StoreMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
-	args := m.Called(id, conversationID, userID, content, messageType)
-	return args.Get(0).(readModel.MessageDTO), args.Error(1)
 }
 
 func (m *MockQueriesRepositoryForMembership) IsMember(conversationID uuid.UUID, userID uuid.UUID) (bool, error) {

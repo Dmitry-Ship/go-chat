@@ -27,14 +27,6 @@ func (m *MockDirectConversationRepository) GetID(ctx context.Context, firstUserI
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
-func (m *MockDirectConversationRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.DirectConversation, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.DirectConversation), args.Error(1)
-}
-
 type MockNotificationServiceForDirect struct {
 	mock.Mock
 }

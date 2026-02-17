@@ -20,13 +20,10 @@ type userQueryRepository interface {
 type conversationQueryRepository interface {
 	GetConversation(id uuid.UUID, userID uuid.UUID) (ConversationFullDTO, error)
 	GetUserConversations(userID uuid.UUID, paginationInfo PaginationInfo) ([]ConversationDTO, error)
-	RenameConversationAndReturn(conversationID uuid.UUID, name string) error
 }
 
 type messageQueryRepository interface {
 	GetConversationMessages(conversationID uuid.UUID, cursor *MessageCursor, limit int) (MessagePageDTO, error)
-	GetNotificationMessage(messageID uuid.UUID) (MessageDTO, error)
-	StoreMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (MessageDTO, error)
 }
 
 type authorizationQueryRepository interface {

@@ -55,41 +55,6 @@ func (r *directConversationRepository) Store(ctx context.Context, conversation *
 	})
 }
 
-func (r *directConversationRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.DirectConversation, error) {
-	conv, err := r.queries.GetDirectConversationWithParticipants(ctx, uuidToPgtype(id))
-	if err != nil {
-		return nil, fmt.Errorf("get direct conversation error: %w", err)
-	}
-
-	// Parse the ARRAY_AGG result - PostgreSQL returns this as a slice of [16]byte
-	participantUserIDs, ok := conv.ParticipantUserIds.([]interface{})
-	if !ok || len(participantUserIDs) == 0 {
-		return nil, fmt.Errorf("direct conversation not found")
-	}
-
-	participantsDomain := make([]domain.Participant, len(participantUserIDs))
-	for i, userIDRaw := range participantUserIDs {
-		// Convert from [16]byte to uuid.UUID
-		userIDBytes, ok := userIDRaw.([16]byte)
-		if !ok {
-			return nil, fmt.Errorf("invalid user id format")
-		}
-		userID := uuid.UUID(userIDBytes)
-		participantsDomain[i] = domain.Participant{
-			UserID:         userID,
-			ConversationID: pgtypeToUUID(conv.ID),
-		}
-	}
-
-	return &domain.DirectConversation{
-		Participants: participantsDomain,
-		Conversation: domain.Conversation{
-			ID:   pgtypeToUUID(conv.ID),
-			Type: conversationTypesMap[uint8(conv.Type)],
-		},
-	}, nil
-}
-
 func (r *directConversationRepository) GetID(ctx context.Context, firstUserID uuid.UUID, secondUserID uuid.UUID) (uuid.UUID, error) {
 	conv, err := r.queries.GetDirectConversationBetweenUsers(ctx, db.GetDirectConversationBetweenUsersParams{
 		UserID:   uuidToPgtype(firstUserID),

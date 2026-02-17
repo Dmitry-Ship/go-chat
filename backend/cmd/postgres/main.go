@@ -6,10 +6,15 @@ import (
 	"log"
 	"os"
 
+	"GitHub/go-chat/backend/internal/config"
 	"GitHub/go-chat/backend/internal/infra/postgres"
 )
 
 func main() {
+	if err := config.LoadDotEnv(); err != nil {
+		log.Fatalf("Configuration error: %v", err)
+	}
+
 	drop := flag.Bool("drop", false, "drop database")
 	flag.Parse()
 

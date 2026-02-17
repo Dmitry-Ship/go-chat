@@ -1,6 +1,16 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/google/uuid"
+
 	"GitHub/go-chat/backend/internal/config"
 	"GitHub/go-chat/backend/internal/gracefulServer"
 	"GitHub/go-chat/backend/internal/infra/cache"
@@ -10,14 +20,6 @@ import (
 	"GitHub/go-chat/backend/internal/server"
 	"GitHub/go-chat/backend/internal/services"
 	ws "GitHub/go-chat/backend/internal/websocket"
-	"context"
-	"fmt"
-	"log"
-	"os"
-	"strconv"
-	"time"
-
-	"github.com/google/uuid"
 )
 
 func validateConfig() error {
@@ -80,7 +82,35 @@ func validateConfig() error {
 	return nil
 }
 
+func resolveServiceHost(host string) string {
+	if host == "" {
+		return host
+	}
+
+	dockerInternalHosts := map[string]string{
+		"postgres": "localhost",
+		"redis":    "localhost",
+	}
+
+	fallbackHost, ok := dockerInternalHosts[host]
+	if !ok {
+		return host
+	}
+
+	if _, err := net.LookupHost(host); err == nil {
+		return host
+	}
+
+	log.Printf("Host %q is not resolvable outside Docker DNS, falling back to %q", host, fallbackHost)
+
+	return fallbackHost
+}
+
 func main() {
+	if err := config.LoadDotEnv(); err != nil {
+		log.Fatalf("Configuration error: %v", err)
+	}
+
 	if err := validateConfig(); err != nil {
 		log.Fatalf("Configuration error: %v", err)
 	}
@@ -94,8 +124,11 @@ func main() {
 		serverID = uuid.New().String()
 	}
 
+	redisHost := resolveServiceHost(os.Getenv("REDIS_HOST"))
+	dbHost := resolveServiceHost(os.Getenv("DB_HOST"))
+
 	redisClient := redisPubsub.GetRedisClient(ctx, redisPubsub.RedisConfig{
-		Host:     os.Getenv("REDIS_HOST"),
+		Host:     redisHost,
 		Port:     os.Getenv("REDIS_PORT"),
 		Password: os.Getenv("REDIS_PASSWORD"),
 	})
@@ -104,7 +137,7 @@ func main() {
 	}()
 
 	pool, err := postgres.NewDatabaseConnection(ctx, postgres.DbConfig{
-		Host:     os.Getenv("DB_HOST"),
+		Host:     dbHost,
 		Port:     os.Getenv("DB_PORT"),
 		User:     os.Getenv("DB_USER"),
 		Name:     os.Getenv("DB_NAME"),

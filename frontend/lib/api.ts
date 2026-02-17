@@ -9,7 +9,7 @@ import {
   MessagePageResponse,
 } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 const fetchWithAuth = async <T = unknown>(url: string, options: RequestInit = {}): Promise<T> => {
   const response = await fetch(`${API_BASE}${url}`, {

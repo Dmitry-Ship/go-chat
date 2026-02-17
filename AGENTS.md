@@ -4,6 +4,7 @@
 
 ### Backend (Go 1.23)
 - **Build**: `make backend_build` or `cd backend && go build -o go-bin ./cmd/server`
+- **Run**: `make backend_run` (loads `.env` automatically by searching current/parent directories, or use `ENV_FILE=/path/to/.env`)
 
 ### Frontend (Next.js 16, React 19, TypeScript)
 - **Build**: `make frontend_build` or `cd frontend && npm run build`
@@ -13,12 +14,14 @@
 - `make backend_lint` - Run backend linter only
 - `make frontend_test` - Run frontend tests only
 - `make frontend_lint` - Run frontend linter only
+- `make frontend_type` - Run frontend TypeScript type check
 
 ### Docker
-- `make docker_up` - Start all services
-- `make docker_up_detached` - Start in detached mode
-- `make docker_down` - Stop all services
-- `make docker_build` - Build all Docker images
+- `make docker_deps_up` - Start only Postgres and Redis containers
+- `make docker_deps_up_detached` - Start only Postgres and Redis in detached mode
+- `make docker_deps_down` - Stop Postgres and Redis containers
+- `docker-compose.yml` contains infra services only (`postgres`, `redis`)
+- Backend and frontend run/build locally (non-Docker)
 
 Run tests and linters after finishing updates.
 

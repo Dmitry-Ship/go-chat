@@ -16,7 +16,7 @@ type gracefulServer struct {
 }
 
 func NewGracefulServer(handler http.Handler) gracefulServer {
-	port := os.Getenv("PORT")
+	port := resolvePort()
 
 	httpServer := &http.Server{
 		Addr:    ":" + port,
@@ -25,6 +25,18 @@ func NewGracefulServer(handler http.Handler) gracefulServer {
 	return gracefulServer{
 		httpServer: httpServer,
 	}
+}
+
+func resolvePort() string {
+	if port := os.Getenv("PORT"); port != "" {
+		return port
+	}
+
+	if port := os.Getenv("API_PORT"); port != "" {
+		return port
+	}
+
+	return "4000"
 }
 
 func (s *gracefulServer) Run() {

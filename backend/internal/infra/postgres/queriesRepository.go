@@ -224,54 +224,6 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, cu
 	return response, nil
 }
 
-func (r *queriesRepository) GetNotificationMessage(messageID uuid.UUID) (readModel.MessageDTO, error) {
-	msg, err := r.queries.GetNotificationMessageRaw(context.Background(), uuidToPgtype(messageID))
-	if err != nil {
-		return readModel.MessageDTO{}, err
-	}
-
-	formatter := presentation.NewMessageFormatter()
-	rawMessage := readModel.RawMessageDTO{
-		ID:             pgtypeToUUID(msg.ID),
-		Type:           uint8(msg.Type),
-		CreatedAt:      msg.CreatedAt.Time,
-		ConversationID: pgtypeToUUID(msg.ConversationID),
-		Content:        msg.Content,
-		UserID:         pgtypeToUUID(msg.UserID),
-		UserName:       msg.UserName.String,
-		UserAvatar:     msg.UserAvatar.String,
-	}
-
-	return formatter.FormatMessageDTO(rawMessage), nil
-}
-
-func (r *queriesRepository) StoreMessageAndReturn(id uuid.UUID, conversationID uuid.UUID, userID uuid.UUID, content string, messageType int32) (readModel.MessageDTO, error) {
-	msg, err := r.queries.StoreMessageAndReturn(context.Background(), db.StoreMessageAndReturnParams{
-		ID:             uuidToPgtype(id),
-		ConversationID: uuidToPgtype(conversationID),
-		UserID:         uuidToPgtype(userID),
-		Content:        content,
-		Type:           messageType,
-	})
-	if err != nil {
-		return readModel.MessageDTO{}, err
-	}
-
-	formatter := presentation.NewMessageFormatter()
-	rawMessage := readModel.RawMessageDTO{
-		ID:             pgtypeToUUID(msg.ID),
-		Type:           uint8(msg.Type),
-		CreatedAt:      msg.CreatedAt.Time,
-		ConversationID: pgtypeToUUID(msg.ConversationID),
-		Content:        msg.FormattedText,
-		UserID:         pgtypeToUUID(msg.UserID),
-		UserName:       msg.UserName,
-		UserAvatar:     msg.UserAvatar.String,
-	}
-
-	return formatter.FormatMessageDTO(rawMessage), nil
-}
-
 func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ConversationDTO, error) {
 	limit, offset := r.paginate(paginationInfo)
 
@@ -376,23 +328,6 @@ func (r *queriesRepository) IsMemberOwner(conversationID uuid.UUID, userID uuid.
 		ConversationID: uuidToPgtype(conversationID),
 		UserID:         uuidToPgtype(userID),
 	})
-}
-
-func (r *queriesRepository) RenameConversationAndReturn(conversationID uuid.UUID, name string) error {
-	rowsAffected, err := r.queries.RenameConversationAndReturn(context.Background(), db.RenameConversationAndReturnParams{
-		ConversationID: uuidToPgtype(conversationID),
-		Name:           name,
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		return domain.ErrorUserNotOwner
-	}
-
-	return nil
 }
 
 func (r *queriesRepository) InviteToConversationAtomic(conversationID uuid.UUID, inviteeID uuid.UUID, participantID uuid.UUID) (uuid.UUID, error) {

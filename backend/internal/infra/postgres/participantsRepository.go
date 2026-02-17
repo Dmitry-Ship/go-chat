@@ -35,47 +35,6 @@ func (r *participantRepository) Store(ctx context.Context, participant *domain.P
 	return nil
 }
 
-func (r *participantRepository) Delete(ctx context.Context, participantID uuid.UUID) error {
-	if err := r.queries.DeleteParticipant(ctx, uuidToPgtype(participantID)); err != nil {
-		return fmt.Errorf("delete participant error: %w", err)
-	}
-
-	return nil
-}
-
-func (r *participantRepository) GetByConversationIDAndUserID(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
-	params := db.FindParticipantByConversationAndUserParams{
-		ConversationID: uuidToPgtype(conversationID),
-		UserID:         uuidToPgtype(userID),
-	}
-
-	participant, err := r.queries.FindParticipantByConversationAndUser(ctx, params)
-	if err != nil {
-		return nil, fmt.Errorf("get participant error: %w", err)
-	}
-
-	return &domain.Participant{
-		ID:             pgtypeToUUID(participant.ID),
-		ConversationID: pgtypeToUUID(participant.ConversationID),
-		UserID:         pgtypeToUUID(participant.UserID),
-	}, nil
-}
-
-func (r *participantRepository) GetIDsByConversationID(ctx context.Context, conversationID uuid.UUID) ([]uuid.UUID, error) {
-	participants, err := r.queries.GetParticipantsIDsByConversationID(ctx, uuidToPgtype(conversationID))
-
-	if err != nil {
-		return nil, fmt.Errorf("get participants error: %w", err)
-	}
-
-	ids := make([]uuid.UUID, len(participants))
-	for i, p := range participants {
-		ids[i] = pgtypeToUUID(p)
-	}
-
-	return ids, nil
-}
-
 func (r *participantRepository) GetConversationIDsByUserID(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
 	conversationIDs, err := r.queries.GetConversationIDsByUserID(ctx, uuidToPgtype(userID))
 	if err != nil {

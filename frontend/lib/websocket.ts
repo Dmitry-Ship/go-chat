@@ -24,7 +24,7 @@ class WebSocketManager {
   private queryClient: QueryClient | null = null;
 
   constructor() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
     const wsUrl = apiUrl.replace("http://", "ws://").replace("https://", "wss://");
     this.url = `${wsUrl}/ws`;
   }

@@ -1,1 +1,4 @@
+-- +goose Down
+-- +goose StatementBegin
 DROP INDEX IF EXISTS messages_conversation_created_id_idx;
+-- +goose StatementEnd

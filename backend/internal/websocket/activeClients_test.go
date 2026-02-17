@@ -18,18 +18,6 @@ func (m *mockParticipantRepository) Store(ctx context.Context, participant *doma
 	return nil
 }
 
-func (m *mockParticipantRepository) Delete(ctx context.Context, participantID uuid.UUID) error {
-	return nil
-}
-
-func (m *mockParticipantRepository) GetByConversationIDAndUserID(ctx context.Context, conversationID uuid.UUID, userID uuid.UUID) (*domain.Participant, error) {
-	return nil, nil
-}
-
-func (m *mockParticipantRepository) GetIDsByConversationID(ctx context.Context, conversationID uuid.UUID) ([]uuid.UUID, error) {
-	return nil, nil
-}
-
 func (m *mockParticipantRepository) GetConversationIDsByUserID(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
 	return m.conversationIDs[userID], nil
 }

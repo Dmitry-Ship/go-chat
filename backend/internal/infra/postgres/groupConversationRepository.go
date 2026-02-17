@@ -62,32 +62,6 @@ func (r *groupConversationRepository) Store(ctx context.Context, conversation *d
 	})
 }
 
-func (r *groupConversationRepository) Update(ctx context.Context, conversation *domain.GroupConversation) error {
-	return r.withTx(ctx, func(tx pgx.Tx) error {
-		qtx := r.queries.WithTx(tx)
-
-		updateConvParams := db.UpdateConversationParams{
-			ID:   uuidToPgtype(conversation.ID),
-			Type: int32(toConversationTypePersistence(conversation.Type)),
-		}
-
-		if err := qtx.UpdateConversation(ctx, updateConvParams); err != nil {
-			return fmt.Errorf("update conversation error: %w", err)
-		}
-
-		updateGroupParams := db.UpdateGroupConversationParams{
-			Name:   conversation.Name,
-			Avatar: pgtype.Text{String: conversation.Avatar, Valid: conversation.Avatar != ""},
-		}
-
-		if err := qtx.UpdateGroupConversation(ctx, updateGroupParams); err != nil {
-			return fmt.Errorf("update group conversation error: %w", err)
-		}
-
-		return nil
-	})
-}
-
 func (r *groupConversationRepository) Rename(ctx context.Context, id uuid.UUID, name string) error {
 	params := db.RenameGroupConversationParams{
 		ConversationID: uuidToPgtype(id),
@@ -107,26 +81,4 @@ func (r *groupConversationRepository) Delete(ctx context.Context, id uuid.UUID) 
 	}
 
 	return nil
-}
-
-func (r *groupConversationRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.GroupConversation, error) {
-	result, err := r.queries.GetGroupConversationWithOwner(ctx, uuidToPgtype(id))
-	if err != nil {
-		return nil, fmt.Errorf("get group conversation error: %w", err)
-	}
-
-	return &domain.GroupConversation{
-		ID:     pgtypeToUUID(result.ID),
-		Name:   result.Name,
-		Avatar: result.Avatar.String,
-		Owner: domain.Participant{
-			UserID:         pgtypeToUUID(result.OwnerUserID),
-			ID:             pgtypeToUUID(result.OwnerParticipantID),
-			ConversationID: pgtypeToUUID(result.OwnerConversationID),
-		},
-		Conversation: domain.Conversation{
-			ID:   pgtypeToUUID(result.ConversationID),
-			Type: conversationTypesMap[uint8(result.ConversationType)],
-		},
-	}, nil
 }

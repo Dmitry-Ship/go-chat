@@ -83,16 +83,3 @@ func (r *userRepository) FindByUsername(ctx context.Context, username string) (*
 		RefreshToken: user.RefreshToken.String,
 	}, nil
 }
-
-func (r *userRepository) UpdateRefreshToken(ctx context.Context, id uuid.UUID, refreshToken string) error {
-	params := db.UpdateUserRefreshTokenParams{
-		ID:           uuidToPgtype(id),
-		RefreshToken: pgtype.Text{String: refreshToken, Valid: refreshToken != ""},
-	}
-
-	if err := r.queries.UpdateUserRefreshToken(ctx, params); err != nil {
-		return fmt.Errorf("update refresh token error: %w", err)
-	}
-
-	return nil
-}
