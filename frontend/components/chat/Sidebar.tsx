@@ -24,7 +24,13 @@ interface SidebarProps {
 export const Sidebar = ({ className = "", onConversationSelect }: SidebarProps) => {
   const { setActiveConversation, activeConversationId } = useChat();
   const { user } = useAuth();
-  const { data: conversations, isLoading } = useConversations();
+  const {
+    conversations,
+    isLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useConversations();
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showStartDirect, setShowStartDirect] = useState(false);
 
@@ -63,14 +69,28 @@ export const Sidebar = ({ className = "", onConversationSelect }: SidebarProps) 
         {isLoading ? (
           <div className="p-4 text-center text-gray-500">Loading...</div>
         ) : (
-          conversations?.map((conversation) => (
-            <ConversationItem
-              key={conversation.id}
-              conversation={conversation}
-              active={conversation.id === activeConversationId}
-              onClick={() => handleConversationClick(conversation.id)}
-            />
-          ))
+          <>
+            {conversations.map((conversation) => (
+              <ConversationItem
+                key={conversation.id}
+                conversation={conversation}
+                active={conversation.id === activeConversationId}
+                onClick={() => handleConversationClick(conversation.id)}
+              />
+            ))}
+            {hasNextPage && (
+              <div className="p-3">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? "Loading..." : "Load more"}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

@@ -47,9 +47,9 @@ func (r *directConversationRepository) Store(ctx context.Context, conversation *
 		}
 
 		if err := qtx.StoreParticipantsBatch(ctx, db.StoreParticipantsBatchParams{
-			Column1:        participantIDs,
+			ParticipantIds: participantIDs,
 			ConversationID: uuidToPgtype(conversation.ID),
-			Column3:        userIDs,
+			UserIds:        userIDs,
 		}); err != nil {
 			return fmt.Errorf("create participants error: %w", err)
 		}

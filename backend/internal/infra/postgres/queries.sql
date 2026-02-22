@@ -45,7 +45,9 @@ VALUES ($1, $2, $3);
 
 -- name: StoreParticipantsBatch :exec
 INSERT INTO participants (id, conversation_id, user_id, created_at)
-SELECT unnest($1::uuid[]), $2, unnest($3::uuid[]), NOW();
+SELECT ids.participant_id, sqlc.arg(conversation_id), uids.user_id, NOW()
+FROM unnest(sqlc.arg(participant_ids)::uuid[]) WITH ORDINALITY AS ids(participant_id, ord)
+JOIN unnest(sqlc.arg(user_ids)::uuid[]) WITH ORDINALITY AS uids(user_id, ord) USING (ord);
 
 -- Complex queries for read model
 
@@ -53,6 +55,7 @@ SELECT unnest($1::uuid[]), $2, unnest($3::uuid[]), NOW();
 SELECT id, name, avatar
 FROM users
 WHERE deleted_at IS NULL AND id != $1
+ORDER BY name ASC, id ASC
 LIMIT $2 OFFSET $3;
 
 -- name: GetParticipantsByConversationID :many
@@ -62,18 +65,21 @@ JOIN participants p ON p.user_id = u.id
 WHERE p.conversation_id = $1
   AND p.deleted_at IS NULL
   AND u.deleted_at IS NULL
+ORDER BY u.name ASC, u.id ASC
 LIMIT $2 OFFSET $3;
 
 -- name: GetPotentialInvitees :many
 SELECT u.id, u.name, u.avatar
 FROM users u
 WHERE u.deleted_at IS NULL
-  AND u.id NOT IN (
-    SELECT user_id
-    FROM participants
-    WHERE conversation_id = $1
-      AND deleted_at IS NULL
+  AND NOT EXISTS (
+    SELECT 1
+    FROM participants p
+    WHERE p.conversation_id = $1
+      AND p.user_id = u.id
+      AND p.deleted_at IS NULL
   )
+ORDER BY u.name ASC, u.id ASC
 LIMIT $2 OFFSET $3;
 
 -- name: GetUsersByIDs :many
@@ -82,7 +88,7 @@ FROM users
 WHERE id = ANY($1::uuid[])
   AND deleted_at IS NULL;
 
--- name: GetConversationMessagesRaw :many
+-- name: GetConversationMessagesFirstPageRaw :many
 SELECT
     m.id,
     m.type,
@@ -93,34 +99,47 @@ SELECT
 FROM messages m
 WHERE m.conversation_id = $1
   AND m.deleted_at IS NULL
-  AND (
-    sqlc.arg(cursor_created_at)::timestamptz IS NULL
-    OR m.created_at < sqlc.arg(cursor_created_at)
-    OR (
-      m.created_at = sqlc.arg(cursor_created_at)
-      AND m.id < sqlc.arg(cursor_id)
-    )
+ORDER BY m.created_at DESC, m.id DESC
+LIMIT sqlc.arg(page_limit);
+
+-- name: GetConversationMessagesPageRaw :many
+SELECT
+    m.id,
+    m.type,
+    m.created_at,
+    m.conversation_id,
+    m.content,
+    m.user_id
+FROM messages m
+WHERE m.conversation_id = sqlc.arg(conversation_id)
+  AND m.deleted_at IS NULL
+  AND (m.created_at, m.id) < (
+    sqlc.arg(cursor_created_at)::timestamptz,
+    sqlc.arg(cursor_id)::uuid
   )
 ORDER BY m.created_at DESC, m.id DESC
 LIMIT sqlc.arg(page_limit);
 
--- name: GetUserConversations :many
-WITH last_messages AS (
-    SELECT DISTINCT ON (m.conversation_id)
-        m.conversation_id,
-        m.id,
-        m.type,
-        m.content,
-        m.created_at,
-        m.user_id
-    FROM messages m
-    WHERE m.deleted_at IS NULL
-    ORDER BY m.conversation_id, m.created_at DESC, m.id DESC
+-- name: GetUserConversationsFirstPage :many
+WITH paged_conversations AS (
+    SELECT
+        c.id,
+        c.created_at,
+        c.type,
+        c.avatar,
+        c.name
+    FROM conversations c
+    JOIN participants p ON p.conversation_id = c.id
+      AND p.user_id = sqlc.arg(user_id)
+      AND p.deleted_at IS NULL
+    WHERE c.deleted_at IS NULL
+    ORDER BY c.created_at DESC, c.id DESC
+    LIMIT sqlc.arg(page_limit)
 )
 SELECT
-    c.id as conversation_id,
-    c.created_at,
-    c.type,
+    pc.id as conversation_id,
+    pc.created_at,
+    pc.type,
     lm.id as message_id,
     lm.type as message_type,
     lm.content as message_content,
@@ -128,108 +147,127 @@ SELECT
     lm.user_id as message_user_id,
     mu.name as message_user_name,
     mu.avatar as message_user_avatar,
-    c.avatar as group_avatar,
-    c.name as group_name,
-    (
-        SELECT u.id
-        FROM participants op
-        JOIN users u ON u.id = op.user_id
-        WHERE op.conversation_id = c.id
-          AND op.user_id <> $1
-          AND op.deleted_at IS NULL
-          AND u.deleted_at IS NULL
-        ORDER BY op.created_at ASC
-        LIMIT 1
-    ) as other_user_id,
-    COALESCE((
-        SELECT u.name
-        FROM participants op
-        JOIN users u ON u.id = op.user_id
-        WHERE op.conversation_id = c.id
-          AND op.user_id <> $1
-          AND op.deleted_at IS NULL
-          AND u.deleted_at IS NULL
-        ORDER BY op.created_at ASC
-        LIMIT 1
-    ), '') as other_user_name,
-    (
-        SELECT u.avatar
-        FROM participants op
-        JOIN users u ON u.id = op.user_id
-        WHERE op.conversation_id = c.id
-          AND op.user_id <> $1
-          AND op.deleted_at IS NULL
-          AND u.deleted_at IS NULL
-        ORDER BY op.created_at ASC
-        LIMIT 1
-    ) as other_user_avatar
-FROM conversations c
-JOIN participants p ON p.conversation_id = c.id
-  AND p.user_id = $1
-  AND p.deleted_at IS NULL
-LEFT JOIN last_messages lm ON lm.conversation_id = c.id
+    pc.avatar as group_avatar,
+    pc.name as group_name,
+    ou.id as other_user_id,
+    COALESCE(ou.name, '') as other_user_name,
+    ou.avatar as other_user_avatar
+FROM paged_conversations pc
+LEFT JOIN LATERAL (
+    SELECT m.id, m.type, m.content, m.created_at, m.user_id
+    FROM messages m
+    WHERE m.conversation_id = pc.id
+      AND m.deleted_at IS NULL
+    ORDER BY m.created_at DESC, m.id DESC
+    LIMIT 1
+) lm ON TRUE
 LEFT JOIN users mu ON mu.id = lm.user_id
   AND mu.deleted_at IS NULL
-WHERE c.deleted_at IS NULL
-ORDER BY c.created_at DESC
-LIMIT $2 OFFSET $3;
+LEFT JOIN LATERAL (
+    SELECT u.id, u.name, u.avatar
+    FROM participants op
+    JOIN users u ON u.id = op.user_id
+    WHERE op.conversation_id = pc.id
+      AND op.user_id <> sqlc.arg(user_id)
+      AND op.deleted_at IS NULL
+      AND u.deleted_at IS NULL
+    ORDER BY op.created_at ASC
+    LIMIT 1
+) ou ON TRUE
+ORDER BY pc.created_at DESC, pc.id DESC;
 
--- name: GetConversationFull :one
-WITH participants_count AS (
-    SELECT COUNT(*) as count
-    FROM participants
-    WHERE conversation_id = $1
-      AND deleted_at IS NULL
+-- name: GetUserConversationsPage :many
+WITH paged_conversations AS (
+    SELECT
+        c.id,
+        c.created_at,
+        c.type,
+        c.avatar,
+        c.name
+    FROM conversations c
+    JOIN participants p ON p.conversation_id = c.id
+      AND p.user_id = sqlc.arg(user_id)
+      AND p.deleted_at IS NULL
+    WHERE c.deleted_at IS NULL
+      AND (c.created_at, c.id) < (
+        sqlc.arg(cursor_created_at)::timestamptz,
+        sqlc.arg(cursor_id)::uuid
+      )
+    ORDER BY c.created_at DESC, c.id DESC
+    LIMIT sqlc.arg(page_limit)
 )
+SELECT
+    pc.id as conversation_id,
+    pc.created_at,
+    pc.type,
+    lm.id as message_id,
+    lm.type as message_type,
+    lm.content as message_content,
+    lm.created_at as message_created_at,
+    lm.user_id as message_user_id,
+    mu.name as message_user_name,
+    mu.avatar as message_user_avatar,
+    pc.avatar as group_avatar,
+    pc.name as group_name,
+    ou.id as other_user_id,
+    COALESCE(ou.name, '') as other_user_name,
+    ou.avatar as other_user_avatar
+FROM paged_conversations pc
+LEFT JOIN LATERAL (
+    SELECT m.id, m.type, m.content, m.created_at, m.user_id
+    FROM messages m
+    WHERE m.conversation_id = pc.id
+      AND m.deleted_at IS NULL
+    ORDER BY m.created_at DESC, m.id DESC
+    LIMIT 1
+) lm ON TRUE
+LEFT JOIN users mu ON mu.id = lm.user_id
+  AND mu.deleted_at IS NULL
+LEFT JOIN LATERAL (
+    SELECT u.id, u.name, u.avatar
+    FROM participants op
+    JOIN users u ON u.id = op.user_id
+    WHERE op.conversation_id = pc.id
+      AND op.user_id <> sqlc.arg(user_id)
+      AND op.deleted_at IS NULL
+      AND u.deleted_at IS NULL
+    ORDER BY op.created_at ASC
+    LIMIT 1
+) ou ON TRUE
+ORDER BY pc.created_at DESC, pc.id DESC;
+
+-- name: GetConversationBase :one
 SELECT
     c.id as conversation_id,
     c.created_at,
     c.type,
-    (
-        SELECT u.id
-        FROM participants op
-        JOIN users u ON u.id = op.user_id
-        WHERE op.conversation_id = c.id
-          AND op.user_id <> $2
-          AND op.deleted_at IS NULL
-          AND u.deleted_at IS NULL
-        ORDER BY op.created_at ASC
-        LIMIT 1
-    ) as other_user_id,
-    COALESCE((
-        SELECT u.name
-        FROM participants op
-        JOIN users u ON u.id = op.user_id
-        WHERE op.conversation_id = c.id
-          AND op.user_id <> $2
-          AND op.deleted_at IS NULL
-          AND u.deleted_at IS NULL
-        ORDER BY op.created_at ASC
-        LIMIT 1
-    ), '') as other_user_name,
-    (
-        SELECT u.avatar
-        FROM participants op
-        JOIN users u ON u.id = op.user_id
-        WHERE op.conversation_id = c.id
-          AND op.user_id <> $2
-          AND op.deleted_at IS NULL
-          AND u.deleted_at IS NULL
-        ORDER BY op.created_at ASC
-        LIMIT 1
-    ) as other_user_avatar,
     c.avatar as group_avatar,
     c.name as group_name,
-    c.owner_id as group_owner_id,
-    pc.count as participants_count,
-    up.id as user_participant_id
+    c.owner_id as group_owner_id
 FROM conversations c
-LEFT JOIN participants up ON up.conversation_id = c.id
-    AND up.user_id = $2
+JOIN participants up ON up.conversation_id = c.id
+    AND up.user_id = sqlc.arg(user_id)
     AND up.deleted_at IS NULL
-CROSS JOIN participants_count pc
-WHERE c.id = $1 AND c.deleted_at IS NULL
+WHERE c.id = sqlc.arg(id)
+  AND c.deleted_at IS NULL
 LIMIT 1;
+
+-- name: GetDirectConversationOtherUser :many
+SELECT u.id, u.name, u.avatar
+FROM participants op
+JOIN users u ON u.id = op.user_id
+WHERE op.conversation_id = sqlc.arg(conversation_id)
+  AND op.user_id <> sqlc.arg(user_id)
+  AND op.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+ORDER BY op.created_at ASC
+LIMIT 1;
+
+-- name: CountConversationParticipants :one
+SELECT COUNT(*)
+FROM participants p
+WHERE p.conversation_id = sqlc.arg(conversation_id)
+  AND p.deleted_at IS NULL;
 
 -- name: GetDirectConversationBetweenUsers :one
 SELECT c.*
@@ -255,24 +293,15 @@ WHERE conversation_id = $1
   AND deleted_at IS NULL;
 
 -- name: InviteToConversationAtomic :one
-WITH valid_conversation AS (
-    SELECT c.id as conv_id
-    FROM conversations c
-    WHERE c.id = sqlc.arg(conversation_id)
-      AND c.type = 0
-      AND c.deleted_at IS NULL
-),
-valid_invitee AS (
-    SELECT u.id as user_id FROM users u WHERE u.id = sqlc.arg(invitee_id) AND u.deleted_at IS NULL
-),
-new_participant AS (
-    INSERT INTO participants (id, conversation_id, user_id, created_at)
-    SELECT sqlc.arg(participant_id), vc.conv_id, vi.user_id, NOW()
-    FROM valid_conversation vc, valid_invitee vi
-    ON CONFLICT DO NOTHING
-    RETURNING user_id
-)
-SELECT user_id FROM new_participant;
+INSERT INTO participants (id, conversation_id, user_id, created_at)
+SELECT sqlc.arg(participant_id), c.id, u.id, NOW()
+FROM conversations c
+JOIN users u ON u.id = sqlc.arg(invitee_id) AND u.deleted_at IS NULL
+WHERE c.id = sqlc.arg(conversation_id)
+  AND c.type = 0
+  AND c.deleted_at IS NULL
+ON CONFLICT DO NOTHING
+RETURNING user_id;
 
 -- name: IsMember :one
 SELECT EXISTS(

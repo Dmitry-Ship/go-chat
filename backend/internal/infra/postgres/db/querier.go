@@ -11,18 +11,22 @@ import (
 )
 
 type Querier interface {
+	CountConversationParticipants(ctx context.Context, conversationID pgtype.UUID) (int64, error)
 	DeleteConversation(ctx context.Context, id pgtype.UUID) error
 	FindUserByUsername(ctx context.Context, name string) (User, error)
 	// Complex queries for read model
 	GetContacts(ctx context.Context, arg GetContactsParams) ([]GetContactsRow, error)
-	GetConversationFull(ctx context.Context, arg GetConversationFullParams) (GetConversationFullRow, error)
+	GetConversationBase(ctx context.Context, arg GetConversationBaseParams) (GetConversationBaseRow, error)
 	GetConversationIDsByUserID(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)
-	GetConversationMessagesRaw(ctx context.Context, arg GetConversationMessagesRawParams) ([]GetConversationMessagesRawRow, error)
+	GetConversationMessagesFirstPageRaw(ctx context.Context, arg GetConversationMessagesFirstPageRawParams) ([]GetConversationMessagesFirstPageRawRow, error)
+	GetConversationMessagesPageRaw(ctx context.Context, arg GetConversationMessagesPageRawParams) ([]GetConversationMessagesPageRawRow, error)
 	GetDirectConversationBetweenUsers(ctx context.Context, arg GetDirectConversationBetweenUsersParams) (Conversation, error)
+	GetDirectConversationOtherUser(ctx context.Context, arg GetDirectConversationOtherUserParams) ([]GetDirectConversationOtherUserRow, error)
 	GetParticipantsByConversationID(ctx context.Context, arg GetParticipantsByConversationIDParams) ([]GetParticipantsByConversationIDRow, error)
 	GetPotentialInvitees(ctx context.Context, arg GetPotentialInviteesParams) ([]GetPotentialInviteesRow, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
-	GetUserConversations(ctx context.Context, arg GetUserConversationsParams) ([]GetUserConversationsRow, error)
+	GetUserConversationsFirstPage(ctx context.Context, arg GetUserConversationsFirstPageParams) ([]GetUserConversationsFirstPageRow, error)
+	GetUserConversationsPage(ctx context.Context, arg GetUserConversationsPageParams) ([]GetUserConversationsPageRow, error)
 	GetUsersByIDs(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetUsersByIDsRow, error)
 	InviteToConversationAtomic(ctx context.Context, arg InviteToConversationAtomicParams) (pgtype.UUID, error)
 	IsMember(ctx context.Context, arg IsMemberParams) (bool, error)

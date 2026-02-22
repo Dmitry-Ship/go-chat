@@ -48,10 +48,6 @@ func NewTokenBucketRateLimiter(config Config) RateLimiter {
 	}
 }
 
-func NewSlidingWindowRateLimiter(config Config) RateLimiter {
-	return NewTokenBucketRateLimiter(config)
-}
-
 func (r *tokenBucketRateLimiter) CheckLimit(key string) (bool, int) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

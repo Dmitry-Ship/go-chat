@@ -2,10 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   createConversation,
   startDirectConversation,
-  joinConversation,
-  leaveConversation,
-  deleteConversation,
-  renameConversation,
   inviteUser,
   kickUser,
 } from '@/lib/api'
@@ -32,57 +28,6 @@ export function useStartDirectConversation() {
       queryClient.setQueryData(['conversation', data.conversation_id], {
         id: data.conversation_id,
       })
-    },
-  })
-}
-
-export function useJoinConversation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (conversationId: string) => joinConversation(conversationId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
-    },
-  })
-}
-
-export function useLeaveConversation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (conversationId: string) => leaveConversation(conversationId),
-    onSuccess: (_, conversationId) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
-      queryClient.removeQueries({ queryKey: ['conversation', conversationId] })
-      queryClient.removeQueries({ queryKey: ['messages', conversationId] })
-    },
-  })
-}
-
-export function useDeleteConversation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (conversationId: string) => deleteConversation(conversationId),
-    onSuccess: (_, conversationId) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
-      queryClient.removeQueries({ queryKey: ['conversation', conversationId] })
-      queryClient.removeQueries({ queryKey: ['messages', conversationId] })
-      queryClient.removeQueries({ queryKey: ['participants', conversationId] })
-    },
-  })
-}
-
-export function useRenameConversation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ conversationId, newName }: { conversationId: string; newName: string }) =>
-      renameConversation(conversationId, newName),
-    onSuccess: (_, { conversationId }) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] })
     },
   })
 }

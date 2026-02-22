@@ -3,7 +3,7 @@ import {
   WSOutgoingMessage,
   MessageDTO,
   ConversationFullDTO,
-  ConversationDTO,
+  ConversationPageResponse,
   MessagePageResponse,
 } from "./types";
 
@@ -142,15 +142,21 @@ class WebSocketManager {
         case 'conversation_updated':
           const conv = event.data as ConversationFullDTO;
           this.queryClient.setQueryData(['conversation', conv.id], conv);
-          this.queryClient.setQueryData(
-            ['conversations', 1, 20],
-            (old: ConversationDTO[] | undefined) => {
+          this.queryClient.setQueriesData(
+            { queryKey: ['conversations'] },
+            (old: InfiniteData<ConversationPageResponse> | undefined) => {
               if (!old) return old;
-              return old.map(c =>
-                c.id === conv.id
-                  ? { ...c, name: conv.name, avatar: conv.avatar }
-                  : c
-              );
+
+              const updatedPages = old.pages.map((page) => ({
+                ...page,
+                conversations: page.conversations.map((conversation) =>
+                  conversation.id === conv.id
+                    ? { ...conversation, name: conv.name, avatar: conv.avatar }
+                    : conversation
+                ),
+              }));
+
+              return { ...old, pages: updatedPages };
             }
           );
           this.queryClient.invalidateQueries({ queryKey: ['participants', conv.id] });

@@ -80,10 +80,3 @@ func toMessageTypePersistence(messageType domain.MessageType) uint8 {
 	}
 	return 0
 }
-
-func MessageTypePersistenceToDomain(persistenceType uint8) domain.MessageType {
-	if messageType, ok := messageTypesMap[persistenceType]; ok {
-		return messageType
-	}
-	return domain.MessageTypeUser
-}

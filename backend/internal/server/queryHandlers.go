@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"GitHub/go-chat/backend/internal/readModel"
@@ -80,14 +81,16 @@ func (s *Server) handleGetConversations(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	paginationInfo, ok := r.Context().Value(paginationKey).(pagination)
-
-	if !ok {
-		http.Error(w, "pagination info not found in context", http.StatusInternalServerError)
+	query := r.URL.Query()
+	cursor, err := parseConversationCursor(query.Get("cursor"))
+	if err != nil {
+		returnError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	conversations, err := s.queries.GetUserConversations(userID, paginationInfo)
+	limit := parseConversationLimit(query)
+
+	conversations, err := s.queries.GetUserConversations(userID, cursor, limit)
 
 	if err != nil {
 		returnError(w, http.StatusInternalServerError, err)
@@ -294,4 +297,20 @@ func (s *Server) handleGetUser(w http.ResponseWriter, r *http.Request) {
 		returnError(w, http.StatusInternalServerError, err)
 		return
 	}
+}
+
+func parseConversationCursor(raw string) (*readModel.ConversationCursor, error) {
+	cursor, err := parseMessageCursor(raw)
+	if err != nil || cursor == nil {
+		return nil, err
+	}
+
+	return &readModel.ConversationCursor{
+		CreatedAt: cursor.CreatedAt,
+		ID:        cursor.ID,
+	}, nil
+}
+
+func parseConversationLimit(query url.Values) int {
+	return parseMessageLimit(query)
 }

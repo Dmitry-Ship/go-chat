@@ -33,6 +33,12 @@ export interface ConversationDTO {
   last_message: MessageDTO | null;
 }
 
+export interface ConversationPageResponse {
+  conversations: ConversationDTO[];
+  next_cursor?: string;
+  has_more: boolean;
+}
+
 export interface ConversationFullDTO {
   id: string;
   name: string;
@@ -50,53 +56,12 @@ export interface ContactDTO {
   name: string;
 }
 
-export interface AuthRequest {
-  username: string;
-  password: string;
-}
-
 export interface AuthResponse {
   access_token_expiration: number;
 }
 
-export interface CreateConversationRequest {
-  conversation_name: string;
-  conversation_id: string;
-}
-
-export interface StartDirectConversationRequest {
-  to_user_id: string;
-}
-
 export interface StartDirectConversationResponse {
   conversation_id: string;
-}
-
-export interface ConversationIdRequest {
-  conversation_id: string;
-}
-
-export interface InviteUserRequest {
-  conversation_id: string;
-  user_id: string;
-}
-
-export interface RenameConversationRequest {
-  conversation_id: string;
-  new_name: string;
-}
-
-export interface PaginationParams {
-  page?: number;
-  page_size?: number;
-}
-
-export interface WSIncomingMessage {
-  type: "group_message" | "direct_message";
-  data: {
-    content: string;
-    conversation_id: string;
-  };
 }
 
 export interface WSNotificationEvent {

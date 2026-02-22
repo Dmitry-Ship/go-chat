@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"strconv"
 	"time"
@@ -82,30 +81,6 @@ func validateConfig() error {
 	return nil
 }
 
-func resolveServiceHost(host string) string {
-	if host == "" {
-		return host
-	}
-
-	dockerInternalHosts := map[string]string{
-		"postgres": "localhost",
-		"redis":    "localhost",
-	}
-
-	fallbackHost, ok := dockerInternalHosts[host]
-	if !ok {
-		return host
-	}
-
-	if _, err := net.LookupHost(host); err == nil {
-		return host
-	}
-
-	log.Printf("Host %q is not resolvable outside Docker DNS, falling back to %q", host, fallbackHost)
-
-	return fallbackHost
-}
-
 func main() {
 	if err := config.LoadDotEnv(); err != nil {
 		log.Fatalf("Configuration error: %v", err)
@@ -124,11 +99,8 @@ func main() {
 		serverID = uuid.New().String()
 	}
 
-	redisHost := resolveServiceHost(os.Getenv("REDIS_HOST"))
-	dbHost := resolveServiceHost(os.Getenv("DB_HOST"))
-
 	redisClient := redisPubsub.GetRedisClient(ctx, redisPubsub.RedisConfig{
-		Host:     redisHost,
+		Host:     os.Getenv("REDIS_HOST"),
 		Port:     os.Getenv("REDIS_PORT"),
 		Password: os.Getenv("REDIS_PASSWORD"),
 	})
@@ -137,7 +109,7 @@ func main() {
 	}()
 
 	pool, err := postgres.NewDatabaseConnection(ctx, postgres.DbConfig{
-		Host:     dbHost,
+		Host:     os.Getenv("DB_HOST"),
 		Port:     os.Getenv("DB_PORT"),
 		User:     os.Getenv("DB_USER"),
 		Name:     os.Getenv("DB_NAME"),

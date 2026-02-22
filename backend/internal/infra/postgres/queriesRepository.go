@@ -180,46 +180,65 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, cu
 		pageLimit = 100
 	}
 
-	queryLimit := pageLimit + 1
-	var cursorCreatedAt pgtype.Timestamptz
-	var cursorID pgtype.UUID
-	if cursor != nil {
-		cursorCreatedAt = pgtype.Timestamptz{Time: cursor.CreatedAt, Valid: true}
-		cursorID = uuidToPgtype(cursor.ID)
-	}
+	queryLimit := int32(pageLimit + 1)
+	conversationIDPg := uuidToPgtype(conversationID)
 
-	messages, err := r.queries.GetConversationMessagesRaw(context.Background(), db.GetConversationMessagesRawParams{
-		ConversationID:  uuidToPgtype(conversationID),
-		CursorCreatedAt: cursorCreatedAt,
-		CursorID:        cursorID,
-		PageLimit:       int32(queryLimit),
-	})
+	var rawMessages []readModel.RawMessageDTO
+	if cursor == nil {
+		messages, err := r.queries.GetConversationMessagesFirstPageRaw(context.Background(), db.GetConversationMessagesFirstPageRawParams{
+			ConversationID: conversationIDPg,
+			PageLimit:      queryLimit,
+		})
+		if err != nil {
+			return readModel.MessagePageDTO{}, err
+		}
 
-	if err != nil {
-		return readModel.MessagePageDTO{}, err
+		rawMessages = make([]readModel.RawMessageDTO, len(messages))
+		for i, msg := range messages {
+			rawMessages[i] = readModel.RawMessageDTO{
+				ID:             pgtypeToUUID(msg.ID),
+				Type:           uint8(msg.Type),
+				CreatedAt:      msg.CreatedAt.Time,
+				ConversationID: pgtypeToUUID(msg.ConversationID),
+				Content:        msg.Content,
+				UserID:         pgtypeToUUID(msg.UserID),
+			}
+		}
+	} else {
+		messages, err := r.queries.GetConversationMessagesPageRaw(context.Background(), db.GetConversationMessagesPageRawParams{
+			ConversationID:  conversationIDPg,
+			CursorCreatedAt: pgtype.Timestamptz{Time: cursor.CreatedAt, Valid: true},
+			CursorID:        uuidToPgtype(cursor.ID),
+			PageLimit:       queryLimit,
+		})
+		if err != nil {
+			return readModel.MessagePageDTO{}, err
+		}
+
+		rawMessages = make([]readModel.RawMessageDTO, len(messages))
+		for i, msg := range messages {
+			rawMessages[i] = readModel.RawMessageDTO{
+				ID:             pgtypeToUUID(msg.ID),
+				Type:           uint8(msg.Type),
+				CreatedAt:      msg.CreatedAt.Time,
+				ConversationID: pgtypeToUUID(msg.ConversationID),
+				Content:        msg.Content,
+				UserID:         pgtypeToUUID(msg.UserID),
+			}
+		}
 	}
 
 	hasMore := false
-	if len(messages) > pageLimit {
+	if len(rawMessages) > pageLimit {
 		hasMore = true
-		messages = messages[:len(messages)-1]
+		rawMessages = rawMessages[:len(rawMessages)-1]
 	}
 
 	formatter := presentation.NewMessageFormatter()
-	messageDTOs := make([]readModel.MessageDTO, 0, len(messages))
+	messageDTOs := make([]readModel.MessageDTO, 0, len(rawMessages))
 
-	for i := len(messages) - 1; i >= 0; i-- {
-		msg := messages[i]
-		rawMessage := readModel.RawMessageDTO{
-			ID:             pgtypeToUUID(msg.ID),
-			Type:           uint8(msg.Type),
-			CreatedAt:      msg.CreatedAt.Time,
-			ConversationID: pgtypeToUUID(msg.ConversationID),
-			Content:        msg.Content,
-			UserID:         pgtypeToUUID(msg.UserID),
-		}
-
-		messageDTOs = append(messageDTOs, formatter.FormatMessageDTO(rawMessage))
+	for i := len(rawMessages) - 1; i >= 0; i-- {
+		messageDTOs = append(messageDTOs, formatter.FormatMessageDTO(rawMessages[i]))
 	}
 
 	response := readModel.MessagePageDTO{
@@ -235,63 +254,168 @@ func (r *queriesRepository) GetConversationMessages(conversationID uuid.UUID, cu
 	return response, nil
 }
 
-func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ConversationDTO, error) {
-	limit, offset := r.paginate(paginationInfo)
-
-	queryResults, err := r.queries.GetUserConversations(context.Background(), db.GetUserConversationsParams{
-		UserID: uuidToPgtype(userID),
-		Limit:  limit,
-		Offset: offset,
-	})
-
-	if err != nil {
-		return nil, err
+func (r *queriesRepository) GetUserConversations(userID uuid.UUID, cursor *readModel.ConversationCursor, limit int) (readModel.ConversationPageDTO, error) {
+	pageLimit := limit
+	if pageLimit <= 0 {
+		pageLimit = 50
+	} else if pageLimit > 100 {
+		pageLimit = 100
 	}
 
+	queryLimit := int32(pageLimit + 1)
+	userIDPg := uuidToPgtype(userID)
 	formatter := presentation.NewMessageFormatter()
-	conversationDTOs := make([]readModel.ConversationDTO, len(queryResults))
 
-	for i, result := range queryResults {
+	toConversationDTO := func(
+		conversationID pgtype.UUID,
+		conversationType int32,
+		messageID pgtype.UUID,
+		messageCreatedAt pgtype.Timestamptz,
+		messageContent string,
+		messageType int32,
+		messageUserID pgtype.UUID,
+		messageUserName pgtype.Text,
+		messageUserAvatar pgtype.Text,
+		groupAvatar pgtype.Text,
+		groupName pgtype.Text,
+		otherUserID pgtype.UUID,
+		otherUserName string,
+		otherUserAvatar pgtype.Text,
+	) readModel.ConversationDTO {
 		conversationDTO := readModel.ConversationDTO{
-			ID:   pgtypeToUUID(result.ConversationID),
-			Type: conversationTypesMap[uint8(result.Type)].String(),
+			ID:   pgtypeToUUID(conversationID),
+			Type: conversationTypesMap[uint8(conversationType)].String(),
 		}
 
-		if result.MessageID.Valid {
+		if messageID.Valid {
 			rawLastMessage := readModel.RawLastMessageDTO{
-				MessageID:         pgtypeToUUID(result.MessageID),
-				MessageCreatedAt:  result.MessageCreatedAt.Time,
-				MessageContent:    result.MessageContent.String,
-				MessageType:       result.MessageType.Int32,
-				MessageUserID:     pgtypeToUUID(result.MessageUserID),
-				MessageUserName:   result.MessageUserName.String,
-				MessageUserAvatar: result.MessageUserAvatar.String,
-				ConversationID:    pgtypeToUUID(result.ConversationID),
+				MessageID:         pgtypeToUUID(messageID),
+				MessageCreatedAt:  messageCreatedAt.Time,
+				MessageContent:    messageContent,
+				MessageType:       messageType,
+				MessageUserID:     pgtypeToUUID(messageUserID),
+				MessageUserName:   messageUserName.String,
+				MessageUserAvatar: messageUserAvatar.String,
+				ConversationID:    pgtypeToUUID(conversationID),
 			}
 			conversationDTO.LastMessage = formatter.FormatConversationLastMessage(rawLastMessage)
 		}
 
-		switch conversationTypesMap[uint8(result.Type)] {
+		switch conversationTypesMap[uint8(conversationType)] {
 		case domain.ConversationTypeDirect:
-			if result.OtherUserID.Valid {
-				conversationDTO.Avatar = result.OtherUserAvatar.String
-				conversationDTO.Name = optionalString(result.OtherUserName)
+			if otherUserID.Valid {
+				conversationDTO.Avatar = otherUserAvatar.String
+				conversationDTO.Name = optionalString(otherUserName)
 			}
 		case domain.ConversationTypeGroup:
-			if result.GroupAvatar.Valid && result.GroupName.Valid {
-				conversationDTO.Avatar = result.GroupAvatar.String
-				conversationDTO.Name = result.GroupName.String
+			if groupAvatar.Valid && groupName.Valid {
+				conversationDTO.Avatar = groupAvatar.String
+				conversationDTO.Name = groupName.String
 			}
 		}
 
-		conversationDTOs[i] = conversationDTO
+		return conversationDTO
 	}
 
-	return conversationDTOs, nil
+	if cursor == nil {
+		queryResults, err := r.queries.GetUserConversationsFirstPage(context.Background(), db.GetUserConversationsFirstPageParams{
+			UserID:    userIDPg,
+			PageLimit: queryLimit,
+		})
+		if err != nil {
+			return readModel.ConversationPageDTO{}, err
+		}
+
+		hasMore := false
+		if len(queryResults) > pageLimit {
+			hasMore = true
+			queryResults = queryResults[:len(queryResults)-1]
+		}
+
+		conversationDTOs := make([]readModel.ConversationDTO, len(queryResults))
+		for i, result := range queryResults {
+			conversationDTOs[i] = toConversationDTO(
+				result.ConversationID,
+				result.Type,
+				result.MessageID,
+				result.MessageCreatedAt,
+				result.MessageContent,
+				result.MessageType,
+				result.MessageUserID,
+				result.MessageUserName,
+				result.MessageUserAvatar,
+				result.GroupAvatar,
+				result.GroupName,
+				result.OtherUserID,
+				result.OtherUserName,
+				result.OtherUserAvatar,
+			)
+		}
+
+		response := readModel.ConversationPageDTO{
+			Conversations: conversationDTOs,
+			HasMore:       hasMore,
+		}
+
+		if hasMore && len(queryResults) > 0 {
+			oldest := queryResults[len(queryResults)-1]
+			response.NextCursor = oldest.CreatedAt.Time.UTC().Format(time.RFC3339Nano) + "|" + pgtypeToUUID(oldest.ConversationID).String()
+		}
+
+		return response, nil
+	}
+
+	queryResults, err := r.queries.GetUserConversationsPage(context.Background(), db.GetUserConversationsPageParams{
+		UserID:          userIDPg,
+		CursorCreatedAt: pgtype.Timestamptz{Time: cursor.CreatedAt, Valid: true},
+		CursorID:        uuidToPgtype(cursor.ID),
+		PageLimit:       queryLimit,
+	})
+	if err != nil {
+		return readModel.ConversationPageDTO{}, err
+	}
+
+	hasMore := false
+	if len(queryResults) > pageLimit {
+		hasMore = true
+		queryResults = queryResults[:len(queryResults)-1]
+	}
+
+	conversationDTOs := make([]readModel.ConversationDTO, len(queryResults))
+	for i, result := range queryResults {
+		conversationDTOs[i] = toConversationDTO(
+			result.ConversationID,
+			result.Type,
+			result.MessageID,
+			result.MessageCreatedAt,
+			result.MessageContent,
+			result.MessageType,
+			result.MessageUserID,
+			result.MessageUserName,
+			result.MessageUserAvatar,
+			result.GroupAvatar,
+			result.GroupName,
+			result.OtherUserID,
+			result.OtherUserName,
+			result.OtherUserAvatar,
+		)
+	}
+
+	response := readModel.ConversationPageDTO{
+		Conversations: conversationDTOs,
+		HasMore:       hasMore,
+	}
+
+	if hasMore && len(queryResults) > 0 {
+		oldest := queryResults[len(queryResults)-1]
+		response.NextCursor = oldest.CreatedAt.Time.UTC().Format(time.RFC3339Nano) + "|" + pgtypeToUUID(oldest.ConversationID).String()
+	}
+
+	return response, nil
 }
 
 func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (readModel.ConversationFullDTO, error) {
-	result, err := r.queries.GetConversationFull(context.Background(), db.GetConversationFullParams{
+	result, err := r.queries.GetConversationBase(context.Background(), db.GetConversationBaseParams{
 		ID:     uuidToPgtype(id),
 		UserID: uuidToPgtype(userID),
 	})
@@ -308,9 +432,16 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (rea
 
 	switch conversationTypesMap[uint8(result.Type)] {
 	case domain.ConversationTypeDirect:
-		if result.OtherUserID.Valid {
-			conversationDTO.Avatar = result.OtherUserAvatar.String
-			conversationDTO.Name = optionalString(result.OtherUserName)
+		otherUsers, err := r.queries.GetDirectConversationOtherUser(context.Background(), db.GetDirectConversationOtherUserParams{
+			ConversationID: uuidToPgtype(id),
+			UserID:         uuidToPgtype(userID),
+		})
+		if err != nil {
+			return readModel.ConversationFullDTO{}, err
+		}
+		if len(otherUsers) > 0 {
+			conversationDTO.Avatar = otherUsers[0].Avatar.String
+			conversationDTO.Name = optionalString(otherUsers[0].Name)
 		}
 	case domain.ConversationTypeGroup:
 		if result.GroupAvatar.Valid && result.GroupName.Valid {
@@ -320,8 +451,12 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (rea
 		if result.GroupOwnerID.Valid {
 			conversationDTO.IsOwner = pgtypeToUUID(result.GroupOwnerID) == userID
 		}
-		conversationDTO.ParticipantsCount = result.ParticipantsCount
-		conversationDTO.HasJoined = result.UserParticipantID.Valid
+		participantsCount, err := r.queries.CountConversationParticipants(context.Background(), uuidToPgtype(id))
+		if err != nil {
+			return readModel.ConversationFullDTO{}, err
+		}
+		conversationDTO.ParticipantsCount = participantsCount
+		conversationDTO.HasJoined = true
 	}
 
 	return conversationDTO, nil

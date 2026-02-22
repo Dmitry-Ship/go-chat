@@ -19,7 +19,7 @@ type userQueryRepository interface {
 
 type conversationQueryRepository interface {
 	GetConversation(id uuid.UUID, userID uuid.UUID) (ConversationFullDTO, error)
-	GetUserConversations(userID uuid.UUID, paginationInfo PaginationInfo) ([]ConversationDTO, error)
+	GetUserConversations(userID uuid.UUID, cursor *ConversationCursor, limit int) (ConversationPageDTO, error)
 }
 
 type messageQueryRepository interface {

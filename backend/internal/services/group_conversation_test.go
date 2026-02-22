@@ -67,9 +67,9 @@ func (m *MockQueriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) 
 	return args.Get(0).(readModel.ConversationFullDTO), args.Error(1)
 }
 
-func (m *MockQueriesRepository) GetUserConversations(userID uuid.UUID, paginationInfo readModel.PaginationInfo) ([]readModel.ConversationDTO, error) {
-	args := m.Called(userID, paginationInfo)
-	return args.Get(0).([]readModel.ConversationDTO), args.Error(1)
+func (m *MockQueriesRepository) GetUserConversations(userID uuid.UUID, cursor *readModel.ConversationCursor, limit int) (readModel.ConversationPageDTO, error) {
+	args := m.Called(userID, cursor, limit)
+	return args.Get(0).(readModel.ConversationPageDTO), args.Error(1)
 }
 
 func (m *MockQueriesRepository) GetConversationMessages(conversationID uuid.UUID, cursor *readModel.MessageCursor, limit int) (readModel.MessagePageDTO, error) {

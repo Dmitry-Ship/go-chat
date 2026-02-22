@@ -3,7 +3,7 @@ import {
   StartDirectConversationResponse,
   UserDTO,
   ContactDTO,
-  ConversationDTO,
+  ConversationPageResponse,
   ConversationFullDTO,
   ConversationUsersResponse,
   MessagePageResponse,
@@ -66,9 +66,11 @@ export const startDirectConversation = (toUserId: string) =>
     body: JSON.stringify({ to_user_id: toUserId }),
   });
 
-export const getConversations = (page = 1, pageSize = 20) =>
-  fetchWithAuth<ConversationDTO[]>(
-    `/api/getConversations?page=${page}&page_size=${pageSize}`
+export const getConversations = (cursor?: string | null, limit = 20) =>
+  fetchWithAuth<ConversationPageResponse>(
+    `/api/getConversations?limit=${limit}${
+      cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""
+    }`
   );
 
 export const getConversation = (id: string) =>
@@ -103,33 +105,6 @@ export const getParticipants = (
   fetchWithAuth<UserDTO[]>(
     `/api/getParticipants?conversation_id=${conversationId}&page=${page}&page_size=${pageSize}`
   );
-
-export const joinConversation = (conversationId: string) =>
-  fetchWithAuth<string>("/api/joinConversation", {
-    method: "POST",
-    body: JSON.stringify({ conversation_id: conversationId }),
-  });
-
-export const leaveConversation = (conversationId: string) =>
-  fetchWithAuth<string>("/api/leaveConversation", {
-    method: "POST",
-    body: JSON.stringify({ conversation_id: conversationId }),
-  });
-
-export const deleteConversation = (conversationId: string) =>
-  fetchWithAuth<string>("/api/deleteConversation", {
-    method: "POST",
-    body: JSON.stringify({ conversation_id: conversationId }),
-  });
-
-export const renameConversation = (conversationId: string, newName: string) =>
-  fetchWithAuth<string>("/api/renameConversation", {
-    method: "POST",
-    body: JSON.stringify({
-      conversation_id: conversationId,
-      new_name: newName,
-    }),
-  });
 
 export const inviteUser = (conversationId: string, userId: string) =>
   fetchWithAuth<string>("/api/inviteUserToConversation", {

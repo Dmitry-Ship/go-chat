@@ -6,8 +6,6 @@ import (
 	"log"
 	"time"
 
-	"GitHub/go-chat/backend/internal/infra/postgres/db"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -63,8 +61,4 @@ func NewDatabaseConnection(ctx context.Context, conf DbConfig) (*pgxpool.Pool, e
 	log.Printf("💿 Connected to database %s", conf.Name)
 
 	return pool, nil
-}
-
-func NewQueries(pool *pgxpool.Pool) *db.Queries {
-	return db.New(pool)
 }
