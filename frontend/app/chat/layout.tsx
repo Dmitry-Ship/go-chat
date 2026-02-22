@@ -23,17 +23,20 @@ export default function ChatLayout({
   useEffect(() => {
     if (!loading && !authenticated) {
       router.push("/login");
+    }
+  }, [loading, authenticated, router]);
+
+  useEffect(() => {
+    if (!authenticated) {
+      wsManager.disconnect();
       return;
     }
 
-    if (authenticated && !wsManager.isConnected()) {
-      wsManager.connect();
-    }
-
+    wsManager.connect();
     return () => {
       wsManager.disconnect();
     };
-  }, [loading, authenticated, router]);
+  }, [authenticated]);
 
   if (loading) {
     return (

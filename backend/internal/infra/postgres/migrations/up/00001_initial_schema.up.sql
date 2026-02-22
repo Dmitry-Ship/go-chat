@@ -1,6 +1,5 @@
--- Combined schema for sqlc code generation
--- This file is auto-generated from migration files
-
+-- +goose Up
+-- +goose StatementBegin
 CREATE TABLE users (
     id UUID PRIMARY KEY,
     avatar TEXT,
@@ -66,3 +65,4 @@ CREATE INDEX idx_messages_deleted_at ON messages(deleted_at);
 CREATE INDEX messages_conversation_created_id_idx
 ON messages (conversation_id, created_at DESC, id DESC)
 WHERE deleted_at IS NULL;
+-- +goose StatementEnd

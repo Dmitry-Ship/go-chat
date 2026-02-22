@@ -28,8 +28,11 @@ func (r *directConversationRepository) Store(ctx context.Context, conversation *
 		qtx := r.queries.WithTx(tx)
 
 		conversationParams := db.StoreConversationParams{
-			ID:   uuidToPgtype(conversation.ID),
-			Type: int32(toConversationTypePersistence(conversation.Type)),
+			ID:      uuidToPgtype(conversation.ID),
+			Type:    int32(toConversationTypePersistence(conversation.Type)),
+			Name:    pgtype.Text{},
+			Avatar:  pgtype.Text{},
+			OwnerID: pgtype.UUID{},
 		}
 
 		if err := qtx.StoreConversation(ctx, conversationParams); err != nil {

@@ -44,10 +44,11 @@ export const ChatHeader = ({ conversationId, onLeave }: ChatHeaderProps) => {
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Button size="icon" variant="ghost">
-              <MoreVertical className="h-5 w-5" />
-            </Button>
+          <DropdownMenuTrigger
+            render={<Button size="icon" variant="ghost" />}
+          >
+            <MoreVertical className="h-5 w-5" />
+            <span className="sr-only">Conversation options</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {conversation.type === "group" && (

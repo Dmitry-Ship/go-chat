@@ -10,8 +10,9 @@ import { useChat } from "@/contexts/ChatContext";
 
 export default function ChatPage() {
   const { user, logout } = useAuth();
-  const { setActiveConversation } = useChat();
-  const [showSidebar, setShowSidebar] = useState(true);
+  const { activeConversationId } = useChat();
+  const [isSidebarManuallyOpen, setIsSidebarManuallyOpen] = useState(false);
+  const showSidebar = !activeConversationId || isSidebarManuallyOpen;
 
   const handleLogout = () => {
     logout();
@@ -37,16 +38,13 @@ export default function ChatPage() {
         {showSidebar ? (
           <Sidebar
             className="h-[calc(100vh-3.5rem)]"
-            onConversationSelect={(id) => {
-              setActiveConversation(id);
-              setShowSidebar(false);
-            }}
+            onConversationSelect={() => setIsSidebarManuallyOpen(false)}
           />
         ) : (
           <div className="h-[calc(100vh-3.5rem)] flex flex-col">
             <Button
               variant="ghost"
-              onClick={() => setShowSidebar(true)}
+              onClick={() => setIsSidebarManuallyOpen(true)}
               className="m-2 w-fit"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -58,10 +56,7 @@ export default function ChatPage() {
       </div>
 
       <div className="hidden md:flex w-full h-screen">
-        <Sidebar
-          className="h-full"
-          onConversationSelect={(id) => setActiveConversation(id)}
-        />
+        <Sidebar className="h-full" />
         <ChatArea className="flex-1" />
       </div>
     </div>

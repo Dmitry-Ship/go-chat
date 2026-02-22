@@ -28,7 +28,6 @@ func ValidateConversationName(name string) error {
 
 type GroupConversation struct {
 	Conversation
-	ID     uuid.UUID
 	Name   string
 	Avatar string
 	Owner  Participant
@@ -40,7 +39,6 @@ func NewGroupConversation(id uuid.UUID, name string, creatorId uuid.UUID) (*Grou
 			ID:   id,
 			Type: ConversationTypeGroup,
 		},
-		ID:     uuid.New(),
 		Name:   name,
 		Avatar: string(name[0]),
 		Owner:  *NewParticipant(uuid.New(), id, creatorId),
@@ -50,7 +48,7 @@ func NewGroupConversation(id uuid.UUID, name string, creatorId uuid.UUID) (*Grou
 }
 
 func (groupConversation *GroupConversation) isJoined(participant *Participant) bool {
-	return participant.ConversationID == groupConversation.Conversation.ID
+	return participant.ConversationID == groupConversation.ID
 }
 
 func (groupConversation *GroupConversation) Delete(participant *Participant) error {
@@ -89,7 +87,7 @@ func (groupConversation *GroupConversation) Invite(inviter *Participant, invitee
 		return nil, ErrorCannotInviteOneself
 	}
 
-	participant := NewParticipant(uuid.New(), groupConversation.Conversation.ID, invitee.ID)
+	participant := NewParticipant(uuid.New(), groupConversation.ID, invitee.ID)
 
 	return participant, nil
 }

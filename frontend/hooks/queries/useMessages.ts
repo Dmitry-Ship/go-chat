@@ -1,11 +1,13 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import type { InfiniteData } from '@tanstack/react-query'
 import { getConversationUsers, getMessages } from '@/lib/api'
+import type { MessagePageResponse } from '@/lib/types'
 
 export function useMessages(conversationId: string | null, limit = 20) {
-  return useInfiniteQuery({
+  return useInfiniteQuery<MessagePageResponse, Error, InfiniteData<MessagePageResponse>, (string | number | null)[], string | null>({
     queryKey: ['messages', conversationId, limit],
-    queryFn: ({ pageParam }) => getMessages(conversationId!, pageParam ?? null, limit),
-    initialPageParam: null,
+    queryFn: ({ pageParam }) => getMessages(conversationId!, pageParam, limit),
+    initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
     enabled: !!conversationId,
     staleTime: 10 * 60 * 1000,

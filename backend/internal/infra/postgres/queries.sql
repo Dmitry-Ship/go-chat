@@ -22,24 +22,20 @@ LIMIT 1;
 -- Conversation queries
 
 -- name: StoreConversation :exec
-INSERT INTO conversations (id, type)
-VALUES ($1, $2);
+INSERT INTO conversations (id, type, name, avatar, owner_id)
+VALUES ($1, $2, $3, $4, $5);
 
 -- name: DeleteConversation :exec
 UPDATE conversations
 SET deleted_at = NOW(), updated_at = NOW()
 WHERE id = $1;
 
--- GroupConversation queries
-
--- name: StoreGroupConversation :exec
-INSERT INTO group_conversations (id, name, avatar, conversation_id, owner_id)
-VALUES ($1, $2, $3, $4, $5);
-
 -- name: RenameGroupConversation :exec
-UPDATE group_conversations
-SET name = $2, updated_at = NOW()
-WHERE conversation_id = $1;
+UPDATE conversations
+SET name = sqlc.arg(name)::text, avatar = sqlc.arg(avatar)::text, updated_at = NOW()
+WHERE id = sqlc.arg(conversation_id)
+  AND type = 0
+  AND deleted_at IS NULL;
 
 -- Participant queries
 
@@ -110,38 +106,71 @@ LIMIT sqlc.arg(page_limit);
 
 -- name: GetUserConversations :many
 WITH last_messages AS (
-    SELECT conversation_id, MAX(created_at) as max_created_at
-    FROM messages
-    GROUP BY conversation_id
+    SELECT DISTINCT ON (m.conversation_id)
+        m.conversation_id,
+        m.id,
+        m.type,
+        m.content,
+        m.created_at,
+        m.user_id
+    FROM messages m
+    WHERE m.deleted_at IS NULL
+    ORDER BY m.conversation_id, m.created_at DESC, m.id DESC
 )
 SELECT
     c.id as conversation_id,
     c.created_at,
     c.type,
-    m.id as message_id,
-    m.type as message_type,
-    m.content as message_content,
-    m.created_at as message_created_at,
-    m.user_id as message_user_id,
-    u.name as message_user_name,
-    u.avatar as message_user_avatar,
-    gc.avatar as group_avatar,
-    gc.name as group_name,
-    ou.id as other_user_id,
-    ou.name as other_user_name,
-    ou.avatar as other_user_avatar
+    lm.id as message_id,
+    lm.type as message_type,
+    lm.content as message_content,
+    lm.created_at as message_created_at,
+    lm.user_id as message_user_id,
+    mu.name as message_user_name,
+    mu.avatar as message_user_avatar,
+    c.avatar as group_avatar,
+    c.name as group_name,
+    (
+        SELECT u.id
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $1
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ) as other_user_id,
+    COALESCE((
+        SELECT u.name
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $1
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ), '') as other_user_name,
+    (
+        SELECT u.avatar
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $1
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ) as other_user_avatar
 FROM conversations c
 JOIN participants p ON p.conversation_id = c.id
-LEFT JOIN last_messages lm ON lm.conversation_id = c.id
-LEFT JOIN messages m ON m.conversation_id = c.id AND m.created_at = lm.max_created_at
-LEFT JOIN users u ON u.id = m.user_id
-LEFT JOIN group_conversations gc ON gc.conversation_id = c.id
-LEFT JOIN participants op ON op.conversation_id = c.id
-    AND op.user_id <> $1
-LEFT JOIN users ou ON ou.id = op.user_id
-WHERE p.user_id = $1
-  AND c.deleted_at IS NULL
+  AND p.user_id = $1
   AND p.deleted_at IS NULL
+LEFT JOIN last_messages lm ON lm.conversation_id = c.id
+LEFT JOIN users mu ON mu.id = lm.user_id
+  AND mu.deleted_at IS NULL
+WHERE c.deleted_at IS NULL
 ORDER BY c.created_at DESC
 LIMIT $2 OFFSET $3;
 
@@ -156,21 +185,48 @@ SELECT
     c.id as conversation_id,
     c.created_at,
     c.type,
-    ou.id as other_user_id,
-    ou.name as other_user_name,
-    ou.avatar as other_user_avatar,
-    gc.avatar as group_avatar,
-    gc.name as group_name,
-    gc.owner_id as group_owner_id,
+    (
+        SELECT u.id
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $2
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ) as other_user_id,
+    COALESCE((
+        SELECT u.name
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $2
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ), '') as other_user_name,
+    (
+        SELECT u.avatar
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $2
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ) as other_user_avatar,
+    c.avatar as group_avatar,
+    c.name as group_name,
+    c.owner_id as group_owner_id,
     pc.count as participants_count,
     up.id as user_participant_id
 FROM conversations c
-LEFT JOIN participants op ON op.conversation_id = c.id
-    AND op.user_id <> $2
-LEFT JOIN users ou ON ou.id = op.user_id
-LEFT JOIN group_conversations gc ON gc.conversation_id = c.id
-LEFT JOIN participants pc_sub ON pc_sub.conversation_id = c.id AND pc_sub.user_id = $2
-LEFT JOIN participants up ON up.conversation_id = c.id AND up.user_id = $2
+LEFT JOIN participants up ON up.conversation_id = c.id
+    AND up.user_id = $2
+    AND up.deleted_at IS NULL
 CROSS JOIN participants_count pc
 WHERE c.id = $1 AND c.deleted_at IS NULL
 LIMIT 1;
@@ -200,19 +256,18 @@ WHERE conversation_id = $1
 
 -- name: InviteToConversationAtomic :one
 WITH valid_conversation AS (
-    SELECT gc.conversation_id as conv_id
-    FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    WHERE gc.conversation_id = $1 
-        AND c.deleted_at IS NULL
-        AND gc.deleted_at IS NULL
+    SELECT c.id as conv_id
+    FROM conversations c
+    WHERE c.id = sqlc.arg(conversation_id)
+      AND c.type = 0
+      AND c.deleted_at IS NULL
 ),
 valid_invitee AS (
-    SELECT u.id as user_id FROM users u WHERE u.id = $2 AND u.deleted_at IS NULL
+    SELECT u.id as user_id FROM users u WHERE u.id = sqlc.arg(invitee_id) AND u.deleted_at IS NULL
 ),
 new_participant AS (
     INSERT INTO participants (id, conversation_id, user_id, created_at)
-    SELECT $3, vc.conv_id, vi.user_id, NOW()
+    SELECT sqlc.arg(participant_id), vc.conv_id, vi.user_id, NOW()
     FROM valid_conversation vc, valid_invitee vi
     ON CONFLICT DO NOTHING
     RETURNING user_id
@@ -227,11 +282,13 @@ SELECT EXISTS(
 
 -- name: IsMemberOwner :one
 SELECT EXISTS(
-    SELECT 1 FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    JOIN participants p ON p.conversation_id = gc.conversation_id AND p.user_id = $2
-    WHERE gc.conversation_id = $1 AND gc.owner_id = $2
-      AND gc.deleted_at IS NULL AND c.deleted_at IS NULL AND p.deleted_at IS NULL
+    SELECT 1 FROM conversations c
+    JOIN participants p ON p.conversation_id = c.id AND p.user_id = sqlc.arg(user_id)
+    WHERE c.id = sqlc.arg(conversation_id)
+      AND c.type = 0
+      AND c.owner_id = sqlc.arg(user_id)
+      AND c.deleted_at IS NULL
+      AND p.deleted_at IS NULL
 );
 
 -- Message queries

@@ -11,20 +11,12 @@ import (
 type Conversation struct {
 	ID        pgtype.UUID        `json:"id"`
 	Type      int32              `json:"type"`
+	Name      pgtype.Text        `json:"name"`
+	Avatar    pgtype.Text        `json:"avatar"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
-}
-
-type GroupConversation struct {
-	ID             pgtype.UUID        `json:"id"`
-	Name           string             `json:"name"`
-	Avatar         pgtype.Text        `json:"avatar"`
-	ConversationID pgtype.UUID        `json:"conversation_id"`
-	OwnerID        pgtype.UUID        `json:"owner_id"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type Message struct {

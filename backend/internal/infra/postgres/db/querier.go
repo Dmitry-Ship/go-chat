@@ -31,8 +31,6 @@ type Querier interface {
 	RenameGroupConversation(ctx context.Context, arg RenameGroupConversationParams) error
 	// Conversation queries
 	StoreConversation(ctx context.Context, arg StoreConversationParams) error
-	// GroupConversation queries
-	StoreGroupConversation(ctx context.Context, arg StoreGroupConversationParams) error
 	// Message queries
 	StoreMessageAndReturn(ctx context.Context, arg StoreMessageAndReturnParams) (StoreMessageAndReturnRow, error)
 	// Participant queries

@@ -40,10 +40,11 @@ export const Sidebar = ({ className = "", onConversationSelect }: SidebarProps) 
           <h1 className="text-xl font-bold">Go-Chat</h1>
           <div className="flex gap-2">
             <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button size="icon" variant="ghost">
-                  <Plus className="h-5 w-5" />
-                </Button>
+              <DropdownMenuTrigger
+                render={<Button size="icon" variant="ghost" />}
+              >
+                <Plus className="h-5 w-5" />
+                <span className="sr-only">Create conversation</span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setShowCreateGroup(true)}>

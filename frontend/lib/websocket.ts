@@ -16,6 +16,8 @@ class WebSocketManager {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 10;
   private reconnectDelay = 1000;
+  private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private pendingDisconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private isManualClose = false;
   private messageHandlers: Set<MessageHandler> = new Set();
   private errorHandlers: Set<ErrorHandler> = new Set();
@@ -33,21 +35,40 @@ class WebSocketManager {
     this.queryClient = client;
   }
 
+  private clearReconnectTimeout() {
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
+  }
+
+  private clearPendingDisconnectTimeout() {
+    if (this.pendingDisconnectTimeoutId) {
+      clearTimeout(this.pendingDisconnectTimeoutId);
+      this.pendingDisconnectTimeoutId = null;
+    }
+  }
+
   connect(): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
+    this.clearPendingDisconnectTimeout();
+
+    if (this.ws?.readyState === WebSocket.OPEN || this.ws?.readyState === WebSocket.CONNECTING) {
       return;
     }
 
     this.isManualClose = false;
-    this.ws = new WebSocket(this.url);
+    this.clearReconnectTimeout();
 
-    this.ws.onopen = () => {
+    const socket = new WebSocket(this.url);
+    this.ws = socket;
+
+    socket.onopen = () => {
       console.log("WebSocket connected");
       this.reconnectAttempts = 0;
       this.reconnectDelay = 1000;
     };
 
-    this.ws.onmessage = (event) => {
+    socket.onmessage = (event) => {
       try {
         const message: WSOutgoingMessage = JSON.parse(event.data);
         this.handleMessage(message);
@@ -57,20 +78,32 @@ class WebSocketManager {
       }
     };
 
-    this.ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
+    socket.onerror = (error) => {
+      if (this.isManualClose || this.ws !== socket) {
+        return;
+      }
+
+      // Browser WebSocket errors have no actionable details; close event drives reconnection.
+      console.warn("WebSocket transport error; waiting for reconnect.");
       this.errorHandlers.forEach((handler) => handler(error));
     };
 
-    this.ws.onclose = () => {
+    socket.onclose = (event) => {
+      if (this.ws === socket) {
+        this.ws = null;
+      }
+
       console.log("WebSocket disconnected");
       this.closeHandlers.forEach((handler) => handler());
 
       if (!this.isManualClose && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
         this.reconnectDelay = Math.min(this.reconnectDelay * 2, 30000);
-        console.log(`Reconnecting in ${this.reconnectDelay}ms...`);
-        setTimeout(() => this.connect(), this.reconnectDelay);
+        console.log(`WebSocket closed (${event.code}). Reconnecting in ${this.reconnectDelay}ms...`);
+        this.reconnectTimeoutId = setTimeout(() => {
+          this.reconnectTimeoutId = null;
+          this.connect();
+        }, this.reconnectDelay);
       }
     };
   }
@@ -137,10 +170,17 @@ class WebSocketManager {
 
   disconnect(): void {
     this.isManualClose = true;
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
+    this.clearReconnectTimeout();
+    this.clearPendingDisconnectTimeout();
+
+    // Defer close to avoid development-mode remount churn closing a CONNECTING socket.
+    this.pendingDisconnectTimeoutId = setTimeout(() => {
+      this.pendingDisconnectTimeoutId = null;
+      if (this.ws) {
+        this.ws.close();
+        this.ws = null;
+      }
+    }, 0);
   }
 
   onMessage(handler: MessageHandler): () => void {

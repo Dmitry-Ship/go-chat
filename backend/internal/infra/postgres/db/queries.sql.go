@@ -96,21 +96,48 @@ SELECT
     c.id as conversation_id,
     c.created_at,
     c.type,
-    ou.id as other_user_id,
-    ou.name as other_user_name,
-    ou.avatar as other_user_avatar,
-    gc.avatar as group_avatar,
-    gc.name as group_name,
-    gc.owner_id as group_owner_id,
+    (
+        SELECT u.id
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $2
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ) as other_user_id,
+    COALESCE((
+        SELECT u.name
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $2
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ), '') as other_user_name,
+    (
+        SELECT u.avatar
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $2
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ) as other_user_avatar,
+    c.avatar as group_avatar,
+    c.name as group_name,
+    c.owner_id as group_owner_id,
     pc.count as participants_count,
     up.id as user_participant_id
 FROM conversations c
-LEFT JOIN participants op ON op.conversation_id = c.id
-    AND op.user_id <> $2
-LEFT JOIN users ou ON ou.id = op.user_id
-LEFT JOIN group_conversations gc ON gc.conversation_id = c.id
-LEFT JOIN participants pc_sub ON pc_sub.conversation_id = c.id AND pc_sub.user_id = $2
-LEFT JOIN participants up ON up.conversation_id = c.id AND up.user_id = $2
+LEFT JOIN participants up ON up.conversation_id = c.id
+    AND up.user_id = $2
+    AND up.deleted_at IS NULL
 CROSS JOIN participants_count pc
 WHERE c.id = $1 AND c.deleted_at IS NULL
 LIMIT 1
@@ -126,7 +153,7 @@ type GetConversationFullRow struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	Type              int32              `json:"type"`
 	OtherUserID       pgtype.UUID        `json:"other_user_id"`
-	OtherUserName     pgtype.Text        `json:"other_user_name"`
+	OtherUserName     interface{}        `json:"other_user_name"`
 	OtherUserAvatar   pgtype.Text        `json:"other_user_avatar"`
 	GroupAvatar       pgtype.Text        `json:"group_avatar"`
 	GroupName         pgtype.Text        `json:"group_name"`
@@ -252,7 +279,7 @@ func (q *Queries) GetConversationMessagesRaw(ctx context.Context, arg GetConvers
 }
 
 const getDirectConversationBetweenUsers = `-- name: GetDirectConversationBetweenUsers :one
-SELECT c.id, c.type, c.created_at, c.updated_at, c.deleted_at
+SELECT c.id, c.type, c.name, c.avatar, c.owner_id, c.created_at, c.updated_at, c.deleted_at
 FROM conversations c
 JOIN participants p1 ON p1.conversation_id = c.id AND p1.user_id = $1
 JOIN participants p2 ON p2.conversation_id = c.id AND p2.user_id = $2
@@ -274,6 +301,9 @@ func (q *Queries) GetDirectConversationBetweenUsers(ctx context.Context, arg Get
 	err := row.Scan(
 		&i.ID,
 		&i.Type,
+		&i.Name,
+		&i.Avatar,
+		&i.OwnerID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -392,38 +422,71 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 
 const getUserConversations = `-- name: GetUserConversations :many
 WITH last_messages AS (
-    SELECT conversation_id, MAX(created_at) as max_created_at
-    FROM messages
-    GROUP BY conversation_id
+    SELECT DISTINCT ON (m.conversation_id)
+        m.conversation_id,
+        m.id,
+        m.type,
+        m.content,
+        m.created_at,
+        m.user_id
+    FROM messages m
+    WHERE m.deleted_at IS NULL
+    ORDER BY m.conversation_id, m.created_at DESC, m.id DESC
 )
 SELECT
     c.id as conversation_id,
     c.created_at,
     c.type,
-    m.id as message_id,
-    m.type as message_type,
-    m.content as message_content,
-    m.created_at as message_created_at,
-    m.user_id as message_user_id,
-    u.name as message_user_name,
-    u.avatar as message_user_avatar,
-    gc.avatar as group_avatar,
-    gc.name as group_name,
-    ou.id as other_user_id,
-    ou.name as other_user_name,
-    ou.avatar as other_user_avatar
+    lm.id as message_id,
+    lm.type as message_type,
+    lm.content as message_content,
+    lm.created_at as message_created_at,
+    lm.user_id as message_user_id,
+    mu.name as message_user_name,
+    mu.avatar as message_user_avatar,
+    c.avatar as group_avatar,
+    c.name as group_name,
+    (
+        SELECT u.id
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $1
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ) as other_user_id,
+    COALESCE((
+        SELECT u.name
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $1
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ), '') as other_user_name,
+    (
+        SELECT u.avatar
+        FROM participants op
+        JOIN users u ON u.id = op.user_id
+        WHERE op.conversation_id = c.id
+          AND op.user_id <> $1
+          AND op.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY op.created_at ASC
+        LIMIT 1
+    ) as other_user_avatar
 FROM conversations c
 JOIN participants p ON p.conversation_id = c.id
-LEFT JOIN last_messages lm ON lm.conversation_id = c.id
-LEFT JOIN messages m ON m.conversation_id = c.id AND m.created_at = lm.max_created_at
-LEFT JOIN users u ON u.id = m.user_id
-LEFT JOIN group_conversations gc ON gc.conversation_id = c.id
-LEFT JOIN participants op ON op.conversation_id = c.id
-    AND op.user_id <> $1
-LEFT JOIN users ou ON ou.id = op.user_id
-WHERE p.user_id = $1
-  AND c.deleted_at IS NULL
+  AND p.user_id = $1
   AND p.deleted_at IS NULL
+LEFT JOIN last_messages lm ON lm.conversation_id = c.id
+LEFT JOIN users mu ON mu.id = lm.user_id
+  AND mu.deleted_at IS NULL
+WHERE c.deleted_at IS NULL
 ORDER BY c.created_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -448,7 +511,7 @@ type GetUserConversationsRow struct {
 	GroupAvatar       pgtype.Text        `json:"group_avatar"`
 	GroupName         pgtype.Text        `json:"group_name"`
 	OtherUserID       pgtype.UUID        `json:"other_user_id"`
-	OtherUserName     pgtype.Text        `json:"other_user_name"`
+	OtherUserName     interface{}        `json:"other_user_name"`
 	OtherUserAvatar   pgtype.Text        `json:"other_user_avatar"`
 }
 
@@ -523,12 +586,11 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []pgtype.UUID) ([]
 
 const inviteToConversationAtomic = `-- name: InviteToConversationAtomic :one
 WITH valid_conversation AS (
-    SELECT gc.conversation_id as conv_id
-    FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    WHERE gc.conversation_id = $1 
-        AND c.deleted_at IS NULL
-        AND gc.deleted_at IS NULL
+    SELECT c.id as conv_id
+    FROM conversations c
+    WHERE c.id = $1
+      AND c.type = 0
+      AND c.deleted_at IS NULL
 ),
 valid_invitee AS (
     SELECT u.id as user_id FROM users u WHERE u.id = $2 AND u.deleted_at IS NULL
@@ -545,12 +607,12 @@ SELECT user_id FROM new_participant
 
 type InviteToConversationAtomicParams struct {
 	ConversationID pgtype.UUID `json:"conversation_id"`
-	ID             pgtype.UUID `json:"id"`
-	ID_2           pgtype.UUID `json:"id_2"`
+	InviteeID      pgtype.UUID `json:"invitee_id"`
+	ParticipantID  pgtype.UUID `json:"participant_id"`
 }
 
 func (q *Queries) InviteToConversationAtomic(ctx context.Context, arg InviteToConversationAtomicParams) (pgtype.UUID, error) {
-	row := q.db.QueryRow(ctx, inviteToConversationAtomic, arg.ConversationID, arg.ID, arg.ID_2)
+	row := q.db.QueryRow(ctx, inviteToConversationAtomic, arg.ConversationID, arg.InviteeID, arg.ParticipantID)
 	var user_id pgtype.UUID
 	err := row.Scan(&user_id)
 	return user_id, err
@@ -577,21 +639,23 @@ func (q *Queries) IsMember(ctx context.Context, arg IsMemberParams) (bool, error
 
 const isMemberOwner = `-- name: IsMemberOwner :one
 SELECT EXISTS(
-    SELECT 1 FROM group_conversations gc
-    JOIN conversations c ON c.id = gc.conversation_id
-    JOIN participants p ON p.conversation_id = gc.conversation_id AND p.user_id = $2
-    WHERE gc.conversation_id = $1 AND gc.owner_id = $2
-      AND gc.deleted_at IS NULL AND c.deleted_at IS NULL AND p.deleted_at IS NULL
+    SELECT 1 FROM conversations c
+    JOIN participants p ON p.conversation_id = c.id AND p.user_id = $1
+    WHERE c.id = $2
+      AND c.type = 0
+      AND c.owner_id = $1
+      AND c.deleted_at IS NULL
+      AND p.deleted_at IS NULL
 )
 `
 
 type IsMemberOwnerParams struct {
-	ConversationID pgtype.UUID `json:"conversation_id"`
 	UserID         pgtype.UUID `json:"user_id"`
+	ConversationID pgtype.UUID `json:"conversation_id"`
 }
 
 func (q *Queries) IsMemberOwner(ctx context.Context, arg IsMemberOwnerParams) (bool, error) {
-	row := q.db.QueryRow(ctx, isMemberOwner, arg.ConversationID, arg.UserID)
+	row := q.db.QueryRow(ctx, isMemberOwner, arg.UserID, arg.ConversationID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
@@ -619,59 +683,45 @@ func (q *Queries) LeaveConversationAtomic(ctx context.Context, arg LeaveConversa
 }
 
 const renameGroupConversation = `-- name: RenameGroupConversation :exec
-UPDATE group_conversations
-SET name = $2, updated_at = NOW()
-WHERE conversation_id = $1
+UPDATE conversations
+SET name = $1::text, avatar = $2::text, updated_at = NOW()
+WHERE id = $3
+  AND type = 0
+  AND deleted_at IS NULL
 `
 
 type RenameGroupConversationParams struct {
-	ConversationID pgtype.UUID `json:"conversation_id"`
 	Name           string      `json:"name"`
+	Avatar         string      `json:"avatar"`
+	ConversationID pgtype.UUID `json:"conversation_id"`
 }
 
 func (q *Queries) RenameGroupConversation(ctx context.Context, arg RenameGroupConversationParams) error {
-	_, err := q.db.Exec(ctx, renameGroupConversation, arg.ConversationID, arg.Name)
+	_, err := q.db.Exec(ctx, renameGroupConversation, arg.Name, arg.Avatar, arg.ConversationID)
 	return err
 }
 
 const storeConversation = `-- name: StoreConversation :exec
 
-INSERT INTO conversations (id, type)
-VALUES ($1, $2)
+INSERT INTO conversations (id, type, name, avatar, owner_id)
+VALUES ($1, $2, $3, $4, $5)
 `
 
 type StoreConversationParams struct {
-	ID   pgtype.UUID `json:"id"`
-	Type int32       `json:"type"`
+	ID      pgtype.UUID `json:"id"`
+	Type    int32       `json:"type"`
+	Name    pgtype.Text `json:"name"`
+	Avatar  pgtype.Text `json:"avatar"`
+	OwnerID pgtype.UUID `json:"owner_id"`
 }
 
 // Conversation queries
 func (q *Queries) StoreConversation(ctx context.Context, arg StoreConversationParams) error {
-	_, err := q.db.Exec(ctx, storeConversation, arg.ID, arg.Type)
-	return err
-}
-
-const storeGroupConversation = `-- name: StoreGroupConversation :exec
-
-INSERT INTO group_conversations (id, name, avatar, conversation_id, owner_id)
-VALUES ($1, $2, $3, $4, $5)
-`
-
-type StoreGroupConversationParams struct {
-	ID             pgtype.UUID `json:"id"`
-	Name           string      `json:"name"`
-	Avatar         pgtype.Text `json:"avatar"`
-	ConversationID pgtype.UUID `json:"conversation_id"`
-	OwnerID        pgtype.UUID `json:"owner_id"`
-}
-
-// GroupConversation queries
-func (q *Queries) StoreGroupConversation(ctx context.Context, arg StoreGroupConversationParams) error {
-	_, err := q.db.Exec(ctx, storeGroupConversation,
+	_, err := q.db.Exec(ctx, storeConversation,
 		arg.ID,
+		arg.Type,
 		arg.Name,
 		arg.Avatar,
-		arg.ConversationID,
 		arg.OwnerID,
 	)
 	return err

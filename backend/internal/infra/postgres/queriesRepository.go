@@ -19,6 +19,17 @@ type queriesRepository struct {
 	queries *db.Queries
 }
 
+func optionalString(value interface{}) string {
+	switch v := value.(type) {
+	case string:
+		return v
+	case []byte:
+		return string(v)
+	default:
+		return ""
+	}
+}
+
 func NewQueriesRepository(pool *pgxpool.Pool) *queriesRepository {
 	return &queriesRepository{
 		pool:    pool,
@@ -264,7 +275,7 @@ func (r *queriesRepository) GetUserConversations(userID uuid.UUID, paginationInf
 		case domain.ConversationTypeDirect:
 			if result.OtherUserID.Valid {
 				conversationDTO.Avatar = result.OtherUserAvatar.String
-				conversationDTO.Name = result.OtherUserName.String
+				conversationDTO.Name = optionalString(result.OtherUserName)
 			}
 		case domain.ConversationTypeGroup:
 			if result.GroupAvatar.Valid && result.GroupName.Valid {
@@ -299,7 +310,7 @@ func (r *queriesRepository) GetConversation(id uuid.UUID, userID uuid.UUID) (rea
 	case domain.ConversationTypeDirect:
 		if result.OtherUserID.Valid {
 			conversationDTO.Avatar = result.OtherUserAvatar.String
-			conversationDTO.Name = result.OtherUserName.String
+			conversationDTO.Name = optionalString(result.OtherUserName)
 		}
 	case domain.ConversationTypeGroup:
 		if result.GroupAvatar.Valid && result.GroupName.Valid {
@@ -333,8 +344,8 @@ func (r *queriesRepository) IsMemberOwner(conversationID uuid.UUID, userID uuid.
 func (r *queriesRepository) InviteToConversationAtomic(conversationID uuid.UUID, inviteeID uuid.UUID, participantID uuid.UUID) (uuid.UUID, error) {
 	result, err := r.queries.InviteToConversationAtomic(context.Background(), db.InviteToConversationAtomicParams{
 		ConversationID: uuidToPgtype(conversationID),
-		ID:             uuidToPgtype(inviteeID),
-		ID_2:           uuidToPgtype(participantID),
+		InviteeID:      uuidToPgtype(inviteeID),
+		ParticipantID:  uuidToPgtype(participantID),
 	})
 
 	if err != nil {

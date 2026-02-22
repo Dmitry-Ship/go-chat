@@ -28,24 +28,15 @@ func (r *groupConversationRepository) Store(ctx context.Context, conversation *d
 		qtx := r.queries.WithTx(tx)
 
 		conversationParams := db.StoreConversationParams{
-			ID:   uuidToPgtype(conversation.Conversation.ID),
-			Type: int32(toConversationTypePersistence(conversation.Type)),
+			ID:      uuidToPgtype(conversation.ID),
+			Type:    int32(toConversationTypePersistence(conversation.Type)),
+			Name:    pgtype.Text{String: conversation.Name, Valid: conversation.Name != ""},
+			Avatar:  pgtype.Text{String: conversation.Avatar, Valid: conversation.Avatar != ""},
+			OwnerID: uuidToPgtype(conversation.Owner.UserID),
 		}
 
 		if err := qtx.StoreConversation(ctx, conversationParams); err != nil {
 			return fmt.Errorf("create conversation error: %w", err)
-		}
-
-		groupConversationParams := db.StoreGroupConversationParams{
-			ID:             uuidToPgtype(conversation.ID),
-			Name:           conversation.Name,
-			Avatar:         pgtype.Text{String: conversation.Avatar, Valid: conversation.Avatar != ""},
-			ConversationID: uuidToPgtype(conversation.Conversation.ID),
-			OwnerID:        uuidToPgtype(conversation.Owner.UserID),
-		}
-
-		if err := qtx.StoreGroupConversation(ctx, groupConversationParams); err != nil {
-			return fmt.Errorf("create group conversation error: %w", err)
 		}
 
 		participantParams := db.StoreParticipantParams{
@@ -66,6 +57,7 @@ func (r *groupConversationRepository) Rename(ctx context.Context, id uuid.UUID, 
 	params := db.RenameGroupConversationParams{
 		ConversationID: uuidToPgtype(id),
 		Name:           name,
+		Avatar:         string(name[0]),
 	}
 
 	if err := r.queries.RenameGroupConversation(ctx, params); err != nil {

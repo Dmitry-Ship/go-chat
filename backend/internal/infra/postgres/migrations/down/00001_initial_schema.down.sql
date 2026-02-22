@@ -1,5 +1,7 @@
 -- +goose Down
 -- +goose StatementBegin
-DROP INDEX IF EXISTS idx_conversations_deleted_at;
+DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS participants;
 DROP TABLE IF EXISTS conversations;
+DROP TABLE IF EXISTS users;
 -- +goose StatementEnd
